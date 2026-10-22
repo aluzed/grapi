@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "body": null,
+  "skipped": "Strapi lists strapi.components in the order its loader read the files, which follows the filesystem"
+}

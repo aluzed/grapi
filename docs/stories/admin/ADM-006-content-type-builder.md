@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-006 : Content-Type Builder (écriture des schémas, rechargement à chaud, migrations de renommage)
@@ -45,6 +45,10 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
 - [ ] En mode production, `POST` d'écriture du CTB renvoie 403.
 - [ ] Toute suppression passe par la modale de confirmation qui liste les impacts.
+
+## Avancement
+- Content API en lecture seule du plugin (`internal/httpapi/ctb.go`) : `GET /api/content-type-builder/content-types[/:uid]` (`kind`, types invisibles en 404) et `GET /api/content-type-builder/components[/:uid]`, au format de `formatContentType` et `formatComponent`. Corpus `components_ctb`, SQLite et Postgres : identique à Strapi. Les deux listes complètes sont en skip au banc : celle des content types contient les types Enterprise (clean-room), celle des composants suit chez Strapi l'ordre de lecture des fichiers.
+- Reste : tout le côté admin (édition des schémas, écriture des fichiers, redémarrage), qui attend la décision `ADM-001`.
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

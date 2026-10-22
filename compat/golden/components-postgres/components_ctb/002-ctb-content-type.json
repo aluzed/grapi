@@ -1,0 +1,52 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "apiID": "page",
+      "schema": {
+        "attributes": {
+          "body": {
+            "components": [
+              "blocks.hero",
+              "blocks.rich-text",
+              "blocks.gallery"
+            ],
+            "type": "dynamiczone"
+          },
+          "layout": {
+            "component": "layout.section",
+            "repeatable": false,
+            "type": "component"
+          },
+          "links": {
+            "component": "shared.link",
+            "max": 3,
+            "min": 1,
+            "repeatable": true,
+            "type": "component"
+          },
+          "seo": {
+            "component": "shared.seo",
+            "repeatable": false,
+            "type": "component"
+          },
+          "title": {
+            "required": true,
+            "type": "string"
+          }
+        },
+        "collectionName": "pages",
+        "description": "",
+        "displayName": "Page",
+        "draftAndPublish": false,
+        "kind": "collectionType",
+        "pluralName": "pages",
+        "restrictRelationsTo": null,
+        "singularName": "page",
+        "visible": true
+      },
+      "uid": "api::page.page"
+    }
+  }
+}

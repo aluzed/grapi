@@ -125,6 +125,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		}
 	}
 	s.addUploadRoutes()
+	s.addCTBRoutes()
 	s.addOpenAPI()
 	if err := s.addGraphQL(); err != nil {
 		log.Error("graphql plugin disabled", "error", err)

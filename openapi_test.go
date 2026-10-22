@@ -55,13 +55,13 @@ func TestOpenAPIRoute(t *testing.T) {
 	if doc.OpenAPI != "3.1.0" || doc.Info["title"] != "my-app" || doc.Info["version"] != "1.2.3" {
 		t.Errorf("head: %v %v", doc.OpenAPI, doc.Info)
 	}
-	for _, p := range []string{"/articles", "/articles/{id}", "/auth/local", "/users/{id}", "/upload/files"} {
+	for _, p := range []string{"/articles", "/articles/{id}", "/auth/local", "/users/{id}", "/upload/files", "/content-type-builder/content-types"} {
 		if doc.Paths[p] == nil {
 			t.Errorf("missing %s", p)
 		}
 	}
-	// Strapi's content-type-builder content API is not served by grapi.
-	if doc.Paths["/content-type-builder/content-types"] != nil {
+	// OAuth providers are not served by grapi yet.
+	if doc.Paths["/auth/{provider}/callback"] != nil {
 		t.Error("routes grapi does not serve are listed")
 	}
 }

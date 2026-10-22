@@ -1,0 +1,20 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "this must be one of the following values: singleType, collectionType",
+            "name": "ValidationError",
+            "path": [],
+            "value": "nope"
+          }
+        ]
+      },
+      "message": "this must be one of the following values: singleType, collectionType",
+      "name": "ValidationError"
+    }
+  }
+}

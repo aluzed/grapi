@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "apiId": "section",
+      "category": "layout",
+      "schema": {
+        "attributes": {
+          "columns": {
+            "component": "layout.column",
+            "repeatable": true,
+            "type": "component"
+          },
+          "heading": {
+            "type": "string"
+          }
+        },
+        "collectionName": "components_layout_sections",
+        "description": "",
+        "displayName": "Section"
+      },
+      "uid": "layout.section"
+    }
+  }
+}

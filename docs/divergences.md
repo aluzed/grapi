@@ -71,6 +71,11 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 - Pas de `x-powered-by` ni de `x-strapi-version` dans le document : le serveur ne se signale pas.
 - Les routes de plugins que grapi ne sert pas encore (content API du Content-Type Builder, rôles, sessions, OAuth) ne sont pas listées.
 
+## Content-Type Builder (`internal/httpapi/ctb.go`)
+
+- `GET /api/content-type-builder/content-types` ne liste pas les types Enterprise (content-releases, review-workflows).
+- `GET /api/content-type-builder/components` liste les composants dans l'ordre du chargement de grapi (catégories et fichiers triés) ; Strapi suit l'ordre du système de fichiers.
+
 ## À trancher
 
 - `biginteger` sous SQLite : Strapi perd la précision au-delà de 2^53 (voir `compat/README.md`). Le reproduire ou non se décide dans `DB-001`.

@@ -1,0 +1,36 @@
+fixture: components
+# Content-Type Builder content API (read only).
+cases:
+  - name: ctb-content-types
+    path: /api/content-type-builder/content-types
+    token: full
+    skip: "lists the Enterprise content types (content-releases, review-workflows), left out of grapi (clean-room)"
+  - name: ctb-content-type
+    path: /api/content-type-builder/content-types/api::page.page
+    token: full
+  - name: ctb-content-type-plugin
+    path: /api/content-type-builder/content-types/plugin::users-permissions.user
+    token: full
+  - name: ctb-content-type-missing
+    path: /api/content-type-builder/content-types/api::nope.nope
+    token: full
+  - name: ctb-components
+    path: /api/content-type-builder/components
+    token: full
+    skip: "Strapi lists strapi.components in the order its loader read the files, which follows the filesystem"
+  - name: ctb-component
+    path: /api/content-type-builder/components/layout.section
+    token: full
+  - name: ctb-component-missing
+    path: /api/content-type-builder/components/nope.nope
+    token: full
+  - name: ctb-content-types-single
+    path: /api/content-type-builder/content-types
+    query: "kind=singleType"
+    token: full
+  - name: ctb-content-types-bad-kind
+    path: /api/content-type-builder/content-types
+    query: "kind=nope"
+    token: full
+  - name: ctb-public-forbidden
+    path: /api/content-type-builder/components

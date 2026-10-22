@@ -1,0 +1,5 @@
+{
+  "status": 0,
+  "body": null,
+  "skipped": "lists the Enterprise content types (content-releases, review-workflows), left out of grapi (clean-room)"
+}

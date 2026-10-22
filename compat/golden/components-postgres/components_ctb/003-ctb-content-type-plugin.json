@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "apiID": "user",
+      "plugin": "users-permissions",
+      "schema": {
+        "attributes": {
+          "blocked": {
+            "configurable": false,
+            "default": false,
+            "type": "boolean"
+          },
+          "confirmationToken": {
+            "configurable": false,
+            "private": true,
+            "searchable": false,
+            "type": "string"
+          },
+          "confirmed": {
+            "configurable": false,
+            "default": false,
+            "type": "boolean"
+          },
+          "email": {
+            "configurable": false,
+            "minLength": 6,
+            "required": true,
+            "type": "email"
+          },
+          "password": {
+            "configurable": false,
+            "minLength": 6,
+            "private": true,
+            "searchable": false,
+            "type": "password"
+          },
+          "provider": {
+            "configurable": false,
+            "type": "string"
+          },
+          "resetPasswordToken": {
+            "configurable": false,
+            "private": true,
+            "searchable": false,
+            "type": "string"
+          },
+          "role": {
+            "configurable": false,
+            "inversedBy": "users",
+            "private": false,
+            "relation": "manyToOne",
+            "required": false,
+            "target": "plugin::users-permissions.role",
+            "targetAttribute": "users",
+            "type": "relation"
+          },
+          "username": {
+            "configurable": false,
+            "minLength": 3,
+            "required": true,
+            "type": "string",
+            "unique": true
+          }
+        },
+        "collectionName": "up_users",
+        "description": "",
+        "displayName": "User",
+        "draftAndPublish": false,
+        "kind": "collectionType",
+        "pluralName": "users",
+        "restrictRelationsTo": null,
+        "singularName": "user",
+        "timestamps": true,
+        "visible": true
+      },
+      "uid": "plugin::users-permissions.user"
+    }
+  }
+}
