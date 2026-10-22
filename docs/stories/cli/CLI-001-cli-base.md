@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # CLI-001 : CLI de base : `new`, `develop`, `start`, `version`
@@ -33,11 +33,15 @@ Le squelette de la CLI et les commandes de cycle de vie d'un projet.
 - `console` (REPL JS de Strapi) : pas d'équivalent pertinent en Go, à rediscuter si `EXT-003` est fait.
 
 ## Critères d'acceptation
-- [ ] `grapi new demo && cd demo && grapi develop` démarre sur `:1337`, et `/_health` renvoie 204.
-- [ ] Modifier un `schema.json` pendant `develop` met à jour l'API sans redémarrage (le nouveau champ apparaît dans la réponse en moins de 2 s).
-- [ ] `.env` et `.env.example` ont exactement les mêmes clés (TU sur le template).
-- [ ] `grapi start` sur un projet avec une config invalide sort en code 1 avec le nom du fichier et la clé en cause.
-- [ ] `grapi report` n'affiche aucun secret (TU).
+- [x] `grapi new demo && cd demo && grapi develop` démarre sur `:1337`, et `/_health` renvoie 204.
+- [x] Modifier un `schema.json` pendant `develop` met à jour l'API sans redémarrage (le nouveau champ apparaît dans la réponse en moins de 2 s).
+- [x] `.env` et `.env.example` ont exactement les mêmes clés (TU sur le template).
+- [x] `grapi start` sur un projet avec une config invalide sort en code 1 avec le nom du fichier et la clé en cause.
+- [x] `grapi report` n'affiche aucun secret (TU).
+
+## Avancement
+- Fait : `grapi new` (config YAML, `.env` aux secrets aléatoires et `.env.example` aux mêmes clés, `--db`, `--git-init`, `--framework`), `grapi develop` (rechargement en processus : un content type ajouté est servi 131 ms après l'écriture de son `schema.json`), `grapi report`, flags `-env` et `-log-level` sur les commandes de projet. La CLI garde le paquet `flag` de la bibliothèque standard plutôt que cobra.
+- Reste : redémarrage du processus pour le mode framework (`go run`), écritures du Content-Type Builder en develop (`ADM-006`), `--open`.
 
 ## Notes techniques
 - `spf13/cobra`, `fsnotify/fsnotify` avec un debounce de 300 ms.

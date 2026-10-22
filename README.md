@@ -13,7 +13,10 @@ Pre-alpha. `grapi start` serves the REST content API of a Strapi project (config
 ## Commands
 
 ```sh
+grapi new <name> [--db sqlite|postgres]      # create a project
+grapi develop                                # serve and reload on src/ or config/ changes
 grapi start -dir <project> [-config <dir>]    # serve the content API
+grapi report                                 # versions and project facts, without secrets
 grapi db:sync --dry-run -dir <project>       # what the start-up schema sync would change (read only)
 grapi db:check -dir <project>                # consistency report: schema, documentIds, orphan links, password hashes
 ```

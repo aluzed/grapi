@@ -15,10 +15,28 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  version             print the grapi version")
+		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  new <name>          create a project (--db sqlite|postgres, --framework)\n  develop             serve and reload when src/ or config/ changes\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  report              versions and project facts, without secrets\n  version             print the grapi version\n\nflags of every project command: -dir, -config, -env, -log-level")
 		return 2
 	}
 	switch args[0] {
+	case "new":
+		if err := newProject(args[1:], stdout); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
+	case "develop":
+		if err := develop(args[1:], stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
+	case "report":
+		if err := report(args[1:], stdout, stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
 	case "start":
 		if err := start(args[1:], stderr); err != nil {
 			fmt.Fprintln(stderr, "grapi:", err)

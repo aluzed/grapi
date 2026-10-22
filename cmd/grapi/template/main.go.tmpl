@@ -1,0 +1,15 @@
+// Framework mode: build this main with the grapi module to add Go hooks.
+package main
+
+import (
+	"log"
+
+	"github.com/aluzed/grapi"
+)
+
+func main() {
+	app := grapi.New(grapi.Options{Dir: "."})
+	if err := app.Start(); err != nil {
+		log.Fatal(err)
+	}
+}
