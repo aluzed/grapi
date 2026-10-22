@@ -101,7 +101,7 @@ app.Cron("cleanup", "0 3 * * *", grapi.CronOptions{TZ: "Europe/Paris"}, func(ctx
 app.CronAt("launch", time.Date(2026, 11, 1, 9, 0, 0, 0, time.UTC), launch)
 ```
 
-Tasks run only when `server.cron.enabled` is true, as in Strapi. With a `TZ` that has daylight saving time, a run at a time that does not exist (02:30 when clocks go forward) is skipped that day, and a run at a time that happens twice (02:30 when clocks go back) runs twice: schedule outside 02:00 to 03:00, or use UTC, for exactly one run a day.
+Tasks run only when `server.cron.enabled` is true, as in Strapi. Around daylight saving time changes, rules follow the wall clock as Strapi's croner does: a time that does not exist runs once the clock has jumped (02:30 runs at 03:30), a time that happens twice runs once, at its first occurrence.
 
 ## GraphQL (`strapi.plugin('graphql').service('extension')`)
 

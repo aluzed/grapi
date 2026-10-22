@@ -45,6 +45,38 @@ type Scheduler struct {
 
 var parser = rc.NewParser(rc.SecondOptional | rc.Minute | rc.Hour | rc.Dom | rc.Month | rc.Dow | rc.Descriptor)
 
+// wallClock runs the rule on the wall clock of loc, as croner does (Strapi's
+// cron): a time skipped by a DST change runs once the clock jumped (02:30
+// at 03:30), a time repeated by one runs once.
+type wallClock struct {
+	inner rc.Schedule
+	loc   *time.Location
+}
+
+func (w wallClock) Next(t time.Time) time.Time {
+	lt := t.In(w.loc)
+	wall := time.Date(lt.Year(), lt.Month(), lt.Day(), lt.Hour(), lt.Minute(), lt.Second(), lt.Nanosecond(), time.UTC)
+	for {
+		next := w.inner.Next(wall)
+		if next.IsZero() {
+			return next
+		}
+		at := time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), next.Second(), 0, w.loc)
+		// A wall time repeated by a DST change: the first occurrence.
+		_, before := at.Add(-3 * time.Hour).Zone()
+		if _, now := at.Zone(); before > now {
+			earlier := at.Add(-time.Duration(before-now) * time.Second)
+			if earlier.In(w.loc).Hour() == next.Hour() && earlier.In(w.loc).Minute() == next.Minute() && earlier.After(t) {
+				at = earlier
+			}
+		}
+		if at.After(t) {
+			return at
+		}
+		wall = next
+	}
+}
+
 // New returns a stopped scheduler.
 func New(log *slog.Logger) *Scheduler {
 	if log == nil {
@@ -83,12 +115,17 @@ func (s *Scheduler) wrap(name string, j *job, opts Options, task Task) func() {
 
 // Add schedules task on rule ("*/5 * * * * *", "0 3 * * *", "@daily").
 func (s *Scheduler) Add(name, rule string, opts Options, task Task) error {
-	spec := rule
+	loc := time.Local
 	if opts.TZ != "" {
-		if _, err := time.LoadLocation(opts.TZ); err != nil {
+		l, err := time.LoadLocation(opts.TZ)
+		if err != nil {
 			return fmt.Errorf("cron %s: %w", name, err)
 		}
-		spec = "CRON_TZ=" + opts.TZ + " " + rule
+		loc = l
+	}
+	inner, err := parser.Parse("CRON_TZ=UTC " + rule)
+	if err != nil {
+		return fmt.Errorf("cron %s: %w", name, err)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -96,11 +133,7 @@ func (s *Scheduler) Add(name, rule string, opts Options, task Task) error {
 		return fmt.Errorf("cron %s: already scheduled", name)
 	}
 	j := &job{}
-	id, err := s.c.AddFunc(spec, s.wrap(name, j, opts, task))
-	if err != nil {
-		return fmt.Errorf("cron %s: %w", name, err)
-	}
-	j.id = id
+	j.id = s.c.Schedule(wallClock{inner: inner, loc: loc}, rc.FuncJob(s.wrap(name, j, opts, task)))
 	s.jobs[name] = j
 	return nil
 }
