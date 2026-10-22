@@ -525,6 +525,11 @@ func (a *App) Setup() (*Server, error) {
 func (a *App) setup(p *Project) (*Server, error) {
 	dir, conf, res, md, desired, d, log := &p.Dir, p.Conf, p.Res, p.MD, p.Desired, p.DB, p.Log
 	ctx := context.Background()
+	for _, fn := range a.onRegister {
+		if err := fn(ctx); err != nil {
+			return nil, fmt.Errorf("register: %w", err)
+		}
+	}
 	err := migrate.WithLock(ctx, d, func(ctx context.Context) error {
 		ran, err := migrate.Run(ctx, d, migrate.Options{RunMigrations: true, Log: log})
 		if err != nil {
@@ -624,9 +629,24 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err := a.addRoutes(api); err != nil {
 		return nil, err
 	}
+	for _, fn := range a.onBootstrap {
+		if err := fn(ctx); err != nil {
+			a.stopWebhooks()
+			return nil, fmt.Errorf("bootstrap: %w", err)
+		}
+	}
 	host, _ := conf.String("server.host")
 	port, _ := conf.Int("server.port")
-	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: a.stopWebhooks}, nil
+	stop := a.stopWebhooks
+	destroy := a.onDestroy
+	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
+		for _, fn := range destroy {
+			if err := fn(context.Background()); err != nil {
+				log.Error("destroy", "error", err)
+			}
+		}
+		stop()
+	}}, nil
 }
 
 // Start sets the App up and serves it until SIGINT or SIGTERM.

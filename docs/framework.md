@@ -12,6 +12,19 @@ if err := app.Start(); err != nil {
 
 Everything below is registered before `Start` (or `Setup`, which returns the HTTP handler without listening, for tests).
 
+## Phases (`src/index.js` register, bootstrap, destroy)
+
+```go
+app.OnRegister(func(ctx context.Context) error { return nil })  // before the database is synced
+app.OnBootstrap(func(ctx context.Context) error {               // services ready, before the server answers
+	_, err := app.Documents().Create(ctx, "api::tag.tag", document.Params{"data": map[string]any{"name": "seeded"}})
+	return err
+})
+app.OnDestroy(func(ctx context.Context) error { return nil })   // when the server closes
+```
+
+An error in `OnRegister` or `OnBootstrap` stops the start.
+
 ## Row lifecycles (`db.lifecycles.subscribe`)
 
 ```go

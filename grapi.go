@@ -4,6 +4,7 @@
 package grapi
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -37,6 +38,9 @@ type App struct {
 	stopWebhooks        func()
 	cronTasks           []cronTask
 	graphql             graphql.Options
+	onRegister          []func(context.Context) error
+	onBootstrap         []func(context.Context) error
+	onDestroy           []func(context.Context) error
 	uploadProviders     map[string]UploadProvider
 	emailProviders      map[string]EmailProvider
 }

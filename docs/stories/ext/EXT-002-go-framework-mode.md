@@ -82,7 +82,8 @@ func main() {
 - Fait : paquet racine `grapi` (`New`, `Setup` qui renvoie le `http.Handler`, `Start`, `UseDocuments`, `OnRow*` ... `Bind`), paquets publics `document` et `hook`. Le binaire `cmd/grapi` n'est plus qu'un `main` qui appelle `grapi.New(...).Start()`. Test de bout en bout : `hooks_test.go` (base neuve, bootstrap, inscription par HTTP, hook de ligne et middleware appliqués).
 - Fait aussi : routes custom (`Route`, `PublicRoute`, `Request`, `Error`) et `Documents()`.
 - Fait depuis : cron (`app.Cron`, `app.CronAt`), policies (`app.Policy`, `Route(...).Policies`, `app.RoutePolicies`), extension du schéma GraphQL (`app.GraphQL()`), documentés dans `docs/framework.md`.
-- Reste : phases `OnRegister`/`OnBootstrap`/`OnDestroy`, surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
+- Phases `OnRegister`, `OnBootstrap` (services prêts, `Documents()` disponible, une erreur arrête le démarrage) et `OnDestroy` (à la fermeture du serveur), test `TestPhases`. Providers d'upload et d'e-mail du projet (`UseUploadProvider`, `UseEmailProvider`).
+- Reste : surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
 
 ## Notes techniques
 - Les paquets publics (`grapi`, `schema`, `document`, `hook`, `errors`) suivent SemVer dès la v1. Avant la v1, les changements cassants sont signalés dans le CHANGELOG.
