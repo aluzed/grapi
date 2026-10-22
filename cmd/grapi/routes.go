@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/hook"
 )
 
 // routesList is `grapi routes:list`: Strapi's table, a GET route listed as
@@ -88,5 +89,25 @@ func listCommand(kind string, args []string, stdout, stderr io.Writer) error {
 		}
 	}
 	_, err = fmt.Fprint(stdout, table(rows))
+	return err
+}
+
+// builtinMiddlewares are the middlewares grapi implements, by Strapi's names.
+var builtinMiddlewares = []string{
+	"strapi::cors", "strapi::errors", "strapi::logger", "strapi::body", "strapi::query",
+	"strapi::security", "strapi::public", "plugin::users-permissions.rateLimit",
+}
+
+// staticList is `grapi middlewares:list` and `hooks:list`.
+func staticList(kind string, stdout io.Writer) error {
+	names := builtinMiddlewares
+	if kind == "hooks" {
+		names = []string{hook.BeforeSync, hook.AfterSync}
+	}
+	rows := [][1]string{{"Name"}}
+	for _, n := range names {
+		rows = append(rows, [1]string{n})
+	}
+	_, err := fmt.Fprint(stdout, table(rows))
 	return err
 }

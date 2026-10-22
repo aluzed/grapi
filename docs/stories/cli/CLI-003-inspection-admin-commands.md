@@ -37,7 +37,8 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `grapi routes:list` : la table des routes au format de Strapi (`HEAD|GET` pour les GET, comme koa), test `TestRoutesList`. Strapi y liste aussi les couches de son routeur (fichiers publics, admin), que grapi sert hors table.
 - `grapi configuration:dump [-f fichier] [-p]` et `configuration:restore [-f fichier] [-s replace|merge|keep]` : les entrées `plugin_*` du core store, triées par clé, valeurs brutes, et les trois importeurs de Strapi avec leurs statistiques (`TestConfigurationDumpRestore`).
 - `grapi content-types:list` et `components:list` (tableau `Name` de Strapi), `TestListCommands`.
-- Reste : les autres listes (`policies:list`, `middlewares:list`, `controllers:list`...), les commandes admin, `rename:field`.
+- `grapi middlewares:list` et `hooks:list` : les middlewares que grapi implémente (sous les noms de Strapi) et les hooks intégrés. Strapi liste aussi ses middlewares absents de grapi (compression, session, favicon...) et ceux de l'admin.
+- Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, les commandes admin, `rename:field`.
 
 ## Notes techniques
 - Ces commandes démarrent l'application sans serveur HTTP (registres et base seulement).

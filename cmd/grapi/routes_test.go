@@ -36,3 +36,14 @@ func TestListCommands(t *testing.T) {
 		t.Fatalf("components: %v %s", err, out.String())
 	}
 }
+
+func TestStaticLists(t *testing.T) {
+	var out bytes.Buffer
+	if err := staticList("middlewares", &out); err != nil || !strings.Contains(out.String(), "│ strapi::body ") {
+		t.Fatalf("%v %s", err, out.String())
+	}
+	out.Reset()
+	if err := staticList("hooks", &out); err != nil || !strings.Contains(out.String(), "│ strapi::content-types.afterSync ") {
+		t.Fatalf("%v %s", err, out.String())
+	}
+}
