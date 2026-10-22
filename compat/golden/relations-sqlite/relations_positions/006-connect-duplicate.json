@@ -4,24 +4,24 @@
   "body": {
     "data": {
       "createdAt": "\u003cts\u003e",
-      "documentId": "#doc22",
-      "id": "#id26",
+      "documentId": "#doc26",
+      "id": "#id28",
       "publishedAt": "\u003cts\u003e",
       "rank": null,
       "tags": [
         {
-          "documentId": "#doc18",
-          "id": "#id21",
+          "documentId": "#doc22",
+          "id": "#id5",
           "name": "pos-a"
         },
         {
-          "documentId": "#doc19",
-          "id": "#id5",
+          "documentId": "#doc23",
+          "id": "#id12",
           "name": "pos-b"
         },
         {
-          "documentId": "#doc20",
-          "id": "#id12",
+          "documentId": "#doc24",
+          "id": "#id6",
           "name": "pos-c"
         }
       ],

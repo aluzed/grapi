@@ -1,0 +1,62 @@
+fixture: relations
+# GraphQL on polymorphic and self relations. Runs after relations.yaml and
+# relations_positions.yaml on the same database.
+cases:
+  - name: gql-seed-writer
+    method: POST
+    path: /api/writers
+    token: full
+    save: { gw: data.documentId }
+    body: { data: { name: "GQL writer" } }
+  - name: gql-seed-tag
+    method: POST
+    path: /api/tags
+    token: full
+    save: { gt: data.documentId }
+    body: { data: { name: "gql-tag" } }
+  - name: gql-seed-post
+    method: POST
+    path: /api/posts
+    query: "status=published"
+    token: full
+    save: { gp: data.documentId }
+    body: { data: { title: "GQL morph", rank: 100, mentions: [{ documentId: "{{gw}}", __type: "api::writer.writer" }, { documentId: "{{gt}}", __type: "api::tag.tag" }], writer: "{{gw}}" } }
+  - name: gql-seed-child
+    method: POST
+    path: /api/posts
+    query: "status=published"
+    token: full
+    save: { gc: data.documentId }
+    body: { data: { title: "GQL child", rank: 101, parent: "{{gp}}" } }
+  - name: gql-seed-comment
+    method: POST
+    path: /api/comments
+    token: full
+    body: { data: { body: "GQL comment", subject: [{ documentId: "{{gp}}", __type: "api::post.post" }] } }
+
+  - name: gql-morph-to-many
+    method: POST
+    path: /graphql
+    token: full
+    skip: "Strapi 5.59 answers INTERNAL_SERVER_ERROR on a morphToMany field; grapi resolves it (docs/divergences.md)"
+    body: { query: "query($id: ID!) { post(documentId: $id) { title mentions { __typename ... on Writer { name } ... on Tag { name } } } }", variables: { id: "{{gp}}" } }
+  - name: gql-morph-to-one
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ comments(filters: { body: { eq: \"GQL comment\" } }) { body subject { __typename ... on Post { title } } } }" }
+  - name: gql-self-relations
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "query($id: ID!) { post(documentId: $id) { title children { title parent { title } } children_connection { nodes { title } } writer { name posts { title } } } }", variables: { id: "{{gp}}" } }
+  - name: gql-filter-through-relation
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ posts(filters: { writer: { name: { eq: \"GQL writer\" } } }, sort: \"rank\") { title } }" }
+  - name: gql-relation-args
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "query($id: ID!) { writer(documentId: $id) { posts(filters: { title: { startsWith: \"GQL\" } }, sort: \"rank:desc\", pagination: { limit: 1 }) { title } } }", variables: { id: "{{gw}}" } }

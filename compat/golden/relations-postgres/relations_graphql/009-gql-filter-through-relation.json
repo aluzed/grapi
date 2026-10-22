@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "posts": [
+        {
+          "title": "GQL morph"
+        }
+      ]
+    }
+  }
+}

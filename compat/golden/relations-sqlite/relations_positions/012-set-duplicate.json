@@ -4,19 +4,19 @@
   "body": {
     "data": {
       "createdAt": "\u003cts\u003e",
-      "documentId": "#doc22",
-      "id": "#id29",
+      "documentId": "#doc26",
+      "id": "#id31",
       "publishedAt": "\u003cts\u003e",
       "rank": null,
       "tags": [
         {
-          "documentId": "#doc19",
-          "id": "#id5",
+          "documentId": "#doc23",
+          "id": "#id12",
           "name": "pos-b"
         },
         {
-          "documentId": "#doc18",
-          "id": "#id21",
+          "documentId": "#doc22",
+          "id": "#id5",
           "name": "pos-a"
         }
       ],

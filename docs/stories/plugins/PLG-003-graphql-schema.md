@@ -45,7 +45,8 @@ Générer au démarrage, puis à chaque rechargement de schéma (`ADM-006`), un 
 - Activation : dépendance `@strapi/plugin-graphql` dans le `package.json` du projet, ou `plugins.graphql.enabled` (`docs/configuration.md`).
 - Banc `graphql` (fixture et corpus dédiés, 44 cas), SQLite et Postgres : 44/44 en mode grapi, contrôle inverse OK.
 - Corpus GraphQL sur les fixtures existantes, en mode grapi : `components_graphql` 12/12 (composants imbriqués, répétables avec `filters`/`pagination`/`sort`, zones dynamiques avec fragments, filtres sur composants, mutations avec `__typename`, erreurs de validation), `i18n-dp_graphql` 19/19 (`locale` en lecture et en écriture, `localizations`, single type localisé, statut hérité par les relations, `publicationFilter`, code de locale inconnu refusé à la validation avec la liste ISO du plugin, `internal/isolocales`), `devfreelance_graphql` 13/13 (médias simples et multiples, `uploadFiles`, `updateUploadFile`, `deleteUploadFile`, utilisateurs, `me` anonyme).
-- Reste : héritage de `publicationFilter` par les relations, relations polymorphes au banc, graphql-codegen sur le schéma.
+- `relations_graphql` 9/9 (relations vers soi, `_connection`, filtres à travers une relation, arguments des relations to-many, morphToOne) ; le cas morphToMany est en skip, Strapi 5.59 y répond par une erreur interne (`docs/divergences.md`).
+- Reste : héritage de `publicationFilter` par les relations, graphql-codegen sur le schéma.
 
 ## Notes techniques
 - Le schéma est dynamique, ce qui exclut gqlgen. Utiliser `graphql-go/graphql` (`graphql.NewObject`, `NewUnion`, `NewInputObject` à la volée). `vektah/gqlparser` sert à parser le SDL des extensions (`PLG-004`).

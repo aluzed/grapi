@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "post": {
+        "children": [
+          {
+            "parent": {
+              "title": "GQL morph"
+            },
+            "title": "GQL child"
+          }
+        ],
+        "children_connection": {
+          "nodes": [
+            {
+              "title": "GQL child"
+            }
+          ]
+        },
+        "title": "GQL morph",
+        "writer": {
+          "name": "GQL writer",
+          "posts": [
+            {
+              "title": "GQL morph"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@
     "data": null,
     "error": {
       "details": {},
-      "message": "The relation with id 8 is already connected. You cannot connect the same relation twice.",
+      "message": "The relation with id 9 is already connected. You cannot connect the same relation twice.",
       "name": "ValidationError",
       "status": 400
     }

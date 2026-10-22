@@ -64,6 +64,7 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 ## GraphQL (`internal/graphql`, `internal/httpapi/graphql.go`)
 
 - Pas de types `ReviewWorkflows*` : review workflows est une fonction Enterprise que grapi conçoit à part (clean-room).
+- Un champ morphToMany (`mentions: [GenericMorph]`) répond chez Strapi 5.59 `null` avec une `INTERNAL_SERVER_ERROR` ; grapi renvoie les entrées liées avec leur `__typename` (corpus `relations_graphql`, cas en skip).
 - Pas de page d'accueil Apollo (sandbox) sur `GET /graphql` : grapi répond comme une requête GET sans en-tête, bloquée par la protection CSRF.
 
 ## OpenAPI (`internal/openapi`)
