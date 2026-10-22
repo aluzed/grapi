@@ -192,16 +192,125 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request, rc *requestConte
 	if err != nil {
 		return err
 	}
+	id := r.URL.Query().Get("id")
 	if len(req.files) == 0 || len(req.files) == 1 && req.files[0].size == 0 {
-		if r.URL.Query().Get("id") != "" {
-			return newError(http.StatusNotImplemented, "NotImplementedError", "Updating a file's info is not supported yet")
+		if id != "" {
+			return s.updateFileInfo(w, r, rc, req, id)
 		}
 		return validationError("Files are empty", nil)
 	}
-	if r.URL.Query().Get("id") != "" {
-		return newError(http.StatusNotImplemented, "NotImplementedError", "Replacing a file is not supported yet")
+	if id != "" {
+		return s.replaceFile(w, r, rc, req, dir, id)
 	}
 	return s.uploadFiles(w, r, rc, req, dir)
+}
+
+// fileByParam is resolveFileId then findOne.
+func (s *Server) fileByParam(ctx context.Context, id string) (query.Row, error) {
+	fid, err := s.resolveFileID(ctx, id)
+	if err != nil || fid == nil {
+		return nil, err
+	}
+	return s.docs.E.FindOne(ctx, fileUID, query.Params{Where: map[string]any{"id": fid}, Populate: []any{"folder"}})
+}
+
+func (s *Server) emitMedia(event string, row query.Row) {
+	if s.docs.Events == nil || row == nil {
+		return
+	}
+	media := plain(s.sanitizeOutput(row, s.schemaOf(fileUID), nil))
+	s.docs.Events.Emit(event, map[string]any{"media": media})
+}
+
+// fileInfoFromBody is validateUploadBody for an update: the fileInfo
+// field, JSON or multipart.
+func fileInfoFromBody(r *http.Request, req *multipartRequest) (map[string]any, bool, error) {
+	if raw := req.fields["fileInfo"]; len(raw) > 0 {
+		infos, err := fileInfos(raw[:1], 1)
+		if err != nil {
+			return nil, false, err
+		}
+		return infos[0], true, nil
+	}
+	if r.Header.Get("Content-Type") == "" || strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		body, _, err := readBody(r)
+		if err != nil {
+			return nil, false, err
+		}
+		if fi, ok := body["fileInfo"]; ok {
+			b, _ := json.Marshal(fi)
+			infos, err := fileInfos([]string{string(b)}, 1)
+			if err != nil {
+				return nil, false, err
+			}
+			return infos[0], true, nil
+		}
+	}
+	return map[string]any{"focalPoint": nil}, false, nil
+}
+
+func (s *Server) updateFileInfo(w http.ResponseWriter, r *http.Request, rc *requestContext, req *multipartRequest, id string) error {
+	ctx := r.Context()
+	info, _, err := fileInfoFromBody(r, req)
+	if err != nil {
+		return err
+	}
+	file, err := s.fileByParam(ctx, id)
+	if err != nil {
+		return err
+	}
+	if file == nil {
+		return errNotFound
+	}
+	keep := func(k string) any {
+		if v := info[k]; v != nil {
+			return v
+		}
+		v, _ := file.Get(k)
+		return v
+	}
+	data := query.Data{"name": keep("name"), "alternativeText": keep("alternativeText"), "caption": keep("caption"), "focalPoint": keep("focalPoint")}
+	fid, _ := file.Get("id")
+	row, err := s.docs.E.Update(ctx, fileUID, map[string]any{"id": fid}, data, query.Params{})
+	if err != nil {
+		return err
+	}
+	s.emitMedia("media.update", row)
+	row.Set("isUrlSigned", false)
+	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
+	return nil
+}
+
+func (s *Server) replaceFile(w http.ResponseWriter, r *http.Request, rc *requestContext, req *multipartRequest, dir, id string) error {
+	ctx := r.Context()
+	if len(req.files) > 1 {
+		return validationError("Cannot replace a file with multiple ones", nil)
+	}
+	f := req.files[0]
+	f.detected = detectMime(f.path)
+	infos, err := fileInfos(req.fields["fileInfo"], 1)
+	if err != nil {
+		return err
+	}
+	file, err := s.fileByParam(ctx, id)
+	if err != nil {
+		return err
+	}
+	if file == nil {
+		return errNotFound
+	}
+	var settings uploadSettings
+	if err := s.uploadSettings(ctx, &settings); err != nil {
+		return err
+	}
+	folderPath, _ := file.Get("folderPath")
+	row, err := s.uploadOne(ctx, f, infos[0], folderPath, nil, settings, dir, file)
+	if err != nil {
+		return err
+	}
+	row.Set("isUrlSigned", false)
+	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
+	return nil
 }
 
 func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, rc *requestContext, req *multipartRequest, dir string) error {
@@ -233,7 +342,7 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, rc *request
 	for i, f := range req.files {
 		info := infos[i]
 		info["folder"] = folderID
-		row, err := s.uploadOne(ctx, f, info, folderPath, metas, settings, dir)
+		row, err := s.uploadOne(ctx, f, info, folderPath, metas, settings, dir, nil)
 		if err != nil {
 			return err
 		}
@@ -333,7 +442,9 @@ func (s *Server) apiUploadFolder(ctx context.Context) (query.Row, error) {
 	return folder, st.Set(ctx, uploadScope, "api-folder", map[string]any{"id": id})
 }
 
-func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]any, folderPath any, metas map[string]string, settings uploadSettings, dir string) (query.Row, error) {
+// uploadOne stores f and its formats then creates the file row, or, with
+// existing, replaces that file's bytes keeping its hash and extension.
+func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]any, folderPath any, metas map[string]string, settings uploadSettings, dir string, existing query.Row) (query.Row, error) {
 	if !isValidFilename(f.filename) {
 		return nil, appError("File name contains invalid characters")
 	}
@@ -354,6 +465,12 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 	}
 	usedName = norm.NFC.String(usedName)
 	hash := media.GenerateFileName(nodeBasename(usedName, ext))
+	if existing != nil {
+		h, _ := existing.Get("hash")
+		e, _ := existing.Get("ext")
+		hash, _ = h.(string)
+		ext, _ = e.(string)
+	}
 	file := query.Data{
 		"name":            usedName,
 		"alternativeText": info["alternativeText"],
@@ -445,7 +562,44 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		}
 	}
 	file["provider"] = "local"
-	return s.docs.E.Create(ctx, fileUID, file, query.Params{})
+	if existing == nil {
+		row, err := s.docs.E.Create(ctx, fileUID, file, query.Params{})
+		if err == nil {
+			s.emitMedia("media.create", row)
+		}
+		return row, err
+	}
+	if _, ok := file["formats"]; !ok {
+		file["formats"] = map[string]any{}
+	}
+	if old, ok := existing.Get("formats"); ok {
+		newFormats, _ := file["formats"].(map[string]any)
+		if om, ok := old.(map[string]any); ok {
+			for k, f := range om {
+				if _, kept := newFormats[k]; kept {
+					continue
+				}
+				if fm, ok := f.(map[string]any); ok {
+					s.removeLocalFile(fm["hash"], fm["ext"])
+				}
+			}
+		}
+	}
+	delete(file, "folder")
+	delete(file, "folderPath")
+	delete(file, "related")
+	// Absent fileInfo keys are undefined in Strapi, which knex leaves out.
+	for _, k := range []string{"alternativeText", "caption"} {
+		if _, given := info[k]; !given {
+			delete(file, k)
+		}
+	}
+	id, _ := existing.Get("id")
+	row, err := s.docs.E.Update(ctx, fileUID, map[string]any{"id": id}, file, query.Params{})
+	if err == nil {
+		s.emitMedia("media.update", row)
+	}
+	return row, err
 }
 
 func nilIfZero(n int) any {
@@ -579,20 +733,22 @@ func (s *Server) uploadDestroy(w http.ResponseWriter, r *http.Request, rc *reque
 	if _, err := s.docs.E.Delete(ctx, fileUID, map[string]any{"id": id}, query.Params{}); err != nil {
 		return err
 	}
+	s.emitMedia("media.delete", row)
 	row.Set("isUrlSigned", false)
 	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
 	return nil
 }
 
-func (s *Server) removeLocal(row query.Row) {
-	dir := filepath.Join(s.cfg.Upload.PublicDir, "uploads")
-	remove := func(hash, ext any) {
-		h, _ := hash.(string)
-		e, _ := ext.(string)
-		if h != "" {
-			_ = os.Remove(filepath.Join(dir, filepath.Base(h+e)))
-		}
+func (s *Server) removeLocalFile(hash, ext any) {
+	h, _ := hash.(string)
+	e, _ := ext.(string)
+	if h != "" {
+		_ = os.Remove(filepath.Join(s.cfg.Upload.PublicDir, "uploads", filepath.Base(h+e)))
 	}
+}
+
+func (s *Server) removeLocal(row query.Row) {
+	remove := s.removeLocalFile
 	hash, _ := row.Get("hash")
 	ext, _ := row.Get("ext")
 	remove(hash, ext)
