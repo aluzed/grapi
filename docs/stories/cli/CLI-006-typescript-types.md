@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # CLI-006 : Génération des types TypeScript pour les clients
@@ -24,9 +24,14 @@ Générer des types TypeScript qui décrivent les réponses et les entrées de l
 - Client SDK généré : on le fait à partir de l'OpenAPI (`PLG-005`).
 
 ## Critères d'acceptation
-- [ ] Les types générés pour le projet de test compilent avec `tsc --strict` (homelab).
+- [x] Les types générés pour le projet de test compilent avec `tsc --strict` (homelab).
 - [ ] Le JSON réel de l'API valide contre les types (test : conversion des types en zod via ts-to-zod, puis parse des réponses du banc).
-- [ ] La génération est déterministe : deux exécutions donnent des fichiers identiques.
+- [x] La génération est déterministe : deux exécutions donnent des fichiers identiques.
+
+## Avancement
+- `grapi ts:generate-types [-o dossier]` (`internal/typegen`) écrit les `types/generated/contentTypes.d.ts` et `components.d.ts` de `strapi ts:generate-types` (format `@strapi/strapi`, `Schema.Attribute.*`, modificateurs dans l'ordre de `@strapi/typescript-utils`, clés triées). `TestMatchesStrapi` compare aux fichiers que Strapi 5.59 génère sur les 7 fixtures : identiques aux blancs près (Strapi passe par prettier), hors types Enterprise. `TestDeterministic`.
+- `tsc --strict` (TypeScript de l'image de référence, contre `@strapi/strapi`) passe sur les déclarations de devfreelance, components et i18n-dp, avec un fichier qui instancie `Data.ContentType<K>` et `Data.Component<K>` pour tous les UID (2026-10-22).
+- Reste : les types propres à grapi (réponses `{data, meta}`, relations optionnelles, unions de zones dynamiques), leur validation contre le JSON du banc, l'exécution pendant `develop`.
 
 ## Notes techniques
 - Génération pure Go (`text/template`), sans dépendance à Node.

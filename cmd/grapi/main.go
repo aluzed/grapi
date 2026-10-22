@@ -15,7 +15,7 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  new <name>          create a project (--db sqlite|postgres, --framework)\n  develop             serve and reload when src/ or config/ changes\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  report              versions and project facts, without secrets\n  openapi [-o file]   write the content API's OpenAPI document\n  api-token:create    create a content API token (--name, --type, --permissions, --lifespan)\n  api-token:list      list the API tokens\n  api-token:delete    delete an API token (--id)\n  permissions:list|grant|revoke <role> [actions...]   users-permissions role permissions\n  version             print the grapi version\n\nflags of every project command: -dir, -config, -env, -log-level")
+		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  new <name>          create a project (--db sqlite|postgres, --framework)\n  develop             serve and reload when src/ or config/ changes\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  report              versions and project facts, without secrets\n  openapi [-o file]   write the content API's OpenAPI document\n  ts:generate-types   write types/generated/*.d.ts for @strapi/strapi (-o dir)\n  api-token:create    create a content API token (--name, --type, --permissions, --lifespan)\n  api-token:list      list the API tokens\n  api-token:delete    delete an API token (--id)\n  permissions:list|grant|revoke <role> [actions...]   users-permissions role permissions\n  version             print the grapi version\n\nflags of every project command: -dir, -config, -env, -log-level")
 		return 2
 	}
 	switch args[0] {
@@ -59,6 +59,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "db:sync", "db:check":
 		cmd := map[string]func([]string, io.Writer, io.Writer) error{"db:sync": dbSync, "db:check": dbCheck}[args[0]]
 		if err := cmd(args[1:], stdout, stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
+	case "ts:generate-types":
+		if err := tsGenerateTypes(args[1:], stdout); err != nil {
 			fmt.Fprintln(stderr, "grapi:", err)
 			return 1
 		}
