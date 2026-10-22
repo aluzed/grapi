@@ -104,3 +104,24 @@ func TestSchemaMatchesStrapi(t *testing.T) {
 		})
 	}
 }
+
+func TestNoShadowCRUD(t *testing.T) {
+	res, _, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", "graphql")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := Build(res.Set, Options{NoShadowCRUD: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if q := s.AST.Query; q == nil || len(q.Fields) != 3 || q.Fields.ForName("ok") == nil {
+		t.Fatalf("an empty schema has nexus' Query.ok: %s", s.SDL)
+	}
+	if s.AST.Mutation != nil || s.AST.Types["Article"] != nil {
+		t.Fatalf("nothing is generated: %s", s.SDL)
+	}
+	s, err = Build(res.Set, Options{NoShadowCRUD: true, Extensions: []Extension{{TypeDefs: "extend type Query { hello: String }"}}})
+	if err != nil || s.AST.Query.Fields.ForName("hello") == nil {
+		t.Fatalf("extensions still apply: %v", err)
+	}
+}

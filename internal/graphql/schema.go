@@ -91,6 +91,9 @@ type Options struct {
 	Extensions []Extension
 	// DepthLimit rejects deeper operations (graphql-depth-limit); 0 is none.
 	DepthLimit int
+	// NoShadowCRUD is shadowCRUD: false: nothing is generated from the
+	// content types, the schema is the extensions'.
+	NoShadowCRUD bool
 }
 
 // CRUD is the shadow CRUD of one content type or component.
@@ -247,13 +250,16 @@ func Build(set *schema.Set, opts Options) (*Schema, error) {
 	b.query = &Def{Kind: DefObject, Name: "Query"}
 	b.mutation = &Def{Kind: DefObject, Name: "Mutation"}
 	for uid, c := range set.Components.All() {
+		if opts.NoShadowCRUD {
+			break
+		}
 		b.models = append(b.models, model{uid: schema.UID(uid), attrs: &c.Attributes, component: true})
 		b.out.typeOf[schema.UID(uid)] = c.GlobalID
 		b.out.componentOf[c.GlobalID] = schema.UID(uid)
 	}
 	for uid, ct := range set.ContentTypes.All() {
 		u := schema.UID(uid)
-		if b.disabled(u) {
+		if b.disabled(u) || opts.NoShadowCRUD {
 			continue
 		}
 		b.models = append(b.models, model{uid: u, ct: ct, attrs: &ct.Attributes, localized: ct.Localized(), singleType: ct.IsSingleType()})
@@ -269,8 +275,14 @@ func Build(set *schema.Set, opts Options) (*Schema, error) {
 	b.def(&Def{Kind: DefInput, Name: "PaginationArg", Fields: []*Field{
 		{Name: "page", Type: "Int"}, {Name: "pageSize", Type: "Int"}, {Name: "start", Type: "Int"}, {Name: "limit", Type: "Int"},
 	}})
+	if len(b.query.Fields) == 0 {
+		// nexus' placeholder for an empty Query type.
+		b.query.add(&Field{Name: "ok", Type: "Boolean!", Kind: FieldExtension, NoAuth: true, Resolve: func(context.Context, *FieldContext) (any, error) { return true, nil }})
+	}
 	b.def(b.query)
-	b.def(b.mutation)
+	if len(b.mutation.Fields) > 0 {
+		b.def(b.mutation)
+	}
 	b.prune()
 	b.out.SDL = b.out.print()
 	sources := []*ast.Source{{Name: "grapi", Input: b.out.SDL}}
@@ -798,12 +810,12 @@ func (b *builder) mutations(m model) {
 
 // extensions are the types the upload, users-permissions and i18n plugins add.
 func (b *builder) extensions() {
-	if _, ok := b.set.ContentType(fileUID); ok {
+	if _, ok := b.set.ContentType(fileUID); ok && !b.opts.NoShadowCRUD {
 		b.def(&Def{Kind: DefInput, Name: "FileInfoInput", Fields: []*Field{{Name: "name", Type: "String"}, {Name: "alternativeText", Type: "String"}, {Name: "caption", Type: "String"}}})
 		b.mutation.add(&Field{Name: "updateUploadFile", Type: "UploadFile!", Args: []Arg{{Name: "id", Type: "ID!"}, {Name: "info", Type: "FileInfoInput"}}, Kind: FieldCustom, Scope: "plugin::upload.content-api.upload"})
 		b.mutation.add(&Field{Name: "deleteUploadFile", Type: "UploadFile", Args: []Arg{{Name: "id", Type: "ID!"}}, Kind: FieldCustom, Scope: "plugin::upload.content-api.destroy"})
 	}
-	if _, ok := b.set.ContentType(userUID); ok {
+	if _, ok := b.set.ContentType(userUID); ok && !b.opts.NoShadowCRUD {
 		b.def(&Def{Kind: DefObject, Name: "UsersPermissionsMe", Fields: []*Field{
 			{Name: "id", Type: "ID!"},
 			{Name: "documentId", Type: "ID!"},

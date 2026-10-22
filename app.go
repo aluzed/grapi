@@ -231,6 +231,9 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 	g.DefaultLimit, _ = c.Int(base + "defaultLimit")
 	g.MaxLimit, _ = c.Int(base + "maxLimit")
 	g.Options.DepthLimit, _ = c.Int(base + "depthLimit")
+	if v, ok := c.Bool(base + "shadowCRUD"); ok && !v {
+		g.Options.NoShadowCRUD = true
+	}
 	if v, ok := c.Bool(base + "apolloServer.introspection"); ok {
 		g.Introspection = v
 	}
@@ -538,9 +541,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	apiCfg.OpenAPI = oas
 	if apiCfg.GraphQL != nil {
-		depth := apiCfg.GraphQL.Options.DepthLimit
+		fromConfig := apiCfg.GraphQL.Options
 		apiCfg.GraphQL.Options = a.graphql
-		apiCfg.GraphQL.Options.DepthLimit = depth
+		apiCfg.GraphQL.Options.DepthLimit, apiCfg.GraphQL.Options.NoShadowCRUD = fromConfig.DepthLimit, fromConfig.NoShadowCRUD
 	}
 	docs := document.New(engine, res.Set)
 	switch v := conf.Get("api.documents.strictRelations").(type) {
