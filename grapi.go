@@ -37,6 +37,8 @@ type App struct {
 	stopWebhooks        func()
 	cronTasks           []cronTask
 	graphql             graphql.Options
+	uploadProviders     map[string]UploadProvider
+	emailProviders      map[string]EmailProvider
 }
 
 // New returns an App for the project in opts.Dir.

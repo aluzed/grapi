@@ -62,6 +62,15 @@ app.RoutePolicies("api::post.post.update", "global::is-editor", grapi.PolicyRef{
 
 A name without namespace is looked up in the route's API or plugin (`is-owner` on an `api::account...` route is `api::account.is-owner`), then in `global::`. An unknown policy stops the start. `false` answers Strapi's 403 `PolicyError`.
 
+## Upload and email providers
+
+```go
+app.UseUploadProvider("my-storage", myStorage) // grapi.UploadProvider: Upload, Delete, IsPrivate, SignedURL
+app.UseEmailProvider("my-mailer", myMailer)    // grapi.EmailProvider: Send(ctx, grapi.EmailMessage)
+```
+
+They are used when `plugins.upload.config.provider` or `plugins.email.config.provider` names them, like an installed Strapi provider. An upload provider sets `UploadFile.URL`, and `UploadFile.Metadata` when it needs it back on delete (`provider_metadata`).
+
 ## Cron (`server.cron.tasks`)
 
 ```go

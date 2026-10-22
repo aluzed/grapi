@@ -152,11 +152,11 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		cfg.Upload.SizeLimit = int64(n)
 	}
 	if name, _ := c.String("plugins.upload.config.provider"); name != "" && name != "local" {
-		prov, err := uploadProvider(c, name)
-		if err != nil {
-			slog.Default().Error("upload provider", "error", err)
-		} else {
+		// An unknown name may be a provider of the Go project: setup reports it.
+		if prov, err := uploadProvider(c, name); err == nil {
 			cfg.Upload.Provider, cfg.Upload.ProviderName = prov, name
+		} else if !errors.Is(err, errUnknownUploadProvider) {
+			slog.Default().Error("upload provider", "error", err)
 		}
 	}
 	if bps, ok := c.Get("plugins.upload.config.breakpoints").(map[string]any); ok {
@@ -240,6 +240,8 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 	return g
 }
 
+var errUnknownUploadProvider = errors.New("unknown upload provider")
+
 // uploadProvider builds the provider of plugins.upload.config: aws-s3
 // takes @strapi/provider-upload-aws-s3's providerOptions.
 func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
@@ -256,7 +258,7 @@ func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
 		return p, nil
 	}
 	if name != "aws-s3" {
-		return nil, fmt.Errorf("upload provider %q is not supported yet", name)
+		return nil, errUnknownUploadProvider
 	}
 	base := "plugins.upload.config.providerOptions."
 	str := func(keys ...string) string {
@@ -559,6 +561,19 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
 		return nil, err
+	}
+	if name, _ := conf.String("plugins.upload.config.provider"); name != "" && name != "local" {
+		if p, ok := a.uploadProviders[name]; ok {
+			apiCfg.Upload.Provider, apiCfg.Upload.ProviderName = p, name
+		} else if apiCfg.Upload.Provider == nil {
+			log.Error("upload provider", "error", fmt.Errorf("upload provider %q is not supported yet", name))
+		}
+	}
+	if name, _ := conf.String("plugins.email.config.provider"); a.emailProviders[name] != nil {
+		svc := &email.Service{Provider: a.emailProviders[name]}
+		svc.Settings.DefaultFrom, _ = conf.String("plugins.email.config.settings.defaultFrom")
+		svc.Settings.DefaultReplyTo, _ = conf.String("plugins.email.config.settings.defaultReplyTo")
+		apiCfg.Email = svc
 	}
 	oas, err := openAPIConfig(conf, *dir)
 	if err != nil {

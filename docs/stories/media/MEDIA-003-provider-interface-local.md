@@ -43,7 +43,8 @@ Définir l'interface provider de grapi et fournir le provider local.
 
 ## Avancement
 - Fait : `internal/media/provider` (`Upload`, `Delete`, `IsPrivate`, `SignedURL`), provider local (écriture atomique, suppression idempotente), choix du provider par `plugins.upload.config.provider`, URL signées dans les réponses des routes upload (`isUrlSigned`), suppression limitée aux fichiers du provider configuré.
-- Reste : `Replacer`, `SizeChecker`, enregistrement de providers custom en mode framework, signature des URL dans les populate du Content API.
+- Providers du projet en mode framework : `app.UseUploadProvider(nom, p)` (`providers.go`, `docs/framework.md`), choisis par `plugins.upload.config.provider` ; `provider_metadata` passe par `UploadFile.Metadata`.
+- Reste : `Replacer`, `SizeChecker`, signature des URL dans les populate du Content API.
 
 ## Notes techniques
 - Écriture atomique : fichier temporaire dans le même dossier, puis `os.Rename`.
