@@ -19,7 +19,16 @@ grapi start -dir <project> [-config <dir>]    # serve the content API
 grapi report                                 # versions and project facts, without secrets
 grapi db:sync --dry-run -dir <project>       # what the start-up schema sync would change (read only)
 grapi db:check -dir <project>                # consistency report: schema, documentIds, orphan links, password hashes
+grapi api-token:create|list|delete|regenerate # content API tokens
+grapi permissions:list|grant|revoke <role>   # users-permissions role permissions
+grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]
+grapi openapi [-o file]                      # the content API's OpenAPI document
+grapi ts:generate-types [-o dir]             # types/generated/*.d.ts for @strapi/strapi
+grapi routes:list | content-types:list | components:list | middlewares:list | hooks:list
+grapi configuration:dump [-f file] | configuration:restore [-f file] [-s replace|merge|keep]
 ```
+
+`grapi` without arguments prints every command and its flags.
 
 On a database created by Strapi 5, run `db:sync --dry-run` and `db:check` first, on a copy.
 
