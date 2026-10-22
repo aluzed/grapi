@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # EXT-006 : Webhooks
@@ -25,9 +25,14 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 
 ## Critères d'acceptation
 - [ ] Payload et en-têtes identiques à Strapi pour `entry.publish` (banc de compatibilité avec un récepteur d'échos).
-- [ ] Un webhook désactivé ne reçoit rien.
+- [x] Un webhook désactivé ne reçoit rien.
 - [ ] Récepteur hors ligne : par défaut, essais espacés puis abandon après la limite, et la file survit à un redémarrage ; avec `retries: 0`, un seul essai et une erreur journalisée.
-- [ ] L'en-tête `X-Strapi-Event` est conservé tel quel (compatibilité des récepteurs existants).
+- [x] L'en-tête `X-Strapi-Event` est conservé tel quel (compatibilité des récepteurs existants).
+
+## Avancement
+- Fait : `internal/webhooks` : webhooks lus dans `strapi_webhooks` à chaque événement, payload `{event, createdAt, model, uid, entry}`, en-têtes `defaultHeaders` puis webhook puis `X-Strapi-Event` et `Content-Type`, délai de 10 s, 5 envois en parallèle, nouvelles tentatives avec backoff exponentiel (`server.webhooks.retries`, 3 par défaut, 0 pour le comportement de Strapi).
+- Écart avec le ticket : la file n'est pas persistée en base (une table de plus modifierait le schéma d'une base Strapi). `contentTypeEvents` n'existe pas dans Strapi 5.59.0 publié (il est sur la branche principale après le tag).
+- Reste : API admin (CRUD, trigger), protection SSRF optionnelle, comparaison avec un récepteur d'échos sur le banc.
 
 ## Notes techniques
 - Client HTTP dédié, avec délais d'attente et sans suivi de redirection vers des IP privées si `server.webhooks.blockPrivateIPs` est actif (protection SSRF, en option).

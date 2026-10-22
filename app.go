@@ -28,9 +28,11 @@ import (
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/schemasync"
 	"github.com/aluzed/grapi/internal/document"
+	"github.com/aluzed/grapi/internal/events"
 	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/registry"
+	"github.com/aluzed/grapi/internal/webhooks"
 )
 
 // dbConfig reads database.connection, or the DATABASE_* variables of a
@@ -289,10 +291,16 @@ type Server struct {
 	Handler http.Handler
 	Addr    string
 	project *Project
+	stop    func()
 }
 
-// Close releases the database.
-func (s *Server) Close() error { return s.project.DB.Close() }
+// Close stops the webhooks and releases the database.
+func (s *Server) Close() error {
+	if s.stop != nil {
+		s.stop()
+	}
+	return s.project.DB.Close()
+}
 
 // Setup loads the project, syncs its database and runs the bootstrap; the
 // returned handler serves the API (to embed grapi in another server).
@@ -353,12 +361,25 @@ func (a *App) setup(p *Project) (*Server, error) {
 	for _, m := range a.documentMiddlewares {
 		docs.Use(m)
 	}
+	docs.Events = events.New(log)
+	retries := 3
+	if n, ok := conf.Int("server.webhooks.retries"); ok {
+		retries = n
+	}
+	hookCfg := webhooks.Config{Retries: retries, DefaultHeaders: map[string]string{}}
+	if h, ok := conf.Get("server.webhooks.defaultHeaders").(map[string]any); ok {
+		for k, v := range h {
+			hookCfg.DefaultHeaders[k] = fmt.Sprint(v)
+		}
+	}
+	runner := &webhooks.Runner{DB: d, Hub: docs.Events, Config: hookCfg, Log: log}
+	a.stopWebhooks = runner.Start(context.Background())
 	a.docs = docs
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
 	a.addRoutes(api)
 	host, _ := conf.String("server.host")
 	port, _ := conf.Int("server.port")
-	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p}, nil
+	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: a.stopWebhooks}, nil
 }
 
 // Start sets the App up and serves it until SIGINT or SIGTERM.

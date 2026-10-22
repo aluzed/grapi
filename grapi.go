@@ -30,6 +30,7 @@ type App struct {
 	documentMiddlewares []document.Middleware
 	routes              []customRoute
 	docs                *document.Service
+	stopWebhooks        func()
 }
 
 // New returns an App for the project in opts.Dir.

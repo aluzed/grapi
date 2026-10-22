@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/events"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -19,6 +20,8 @@ type Service struct {
 	Set  *schema.Set
 	comp *Components
 	mw   middlewares
+	// Events receives entry.create, entry.update... (nil: no events).
+	Events *events.Hub
 }
 
 // New returns the document service of an application.
@@ -403,6 +406,7 @@ func (s *Service) createDocument(ctx context.Context, uid string, p Params) (que
 		if doc, err = s.createEntry(ctx, ct, qp); err != nil {
 			return err
 		}
+		s.emit(ctx, "entry.create", uid, doc)
 		if ct.DraftAndPublish() && p["status"] == "published" {
 			pp := clone(p)
 			id, _ := doc.Get(schema.AttrDocumentID)
@@ -605,6 +609,7 @@ func (s *Service) updateDocument(ctx context.Context, uid, documentID string, p 
 			if result, err = s.updateEntry(ctx, ct, id, qp); err != nil {
 				return err
 			}
+			s.emit(ctx, "entry.update", uid, result)
 		} else {
 			exists, err := s.E.FindOne(ctx, uid, query.Params{Where: map[string]any{schema.AttrDocumentID: documentID}})
 			if err != nil {
@@ -620,6 +625,7 @@ func (s *Service) updateDocument(ctx context.Context, uid, documentID string, p 
 				if result, err = s.createEntry(ctx, ct, cp); err != nil {
 					return err
 				}
+				s.emit(ctx, "entry.create", uid, result)
 			}
 		}
 		if ct.DraftAndPublish() && result != nil && p["status"] == "published" {
@@ -680,6 +686,7 @@ func (s *Service) deleteCore(ctx context.Context, uid, documentID string, p Para
 			if err != nil {
 				return err
 			}
+			s.emit(ctx, "entry.delete", uid, deleted)
 			res.Entries = append(res.Entries, deleted)
 		}
 		return nil
@@ -803,6 +810,9 @@ func (s *Service) publish(ctx context.Context, ct *schema.ContentType, documentI
 		}
 		published = append(published, row)
 	}
+	for _, row := range published {
+		s.emit(ctx, "entry.publish", string(ct.UID), row)
+	}
 	return published, nil
 }
 
@@ -861,6 +871,7 @@ func (s *Service) unpublishCore(ctx context.Context, uid, documentID string, p P
 			if _, err := s.deleteEntry(ctx, uid, id, query.Params{}); err != nil {
 				return err
 			}
+			s.emit(ctx, "entry.unpublish", uid, r)
 		}
 		out = rows
 		return nil
@@ -934,6 +945,9 @@ func (s *Service) discardDraftDocument(ctx context.Context, uid, documentID stri
 				return err
 			}
 			out = append(out, row)
+		}
+		for _, row := range out {
+			s.emit(ctx, "entry.draft-discard", uid, row)
 		}
 		return nil
 	})

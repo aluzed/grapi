@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DOC-005 : Événements entry.* et event hub
@@ -20,9 +20,13 @@ Un event hub interne et l'émission des événements de documents avec le même 
 - La livraison HTTP des webhooks (`EXT-006`).
 
 ## Critères d'acceptation
-- [ ] Aucun événement émis si la transaction est annulée.
+- [x] Aucun événement émis si la transaction est annulée.
 - [ ] Le payload de `entry.publish` correspond à Strapi (champs, relations peuplées ou non selon la config) sur le banc de compatibilité.
-- [ ] Un abonné qui panique ne bloque ni l'écriture ni les autres abonnés (erreur journalisée).
+- [x] Un abonné qui panique ne bloque ni l'écriture ni les autres abonnés (erreur journalisée).
+
+## Avancement
+- Fait : `internal/events` (On, Once, Subscribe, Destroy, paniques isolées) et l'émission des six événements `entry.*` aux mêmes endroits que le dépôt Strapi, après commit (`db.OnCommit`), avec l'entrée relue en deep populate et assainie. Tests : `internal/events/hub_test.go`, `internal/webhooks/webhooks_test.go`.
+- Reste : `media.*` depuis l'upload, comparaison du payload sur le banc.
 
 ## Notes techniques
 - Les hooks `onCommit` de la transaction (`DB-001`) déclenchent l'émission.
