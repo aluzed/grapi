@@ -103,3 +103,6 @@ func snakeCase(s string) string {
 
 // KebabCase is lodash's kebabCase.
 func KebabCase(s string) string { return strings.ReplaceAll(snakeCase(s), "_", "-") }
+
+// SnakeCase is lodash's snakeCase.
+func SnakeCase(s string) string { return snakeCase(s) }

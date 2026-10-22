@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -113,6 +112,7 @@ type Attribute struct {
 	Auto bool `json:"-"`
 
 	resolvedCustomField bool
+	empty               emptyKeys
 }
 
 type attributeFields Attribute
@@ -160,6 +160,7 @@ func (a *Attribute) UnmarshalJSON(data []byte) error {
 	if a.Type == "" {
 		return fmt.Errorf("missing attribute type")
 	}
+	a.empty = collectEmpty(data)
 	return nil
 }
 
@@ -168,16 +169,11 @@ func (a Attribute) MarshalJSON() ([]byte, error) {
 	if a.resolvedCustomField {
 		a.Type = TypeCustomField
 	}
-	b, err := json.Marshal(attributeFields(a))
-	if err != nil || len(a.Extra) == 0 {
-		return b, err
-	}
-	extra, err := json.Marshal(a.Extra)
+	b, err := withExtra(attributeFields(a), a.Extra)
 	if err != nil {
 		return nil, err
 	}
-	b = bytes.TrimSuffix(b, []byte("}"))
-	return append(append(b, ','), extra[1:]...), nil
+	return a.empty.restore(b)
 }
 
 // IsScalar reports whether the attribute is stored in a column of its own table.

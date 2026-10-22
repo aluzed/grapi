@@ -35,6 +35,7 @@ type Info struct {
 	Description  string                     `json:"description,omitempty"`
 	Icon         string                     `json:"icon,omitempty"`
 	Extra        map[string]json.RawMessage `json:"-"`
+	empty        emptyKeys
 }
 
 type infoFields Info
@@ -48,11 +49,18 @@ func (i *Info) UnmarshalJSON(data []byte) error {
 	*i = Info(f)
 	extra, err := unknownKeys(data, "singularName", "pluralName", "displayName", "description", "icon")
 	i.Extra = extra
+	i.empty = collectEmpty(data)
 	return err
 }
 
 // MarshalJSON writes the known keys then Extra.
-func (i Info) MarshalJSON() ([]byte, error) { return withExtra(infoFields(i), i.Extra) }
+func (i Info) MarshalJSON() ([]byte, error) {
+	b, err := withExtra(infoFields(i), i.Extra)
+	if err != nil {
+		return nil, err
+	}
+	return i.empty.restore(b)
+}
 
 // ContentType is a schema.json of src/api or of a plugin, plus what grapi derives from it.
 type ContentType struct {
@@ -70,6 +78,8 @@ type ContentType struct {
 	ModelName string   `json:"-"`
 	GlobalID  string   `json:"-"`
 	Warnings  []string `json:"-"`
+
+	empty emptyKeys
 }
 
 type contentTypeFields ContentType
@@ -96,6 +106,7 @@ func (ct *ContentType) UnmarshalJSON(data []byte) error {
 	*ct = ContentType(f)
 	extra, err := unknownKeys(data, contentTypeKeys...)
 	ct.Extra = extra
+	ct.empty = collectEmpty(data)
 	return err
 }
 
@@ -109,7 +120,11 @@ func (ct ContentType) MarshalJSON() ([]byte, error) {
 			out.Attributes.Set(name, a)
 		}
 	}
-	return withExtra(out, ct.Extra)
+	b, err := withExtra(out, ct.Extra)
+	if err != nil {
+		return nil, err
+	}
+	return ct.empty.restore(b)
 }
 
 // DraftAndPublish reports whether options.draftAndPublish is true (false by default).

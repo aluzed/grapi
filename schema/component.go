@@ -18,6 +18,8 @@ type Component struct {
 	Category  string `json:"-"`
 	ModelName string `json:"-"`
 	GlobalID  string `json:"-"`
+
+	empty emptyKeys
 }
 
 type componentFields Component
@@ -40,11 +42,18 @@ func (c *Component) UnmarshalJSON(data []byte) error {
 	*c = Component(f)
 	extra, err := unknownKeys(data, "collectionName", "info", "options", "attributes")
 	c.Extra = extra
+	c.empty = collectEmpty(data)
 	return err
 }
 
 // MarshalJSON writes the known keys then Extra.
-func (c Component) MarshalJSON() ([]byte, error) { return withExtra(componentFields(c), c.Extra) }
+func (c Component) MarshalJSON() ([]byte, error) {
+	b, err := withExtra(componentFields(c), c.Extra)
+	if err != nil {
+		return nil, err
+	}
+	return c.empty.restore(b)
+}
 
 // Prepare derives uid, model name and global id from the file location.
 func (c *Component) Prepare(category, name string) error {
