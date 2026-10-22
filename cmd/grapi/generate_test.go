@@ -40,6 +40,9 @@ func TestGenerate(t *testing.T) {
 	if c, o := gen("content-type", "--name", "note", "--plural", "notes-bis"); c == 0 || !strings.Contains(o, "already exists") {
 		t.Fatalf("existing schema: %d %s", c, o)
 	}
+	if c, o := gen("migration", "--name", "seed-notes"); c != 0 || !strings.Contains(o, ".seed-notes.sql") {
+		t.Fatalf("migration: %s", o)
+	}
 	srv, err := grapi.New(grapi.Options{Dir: project, Stderr: &out}).Setup()
 	if err != nil {
 		t.Fatal(err)
@@ -50,6 +53,9 @@ func TestGenerate(t *testing.T) {
 	}
 	ts := httptest.NewServer(srv.Handler)
 	defer ts.Close()
+	if code := run([]string{"db:check", "-dir", project}, &out, &out); code != 0 {
+		t.Fatalf("db:check after the generated migration ran: %s", out.String())
+	}
 	res, err := http.Get(ts.URL + "/api/notes")
 	if err != nil {
 		t.Fatal(err)

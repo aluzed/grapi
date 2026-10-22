@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/schema"
@@ -59,6 +60,9 @@ func generate(args []string, stdout io.Writer) error {
 		return errors.New("usage: grapi generate content-type|component [flags]")
 	}
 	kind, args := args[0], args[1:]
+	if kind == "migration" {
+		return generateMigration(args, stdout, time.Now())
+	}
 	fs := flag.NewFlagSet("generate "+kind, flag.ContinueOnError)
 	dir := fs.String("dir", ".", "project directory")
 	name := fs.String("name", "", "singular name (kebab case), or category.name for a component")
@@ -137,6 +141,30 @@ func generate(args []string, stdout io.Writer) error {
 	if _, _, err := builtin.Load(os.DirFS(*dir)); err != nil {
 		_ = os.Remove(path) //nolint:gosec // names are checked in kebab case
 		return fmt.Errorf("the generated schema does not load, nothing written: %w", err)
+	}
+	fmt.Fprintf(stdout, "Created %s\n", path)
+	return nil
+}
+
+// generateMigration writes database/migrations/<YYYY.MM.DDTHH.mm.ss>.<name>.sql,
+// Strapi's naming, which orders the migrations.
+func generateMigration(args []string, stdout io.Writer, now time.Time) error {
+	fs := flag.NewFlagSet("generate migration", flag.ContinueOnError)
+	dir := fs.String("dir", ".", "project directory")
+	name := fs.String("name", "", "migration name (kebab case)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if !kebab.MatchString(*name) {
+		return fmt.Errorf("--name %q is not a kebab case name", *name)
+	}
+	path := filepath.Join(*dir, "database", "migrations", now.Format("2006.01.02T15.04.05")+"."+*name+".sql")
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil { //nolint:gosec // the name is checked in kebab case
+		return err
+	}
+	body := "-- " + *name + ": runs once, in a transaction, before the schema sync.\nSELECT 1;\n"
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil { //nolint:gosec // the name is checked in kebab case
+		return err
 	}
 	fmt.Fprintf(stdout, "Created %s\n", path)
 	return nil

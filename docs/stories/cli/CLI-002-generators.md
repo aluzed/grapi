@@ -29,7 +29,8 @@ Des générateurs interactifs et non interactifs qui produisent des fichiers pr�
 
 ## Avancement
 - `grapi generate content-type --name <n> [--plural] [--api] [--kind] [--draft-and-publish] [--i18n] [--attr nom:type[:required]]...` et `grapi generate component --name <categorie>.<nom> [--attr ...]` (`cmd/grapi/generate.go`), non interactifs. Les noms réservés du Content-Type Builder sont refusés avant écriture ; le schéma écrit est rechargé et supprimé s'il ne charge pas ; un schéma existant n'est pas écrasé. `TestGenerate` : le content type généré est servi (`GET /api/notes` 200).
-- Reste : `generate api`, le mode interactif, les squelettes Go (`controller`, `service`, `policy`, `middleware`), `generate migration`.
+- `grapi generate migration --name <n>` : `database/migrations/<YYYY.MM.DDTHH.mm.ss>.<n>.sql` (nommage de Strapi, qui ordonne les migrations), exécutée au démarrage suivant (`TestGenerate`).
+- Reste : `generate api`, le mode interactif, les squelettes Go (`controller`, `service`, `policy`, `middleware`).
 
 ## Notes techniques
 - `charmbracelet/huh` pour les questions interactives, `text/template` pour les squelettes (il n'y a ici que des données internes, pas d'entrée utilisateur non maîtrisée dans les templates de code).
