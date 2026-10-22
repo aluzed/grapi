@@ -10,8 +10,8 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 - Table `strapi_webhooks` : `id`, `name`, `url`, `headers` (json), `events` (json), `enabled`, et `contentTypeEvents` (json, filtrage par uid de content type).
 - Événements autorisés : `entry.create|update|delete|publish|unpublish|draft-discard`, ainsi que ceux ajoutés par les plugins (`media.create|update|delete`, review workflows, releases).
 - Livraison : POST JSON `{event, createdAt, ...info}` (info = `{model, uid, entry}` de `DOC-005`). En-têtes = `server.webhooks.defaultHeaders`, puis ceux du webhook, puis `X-Strapi-Event: <event>` et `Content-Type: application/json`. Délai d'attente de 10 s. File en mémoire, 5 envois en parallèle.
-- Comportement Strapi par défaut : **pas de nouvelle tentative**, échec seulement journalisé.
-- Amélioration optionnelle (`server.webhooks.retries`, désactivée par défaut) : nouvelles tentatives avec backoff exponentiel, et file persistée en base pour survivre à un redémarrage.
+- Strapi ne fait **aucune nouvelle tentative** : l'échec est seulement journalisé.
+- grapi fait **de nouvelles tentatives par défaut** (décision du 2026-10-22) : backoff exponentiel, file persistée en base pour survivre à un redémarrage, limite configurable via `server.webhooks.retries`. `retries: 0` redonne le comportement de Strapi.
 - Déclenchement manuel (`/:id/trigger`) pour l'admin, avec le statut et le message renvoyés.
 - API admin : CRUD, suppression en lot, déclenchement manuel.
 
@@ -22,7 +22,7 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 ## Critères d'acceptation
 - [ ] Payload et en-têtes identiques à Strapi pour `entry.publish` (banc de compatibilité avec un récepteur d'échos).
 - [ ] Un webhook désactivé ne reçoit rien.
-- [ ] Récepteur hors ligne : retries désactivés, un seul essai et une erreur journalisée ; retries activés, essais espacés puis abandon après la limite.
+- [ ] Récepteur hors ligne : par défaut, essais espacés puis abandon après la limite, et la file survit à un redémarrage ; avec `retries: 0`, un seul essai et une erreur journalisée.
 - [ ] L'en-tête `X-Strapi-Event` est conservé tel quel (compatibilité des récepteurs existants).
 
 ## Notes techniques

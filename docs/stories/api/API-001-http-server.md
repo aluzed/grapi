@@ -10,7 +10,7 @@ Le serveur HTTP de grapi, sa configuration réseau et son cycle de vie.
 - Écoute sur `server.host` et `server.port` (défaut `0.0.0.0:1337`) ou sur une socket Unix (`server.socket`).
 - `server.proxy` : prise en compte de `X-Forwarded-*` (`ipHeader`, `maxIpsCount`) derrière un reverse proxy.
 - `server.http.serverOptions` : timeouts de lecture, d'écriture et d'inactivité.
-- `GET|HEAD /_health` : `204` avec l'en-tête `strapi: You are so French!` (gardé pour compatibilité des sondes existantes).
+- `GET|HEAD /_health` : `204` sans corps et sans en-tête qui identifie le logiciel (pas de `strapi: You are so French!`, voir `API-008`). Les sondes Dokploy et Traefik ne regardent que le code.
 - Contexte de requête : `context.Context` enrichi (auth, locale, transaction, logger, request id) accessible partout.
 - Calcul de `server.url` / `server.absoluteUrl` et `admin.url` / `admin.absoluteUrl`.
 - Arrêt propre sur SIGTERM et SIGINT : arrêt des nouvelles connexions, drainage avec délai, puis `Destroy` dans l'ordre inverse du démarrage (plugins, hooks utilisateur, serveur, event hub, base).
@@ -20,7 +20,7 @@ Le serveur HTTP de grapi, sa configuration réseau et son cycle de vie.
 - HTTP/3.
 
 ## Critères d'acceptation
-- [ ] `curl -I /_health` renvoie `204` et l'en-tête `strapi`.
+- [ ] `curl -I /_health` renvoie `204`, et aucun en-tête ne nomme le serveur ni sa version.
 - [ ] Derrière un proxy avec `server.proxy.koa: true`, l'IP client est celle de `X-Forwarded-For`.
 - [ ] SIGTERM pendant une requête longue : la requête se termine, puis le processus sort avec le code 0.
 - [ ] Démarrage à vide (projet minimal SQLite) en moins de 300 ms sur le homelab.

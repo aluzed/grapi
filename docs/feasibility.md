@@ -55,7 +55,7 @@ Détail et fichiers sources de référence : dans chaque ticket de [`stories/`](
 | Logs | `log/slog` | |
 | JS/TS embarqué (optionnel) | `evanw/esbuild` (transpile TS, bundle les paquets npm purs) + `dop251/goja` (moteur JS en Go pur) | esbuild est écrit en Go : on peut charger des `.ts` sans Node. Voir décision D2 |
 
-## 4. Décisions à prendre avant d'implémenter
+## 4. Décisions (validées le 2026-10-22, recommandations retenues)
 
 ### D1. Admin : réutiliser la SPA Strapi ou faire la nôtre ?
 
@@ -114,6 +114,14 @@ Les fonctionnalités ne sont pas protégeables, le code oui. Règles :
 - chaque ticket « XTR » le rappelle.
 
 Ces règles sont détaillées dans `SETUP-003`.
+
+### Décisions secondaires (2026-10-22)
+
+- Aucun en-tête `X-Powered-By` et aucune signature du serveur (`API-008`).
+- Configuration en YAML (JSON et TOML acceptés), avec `${env:...}` et `${file:...}` (`EXT-001`).
+- Les noms de variables Strapi (`NODE_ENV`, `STRAPI_*`) sont acceptés en alias des `GRAPI_*` (`EXT-001`).
+- Archives natives en AES-256-GCM, lecture du format Strapi (AES-128-ECB) conservée, et `--strapi-compat` pour écrire dans ce format (`CLI-004`).
+- Webhooks : nouvelles tentatives et file persistée par défaut (`EXT-006`).
 
 ## 5. Risques
 

@@ -12,6 +12,7 @@ Charger la configuration du projet, avec la même structure de clés que Strapi,
 - Lecture de fichier : `${file:chemin}` injecte le contenu d'un fichier relatif à la racine du projet (clés privées DKIM, certificats). C'est l'équivalent des `fs.readFileSync` qu'on trouve dans les configs Strapi (cas dev-freelance, voir `MIG-001`). Un fichier absent fait échouer le démarrage avec le nom de la clé de config.
 - Une valeur entièrement interpolée garde son type (entier, booléen, tableau).
 - Chargement de `.env` (ou du fichier pointé par `ENV_PATH`), sans écraser les variables déjà définies.
+- Alias des variables Strapi (décision du 2026-10-22) : chaque variable `GRAPI_*` accepte aussi son nom Strapi (`NODE_ENV` pour `GRAPI_ENV`, `STRAPI_*`, etc.), avec une table d'alias unique dans `internal/config/aliases.go`. Si les deux sont définis, `GRAPI_*` l'emporte et un avertissement est journalisé.
 - Fusion : valeurs par défaut de grapi, puis `config/*`, puis `config/env/<GRAPI_ENV|NODE_ENV>/*`.
 - Fichiers connus : `server`, `database`, `admin`, `api`, `middlewares`, `plugins`, `features`, `cron-tasks`. Tout autre nom devient un espace de config custom. Les noms réservés (`uuid`, `license`, `telemetry`, `strapi`, `internal`, `dirs`, etc.) sont refusés.
 - Valeurs par défaut clés : `server.port` 1337, `server.host` 0.0.0.0, `api.rest.prefix` `/api`, `api.rest.defaultLimit` 25.

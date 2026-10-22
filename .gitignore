@@ -1,0 +1,10 @@
+/dist/
+/grapi
+*.test
+*.out
+coverage.*
+.env*
+!.env.example
+public/uploads/
+node_modules/
+.DS_Store
