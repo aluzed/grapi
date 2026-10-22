@@ -89,6 +89,8 @@ func Perf(urls []string, concurrency int, d time.Duration) PerfResult {
 		}
 		return float64(lat[int(p*float64(len(lat)-1))].Microseconds()) / 1000
 	}
-	return PerfResult{Requests: n.Load(), Errors: errs.Load(), Seconds: elapsed, RPS: float64(n.Load()) / elapsed,
-		P50ms: pct(0.50), P95ms: pct(0.95), P99ms: pct(0.99), Endpoints: len(urls)}
+	return PerfResult{
+		Requests: n.Load(), Errors: errs.Load(), Seconds: elapsed, RPS: float64(n.Load()) / elapsed,
+		P50ms: pct(0.50), P95ms: pct(0.95), P99ms: pct(0.99), Endpoints: len(urls),
+	}
 }
