@@ -1,0 +1,6 @@
+.git
+dist
+compat/bin
+compat/report
+compat/golden
+**/*.test

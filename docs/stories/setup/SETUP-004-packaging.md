@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SETUP-004 : Packaging : binaire, image Docker, admin embarqué, choix CGO
@@ -31,11 +31,15 @@ Produire les artefacts de release : binaires multi-plateformes, image Docker min
 
 ## Critères d'acceptation
 - [ ] `make docker` construit l'image **sur le homelab** (`docker --context homelab`) et elle démarre un projet fixture sur Postgres.
-- [ ] La variante `purego` compile avec `CGO_ENABLED=0` et le binaire Linux est statique (`file` : « statically linked »).
+- [x] La variante `purego` compile avec `CGO_ENABLED=0` et le binaire Linux est statique (`file` : « statically linked »).
 - [ ] La même requête d'upload d'image produit des formats `thumbnail`, `small`, `medium` et `large` dans la variante vips, et un message clair dans la variante purego si un format non supporté est demandé.
 - [ ] L'admin est servi par le binaire seul, sans aucun fichier externe.
-- [ ] L'image tourne en uid 1000 et `HEALTHCHECK` est vert.
-- [ ] `DEPLOY.md` décrit les trois modes de déploiement.
+- [x] L'image tourne en uid 1000 et `HEALTHCHECK` est vert.
+- [x] `DEPLOY.md` décrit les trois modes de déploiement.
+
+## Avancement
+- Fait : `Dockerfile` (variante Go pur, `debian:trixie-slim`, uid 1000, `HEALTHCHECK` via `grapi health`, 149 Mo), `make docker` qui construit sur le homelab, `DEPLOY.md`. Testé sur le homelab : base Postgres neuve, fixture dev-freelance, healthcheck vert, inscription par l'API.
+- Reste : variante libvips (govips, CGO), SPA admin embarquée, goreleaser, SBOM, image sur ghcr.io.
 
 ## Notes techniques
 - La compatibilité de sortie avec sharp n'est pas binaire (encodeurs différents). Le banc (`SETUP-002`) compare donc les dimensions, les formats et les métadonnées, pas les octets.

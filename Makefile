@@ -4,7 +4,7 @@ GOBIN := $(shell go env GOPATH)/bin
 GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
 GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: ci build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: docker ci build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 # What GitHub Actions used to run, locally (Actions is off on the repo).
 ci: lint licenses test test-integration-homelab
@@ -32,6 +32,12 @@ check-emdash:
 
 check-stories:
 	./scripts/check-stories.sh
+
+# The image is built on the homelab only (COMPAT_HOST), never on this machine.
+COMPAT_HOST ?= homelab
+docker:
+	rsync -a --delete --exclude .git --exclude dist --exclude compat/bin --exclude compat/report --exclude compat/golden ./ $(COMPAT_HOST):grapi-build/
+	ssh $(COMPAT_HOST) 'cd grapi-build && docker build --build-arg VERSION=$(VERSION) -t grapi:$(VERSION) -t grapi:latest .'
 
 FIXTURE ?= basic
 MODE ?= self
