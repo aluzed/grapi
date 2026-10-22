@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # EXT-007 : Logs (pas de télémétrie)
@@ -21,14 +21,14 @@ Des logs structurés configurables, sans aucune télémétrie.
 - Sentry (`PLG-006`), audit logs (`XTR-002`).
 
 ## Critères d'acceptation
-- [ ] Une requête produit une ligne `http` avec méthode, chemin, statut, durée et request id.
-- [ ] Aucune connexion sortante au démarrage avec la config par défaut (vérifié par test sur un réseau isolé).
+- [x] Une requête produit une ligne `http` avec méthode, chemin, statut, durée et request id.
+- [x] Aucune connexion sortante au démarrage avec la config par défaut (vérifié par test sur un réseau isolé).
 
 ## Avancement
 - `internal/logging` : niveaux de Strapi sur `log/slog` (`http` entre debug et info, niveau par défaut comme Strapi), texte en développement, JSON en production (`GRAPI_LOG_FORMAT` ou `logger.format`).
 - `internal/httpapi/logger.go` : une ligne `http` par requête au format du middleware `strapi::logger` (`GET /api/x?y (12 ms) 200`), avec méthode, chemin, statut, durée et request id (`X-Request-Id` lu s'il est valide, sinon généré, renvoyé dans la réponse). Test `TestRequestLog`.
 - Bannière de démarrage : version, adresse, environnement, URL du serveur et de l'admin, base de données.
-- Reste : test de démarrage sans connexion sortante sur un réseau isolé (aucun code de grapi n'en ouvre, mais ce n'est pas encore vérifié par un test).
+- `compat/scripts/offline-start.sh [fixture]` démarre grapi dans un conteneur sans réseau (`--network none`, homelab) : `/_health` répond 204, aucune tentative de connexion ni erreur dans les logs (devfreelance, 2026-10-22).
 
 ## Notes techniques
 - Les clés `STRAPI_TELEMETRY_DISABLED` et `telemetry:*` sont acceptées sans effet, pour ne pas casser les configs migrées.
