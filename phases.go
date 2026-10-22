@@ -2,6 +2,10 @@ package grapi
 
 import (
 	"context"
+	"sort"
+
+	"github.com/aluzed/grapi/internal/db"
+	"github.com/aluzed/grapi/internal/db/store"
 
 	"github.com/aluzed/grapi/hook"
 	"github.com/aluzed/grapi/schema"
@@ -29,7 +33,7 @@ func (a *App) OnDestroy(fn func(ctx context.Context) error) {
 // hook.BeforeSync and hook.AfterSync, and the project's own.
 func (a *App) Hooks() *hook.Registry { return a.hooks }
 
-func (a *App) syncHook(ctx context.Context, name string, set *schema.Set) error {
+func (a *App) syncHook(ctx context.Context, name string, set *schema.Set, d *db.DB) error {
 	h, ok := a.hooks.Get(name).(*hook.Parallel[hook.SyncEvent])
 	if !ok {
 		return nil
@@ -37,6 +41,13 @@ func (a *App) syncHook(ctx context.Context, name string, set *schema.Set) error 
 	ev := hook.SyncEvent{}
 	for uid := range set.ContentTypes.All() {
 		ev.ContentTypes = append(ev.ContentTypes, uid)
+	}
+	var old map[string]any
+	if found, err := (store.Store{DB: d}).Get(ctx, store.Scope{Type: "strapi"}, "content_types_schema", &old); err == nil && found {
+		for uid := range old {
+			ev.OldContentTypes = append(ev.OldContentTypes, uid)
+		}
+		sort.Strings(ev.OldContentTypes)
 	}
 	_, err := h.Call(ctx, ev)
 	return err

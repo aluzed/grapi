@@ -28,7 +28,8 @@ Un registre de hooks typés en Go, avec les quatre sémantiques.
 ## Avancement
 - Paquet public `hook` (`hook/registry.go`) : `Series`, `Waterfall`, `Parallel` et `Bail` génériques, désinscription par la fonction que rend `Register`, annulation par `context` ; `Registry` (`Register`, `Get`, `Delete`) exposé par `app.Hooks()`. Tests `hook/registry_test.go` (avec `-race`).
 - `strapi::content-types.beforeSync` et `afterSync` (`Parallel[SyncEvent]`, comme Strapi) : `beforeSync` avant la synchronisation du schéma, `afterSync` une fois les services prêts, pour qu'un handler puisse créer des données (`TestPhases`). Strapi appelle `afterSync` juste après la synchronisation, avant ses services ; l'écart est voulu.
-- Reste : `oldContentTypes` dans l'événement (les schémas d'avant la synchronisation).
+- `SyncEvent.OldContentTypes` : les uids que Strapi a enregistrés à son dernier démarrage (`strapi_content_types_schema` du core store), vide sur une base qu'il n'a jamais ouverte (`TestSyncHookOldContentTypes`).
+- Reste : les schémas complets d'avant (grapi ne donne que les uids), et l'écriture de `strapi_content_types_schema` par grapi.
 
 ## Notes techniques
 - Génériques Go, pas d'`interface{}` dans l'API publique.

@@ -170,6 +170,10 @@ func (r *Registry) Get(name string) any {
 type SyncEvent struct {
 	// ContentTypes are the uids of the content types being synced.
 	ContentTypes []string
+	// OldContentTypes are the uids Strapi recorded at its last start
+	// (core store strapi_content_types_schema), empty on a database it
+	// never opened.
+	OldContentTypes []string
 }
 
 // Names of the built-in hooks, both Parallel[SyncEvent] as in Strapi.

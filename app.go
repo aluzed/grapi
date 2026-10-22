@@ -532,7 +532,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 			return nil, fmt.Errorf("register: %w", err)
 		}
 	}
-	if err := a.syncHook(ctx, hook.BeforeSync, res.Set); err != nil {
+	if err := a.syncHook(ctx, hook.BeforeSync, res.Set, d); err != nil {
 		return nil, fmt.Errorf("%s: %w", hook.BeforeSync, err)
 	}
 	err := migrate.WithLock(ctx, d, func(ctx context.Context) error {
@@ -639,7 +639,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		return nil, err
 	}
 	// After the sync and once the services exist, so that a handler can seed.
-	if err := a.syncHook(ctx, hook.AfterSync, res.Set); err != nil {
+	if err := a.syncHook(ctx, hook.AfterSync, res.Set, d); err != nil {
 		a.stopWebhooks()
 		return nil, fmt.Errorf("%s: %w", hook.AfterSync, err)
 	}
