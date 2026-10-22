@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-001 : CLI de base : `new`, `develop`, `start`, `version`
 
 ## Contexte

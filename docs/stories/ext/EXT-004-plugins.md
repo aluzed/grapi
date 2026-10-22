@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-004 : Système de plugins et extensions de plugins
 
 ## Contexte

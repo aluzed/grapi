@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DOC-003 : Validation des entrées et valeurs par défaut
 
 ## Contexte

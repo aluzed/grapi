@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-003 : Commandes d'inspection et d'administration (`*:list`, `admin:*`, `configuration:dump|restore`)
 
 ## Contexte

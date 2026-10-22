@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DOC-006 : Résolution des relations par documentId
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # MEDIA-006 : Dossiers, actions groupées, remplacement, upload depuis URL, réglages
 
 ## Contexte

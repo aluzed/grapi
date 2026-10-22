@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # API-005 : Sanitize et validation (entrée, sortie, requête, selon les permissions)
 
 ## Contexte

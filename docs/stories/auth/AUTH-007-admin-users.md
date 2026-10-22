@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-007 : Utilisateurs admin, rôles admin, invitations
 
 ## Contexte

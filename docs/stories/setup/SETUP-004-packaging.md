@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # SETUP-004 : Packaging : binaire, image Docker, admin embarqué, choix CGO
 
 ## Contexte

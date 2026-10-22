@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-003 : Sessions et refresh tokens (partagé entre admin et utilisateurs finaux)
 
 ## Contexte

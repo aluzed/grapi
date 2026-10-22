@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-003 : Validation de cohérence des schémas
 
 ## Contexte

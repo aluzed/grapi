@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DOC-007 : Single types
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-010 : Extensions UI (custom fields, zones d'injection, menus)
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.

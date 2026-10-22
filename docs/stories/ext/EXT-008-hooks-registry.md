@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-008 : Registre de hooks (series, waterfall, parallel, bail)
 
 ## Contexte

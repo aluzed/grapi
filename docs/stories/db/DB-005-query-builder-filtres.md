@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-005 : Query builder et opérateurs de filtre
 
 ## Contexte

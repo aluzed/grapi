@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SETUP-003 : Règles clean-room et licences des dépendances
 
 ## Contexte

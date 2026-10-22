@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SETUP-001 : Bootstrap du repo Go
 
 ## Contexte

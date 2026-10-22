@@ -1,3 +1,7 @@
+---
+status: in-progress
+---
+
 # DB-002 : Nommage et métadonnées compatibles Strapi
 
 ## Contexte

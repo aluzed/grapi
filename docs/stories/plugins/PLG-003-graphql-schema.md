@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-003 : GraphQL : schéma généré dynamiquement
 
 ## Contexte

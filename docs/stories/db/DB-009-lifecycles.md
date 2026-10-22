@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-009 : Lifecycles de la base
 
 ## Contexte

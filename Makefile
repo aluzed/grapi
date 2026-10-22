@@ -2,7 +2,7 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 GOLANGCI_LINT ?= golangci-lint
 
-.PHONY: build test test-integration test-integration-homelab lint check-emdash bench-compat licenses notice
+.PHONY: build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 build:
 	go build -trimpath -ldflags "$(LDFLAGS)" -o dist/grapi ./cmd/grapi
@@ -18,11 +18,14 @@ test-integration:
 test-integration-homelab:
 	./scripts/with-homelab-postgres.sh go test -tags integration ./...
 
-lint: check-emdash
+lint: check-emdash check-stories
 	$(GOLANGCI_LINT) run ./...
 
 check-emdash:
 	./scripts/check-emdash.sh
+
+check-stories:
+	./scripts/check-stories.sh
 
 FIXTURE ?= basic
 MODE ?= self

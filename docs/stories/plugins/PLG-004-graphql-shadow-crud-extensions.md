@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-004 : GraphQL : shadow CRUD, extensions, auth, policies, limites
 
 ## Contexte

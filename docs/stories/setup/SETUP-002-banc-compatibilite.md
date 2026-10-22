@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SETUP-002 : Banc de compatibilité contre Strapi 5.59
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DOC-002 : Draft & Publish
 
 ## Contexte

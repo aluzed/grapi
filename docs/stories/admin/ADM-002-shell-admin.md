@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-002 : Shell admin : connexion, navigation, profil, page d'accueil
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`.

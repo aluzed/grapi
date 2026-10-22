@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # MEDIA-004 : Provider S3 (R2, MinIO, privé, URLs signées)
 
 ## Contexte

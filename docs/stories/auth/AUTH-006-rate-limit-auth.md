@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-006 : Rate limiting des routes d'authentification
 
 ## Contexte

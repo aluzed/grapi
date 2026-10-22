@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-006 : Sentry
 
 ## Contexte

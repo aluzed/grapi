@@ -176,6 +176,16 @@ compat/               banc de compatibilité contre Strapi de référence
 
 Chaque ticket suit ce format : **Contexte**, **Objectif**, **Périmètre**, **Hors périmètre**, **Critères d'acceptation**, **Notes techniques**, **Référence Strapi** (chemins dans le clone, relatifs à `strapi/packages/`), **Dépendances**, **Fichiers**.
 
+Chaque ticket commence par un frontmatter qui porte son statut :
+
+```yaml
+---
+status: todo
+---
+```
+
+Valeurs possibles : `todo`, `in-progress`, `done`. Le statut change dans le même commit que le code qui le justifie : un ticket passe à `in-progress` au premier commit qui le touche, et à `done` quand tous ses critères d'acceptation sont remplis. `make check-stories` (lancé en CI) refuse un ticket sans statut valide.
+
 ## Règles transverses
 
 - Pas d'em-dash (U+2014), nulle part.

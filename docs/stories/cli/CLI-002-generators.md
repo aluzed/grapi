@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-002 : Générateurs (`generate api|content-type|controller|policy|middleware|migration`)
 
 ## Contexte

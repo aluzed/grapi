@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-006 : Custom fields
 
 ## Contexte

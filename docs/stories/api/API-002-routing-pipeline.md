@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # API-002 : Routage déclaratif et pipeline par route
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # DB-001 : Dialectes, pool, transactions portées par `context`
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-004 : Layout de projet et chargement
 
 ## Contexte

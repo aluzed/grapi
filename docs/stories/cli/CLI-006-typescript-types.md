@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-006 : Génération des types TypeScript pour les clients
 
 ## Contexte

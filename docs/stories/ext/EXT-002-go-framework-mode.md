@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-002 : Mode framework Go (grapi comme bibliothèque)
 
 ## Contexte

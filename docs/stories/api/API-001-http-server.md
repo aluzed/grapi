@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # API-001 : Serveur HTTP, contexte de requête, /_health, arrêt propre
 
 ## Contexte

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-001 : Moteur de permissions (actions, sujets, champs, locales, conditions traduites en filtres)
 
 ## Contexte

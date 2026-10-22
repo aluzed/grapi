@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-004 : Migrations utilisateur et internes
 
 ## Contexte

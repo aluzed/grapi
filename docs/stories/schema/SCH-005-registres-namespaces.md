@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-005 : Registres namespacés
 
 ## Contexte

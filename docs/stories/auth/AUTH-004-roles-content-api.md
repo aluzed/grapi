@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-004 : Rôles et permissions du Content API (Public, Authenticated, rôles custom)
 
 ## Contexte

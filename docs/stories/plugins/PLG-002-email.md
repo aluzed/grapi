@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-002 : E-mail : service, templates, providers
 
 ## Contexte

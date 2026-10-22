@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-010 : Core store (`strapi_core_store_settings`)
 
 ## Contexte

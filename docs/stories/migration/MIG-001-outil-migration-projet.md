@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # MIG-001 : Outil de migration d'un projet Strapi
 
 ## Contexte

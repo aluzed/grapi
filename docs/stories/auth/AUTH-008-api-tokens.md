@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # AUTH-008 : API tokens et admin tokens
 
 ## Contexte

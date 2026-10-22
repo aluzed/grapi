@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-003 : Content Manager : vue liste
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.

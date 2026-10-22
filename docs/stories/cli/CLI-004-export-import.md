@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-004 : Export et import (format d'archive Strapi)
 
 ## Contexte

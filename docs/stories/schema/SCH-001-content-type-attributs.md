@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-001 : Modèle de content type et attributs
 
 ## Contexte

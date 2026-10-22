@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-006 : Relations : stockage, populate, connect/disconnect/set, positions, ordre fractionnaire
 
 ## Contexte

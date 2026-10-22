@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # CLI-005 : Transfer distant (WebSocket push/pull)
 
 ## Contexte

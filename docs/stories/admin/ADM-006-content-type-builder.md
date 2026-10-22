@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-006 : Content-Type Builder (écriture des schémas, rechargement à chaud, migrations de renommage)
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # API-003 : Parseur de query string compatible qs
 
 ## Contexte

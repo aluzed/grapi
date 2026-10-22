@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-007 : Logs (pas de télémétrie)
 
 ## Contexte

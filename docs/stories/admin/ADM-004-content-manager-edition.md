@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-004 : Content Manager : vue édition (champs, composants, zones dynamiques, relations, D&P, i18n)
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.

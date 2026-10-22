@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-001 : Décision et spike : SPA Strapi ou admin maison (D1)
 
 ## Contexte

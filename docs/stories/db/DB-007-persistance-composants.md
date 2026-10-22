@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-007 : Persistance des composants et zones dynamiques
 
 ## Contexte

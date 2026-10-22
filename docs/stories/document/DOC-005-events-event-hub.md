@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DOC-005 : Événements entry.* et event hub
 
 ## Contexte

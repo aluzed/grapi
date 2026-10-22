@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # SCH-002 : Composants et zones dynamiques (schéma)
 
 ## Contexte

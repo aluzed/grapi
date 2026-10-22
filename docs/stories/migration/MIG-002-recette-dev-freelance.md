@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # MIG-002 : Recette dev-freelance
 
 ## Contexte

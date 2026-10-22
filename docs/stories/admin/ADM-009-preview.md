@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-009 : Preview
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`. Le code preview de Strapi est sous licence Enterprise (D6) : ce ticket se spécifie uniquement à partir de la documentation publique.

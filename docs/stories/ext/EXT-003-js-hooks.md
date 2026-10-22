@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-003 : Hooks JS/TS embarqués (esbuild + goja)
 
 ## Contexte

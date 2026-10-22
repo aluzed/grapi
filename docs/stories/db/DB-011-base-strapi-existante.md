@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-011 : Ouverture d'une base Strapi 5 existante sans migration
 
 ## Contexte

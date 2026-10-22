@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # API-007 : Classes d'erreur et format d'erreur
 
 ## Contexte

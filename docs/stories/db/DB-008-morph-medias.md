@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-008 : Relations polymorphes (morph) et champs média
 
 ## Contexte

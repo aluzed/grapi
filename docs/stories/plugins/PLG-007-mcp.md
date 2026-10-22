@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-007 : Serveur MCP
 
 ## Contexte

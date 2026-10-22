@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # MEDIA-001 : Modèle File/Folder et API d'upload (Content API + admin)
 
 ## Contexte

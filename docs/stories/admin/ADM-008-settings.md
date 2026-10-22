@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # ADM-008 : Settings (webhooks, tokens, utilisateurs, rôles et RBAC, locales, users-permissions, e-mail, projet)
 
 > Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.

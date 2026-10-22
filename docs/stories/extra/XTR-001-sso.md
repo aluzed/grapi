@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # XTR-001 : SSO (OIDC, SAML)
 
 > Clean-room (`SETUP-003`, décision D6) : ce ticket se spécifie uniquement à partir de la documentation publique de Strapi et du comportement observable. Aucun fichier source Strapi sous licence Enterprise ne doit être ouvert, y compris pour en lire le nom.

@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # DB-003 : Synchronisation du schéma au démarrage
 
 ## Contexte

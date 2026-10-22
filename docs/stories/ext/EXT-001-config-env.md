@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # EXT-001 : Configuration déclarative et env()
 
 ## Contexte

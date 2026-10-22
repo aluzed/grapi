@@ -1,3 +1,7 @@
+---
+status: todo
+---
+
 # PLG-005 : OpenAPI et documentation (Swagger UI)
 
 ## Contexte
