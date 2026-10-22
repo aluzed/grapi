@@ -1,0 +1,36 @@
+fixture: components
+seed:
+  - { uid: api::author.author, data: { name: "Ana" } }
+  - { uid: api::author.author, data: { name: "bob" } }
+  - { uid: shared.seo, data: { metaTitle: "Home page", metaDescription: "Welcome", noIndex: false } }
+  - { uid: shared.seo, data: { metaTitle: "about us", noIndex: true } }
+  - { uid: shared.seo, data: { metaTitle: null } }
+  - { uid: shared.link, data: { label: "Docs", url: "/docs", author: 1 } }
+  - { uid: shared.link, data: { label: "blog", url: "/blog", author: 2 } }
+  - { uid: shared.link, data: { label: "Contact", url: "/contact" } }
+  - { uid: layout.cell, data: { text: "cell one", authors: [1] } }
+  - { uid: layout.cell, data: { text: "cell two", authors: [1, 2] } }
+  - { uid: layout.column, data: { width: 6, cell: 1 } }
+  - { uid: layout.column, data: { width: 12, cell: 2 } }
+  - { uid: layout.section, data: { heading: "Intro", columns: [1, 2] } }
+  - { uid: api::page.page, data: { title: "Home", seo: 1, links: [1, 2], layout: 1 } }
+  - { uid: api::page.page, data: { title: "About", seo: 2, links: [3] } }
+  - { uid: api::page.page, data: { title: "Empty", seo: 3 } }
+  - { uid: api::page.page, data: { title: "Bare" } }
+cases:
+  - { name: pages-all, uid: api::page.page, params: { orderBy: [{ id: asc }] } }
+  - { name: by-seo-title, uid: api::page.page, params: { where: { seo: { metaTitle: { $containsi: "page" } } } } }
+  - { name: by-seo-bool, uid: api::page.page, params: { where: { seo: { noIndex: true } } } }
+  - { name: by-seo-null, uid: api::page.page, params: { where: { seo: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: by-link-label, uid: api::page.page, params: { where: { links: { label: { $in: ["Docs", "Contact"] } } }, orderBy: [{ id: asc }] } }
+  - { name: by-link-author, uid: api::page.page, params: { where: { links: { author: { name: "bob" } } } } }
+  - { name: by-nested-column-width, uid: api::page.page, params: { where: { layout: { columns: { width: { $gte: 12 } } } } } }
+  - { name: by-nested-cell-authors, uid: api::page.page, params: { where: { layout: { columns: { cell: { authors: { name: "Ana" } } } } } } }
+  - { name: count-by-links, uid: api::page.page, op: count, params: { where: { links: { url: { $startsWith: "/" } } } } }
+  - { name: sort-by-seo-title, uid: api::page.page, params: { orderBy: [{ seo: { metaTitle: asc } }] } }
+  - { name: sort-by-seo-title-desc, uid: api::page.page, params: { orderBy: [{ seo: { metaTitle: desc } }, { id: asc }] } }
+  - { name: sort-by-links-label, uid: api::page.page, params: { orderBy: [{ links: { label: asc } }] } }
+  - { name: seo-components-direct, uid: shared.seo, params: { where: { metaTitle: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: links-by-author, uid: shared.link, params: { where: { author: { name: { $eqi: "ANA" } } } } }
+  - { name: error-filter-dynamic-zone, uid: api::page.page, params: { where: { body: { id: 1 } } } }
+  - { name: error-sort-dynamic-zone, uid: api::page.page, params: { orderBy: [{ body: asc }] } }

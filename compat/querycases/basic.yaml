@@ -1,0 +1,106 @@
+fixture: basic
+seed:
+  - uid: api::article.article
+    data: { title: "Été à Paris", slug: "ete", views: 42, bigCounter: "123456789012", rating: 4.5, price: 10.5, releaseDate: "2026-01-15", releaseTime: "14:30:00", scheduledAt: "2026-03-01T10:00:00.000Z", importedAt: "2026-02-01T00:00:00.000Z", featured: true, stage: "draft", meta: { a: 1, tags: ["x", "y"] }, contact: "Alice@Example.com", summary: "100% sure_thing" }
+  - uid: api::article.article
+    data: { title: "été à paris", slug: "ete-2", views: 7, rating: 1.25, price: 99.99, releaseDate: "2025-12-31", featured: false, stage: "review", contact: "bob@example.com", summary: "back\\slash" }
+  - uid: api::article.article
+    data: { title: "Hello World", slug: "hello", views: 42, rating: 3, featured: true, stage: "published", scheduledAt: "2026-01-01T00:00:00.000Z", summary: "plain" }
+  - uid: api::article.article
+    data: { title: "hello world", slug: "hello-2", views: 0, featured: false, stage: "draft" }
+  - uid: api::article.article
+    data: { title: "Zebra 42", slug: "zebra", views: 1000, rating: 0.5, price: 0, releaseDate: "2026-06-30", releaseTime: "08:05:09.120", stage: "review" }
+  - uid: api::article.article
+    data: { title: null, slug: "untitled", views: null, featured: null }
+  - uid: api::article.article
+    data: { title: "_underscore", slug: "under", views: 5, summary: "50%" }
+  - uid: api::tag.tag
+    data: { name: "go", weight: 2 }
+  - uid: api::tag.tag
+    data: { name: "Go", weight: 10 }
+  - uid: api::tag.tag
+    data: { name: "rust", weight: null }
+cases:
+  - { name: all, uid: api::article.article, params: { orderBy: [{ id: asc }] } }
+  - { name: eq, uid: api::article.article, params: { where: { title: { $eq: "Hello World" } } } }
+  - { name: eq-shortcut, uid: api::article.article, params: { where: { title: "Hello World" } } }
+  - { name: eq-null, uid: api::article.article, params: { where: { title: { $eq: null } } } }
+  - { name: eq-null-shortcut, uid: api::article.article, params: { where: { title: null } } }
+  - { name: eq-array-is-or, uid: api::article.article, params: { where: { views: { $eq: [42, 7] } }, orderBy: [{ id: asc }] } }
+  - { name: in-shortcut, uid: api::article.article, params: { where: { views: [0, 5] }, orderBy: [{ id: asc }] } }
+  - { name: ne, uid: api::article.article, params: { where: { stage: { $ne: "draft" } }, orderBy: [{ id: asc }] } }
+  - { name: ne-null, uid: api::article.article, params: { where: { title: { $ne: null } }, orderBy: [{ id: asc }] } }
+  - { name: eqi-ascii, uid: api::article.article, params: { where: { title: { $eqi: "HELLO WORLD" } }, orderBy: [{ id: asc }] } }
+  - { name: eqi-accents, uid: api::article.article, params: { where: { title: { $eqi: "ÉTÉ À PARIS" } }, orderBy: [{ id: asc }] } }
+  - { name: nei, uid: api::article.article, params: { where: { title: { $nei: "hello world" } }, orderBy: [{ id: asc }] } }
+  - { name: in, uid: api::article.article, params: { where: { stage: { $in: ["draft", "review"] } }, orderBy: [{ id: asc }] } }
+  - { name: in-empty, uid: api::article.article, params: { where: { stage: { $in: [] } } } }
+  - { name: notin, uid: api::article.article, params: { where: { stage: { $notIn: ["draft"] } }, orderBy: [{ id: asc }] } }
+  - { name: notin-empty, uid: api::article.article, params: { where: { stage: { $notIn: [] } }, orderBy: [{ id: asc }] } }
+  - { name: gt-int, uid: api::article.article, params: { where: { views: { $gt: 7 } }, orderBy: [{ id: asc }] } }
+  - { name: gte-int-string, uid: api::article.article, params: { where: { views: { $gte: "42" } }, orderBy: [{ id: asc }] } }
+  - { name: lt-float, uid: api::article.article, params: { where: { rating: { $lt: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: lte-decimal, uid: api::article.article, params: { where: { price: { $lte: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: between-int, uid: api::article.article, params: { where: { views: { $between: [5, 42] } }, orderBy: [{ id: asc }] } }
+  - { name: date-gt, uid: api::article.article, params: { where: { releaseDate: { $gt: "2026-01-01" } }, orderBy: [{ id: asc }] } }
+  - { name: date-eq, uid: api::article.article, params: { where: { releaseDate: "2026-01-15" } } }
+  - { name: datetime-gte, uid: api::article.article, params: { where: { scheduledAt: { $gte: "2026-02-01T00:00:00.000Z" } } } }
+  - { name: datetime-lt-date-only, uid: api::article.article, params: { where: { scheduledAt: { $lt: "2026-02-01" } } } }
+  - { name: timestamp-gt, uid: api::article.article, params: { where: { importedAt: { $gt: "2026-01-01T00:00:00Z" } } } }
+  - { name: time-gt, uid: api::article.article, params: { where: { releaseTime: { $gt: "09:00:00" } } } }
+  - { name: bool-true, uid: api::article.article, params: { where: { featured: true }, orderBy: [{ id: asc }] } }
+  - { name: bool-string, uid: api::article.article, params: { where: { featured: "false" }, orderBy: [{ id: asc }] } }
+  - { name: bool-one, uid: api::article.article, params: { where: { featured: { $eq: 1 } }, orderBy: [{ id: asc }] } }
+  - { name: null-true, uid: api::article.article, params: { where: { rating: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: null-false, uid: api::article.article, params: { where: { rating: { $null: false } }, orderBy: [{ id: asc }] } }
+  - { name: null-string-false-is-truthy, uid: api::article.article, params: { where: { rating: { $null: "false" } }, orderBy: [{ id: asc }] } }
+  - { name: notnull, uid: api::article.article, params: { where: { price: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: contains, uid: api::article.article, params: { where: { title: { $contains: "World" } }, orderBy: [{ id: asc }] } }
+  - { name: containsi, uid: api::article.article, params: { where: { title: { $containsi: "world" } }, orderBy: [{ id: asc }] } }
+  - { name: containsi-accents, uid: api::article.article, params: { where: { title: { $containsi: "ÉTÉ" } }, orderBy: [{ id: asc }] } }
+  - { name: notcontains, uid: api::article.article, params: { where: { title: { $notContains: "World" } }, orderBy: [{ id: asc }] } }
+  - { name: notcontainsi, uid: api::article.article, params: { where: { title: { $notContainsi: "world" } }, orderBy: [{ id: asc }] } }
+  - { name: contains-percent, uid: api::article.article, params: { where: { summary: { $contains: "%" } }, orderBy: [{ id: asc }] } }
+  - { name: contains-underscore, uid: api::article.article, params: { where: { summary: { $contains: "_" } }, orderBy: [{ id: asc }] } }
+  - { name: contains-backslash, uid: api::article.article, params: { where: { summary: { $contains: "\\" } }, orderBy: [{ id: asc }] } }
+  - { name: startswith, uid: api::article.article, params: { where: { title: { $startsWith: "_" } } } }
+  - { name: startswithi, uid: api::article.article, params: { where: { title: { $startsWithi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: endswith, uid: api::article.article, params: { where: { title: { $endsWith: "42" } } } }
+  - { name: endswithi, uid: api::article.article, params: { where: { title: { $endsWithi: "WORLD" } }, orderBy: [{ id: asc }] } }
+  - { name: contains-array-is-or, uid: api::article.article, params: { where: { title: { $containsi: ["zebra", "paris"] } }, orderBy: [{ id: asc }] } }
+  - { name: contains-number, uid: api::article.article, params: { where: { title: { $contains: 42 } } } }
+  - { name: or, uid: api::article.article, params: { where: { $or: [{ views: 0 }, { stage: "review" }] }, orderBy: [{ id: asc }] } }
+  - { name: and, uid: api::article.article, params: { where: { $and: [{ featured: true }, { views: 42 }] }, orderBy: [{ id: asc }] } }
+  - { name: not-root, uid: api::article.article, params: { where: { $not: { stage: "draft" } }, orderBy: [{ id: asc }] } }
+  - { name: not-attribute, uid: api::article.article, params: { where: { views: { $not: { $gt: 10 } } }, orderBy: [{ id: asc }] } }
+  - { name: nested-groups, uid: api::article.article, params: { where: { $or: [{ $and: [{ featured: true }, { views: { $lt: 100 } }] }, { title: { $null: true } }] }, orderBy: [{ id: asc }] } }
+  - { name: two-operators, uid: api::article.article, params: { where: { views: { $gt: 1, $lt: 100 } }, orderBy: [{ id: asc }] } }
+  - { name: where-array, uid: api::article.article, params: { where: [{ featured: true }, { stage: "draft" }] } }
+  - { name: search-text, uid: api::article.article, params: { _q: "world", orderBy: [{ id: asc }] } }
+  - { name: search-number, uid: api::article.article, params: { _q: "42", orderBy: [{ id: asc }] } }
+  - { name: search-percent, uid: api::article.article, params: { _q: "%", orderBy: [{ id: asc }] } }
+  - { name: search-accents, uid: api::article.article, params: { _q: "été", orderBy: [{ id: asc }] } }
+  - { name: search-with-filter, uid: api::article.article, params: { _q: "hello", where: { featured: true } } }
+  - { name: sort-int-desc, uid: api::article.article, params: { orderBy: [{ views: desc }, { id: asc }] } }
+  - { name: sort-nulls-asc, uid: api::article.article, params: { orderBy: [{ rating: asc }, { id: asc }] } }
+  - { name: sort-string, uid: api::article.article, params: { orderBy: "title" } }
+  - { name: sort-multi, uid: api::article.article, params: { orderBy: [{ featured: desc }, { views: asc }, { id: desc }] } }
+  - { name: page-1, uid: api::article.article, params: { orderBy: [{ views: desc }], limit: 2 } }
+  - { name: page-2, uid: api::article.article, params: { orderBy: [{ views: desc }], limit: 2, offset: 2 } }
+  - { name: offset-only, uid: api::article.article, params: { orderBy: [{ id: asc }], offset: 5 } }
+  - { name: limit-zero, uid: api::article.article, params: { orderBy: [{ id: asc }], limit: 0 } }
+  - { name: select, uid: api::article.article, params: { select: ["title", "views"], orderBy: [{ id: asc }] } }
+  - { name: count-all, uid: api::article.article, op: count }
+  - { name: count-filtered, uid: api::article.article, op: count, params: { where: { featured: true } } }
+  - { name: count-search, uid: api::article.article, op: count, params: { _q: "hello" } }
+  - { name: findone, uid: api::article.article, op: findOne, params: { where: { slug: "zebra" } } }
+  - { name: findone-sorted, uid: api::article.article, op: findOne, params: { orderBy: [{ views: desc }] } }
+  - { name: findone-none, uid: api::article.article, op: findOne, params: { where: { slug: "nope" } } }
+  - { name: tags-all, uid: api::tag.tag, params: { orderBy: [{ weight: desc }, { id: asc }] } }
+  - { name: tags-eqi, uid: api::tag.tag, params: { where: { name: { $eqi: "GO" } } } }
+  - { name: error-unknown-operator, uid: api::article.article, params: { where: { title: { $like: "x" } } } }
+  - { name: error-root-operator, uid: api::article.article, params: { where: { $eq: 1 } } }
+  - { name: error-and-not-array, uid: api::article.article, params: { where: { $and: { views: 1 } } } }
+  - { name: error-bad-number, uid: api::article.article, params: { where: { views: { $gt: "abc" } } } }
+  - { name: error-bad-date, uid: api::article.article, params: { where: { releaseDate: { $eq: "15/01/2026" } } } }
+  - { name: error-sort-unknown, uid: api::article.article, params: { orderBy: [{ nope: asc }] } }

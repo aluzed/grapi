@@ -121,6 +121,30 @@ roundtrip)
   b_url=http://127.0.0.1:$(port_of b)
   b_tokens=$work/b/tokens.json
   ;;
+query)
+  # Strapi seeds the database and runs the cases through db.query(uid), then
+  # grapi's query engine runs them on the same database.
+  start_db a
+  cases=$work/cases.json
+  "$here/bin/compat" query-cases -in "$here/querycases/$fixture.yaml" -out "$cases"
+  set -- -e DATABASE_CLIENT=sqlite
+  grapi_db="$work/a/data.db"
+  if [ "$db" = postgres ]; then
+    set -- -e DATABASE_CLIENT=postgres -e DATABASE_HOST="$run_id-a-pg" -e DATABASE_NAME=strapi \
+      -e DATABASE_USERNAME=strapi -e DATABASE_PASSWORD=strapi
+    grapi_db="postgres://strapi:strapi@127.0.0.1:$(docker port "$run_id-a-pg" 5432/tcp | head -1 | sed 's/.*://')/strapi?sslmode=disable"
+  fi
+  cp "$cases" "$work/a/cases.json"
+  docker run --rm --label "grapi-compat=$run_id" --network "$run_id" "$@" \
+    -v "$here/fixtures/$fixture:/fixture:ro" -v "$work/a:/data" -v "$here/tools:/tools:ro" \
+    --entrypoint sh "$image" -c 'rm -rf /app/src && cp -r /fixture/src /app/src && cp /app/bootstrap/index.js /app/src/index.js && node /app/bootstrap/scaffold.js && node /tools/run-queries.js /data/cases.json /data/strapi.json'
+  "$here/bin/compat" query -fixture "$here/fixtures/$fixture" -client "$db" -db "$grapi_db" -cases "$cases" -out "$work/grapi.json"
+  mkdir -p "$here/report"
+  report="$here/report/$(date +%Y-%m-%d)-$fixture-query-$db.md"
+  "$here/bin/compat" query-diff -a "$work/a/strapi.json" -b "$work/grapi.json" -report "$report" \
+    -title "Query compat $fixture ($db, Strapi $STRAPI_VERSION)"
+  exit $?
+  ;;
 grapi)
   echo "error: grapi mode needs the grapi image (not built yet)" >&2
   exit 2

@@ -3,6 +3,7 @@
 //	compat run  -corpus compat/corpus -fixture basic -url http://127.0.0.1:41337 -tokens tokens.json -out out/ref
 //	compat diff -a out/ref -b out/grapi -report report.md
 //	compat schema-sync -fixture compat/fixtures/basic -client sqlite -db data.db
+//	compat query -fixture compat/fixtures/basic -client sqlite -db data.db -cases cases.json -out grapi.json
 package main
 
 import (
@@ -18,7 +19,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: compat run|diff|schema-sync [flags]")
+		fmt.Fprintln(os.Stderr, "usage: compat run|diff|schema-sync|query-cases|query|query-diff [flags]")
 		os.Exit(2)
 	}
 	var err error
@@ -29,6 +30,12 @@ func main() {
 		err = compare(os.Args[2:])
 	case "schema-sync":
 		err = schemaSync(os.Args[2:])
+	case "query-cases":
+		err = queryCasesCmd(os.Args[2:])
+	case "query":
+		err = queryCmd(os.Args[2:])
+	case "query-diff":
+		err = queryDiffCmd(os.Args[2:])
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}

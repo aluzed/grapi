@@ -1,0 +1,64 @@
+fixture: relations
+seed:
+  - { uid: api::profile.profile, data: { bio: "Writes about Go" } }
+  - { uid: api::profile.profile, data: { bio: "rust and more" } }
+  - { uid: api::writer.writer, data: { name: "Ana", profile: 1 } }
+  - { uid: api::writer.writer, data: { name: "bob", profile: 2 } }
+  - { uid: api::writer.writer, data: { name: "Émile" } }
+  - { uid: api::writer.writer, data: { name: null } }
+  - { uid: api::category.category, data: { name: "News" } }
+  - { uid: api::category.category, data: { name: "dev" } }
+  - { uid: api::tag.tag, data: { name: "go" } }
+  - { uid: api::tag.tag, data: { name: "rust" } }
+  - { uid: api::tag.tag, data: { name: "Zig" } }
+  - { uid: api::post.post, data: { title: "Alpha", rank: 3, writer: 1, category: 1, tags: [1, 2], featuredTag: 1 } }
+  - { uid: api::post.post, data: { title: "beta", rank: 1, writer: 2, category: 2, tags: [2], parent: 1 } }
+  - { uid: api::post.post, data: { title: "Gamma", rank: 2, writer: 1, parent: 1, related: [1, 2] } }
+  - { uid: api::post.post, data: { title: "delta", writer: null, category: 1, tags: [1, 3], parent: 2 } }
+  - { uid: api::post.post, data: { title: "Épsilon", rank: 5, writer: 3, category: 2, tags: [3], featuredTag: 3 } }
+  - { uid: api::post.post, data: { title: "orphan", rank: 4 } }
+cases:
+  - { name: posts-all, uid: api::post.post, params: { orderBy: [{ id: asc }] } }
+  - { name: by-writer-name, uid: api::post.post, params: { where: { writer: { name: "Ana" } }, orderBy: [{ id: asc }] } }
+  - { name: by-writer-id, uid: api::post.post, params: { where: { writer: 1 }, orderBy: [{ id: asc }] } }
+  - { name: by-writer-in, uid: api::post.post, params: { where: { writer: { $in: [2, 3] } }, orderBy: [{ id: asc }] } }
+  - { name: by-writer-null, uid: api::post.post, params: { where: { writer: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: by-writer-notnull, uid: api::post.post, params: { where: { writer: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: by-writer-eqi, uid: api::post.post, params: { where: { writer: { name: { $eqi: "BOB" } } } } }
+  - { name: by-tag-many, uid: api::post.post, params: { where: { tags: { name: { $in: ["go", "rust"] } } }, orderBy: [{ id: asc }] } }
+  - { name: by-tag-unsorted-distinct, uid: api::post.post, params: { where: { tags: { name: { $in: ["go", "rust", "Zig"] } } } } }
+  - { name: by-tag-and-group, uid: api::post.post, params: { where: { tags: { $and: [{ name: { $startsWith: "r" } }, { id: { $gt: 1 } }] } }, orderBy: [{ id: asc }] } }
+  - { name: by-two-relations-or, uid: api::post.post, params: { where: { $or: [{ category: { name: "dev" } }, { tags: { name: "Zig" } }] }, orderBy: [{ id: asc }] } }
+  - { name: by-parent, uid: api::post.post, params: { where: { parent: { title: "Alpha" } }, orderBy: [{ id: asc }] } }
+  - { name: by-children, uid: api::post.post, params: { where: { children: { title: { $containsi: "a" } } }, orderBy: [{ id: asc }] } }
+  - { name: by-related-unidirectional, uid: api::post.post, params: { where: { related: { title: "beta" } } } }
+  - { name: by-featured-tag, uid: api::post.post, params: { where: { featuredTag: { name: "Zig" } } } }
+  - { name: by-nested-two-levels, uid: api::post.post, params: { where: { writer: { profile: { bio: { $containsi: "go" } } } }, orderBy: [{ id: asc }] } }
+  - { name: tags-by-posts-inverse, uid: api::tag.tag, params: { where: { posts: { title: { $startsWithi: "a" } } }, orderBy: [{ id: asc }] } }
+  - { name: writers-by-posts-inverse, uid: api::writer.writer, params: { where: { posts: { rank: { $gte: 3 } } }, orderBy: [{ id: asc }] } }
+  - { name: writers-by-profile, uid: api::writer.writer, params: { where: { profile: { bio: { $contains: "rust" } } } } }
+  - { name: profile-by-writer-inverse, uid: api::profile.profile, params: { where: { writer: { name: "Ana" } } } }
+  - { name: category-by-posts, uid: api::category.category, params: { where: { posts: { rank: { $null: true } } } } }
+  - { name: writers-by-morph-many, uid: api::writer.writer, params: { where: { mentionedIn: { title: "Alpha" } } } }
+  - { name: count-by-tags, uid: api::post.post, op: count, params: { where: { tags: { name: { $in: ["go", "rust"] } } } } }
+  - { name: count-by-writer, uid: api::post.post, op: count, params: { where: { writer: { name: { $notNull: true } } } } }
+  - { name: sort-by-writer, uid: api::post.post, params: { orderBy: [{ writer: { name: asc } }] } }
+  - { name: sort-by-writer-desc, uid: api::post.post, params: { orderBy: [{ writer: { name: desc } }, { title: asc }] } }
+  - { name: sort-by-category-paginated, uid: api::post.post, params: { orderBy: [{ category: { name: asc } }], limit: 2, offset: 1 } }
+  - { name: sort-by-tags-many, uid: api::post.post, params: { orderBy: [{ tags: { name: asc } }] } }
+  - { name: sort-tags-by-posts-rank, uid: api::tag.tag, params: { orderBy: [{ posts: { rank: desc } }] } }
+  - { name: sort-tags-by-posts-rank-asc, uid: api::tag.tag, params: { orderBy: [{ posts: { rank: asc } }] } }
+  - { name: sort-writers-by-posts-title, uid: api::writer.writer, params: { orderBy: [{ posts: { title: desc } }], limit: 3 } }
+  - { name: sort-deep-with-filter, uid: api::post.post, params: { where: { tags: { name: { $ne: "rust" } } }, orderBy: [{ writer: { name: asc } }] } }
+  - { name: sort-two-levels, uid: api::post.post, params: { orderBy: [{ writer: { profile: { bio: asc } } }, { id: asc }] } }
+  - { name: findone-deep-sort, uid: api::post.post, op: findOne, params: { orderBy: [{ writer: { name: desc } }] } }
+  - { name: filter-and-sort-same-relation, uid: api::post.post, params: { where: { category: { name: { $notNull: true } } }, orderBy: [{ category: { name: desc } }, { id: asc }] } }
+  - { name: paginate-with-join, uid: api::post.post, params: { where: { tags: { id: { $gt: 0 } } }, orderBy: [{ title: asc }], limit: 2 } }
+  - { name: search-with-join, uid: api::post.post, params: { _q: "a", where: { writer: { name: { $notNull: true } } }, orderBy: [{ id: asc }] } }
+  - { name: by-created-by, uid: api::post.post, params: { where: { createdBy: { firstname: "x" } } } }
+  - { name: error-filter-morph-to-one, uid: api::comment.comment, params: { where: { subject: { id: 1 } } } }
+  - { name: error-filter-morph-to-many, uid: api::post.post, params: { where: { mentions: { id: 1 } } } }
+  - { name: error-mixed-keys, uid: api::post.post, params: { where: { writer: { $eq: 1, name: "Ana" } } } }
+  - { name: error-two-operators, uid: api::post.post, params: { where: { writer: { $eq: 1, $ne: 2 } } } }
+  - { name: error-not-object-on-relation, uid: api::post.post, params: { where: { writer: { $not: { name: "Ana" } } } } }
+  - { name: not-scalar-on-relation, uid: api::post.post, params: { where: { writer: { $not: 1 } }, orderBy: [{ id: asc }] } }
