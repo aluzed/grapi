@@ -37,6 +37,7 @@ On a database created by Strapi 5, run `db:sync --dry-run` and `db:check` first,
 ```sh
 make build             # dist/grapi
 make test              # unit tests
+make race              # unit tests with the race detector
 make test-integration  # Postgres (GRAPI_TEST_PG_DSN) and SQLite
 make lint              # golangci-lint + em-dash and story status checks
 make ci                # everything CI would run (GitHub Actions is off): lint, licenses, tests, Postgres on the homelab

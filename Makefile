@@ -4,7 +4,7 @@ GOBIN := $(shell go env GOPATH)/bin
 GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
 GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: docker ci build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: docker ci build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 # What GitHub Actions used to run, locally (Actions is off on the repo).
 ci: lint licenses test test-integration-homelab
@@ -14,6 +14,9 @@ build:
 
 test:
 	go test ./...
+
+race:
+	go test -race ./...
 
 # Needs GRAPI_TEST_PG_DSN for Postgres; SQLite runs in a temp dir. One package at
 # a time: the Postgres tests reset the shared database.
