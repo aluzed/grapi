@@ -1,0 +1,107 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "bigCounter": null,
+        "body": null,
+        "code": null,
+        "contact": null,
+        "content": null,
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc2",
+        "featured": false,
+        "id": "#id2",
+        "importedAt": null,
+        "meta": null,
+        "price": null,
+        "publishedAt": "\u003cts\u003e",
+        "rating": null,
+        "releaseDate": null,
+        "releaseTime": null,
+        "scheduledAt": null,
+        "slug": null,
+        "stage": "idea",
+        "summary": null,
+        "title": "Defaults only",
+        "updatedAt": "\u003cts\u003e",
+        "views": 0
+      },
+      {
+        "bigCounter": "9007199254740992",
+        "body": "# Title\n\nSome **markdown**.",
+        "code": "ABC-001",
+        "contact": "hello@example.com",
+        "content": [
+          {
+            "children": [
+              {
+                "text": "Blocks content",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          }
+        ],
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "featured": true,
+        "id": "#id1",
+        "importedAt": null,
+        "meta": {
+          "nested": {
+            "ok": true
+          },
+          "tags": [
+            "a",
+            "b"
+          ]
+        },
+        "price": 19.99,
+        "publishedAt": "\u003cts\u003e",
+        "rating": 4.5,
+        "releaseDate": "2026-10-22",
+        "releaseTime": "14:30:00.000",
+        "scheduledAt": "2026-10-22T14:30:00.000Z",
+        "slug": null,
+        "stage": "writing",
+        "summary": "First article",
+        "title": "Hello World",
+        "updatedAt": "\u003cts\u003e",
+        "views": 10
+      },
+      {
+        "bigCounter": null,
+        "body": null,
+        "code": "XYZ-123",
+        "contact": null,
+        "content": null,
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc3",
+        "featured": false,
+        "id": "#id3",
+        "importedAt": null,
+        "meta": null,
+        "price": null,
+        "publishedAt": "\u003cts\u003e",
+        "rating": 1.5,
+        "releaseDate": null,
+        "releaseTime": null,
+        "scheduledAt": null,
+        "slug": "custom-slug",
+        "stage": "idea",
+        "summary": null,
+        "title": "Third one",
+        "updatedAt": "\u003cts\u003e",
+        "views": 3
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageSize": 25
+      }
+    }
+  }
+}

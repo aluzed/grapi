@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc4",
+        "id": "#id4",
+        "name": "go",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e",
+        "weight": 5
+      },
+      {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc5",
+        "id": "#id1",
+        "name": "strapi",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e",
+        "weight": 1
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

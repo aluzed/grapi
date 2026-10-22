@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "articles",
+  "info": { "singularName": "article", "pluralName": "articles", "displayName": "Article" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true, "maxLength": 120 },
+    "slug": { "type": "uid", "targetField": "title" },
+    "summary": { "type": "text" },
+    "body": { "type": "richtext" },
+    "content": { "type": "blocks" },
+    "contact": { "type": "email" },
+    "views": { "type": "integer", "default": 0, "min": 0 },
+    "bigCounter": { "type": "biginteger" },
+    "rating": { "type": "float" },
+    "price": { "type": "decimal" },
+    "releaseDate": { "type": "date" },
+    "releaseTime": { "type": "time" },
+    "scheduledAt": { "type": "datetime" },
+    "importedAt": { "type": "timestamp" },
+    "featured": { "type": "boolean", "default": false },
+    "meta": { "type": "json" },
+    "stage": { "type": "enumeration", "enum": ["idea", "writing", "review", "done"], "default": "idea" },
+    "internalNote": { "type": "text", "private": true },
+    "code": { "type": "string", "unique": true, "regex": "^[A-Z]{3}-[0-9]{3}$" }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "grapi-compat-reference",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start": "strapi start"
+  },
+  "dependencies": {
+    "@strapi/strapi": "5.59.0",
+    "@strapi/plugin-users-permissions": "5.59.0",
+    "better-sqlite3": "12.4.1",
+    "pg": "8.16.3"
+  },
+  "engines": {
+    "node": ">=20.0.0 <=24.x.x"
+  }
+}

@@ -20,8 +20,13 @@ lint: check-emdash
 check-emdash:
 	./scripts/check-emdash.sh
 
+FIXTURE ?= basic
+MODE ?= self
+DB ?= sqlite
+
+# Runs on the homelab (COMPAT_HOST), never on this machine.
 bench-compat:
-	go run ./compat/cmd/bench
+	./compat/scripts/bench.sh $(FIXTURE) $(MODE) $(DB)
 
 ALLOWED_LICENSES := MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC,MPL-2.0
 

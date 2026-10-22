@@ -1,0 +1,18 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "internalNote",
+        "param": "filters",
+        "path": "internalNote",
+        "source": "query"
+      },
+      "message": "Invalid key internalNote",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

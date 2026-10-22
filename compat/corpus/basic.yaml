@@ -1,0 +1,267 @@
+fixture: basic
+cases:
+  - name: articles-empty
+    path: /api/articles
+  - name: unknown-route
+    path: /api/nothing-here
+  - name: create-public-forbidden
+    method: POST
+    path: /api/articles
+    body: { data: { title: "Nope" } }
+  - name: create-readonly-forbidden
+    method: POST
+    path: /api/articles
+    token: read
+    body: { data: { title: "Nope" } }
+  - name: create-missing-data
+    method: POST
+    path: /api/articles
+    token: full
+    body: { title: "No data wrapper" }
+  - name: create-missing-required
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { summary: "no title" } }
+  - name: create-title-too-long
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" } }
+  - name: create-bad-regex
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "Bad code", code: "abc-1" } }
+  - name: create-bad-enum
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "Bad enum", stage: "published" } }
+  - name: create-bad-email
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "Bad email", contact: "not-an-email" } }
+  - name: create-negative-views
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "Negative", views: -1 } }
+  - name: create-full
+    method: POST
+    path: /api/articles
+    token: full
+    save: { a1: data.documentId }
+    body:
+      data:
+        title: "Hello World"
+        summary: "First article"
+        body: "# Title\n\nSome **markdown**."
+        content:
+          - type: paragraph
+            children: [{ type: text, text: "Blocks content" }]
+        contact: "hello@example.com"
+        views: 10
+        bigCounter: "9007199254740993"
+        rating: 4.5
+        price: 19.99
+        releaseDate: "2026-10-22"
+        releaseTime: "14:30:00"
+        scheduledAt: "2026-10-22T14:30:00.000Z"
+        featured: true
+        meta: { tags: ["a", "b"], nested: { ok: true } }
+        stage: "writing"
+        internalNote: "should never be returned"
+        code: "ABC-001"
+  - name: create-defaults
+    method: POST
+    path: /api/articles
+    token: full
+    save: { a2: data.documentId }
+    body: { data: { title: "Defaults only" } }
+  - name: create-duplicate-unique
+    method: POST
+    path: /api/articles
+    token: full
+    body: { data: { title: "Duplicate code", code: "ABC-001" } }
+  - name: create-explicit-slug
+    method: POST
+    path: /api/articles
+    token: full
+    save: { a3: data.documentId }
+    body: { data: { title: "Third one", slug: "custom-slug", views: 3, rating: 1.5, code: "XYZ-123" } }
+  - name: list-default
+    path: /api/articles
+  - name: list-public
+    path: /api/articles
+    query: "sort=title:asc"
+  - name: find-one
+    path: /api/articles/{{a1}}
+  - name: find-one-unknown
+    path: /api/articles/doesnotexist000000000000
+  - name: find-one-draft
+    path: /api/articles/{{a1}}
+    query: "status=draft"
+  - name: fields-subset
+    path: /api/articles
+    query: "fields[0]=title&fields[1]=views&sort=title:asc"
+  - name: fields-private-ignored
+    path: /api/articles
+    query: "fields[0]=internalNote&sort=title:asc"
+  - name: sort-desc
+    path: /api/articles
+    query: "sort=views:desc"
+  - name: sort-multi
+    path: /api/articles
+    query: "sort[0]=featured:desc&sort[1]=title:asc"
+  - name: sort-unknown-field
+    path: /api/articles
+    query: "sort=nope:asc"
+  - name: filter-eq
+    path: /api/articles
+    query: "filters[title][$eq]=Hello World"
+  - name: filter-eqi
+    path: /api/articles
+    query: "filters[title][$eqi]=hello world"
+  - name: filter-ne
+    path: /api/articles
+    query: "filters[title][$ne]=Hello World&sort=title:asc"
+  - name: filter-gt-lte
+    path: /api/articles
+    query: "filters[views][$gt]=0&filters[views][$lte]=10&sort=views:asc"
+  - name: filter-in
+    path: /api/articles
+    query: "filters[code][$in][0]=ABC-001&filters[code][$in][1]=XYZ-123&sort=code:asc"
+  - name: filter-notin
+    path: /api/articles
+    query: "filters[code][$notIn][0]=ABC-001&sort=title:asc"
+  - name: filter-contains
+    path: /api/articles
+    query: "filters[title][$contains]=one&sort=title:asc"
+  - name: filter-containsi
+    path: /api/articles
+    query: "filters[title][$containsi]=HELLO"
+  - name: filter-notcontainsi
+    path: /api/articles
+    query: "filters[title][$notContainsi]=HELLO&sort=title:asc"
+  - name: filter-startswith-endswith
+    path: /api/articles
+    query: "filters[title][$startsWith]=Hel&filters[title][$endsWith]=rld"
+  - name: filter-null
+    path: /api/articles
+    query: "filters[code][$null]=true"
+  - name: filter-notnull
+    path: /api/articles
+    query: "filters[code][$notNull]=true&sort=code:asc"
+  - name: filter-between
+    path: /api/articles
+    query: "filters[rating][$between][0]=1&filters[rating][$between][1]=2"
+  - name: filter-or
+    path: /api/articles
+    query: "filters[$or][0][views][$eq]=10&filters[$or][1][views][$eq]=3&sort=views:asc"
+  - name: filter-and-not
+    path: /api/articles
+    query: "filters[$and][0][featured][$eq]=false&filters[$not][title][$eq]=Third one"
+  - name: filter-implicit-eq
+    path: /api/articles
+    query: "filters[stage]=writing"
+  - name: filter-private-field
+    path: /api/articles
+    query: "filters[internalNote][$eq]=x"
+  - name: filter-unknown-operator
+    path: /api/articles
+    query: "filters[title][$nope]=x"
+  - name: filter-unknown-field
+    path: /api/articles
+    query: "filters[nope][$eq]=x"
+  - name: pagination-page
+    path: /api/articles
+    query: "pagination[page]=2&pagination[pageSize]=2&sort=title:asc"
+  - name: pagination-start-limit
+    path: /api/articles
+    query: "pagination[start]=1&pagination[limit]=1&sort=title:asc"
+  - name: pagination-no-count
+    path: /api/articles
+    query: "pagination[withCount]=false&sort=title:asc"
+  - name: pagination-mixed
+    path: /api/articles
+    query: "pagination[page]=1&pagination[limit]=1"
+  - name: pagination-over-max
+    path: /api/articles
+    query: "pagination[pageSize]=500"
+  - name: pagination-limit-minus-one
+    path: /api/articles
+    query: "pagination[limit]=-1&sort=title:asc"
+  - name: pagination-invalid
+    path: /api/articles
+    query: "pagination[page]=abc"
+  - name: update
+    method: PUT
+    path: /api/articles/{{a2}}
+    token: full
+    body: { data: { summary: "Updated", views: 42 } }
+  - name: update-unknown
+    method: PUT
+    path: /api/articles/doesnotexist000000000000
+    token: full
+    body: { data: { summary: "x" } }
+  - name: update-id-ignored
+    method: PUT
+    path: /api/articles/{{a2}}
+    token: full
+    body: { data: { id: 999, documentId: "forged", summary: "Forged ids" } }
+  - name: after-update
+    path: /api/articles/{{a2}}
+  - name: delete
+    method: DELETE
+    path: /api/articles/{{a3}}
+    token: full
+  - name: after-delete
+    path: /api/articles/{{a3}}
+  - name: delete-again
+    method: DELETE
+    path: /api/articles/{{a3}}
+    token: full
+  - name: tag-create-1
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t1: data.documentId }
+    body: { data: { name: "go", weight: 5 } }
+  - name: tag-create-2
+    method: POST
+    path: /api/tags
+    token: full
+    body: { data: { name: "strapi", weight: 1 } }
+  - name: tag-duplicate
+    method: POST
+    path: /api/tags
+    token: full
+    body: { data: { name: "go" } }
+  - name: tag-list
+    path: /api/tags
+    query: "sort=weight:asc"
+  - name: tag-status-param
+    path: /api/tags
+    query: "status=draft&sort=name:asc"
+  - name: homepage-missing
+    path: /api/homepage
+  - name: homepage-put
+    method: PUT
+    path: /api/homepage
+    token: full
+    body: { data: { title: "Welcome", tagline: "grapi compat" } }
+  - name: homepage-get
+    path: /api/homepage
+  - name: homepage-put-again
+    method: PUT
+    path: /api/homepage
+    token: full
+    body: { data: { tagline: "updated" } }
+  - name: homepage-delete
+    method: DELETE
+    path: /api/homepage
+    token: full
+  - name: homepage-after-delete
+    path: /api/homepage

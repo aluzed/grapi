@@ -1,0 +1,16 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc4",
+      "id": "#id4",
+      "name": "go",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e",
+      "weight": 5
+    },
+    "meta": {}
+  }
+}

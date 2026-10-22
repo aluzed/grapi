@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "stage must be one of the following values: idea, writing, review, done, ",
+            "name": "ValidationError",
+            "path": [
+              "stage"
+            ],
+            "value": "published"
+          }
+        ]
+      },
+      "message": "stage must be one of the following values: idea, writing, review, done, ",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

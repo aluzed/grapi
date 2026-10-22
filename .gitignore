@@ -9,3 +9,5 @@ public/uploads/
 node_modules/
 .DS_Store
 /NOTICE
+/compat/bin/
+/compat/report/
