@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Request body cannot be empty",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

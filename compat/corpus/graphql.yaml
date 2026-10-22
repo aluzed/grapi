@@ -189,3 +189,21 @@ cases:
     method: POST
     path: /graphql
     body: { query: "mutation { forgotPassword(email: \"nobody@example.com\") { ok } }" }
+
+  # users-permissions roles.
+  - name: gql-role-create
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { createUsersPermissionsRole(data: { name: \"GQL Role\", description: \"made by gql\" }) { ok } }" }
+  - name: gql-roles
+    method: POST
+    path: /graphql
+    token: full
+    save: { grole: data.usersPermissionsRoles.2.documentId }
+    body: { query: "{ usersPermissionsRoles(sort: \"name\") { documentId name type description } }" }
+  - name: gql-role-delete-missing
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { deleteUsersPermissionsRole(id: \"999\") { ok } }" }

@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "roles": [
+      {
+        "createdAt": "\u003cts\u003e",
+        "description": "Default role given to authenticated user.",
+        "documentId": "#doc7",
+        "id": "#id6",
+        "name": "Authenticated",
+        "nb_users": 0,
+        "publishedAt": "\u003cts\u003e",
+        "type": "authenticated",
+        "updatedAt": "\u003cts\u003e"
+      },
+      {
+        "createdAt": "\u003cts\u003e",
+        "description": "Default role given to unauthenticated user.",
+        "documentId": "#doc8",
+        "id": "#id7",
+        "name": "Public",
+        "nb_users": 0,
+        "publishedAt": "\u003cts\u003e",
+        "type": "public",
+        "updatedAt": "\u003cts\u003e"
+      },
+      {
+        "createdAt": "\u003cts\u003e",
+        "description": "Edits",
+        "documentId": "#doc9",
+        "id": "#id8",
+        "name": "Éditeur Senior",
+        "nb_users": 0,
+        "publishedAt": "\u003cts\u003e",
+        "type": "editeur_senior",
+        "updatedAt": "\u003cts\u003e"
+      }
+    ]
+  }
+}

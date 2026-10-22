@@ -1,0 +1,184 @@
+{
+ "plugin::content-type-builder": {
+  "controllers": {
+   "components": {
+    "getComponent": {
+     "enabled": false,
+     "policy": ""
+    },
+    "getComponents": {
+     "enabled": false,
+     "policy": ""
+    }
+   },
+   "content-types": {
+    "getContentType": {
+     "enabled": false,
+     "policy": ""
+    },
+    "getContentTypes": {
+     "enabled": false,
+     "policy": ""
+    }
+   }
+  }
+ },
+ "plugin::email": {
+  "controllers": {
+   "email": {
+    "send": {
+     "enabled": false,
+     "policy": ""
+    }
+   }
+  }
+ },
+ "plugin::i18n": {
+  "controllers": {
+   "locales": {
+    "listLocales": {
+     "enabled": false,
+     "policy": ""
+    }
+   }
+  }
+ },
+ "plugin::upload": {
+  "controllers": {
+   "content-api": {
+    "destroy": {
+     "enabled": false,
+     "policy": ""
+    },
+    "find": {
+     "enabled": false,
+     "policy": ""
+    },
+    "findOne": {
+     "enabled": false,
+     "policy": ""
+    },
+    "findPage": {
+     "enabled": false,
+     "policy": ""
+    },
+    "upload": {
+     "enabled": false,
+     "policy": ""
+    }
+   }
+  }
+ },
+ "plugin::users-permissions": {
+  "controllers": {
+   "auth": {
+    "callback": {
+     "enabled": false,
+     "policy": ""
+    },
+    "changePassword": {
+     "enabled": false,
+     "policy": ""
+    },
+    "connect": {
+     "enabled": false,
+     "policy": ""
+    },
+    "emailConfirmation": {
+     "enabled": false,
+     "policy": ""
+    },
+    "forgotPassword": {
+     "enabled": false,
+     "policy": ""
+    },
+    "getSessions": {
+     "enabled": false,
+     "policy": ""
+    },
+    "logout": {
+     "enabled": false,
+     "policy": ""
+    },
+    "refresh": {
+     "enabled": false,
+     "policy": ""
+    },
+    "register": {
+     "enabled": false,
+     "policy": ""
+    },
+    "resetPassword": {
+     "enabled": false,
+     "policy": ""
+    },
+    "revokeSession": {
+     "enabled": false,
+     "policy": ""
+    },
+    "sendEmailConfirmation": {
+     "enabled": false,
+     "policy": ""
+    }
+   },
+   "permissions": {
+    "getPermissions": {
+     "enabled": false,
+     "policy": ""
+    }
+   },
+   "role": {
+    "createRole": {
+     "enabled": false,
+     "policy": ""
+    },
+    "deleteRole": {
+     "enabled": false,
+     "policy": ""
+    },
+    "find": {
+     "enabled": false,
+     "policy": ""
+    },
+    "findOne": {
+     "enabled": false,
+     "policy": ""
+    },
+    "updateRole": {
+     "enabled": false,
+     "policy": ""
+    }
+   },
+   "user": {
+    "count": {
+     "enabled": false,
+     "policy": ""
+    },
+    "create": {
+     "enabled": false,
+     "policy": ""
+    },
+    "destroy": {
+     "enabled": false,
+     "policy": ""
+    },
+    "find": {
+     "enabled": false,
+     "policy": ""
+    },
+    "findOne": {
+     "enabled": false,
+     "policy": ""
+    },
+    "me": {
+     "enabled": false,
+     "policy": ""
+    },
+    "update": {
+     "enabled": false,
+     "policy": ""
+    }
+   }
+  }
+ }
+}

@@ -36,6 +36,7 @@ Reproduire le modèle rôles et permissions de users-permissions et son applicat
 
 ## Avancement
 - Fait : vérification des permissions du rôle Public et du rôle de l'utilisateur sur chaque route (`internal/httpapi/auth.go`), restriction des relations en lecture et en écriture. `internal/bootstrap` crée au démarrage les rôles Authenticated et Public et les 13 permissions par défaut de Strapi 5.59 quand la base n'en a aucune, ainsi que les réglages `grant`, `email` et `advanced`.
+- Routes du content API `/api/users-permissions/roles` (liste avec `nb_users`, détail avec l'arbre des permissions, création avec `type` dérivé du nom, mise à jour qui synchronise les permissions, suppression qui renvoie les utilisateurs vers Public et refuse de supprimer Public) et `/api/users-permissions/permissions` (`getActions` : actions des content types, des routes Go du projet et des contrôleurs des plugins), dans `internal/httpapi/roles.go`. Corpus `basic_roles` (14 cas, SQLite et Postgres) identique à Strapi, y compris l'ordre non trié de la liste (Strapi passe `sort` à `db.query`, qui l'ignore).
 - Divergence voulue : grapi ne purge jamais les permissions des actions qu'il ne connaît pas (Strapi le fait au boot). Tant que les contrôleurs JS custom (`EXT-003`) ne sont pas lus, une purge détruirait les permissions de ces routes sur une base existante. Le critère « contrôleur supprimé, permissions purgées » attend donc `EXT-003`.
 
 ## Notes techniques

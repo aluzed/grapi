@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "usersPermissionsRoles": [
+        {
+          "description": "Default role given to authenticated user.",
+          "documentId": "#doc7",
+          "name": "Authenticated",
+          "type": "authenticated"
+        },
+        {
+          "description": "made by gql",
+          "documentId": "#doc8",
+          "name": "GQL Role",
+          "type": "gql_role"
+        },
+        {
+          "description": "Default role given to unauthenticated user.",
+          "documentId": "#doc9",
+          "name": "Public",
+          "type": "public"
+        }
+      ]
+    }
+  }
+}

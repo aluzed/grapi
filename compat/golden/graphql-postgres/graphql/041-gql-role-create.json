@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createUsersPermissionsRole": {
+        "ok": true
+      }
+    }
+  }
+}

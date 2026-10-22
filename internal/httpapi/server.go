@@ -109,6 +109,9 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		s.cfg.Upload.SizeLimit = 1000000000
 	}
 	s.addUsersRoutes()
+	if _, ok := set.ContentType(roleUID); ok {
+		s.addRoleRoutes()
+	}
 	if _, ok := set.ContentType(userUID); ok {
 		s.addUsersEmailRoutes()
 		limited := []string{"auth/local", "auth/local/register", "auth/forgot-password", "auth/reset-password", "auth/send-email-confirmation", "auth/change-password"}

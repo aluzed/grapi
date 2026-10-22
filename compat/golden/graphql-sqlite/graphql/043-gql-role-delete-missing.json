@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "deleteUsersPermissionsRole": null
+    },
+    "errors": [
+      {
+        "extensions": {
+          "code": "STRAPI_NOT_FOUND_ERROR",
+          "error": {
+            "details": {},
+            "message": "Role not found",
+            "name": "NotFoundError"
+          }
+        },
+        "message": "Role not found",
+        "path": [
+          "deleteUsersPermissionsRole"
+        ]
+      }
+    ]
+  }
+}

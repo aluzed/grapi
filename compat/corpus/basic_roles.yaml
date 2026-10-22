@@ -1,0 +1,55 @@
+fixture: basic
+# users-permissions roles through the content API. Runs after basic.yaml.
+cases:
+  - name: permissions-tree
+    path: /api/users-permissions/permissions
+    token: full
+  - name: roles-list
+    path: /api/users-permissions/roles
+    token: full
+  - name: role-create-empty-body
+    method: POST
+    path: /api/users-permissions/roles
+    token: full
+    body: {}
+  - name: role-create
+    method: POST
+    path: /api/users-permissions/roles
+    token: full
+    body: { name: "Éditeur Senior", description: "Edits", permissions: { "api::article": { controllers: { article: { find: { enabled: true }, update: { enabled: true }, delete: { enabled: false } } } } } }
+  - name: roles-after-create
+    path: /api/users-permissions/roles
+    token: full
+    save: { editor: roles.2.id }
+  - name: role-find-one
+    path: /api/users-permissions/roles/{{editor}}
+    token: full
+  - name: role-find-one-missing
+    path: /api/users-permissions/roles/999
+    token: full
+  - name: role-update
+    method: PUT
+    path: /api/users-permissions/roles/{{editor}}
+    token: full
+    body: { name: "Editor", type: "ignored", permissions: { "api::article": { controllers: { article: { find: { enabled: true }, findOne: { enabled: true } } } } } }
+  - name: role-after-update
+    path: /api/users-permissions/roles/{{editor}}
+    token: full
+  - name: role-update-missing
+    method: PUT
+    path: /api/users-permissions/roles/999
+    token: full
+    body: { name: "x" }
+  - name: role-delete-public
+    method: DELETE
+    path: /api/users-permissions/roles/2
+    token: full
+  - name: role-delete
+    method: DELETE
+    path: /api/users-permissions/roles/{{editor}}
+    token: full
+  - name: roles-after-delete
+    path: /api/users-permissions/roles
+    token: full
+  - name: roles-public-forbidden
+    path: /api/users-permissions/roles

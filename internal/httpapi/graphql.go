@@ -876,6 +876,12 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 			return nil, err
 		}
 		return map[string]any{"data": user}, nil
+	case "createUsersPermissionsRole":
+		return g.rest(g.s.roleCreate, "POST", a["data"], nil, "", roleUID)
+	case "updateUsersPermissionsRole":
+		return g.rest(g.s.roleUpdate, "PUT", a["data"], map[string]string{"role": id}, "", roleUID)
+	case "deleteUsersPermissionsRole":
+		return g.rest(g.s.roleDelete, "DELETE", nil, map[string]string{"role": id}, "", roleUID)
 	case "updateUploadFile":
 		info, _ := a["info"].(map[string]any)
 		row, err := g.s.applyFileInfo(ctx, id, info)
