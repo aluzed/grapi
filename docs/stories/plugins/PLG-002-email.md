@@ -38,7 +38,8 @@ Un service e-mail avec une interface provider, cinq providers et des templates s
 - Fait : `internal/plugins/email` (SMTP façon nodemailer avec STARTTLS et DKIM via go-msgauth, sendmail, `Template` de users-permissions), config `plugins.email.config` (`nodemailer` ou `sendmail`), `POST /api/email`.
 - 2026-10-22, homelab : forgot-password servi par grapi vers Mailpit, signature DKIM vérifiée (`d=dev-freelance.com`, `s=sel2026`, clé lue par `${file:}`).
 - Correction du critère 3 : chez Strapi, une variable inconnue n'est pas rendue vide, elle reste telle quelle (`template()` de users-permissions désactive `evaluate` et `escape`, seule l'interpolation stricte s'applique). grapi fait de même.
-- Reste : amazon-ses, mailgun, sendgrid, routes admin (`/email/test`, `/email/settings`).
+- Providers `sendgrid` (`apiKey`, API v3 `mail/send`), `mailgun` (`key`, `username`, `url`, `domain`, formulaire `messages` en auth basique) et `amazon-ses` (`key`, `secret`, `amazon` : action `SendEmail` de l'API query, signée SigV4, région lue dans l'endpoint), avec les `providerOptions` des providers Strapi (`internal/plugins/email/http.go`, tests sur serveurs `httptest`). Une réponse en erreur de l'API remonte avec son statut.
+- Reste : envoi réel vers chaque service (comptes de test), routes admin (`/email/test`, `/email/settings`).
 
 ## Notes techniques
 - `wneessen/go-mail` (SMTP, sendmail) et `emersion/go-msgauth/dkim` pour signer.

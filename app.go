@@ -366,6 +366,12 @@ func emailService(c *config.Config) (*email.Service, error) {
 		svc.Provider = p
 	case "", "sendmail":
 		svc.Provider = &email.Sendmail{}
+	case "sendgrid":
+		svc.Provider = &email.SendGrid{APIKey: opt("apiKey")}
+	case "mailgun":
+		svc.Provider = &email.Mailgun{Key: opt("key"), Username: opt("username"), URL: opt("url"), Domain: opt("domain")}
+	case "amazon-ses":
+		svc.Provider = &email.SES{Key: opt("key"), Secret: opt("secret"), Endpoint: opt("amazon")}
 	default:
 		return nil, fmt.Errorf("email provider %q is not supported yet", provider)
 	}
