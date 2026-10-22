@@ -9,7 +9,6 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
@@ -26,17 +25,30 @@ type GraphQLConfig struct {
 	// DefaultLimit and MaxLimit are the plugin's defaultLimit and maxLimit.
 	DefaultLimit int
 	MaxLimit     int
+	// Options hold the shadow CRUD, the extensions and depthLimit.
+	Options graphql.Options
 }
 
 func (s *Server) addGraphQL() error {
 	if s.cfg.GraphQL == nil {
 		return nil
 	}
-	sch, err := graphql.Build(s.set)
+	sch, err := graphql.Build(s.set, s.cfg.GraphQL.Options)
 	if err != nil {
 		return err
 	}
 	s.gql = sch
+	var unbounded []string
+	if s.cfg.GraphQL.Options.DepthLimit <= 0 {
+		unbounded = append(unbounded, "depthLimit")
+	}
+	if s.cfg.GraphQL.MaxLimit <= 0 {
+		unbounded = append(unbounded, "maxLimit")
+	}
+	if len(unbounded) > 0 {
+		s.log.Warn("Built-in GraphQL operation limits are unbounded or invalid for: " + strings.Join(unbounded, ", ") +
+			". Configure these limits (for example: defaultLimit: 25, maxLimit: 100, depthLimit: 10). Custom Apollo validation rules may independently enforce limits. See https://docs.strapi.io/cms/configurations/plugins.")
+	}
 	if s.cfg.GraphQL.Endpoint == "" {
 		s.cfg.GraphQL.Endpoint = "/graphql"
 	}
@@ -164,7 +176,7 @@ func (s *Server) formatGraphQLError(e *graphql.Error, res *graphql.Result) map[s
 	out["message"] = api.Message
 	ext["error"] = map[string]any{"name": api.Name, "message": api.Message, "details": details}
 	switch api.Name {
-	case "ForbiddenError", "UnauthorizedError":
+	case "ForbiddenError", "UnauthorizedError", "PolicyError":
 		ext["code"] = "FORBIDDEN"
 	case "ValidationError":
 		ext["code"] = "BAD_USER_INPUT"
@@ -198,6 +210,21 @@ func (g *gqlResolver) authorize(fc *graphql.FieldContext) error {
 	}
 	if !g.auth.Allowed(f.Scope) {
 		return errGQLForbidden
+	}
+	return nil
+}
+
+var errPolicy = newError(http.StatusForbidden, "PolicyError", "Policy Failed")
+
+func (g *gqlResolver) policies(ctx context.Context, fc *graphql.FieldContext) error {
+	for _, p := range fc.Field.Policies {
+		ok, err := p(ctx, fc)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errPolicy
+		}
 	}
 	return nil
 }
@@ -466,8 +493,13 @@ func (g *gqlResolver) Resolve(ctx context.Context, fc *graphql.FieldContext) (an
 	if err := g.authorize(fc); err != nil {
 		return nil, err
 	}
+	if err := g.policies(ctx, fc); err != nil {
+		return nil, err
+	}
 	f := fc.Field
 	switch f.Kind {
+	case graphql.FieldExtension:
+		return f.Resolve(ctx, fc)
 	case graphql.FieldFind, graphql.FieldFindConnection, graphql.FieldFindOne, graphql.FieldSingleFind:
 		return g.find(ctx, fc)
 	case graphql.FieldNodes:
@@ -770,18 +802,26 @@ func nilRow(row query.Row, err error) (any, error) {
 }
 
 // rest runs a REST handler of the same plugin and decodes its answer.
-func (g *gqlResolver) rest(h func(http.ResponseWriter, *http.Request, *requestContext) error, method string, body any, params map[string]string, q url.Values, uid string) (any, error) {
+// With limited, the call goes through the rateLimit middleware of that
+// route first, as the plugin's createRateLimitRunner does.
+func (g *gqlResolver) rest(h func(http.ResponseWriter, *http.Request, *requestContext) error, method string, body any, params map[string]string, limited string, uid string) (any, error) {
 	b, _ := json.Marshal(body)
 	target := "/"
-	if q != nil {
-		target += "?" + q.Encode()
+	if limited != "" {
+		target = "/" + strings.Trim(g.s.cfg.Prefix, "/") + limited
 	}
 	r := httptest.NewRequestWithContext(g.r.Context(), method, target, bytes.NewReader(b))
+	r.RemoteAddr = g.r.RemoteAddr
 	r.Header.Set("Content-Type", "application/json")
-	if a := g.r.Header.Get("Authorization"); a != "" {
-		r.Header.Set("Authorization", a)
+	for _, k := range []string{"Authorization", "X-Forwarded-For"} {
+		if v := g.r.Header.Get(k); v != "" {
+			r.Header.Set(k, v)
+		}
 	}
 	rec := httptest.NewRecorder()
+	if limited != "" && g.s.rateLimited(rec, r) {
+		return nil, errRateLimit
+	}
 	rc := &requestContext{auth: g.auth, params: params, query: ParseQuery(r.URL.RawQuery), model: g.s.schemaOf(uid)}
 	if err := h(rec, r, rc); err != nil {
 		return nil, err
@@ -814,15 +854,15 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 		return g.s.docs.E.FindOne(ctx, userUID, query.Params{Where: map[string]any{"id": uid}, Populate: map[string]any{"role": true}})
 	case "login":
 		body := map[string]any{"identifier": input["identifier"], "password": input["password"]}
-		return g.rest(g.s.authCallback, "POST", body, map[string]string{"provider": toString(input["provider"])}, nil, userUID)
+		return g.rest(g.s.authCallback, "POST", body, map[string]string{"provider": toString(input["provider"])}, "/auth/local", userUID)
 	case "register":
-		return g.rest(g.s.authRegister, "POST", input, nil, nil, userUID)
+		return g.rest(g.s.authRegister, "POST", input, nil, "/auth/local/register", userUID)
 	case "forgotPassword":
-		return g.rest(g.s.authForgotPassword, "POST", map[string]any{"email": a["email"]}, nil, nil, userUID)
+		return g.rest(g.s.authForgotPassword, "POST", map[string]any{"email": a["email"]}, nil, "/auth/forgot-password", userUID)
 	case "resetPassword":
-		return g.rest(g.s.authResetPassword, "POST", map[string]any{"password": a["password"], "passwordConfirmation": a["passwordConfirmation"], "code": a["code"]}, nil, nil, userUID)
+		return g.rest(g.s.authResetPassword, "POST", map[string]any{"password": a["password"], "passwordConfirmation": a["passwordConfirmation"], "code": a["code"]}, nil, "/auth/reset-password", userUID)
 	case "changePassword":
-		return g.rest(g.s.authChangePassword, "POST", map[string]any{"currentPassword": a["currentPassword"], "password": a["password"], "passwordConfirmation": a["passwordConfirmation"]}, nil, nil, userUID)
+		return g.rest(g.s.authChangePassword, "POST", map[string]any{"currentPassword": a["currentPassword"], "password": a["password"], "passwordConfirmation": a["passwordConfirmation"]}, nil, "/auth/change-password", userUID)
 	case "createUsersPermissionsUser", "updateUsersPermissionsUser", "deleteUsersPermissionsUser":
 		h, method := g.s.usersCreate, "POST"
 		switch fc.Field.Name {
@@ -831,7 +871,7 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 		case "deleteUsersPermissionsUser":
 			h, method = g.s.usersDestroy, "DELETE"
 		}
-		user, err := g.rest(h, method, a["data"], map[string]string{"id": id}, nil, userUID)
+		user, err := g.rest(h, method, a["data"], map[string]string{"id": id}, "", userUID)
 		if err != nil {
 			return nil, err
 		}
@@ -844,7 +884,7 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 		}
 		return nilRow(row, err)
 	case "deleteUploadFile":
-		return g.rest(g.s.uploadDestroy, "DELETE", nil, map[string]string{"id": id}, nil, fileUID)
+		return g.rest(g.s.uploadDestroy, "DELETE", nil, map[string]string{"id": id}, "", fileUID)
 	}
 	return nil, newError(http.StatusNotImplemented, "NotImplementedError", fc.Field.Name+" is not implemented by grapi yet")
 }

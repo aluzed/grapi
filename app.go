@@ -197,6 +197,7 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 	g.Endpoint, _ = c.String(base + "endpoint")
 	g.DefaultLimit, _ = c.Int(base + "defaultLimit")
 	g.MaxLimit, _ = c.Int(base + "maxLimit")
+	g.Options.DepthLimit, _ = c.Int(base + "depthLimit")
 	if v, ok := c.Bool(base + "apolloServer.introspection"); ok {
 		g.Introspection = v
 	}
@@ -475,6 +476,11 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
 		return nil, err
+	}
+	if apiCfg.GraphQL != nil {
+		depth := apiCfg.GraphQL.Options.DepthLimit
+		apiCfg.GraphQL.Options = a.graphql
+		apiCfg.GraphQL.Options.DepthLimit = depth
 	}
 	docs := document.New(engine, res.Set)
 	for _, m := range a.documentMiddlewares {

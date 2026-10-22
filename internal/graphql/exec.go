@@ -154,6 +154,9 @@ func (s *Schema) Execute(ctx context.Context, req Request, res Resolver) *Result
 		return rejected("GRAPHQL_PARSE_FAILED", gqlerror.List{gqlerror.Errorf("Syntax Error: %s", perr)})
 	}
 	errs := validator.ValidateWithRules(s.AST, doc, nil)
+	if len(errs) == 0 && s.depthLimit > 0 {
+		errs = depthErrors(doc, s.depthLimit)
+	}
 	if len(errs) == 0 {
 		errs = localeLiterals(doc)
 	}
@@ -244,6 +247,51 @@ func fixStringLocations(doc *ast.QueryDocument, errs gqlerror.List) {
 			}
 		}
 	}
+}
+
+// depthErrors is graphql-depth-limit: the fields nested deeper than max,
+// introspection fields left out.
+func depthErrors(doc *ast.QueryDocument, maxDepth int) gqlerror.List {
+	var errs gqlerror.List
+	var depth func(sel ast.Selection, so int, op string, seen map[string]bool) int
+	children := func(set ast.SelectionSet, so int, op string, seen map[string]bool) int {
+		m := 0
+		for _, c := range set {
+			m = max(m, depth(c, so, op, seen))
+		}
+		return m
+	}
+	depth = func(sel ast.Selection, so int, op string, seen map[string]bool) int {
+		if so > maxDepth {
+			p := sel.GetPosition()
+			errs = append(errs, &gqlerror.Error{
+				Message:   fmt.Sprintf("'%s' exceeds maximum operation depth of %d", op, maxDepth),
+				Locations: []gqlerror.Location{{Line: p.Line, Column: p.Column}},
+			})
+			return 0
+		}
+		switch x := sel.(type) {
+		case *ast.Field:
+			if strings.HasPrefix(x.Name, "__") || len(x.SelectionSet) == 0 {
+				return 0
+			}
+			return 1 + children(x.SelectionSet, so+1, op, seen)
+		case *ast.InlineFragment:
+			return children(x.SelectionSet, so, op, seen)
+		case *ast.FragmentSpread:
+			if x.Definition == nil || seen[x.Name] {
+				return 0
+			}
+			seen[x.Name] = true
+			defer delete(seen, x.Name)
+			return children(x.Definition.SelectionSet, so, op, seen)
+		}
+		return 0
+	}
+	for _, op := range doc.Operations {
+		children(op.SelectionSet, 0, op.Name, map[string]bool{})
+	}
+	return errs
 }
 
 // localeLiterals is the I18NLocaleCode scalar's parseLiteral: a string
@@ -647,7 +695,8 @@ func (e *executor) field(ctx context.Context, typ *Def, parent any, sel *ast.Fie
 		root, rootArgs = meta, args
 	}
 	var v any
-	if meta == nil || meta.Kind == FieldValue {
+	plain := meta == nil || meta.Kind == FieldValue && meta.Scope == "" && len(meta.Policies) == 0 && !isRoot(typ)
+	if plain {
 		v = valueOf(parent, sel.Name)
 	} else {
 		var err error
@@ -740,6 +789,10 @@ func (e *executor) complete(ctx context.Context, t *ast.Type, v any, sel *ast.Fi
 	}
 	return e.selectionSet(ctx, od, v, set, path, root, rootArgs)
 }
+
+// isRoot reports whether typ is a root type, whose fields all go through
+// the resolver for authorization.
+func isRoot(typ *Def) bool { return typ.Name == "Query" || typ.Name == "Mutation" }
 
 func isNil(v any) bool {
 	if v == nil {

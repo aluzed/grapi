@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/aluzed/grapi/internal/graphql"
+
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
 )
@@ -32,6 +34,7 @@ type App struct {
 	docs                *document.Service
 	stopWebhooks        func()
 	cronTasks           []cronTask
+	graphql             graphql.Options
 }
 
 // New returns an App for the project in opts.Dir.

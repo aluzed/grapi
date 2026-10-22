@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # PLG-004 : GraphQL : shadow CRUD, extensions, auth, policies, limites
@@ -35,6 +35,15 @@ Les mêmes mécanismes de personnalisation et de sécurité, exposés en Go (mod
 - [ ] Une extension SDL qui ajoute `Query.popularPosts` avec un résolveur Go est appelable et soumise à son scope (intégration).
 - [ ] Une requête plus profonde que `depthLimit` est rejetée avec une erreur GraphQL standard.
 - [ ] Banc `SETUP-002` : `login` et `me` via GraphQL donnent les mêmes réponses que Strapi. Un rôle Public sans `find` reçoit une erreur `Forbidden access` identique.
+
+## Avancement
+- Shadow CRUD : `graphql.Options.ShadowCRUD` dans le builder (types, queries, mutations, actions, champs en sortie, entrée et filtres), exposé en mode framework par `app.GraphQL().ShadowCRUD(uid)` avec les verbes de Strapi (`Disable`, `DisableQueries`, `DisableMutations`, `DisableAction(s)`, `Field(name).Disable/DisableOutput/DisableInput/DisableFilters`, `graphql.go`). Les désactivations des plugins (admin, dossiers d'upload, mutations de fichiers et de locales, permissions, CRUD users et rôles remplacé) sont celles de Strapi : le SDL est identique à celui de Strapi sur les 7 fixtures (`PLG-003`).
+- Extensions : `app.GraphQL().Use(GraphQLExtension{TypeDefs, Resolvers, ResolversConfig})`. Le SDL est chargé avec le schéma généré par gqlparser (`extend type Query` compris), les résolveurs Go sont branchés sur les champs, `ResolversConfig` règle `Auth: false`, le scope et les policies, y compris sur les champs générés.
+- Autorisation : wrap-resolvers reproduit (champs de Query et Mutation toujours vérifiés, relations sur le scope `find` de la cible, scopes propres à upload et i18n), `PolicyError` en `FORBIDDEN`.
+- Limites : `depthLimit` (message de graphql-depth-limit, 400 `GRAPHQL_VALIDATION_FAILED`), `defaultLimit`, `maxLimit`, avertissement au démarrage avec le message de Strapi quand elles ne sont pas bornées.
+- Extensions users-permissions (`me`, `login`, `register`, `forgotPassword`, `resetPassword`, `changePassword`, CRUD users) et upload (`updateUploadFile`, `deleteUploadFile`) branchées sur les contrôleurs REST, rate limit compris (le `createRateLimitRunner` du plugin partage le compteur des routes REST).
+- Test d'intégration `TestGraphQLExtensions` (extension SDL, scope, `auth: false`, policy, `depthLimit`, shadow CRUD vu par introspection).
+- Reste : middlewares de résolveur, `shadowCRUD: false` global, `emailConfirmation` et CRUD des rôles, limite de complexité, cas banc `login` et `me` (le rate limit du corpus devfreelance les épuise : corpus dédié à prévoir).
 
 ## Notes techniques
 - Pour la fusion du SDL : parser avec `gqlparser`, puis convertir les définitions en objets `graphql-go`. C'est à écrire, il n'y a pas de pont existant mûr.

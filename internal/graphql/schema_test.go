@@ -78,7 +78,7 @@ func TestSchemaMatchesStrapi(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := Build(res.Set)
+			got, err := Build(res.Set, Options{})
 			if err != nil {
 				t.Fatal(err)
 			}

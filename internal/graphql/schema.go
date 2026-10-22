@@ -4,6 +4,7 @@
 package graphql
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -51,6 +52,7 @@ const (
 	FieldPageInfo
 	FieldEntityData
 	FieldCustom
+	FieldExtension
 )
 
 // Arg is a field argument.
@@ -71,6 +73,51 @@ type Field struct {
 	NoAuth bool
 	// Default is an input field's default value.
 	Default string
+	// Resolve and Policies come from extensions.
+	Resolve  ResolveFunc
+	Policies []PolicyFunc
+}
+
+// ResolveFunc resolves an extension field.
+type ResolveFunc func(ctx context.Context, fc *FieldContext) (any, error)
+
+// PolicyFunc is a resolver policy: false or an error rejects the call.
+type PolicyFunc func(ctx context.Context, fc *FieldContext) (bool, error)
+
+// Options customize the generated schema: the extension service of the
+// plugin (strapi.plugin('graphql').service('extension')).
+type Options struct {
+	ShadowCRUD map[schema.UID]*CRUD
+	Extensions []Extension
+	// DepthLimit rejects deeper operations (graphql-depth-limit); 0 is none.
+	DepthLimit int
+}
+
+// CRUD is the shadow CRUD of one content type or component.
+type CRUD struct {
+	Disabled, QueriesDisabled, MutationsDisabled bool
+	DisabledActions                              map[string]bool
+	Fields                                       map[string]*FieldCRUD
+}
+
+// FieldCRUD disables a field in the output type, the input type or the
+// filters.
+type FieldCRUD struct{ Output, Input, Filters bool }
+
+// Extension adds type definitions and resolvers, and configures the
+// resolvers of generated or added fields ("Query.articles").
+type Extension struct {
+	TypeDefs        string
+	Resolvers       map[string]map[string]ResolveFunc
+	ResolversConfig map[string]ResolverConfig
+}
+
+// ResolverConfig is a resolversConfig entry. Auth false skips the
+// permission check; Scope replaces the one of a generated field.
+type ResolverConfig struct {
+	Auth     *bool
+	Scope    string
+	Policies []PolicyFunc
 }
 
 // EnumValue maps a GraphQL enum value to the stored one.
@@ -113,6 +160,7 @@ type Schema struct {
 	// componentOf is the component of each object type name.
 	componentOf map[string]schema.UID
 	set         *schema.Set
+	depthLimit  int
 }
 
 // Def returns the definition named name.
@@ -181,6 +229,7 @@ type model struct {
 }
 
 type builder struct {
+	opts     Options
 	set      *schema.Set
 	out      *Schema
 	query    *Def
@@ -190,8 +239,8 @@ type builder struct {
 }
 
 // Build derives the schema of set.
-func Build(set *schema.Set) (*Schema, error) {
-	b := &builder{set: set, out: &Schema{defs: map[string]*Def{}, typeOf: map[schema.UID]string{}, componentOf: map[string]schema.UID{}, set: set}}
+func Build(set *schema.Set, opts Options) (*Schema, error) {
+	b := &builder{opts: opts, set: set, out: &Schema{defs: map[string]*Def{}, typeOf: map[schema.UID]string{}, componentOf: map[string]schema.UID{}, set: set, depthLimit: opts.DepthLimit}}
 	_, b.i18n = set.ContentType(localeUID)
 	b.scalars()
 	b.internals()
@@ -224,12 +273,72 @@ func Build(set *schema.Set) (*Schema, error) {
 	b.def(b.mutation)
 	b.prune()
 	b.out.SDL = b.out.print()
-	s, err := gqlparser.LoadSchema(&ast.Source{Name: "grapi", Input: b.out.SDL})
+	sources := []*ast.Source{{Name: "grapi", Input: b.out.SDL}}
+	for i, ext := range opts.Extensions {
+		if strings.TrimSpace(ext.TypeDefs) != "" {
+			sources = append(sources, &ast.Source{Name: fmt.Sprintf("extension %d", i+1), Input: ext.TypeDefs})
+		}
+	}
+	s, err := gqlparser.LoadSchema(sources...)
 	if err != nil {
 		return nil, fmt.Errorf("graphql schema: %w", err)
 	}
 	b.out.AST = s
+	if err := b.applyExtensions(); err != nil {
+		return nil, err
+	}
 	return b.out, nil
+}
+
+// applyExtensions binds the extension resolvers and resolversConfig to the
+// fields of the loaded schema.
+func (b *builder) applyExtensions() error {
+	def := func(typ string) *Def {
+		if d := b.out.defs[typ]; d != nil {
+			return d
+		}
+		d := &Def{Kind: DefObject, Name: typ}
+		b.out.defs[typ] = d
+		return d
+	}
+	for _, ext := range b.opts.Extensions {
+		for typ, fields := range ext.Resolvers {
+			t := b.out.AST.Types[typ]
+			for name, fn := range fields {
+				if t == nil || t.Fields.ForName(name) == nil {
+					return fmt.Errorf("graphql extension: no field %s.%s in the schema", typ, name)
+				}
+				d := def(typ)
+				f := d.Field(name)
+				if f == nil {
+					f = d.add(&Field{Name: name})
+				}
+				f.Kind, f.Resolve = FieldExtension, fn
+			}
+		}
+	}
+	for _, ext := range b.opts.Extensions {
+		for path, cfg := range ext.ResolversConfig {
+			typ, name, ok := strings.Cut(path, ".")
+			t := b.out.AST.Types[typ]
+			if !ok || t == nil || t.Fields.ForName(name) == nil {
+				return fmt.Errorf("graphql extension: resolversConfig %q matches no field", path)
+			}
+			d := def(typ)
+			f := d.Field(name)
+			if f == nil {
+				f = d.add(&Field{Name: name})
+			}
+			if cfg.Auth != nil && !*cfg.Auth {
+				f.NoAuth = true
+			}
+			if cfg.Scope != "" {
+				f.Scope = cfg.Scope
+			}
+			f.Policies = append(f.Policies, cfg.Policies...)
+		}
+	}
+	return nil
 }
 
 func (b *builder) def(d *Def) *Def {
@@ -268,22 +377,45 @@ func lowerFirst(s string) string {
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
-// disabled is the shadow CRUD of the content types nothing exposes.
-func (b *builder) disabled(uid schema.UID) bool {
-	return uid.Namespace() == schema.NamespaceAdmin || uid == folderUID
+func (b *builder) crud(uid schema.UID) *CRUD {
+	if c := b.opts.ShadowCRUD[uid]; c != nil {
+		return c
+	}
+	return &CRUD{}
 }
 
-func (b *builder) queriesEnabled(uid schema.UID) bool { return uid != permissionUID }
+func (b *builder) field(uid schema.UID, name string) FieldCRUD {
+	if f := b.crud(uid).Fields[name]; f != nil {
+		return *f
+	}
+	return FieldCRUD{}
+}
+
+// disabled is the shadow CRUD of the content types nothing exposes.
+func (b *builder) disabled(uid schema.UID) bool {
+	return uid.Namespace() == schema.NamespaceAdmin || uid == folderUID || b.crud(uid).Disabled
+}
+
+func (b *builder) queriesEnabled(uid schema.UID) bool {
+	return uid != permissionUID && !b.crud(uid).QueriesDisabled
+}
 
 func (b *builder) mutationsEnabled(uid schema.UID) bool {
 	switch uid {
 	case permissionUID, fileUID, localeUID, userUID, roleUID:
 		return false
 	}
-	return true
+	return !b.crud(uid).MutationsDisabled
+}
+
+func (b *builder) actionEnabled(uid schema.UID, action string) bool {
+	return !b.crud(uid).DisabledActions[action]
 }
 
 func (b *builder) inputEnabled(m model, name string) bool {
+	if b.field(m.uid, name).Input {
+		return false
+	}
 	return !m.localized || (name != schema.AttrLocale && name != schema.AttrLocalizations)
 }
 
@@ -444,11 +576,11 @@ func (b *builder) register(m model) {
 func (b *builder) filters(m model) {
 	self := b.filtersName(m.uid)
 	d := &Def{Kind: DefInput, Name: self, UID: m.uid}
-	if !m.component && !m.singleType {
+	if !m.component && !m.singleType && !b.field(m.uid, "documentId").Filters {
 		d.Fields = append(d.Fields, &Field{Name: "documentId", Type: "IDFilterInput"})
 	}
 	for name, a := range m.attrs.All() {
-		if a.IsPrivate() {
+		if a.IsPrivate() || b.field(m.uid, name).Filters {
 			continue
 		}
 		switch {
@@ -529,7 +661,7 @@ func (b *builder) object(m model) *Def {
 	}
 	_, fileOK := b.set.ContentType(fileUID)
 	for attr, a := range m.attrs.All() {
-		if a.IsPrivate() {
+		if a.IsPrivate() || b.field(m.uid, attr).Output {
 			continue
 		}
 		req := a.IsRequired()
@@ -625,7 +757,9 @@ func (b *builder) queries(m model) {
 	one := lowerFirst(name)
 	uid := string(m.uid)
 	if m.singleType {
-		b.rootField(&Field{Name: one, Type: name, Args: b.localeArg(m, publicationArgs()), Kind: FieldSingleFind, UID: m.uid, Scope: uid + ".find"})
+		if b.actionEnabled(m.uid, "find") {
+			b.rootField(&Field{Name: one, Type: name, Args: b.localeArg(m, publicationArgs()), Kind: FieldSingleFind, UID: m.uid, Scope: uid + ".find"})
+		}
 		return
 	}
 	many := lowerFirst(typeName(m.ct, true))
@@ -647,14 +781,19 @@ func (b *builder) mutations(m model) {
 	status := Arg{Name: "status", Type: "PublicationStatus", Default: "PUBLISHED"}
 	data := Arg{Name: "data", Type: name + "Input!"}
 	docID := Arg{Name: "documentId", Type: "ID!"}
+	add := func(action string, f *Field) {
+		if b.actionEnabled(m.uid, action) {
+			b.rootField(f)
+		}
+	}
 	if m.singleType {
-		b.rootField(&Field{Name: "update" + name, Type: name, Args: b.localeArg(m, []Arg{status, data}), Kind: FieldSingleUpdate, UID: m.uid, Scope: uid + ".update"})
-		b.rootField(&Field{Name: "delete" + name, Type: "DeleteMutationResponse", Args: b.localeArg(m, nil), Kind: FieldSingleDelete, UID: m.uid, Scope: uid + ".delete"})
+		add("update", &Field{Name: "update" + name, Type: name, Args: b.localeArg(m, []Arg{status, data}), Kind: FieldSingleUpdate, UID: m.uid, Scope: uid + ".update"})
+		add("delete", &Field{Name: "delete" + name, Type: "DeleteMutationResponse", Args: b.localeArg(m, nil), Kind: FieldSingleDelete, UID: m.uid, Scope: uid + ".delete"})
 		return
 	}
-	b.rootField(&Field{Name: "create" + name, Type: name, Args: b.localeArg(m, []Arg{status, data}), Kind: FieldCreate, UID: m.uid, Scope: uid + ".create"})
-	b.rootField(&Field{Name: "update" + name, Type: name, Args: b.localeArg(m, []Arg{docID, status, data}), Kind: FieldUpdate, UID: m.uid, Scope: uid + ".update"})
-	b.rootField(&Field{Name: "delete" + name, Type: "DeleteMutationResponse", Args: b.localeArg(m, []Arg{docID}), Kind: FieldDelete, UID: m.uid, Scope: uid + ".delete"})
+	add("create", &Field{Name: "create" + name, Type: name, Args: b.localeArg(m, []Arg{status, data}), Kind: FieldCreate, UID: m.uid, Scope: uid + ".create"})
+	add("update", &Field{Name: "update" + name, Type: name, Args: b.localeArg(m, []Arg{docID, status, data}), Kind: FieldUpdate, UID: m.uid, Scope: uid + ".update"})
+	add("delete", &Field{Name: "delete" + name, Type: "DeleteMutationResponse", Args: b.localeArg(m, []Arg{docID}), Kind: FieldDelete, UID: m.uid, Scope: uid + ".delete"})
 }
 
 // extensions are the types the upload, users-permissions and i18n plugins add.

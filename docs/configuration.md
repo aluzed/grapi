@@ -36,7 +36,7 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `plugins.upload.config`: `provider` (`local` by default, or `aws-s3` with `providerOptions` as `@strapi/provider-upload-aws-s3` takes them: `baseUrl`, `rootPath`, `s3Options.{region,endpoint,forcePathStyle,credentials,params.{Bucket,ACL,signedUrlExpires}}`), `sizeLimit` (bytes), `breakpoints`.
 
-`plugins.graphql`: the plugin is on when the project's `package.json` depends on `@strapi/plugin-graphql` (Strapi enables installed plugins) or when `enabled: true`; `enabled: false` turns it off. `config.endpoint` (`/graphql`), `config.defaultLimit` (10), `config.maxLimit` (unlimited), `config.apolloServer.introspection` (on unless `NODE_ENV=production`, as Apollo).
+`plugins.graphql`: the plugin is on when the project's `package.json` depends on `@strapi/plugin-graphql` (Strapi enables installed plugins) or when `enabled: true`; `enabled: false` turns it off. `config.endpoint` (`/graphql`), `config.defaultLimit` (10), `config.maxLimit` (unlimited), `config.depthLimit` (unlimited), `config.apolloServer.introspection` (on unless `NODE_ENV=production`, as Apollo).
 
 Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a generated Strapi project.
 
