@@ -112,24 +112,16 @@ func apiTokenCreate(args []string, stdout, stderr io.Writer) error {
 		}
 		return fmt.Errorf("a token named %q already exists", *name)
 	}
-	raw := make([]byte, 128)
-	if _, err := rand.Read(raw); err != nil {
+	accessKey, keys, err := newAccessKey(p, salt)
+	if err != nil {
 		return err
 	}
-	accessKey := hex.EncodeToString(raw)
-	m := hmac.New(sha512.New, []byte(salt))
-	m.Write([]byte(accessKey))
-	data := query.Data{
-		"name": *name, "type": *typ, "kind": "content-api",
-		"accessKey": hex.EncodeToString(m.Sum(nil)),
+	data := query.Data{"name": *name, "type": *typ, "kind": "content-api"}
+	for k, v := range keys {
+		data[k] = v
 	}
 	if *desc != "" {
 		data["description"] = *desc
-	}
-	if secret, _ := p.Conf.String("admin.secrets.encryptionKey"); secret != "" {
-		if data["encryptedKey"], err = encryptKey(secret, accessKey); err != nil {
-			return err
-		}
 	}
 	if *days > 0 {
 		life := time.Duration(*days) * day
@@ -184,6 +176,66 @@ func apiTokenList(args []string, stdout, stderr io.Writer) error {
 }
 
 // apiTokenDelete is `grapi api-token:delete --id N`.
+// newAccessKey is the api-token service's: 128 random bytes in hex, stored
+// as its HMAC-SHA512 with the salt, and encrypted when an encryption key
+// is set.
+func newAccessKey(p *grapi.Project, salt string) (string, query.Data, error) {
+	raw := make([]byte, 128)
+	if _, err := rand.Read(raw); err != nil {
+		return "", nil, err
+	}
+	accessKey := hex.EncodeToString(raw)
+	m := hmac.New(sha512.New, []byte(salt))
+	m.Write([]byte(accessKey))
+	data := query.Data{"accessKey": hex.EncodeToString(m.Sum(nil))}
+	if secret, _ := p.Conf.String("admin.secrets.encryptionKey"); secret != "" {
+		enc, err := encryptKey(secret, accessKey)
+		if err != nil {
+			return "", nil, err
+		}
+		data["encryptedKey"] = enc
+	}
+	return accessKey, data, nil
+}
+
+// apiTokenRegenerate is `grapi api-token:regenerate --id N`: a new key for
+// the token, the old one stops working (the admin's regenerate).
+func apiTokenRegenerate(args []string, stdout, stderr io.Writer) error {
+	fs, dir, configDir := projectFlags("api-token:regenerate")
+	id := fs.Int("id", 0, "token id")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *id <= 0 {
+		return errors.New("--id is required")
+	}
+	p, e, err := openEngine(*dir, *configDir, stderr)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = p.DB.Close() }()
+	salt, _ := p.Conf.String("admin.apiToken.salt")
+	if salt == "" {
+		salt = p.Conf.Env["API_TOKEN_SALT"]
+	}
+	if salt == "" {
+		return errors.New("admin.apiToken.salt (API_TOKEN_SALT) is not set")
+	}
+	accessKey, keys, err := newAccessKey(p, salt)
+	if err != nil {
+		return err
+	}
+	row, err := e.Update(context.Background(), apiTokenUID, map[string]any{"id": *id}, keys, query.Params{})
+	if err != nil {
+		return err
+	}
+	if row == nil {
+		return fmt.Errorf("no token %d", *id)
+	}
+	fmt.Fprintf(stdout, "Token %d regenerated. Copy it now, it is not shown again:\n%s\n", *id, accessKey)
+	return nil
+}
+
 func apiTokenDelete(args []string, stdout, stderr io.Writer) error {
 	fs, dir, configDir := projectFlags("api-token:delete")
 	id := fs.Int("id", 0, "token id")

@@ -113,6 +113,18 @@ func TestTokensAndPermissions(t *testing.T) {
 		t.Fatalf("lastUsedAt is set on use: %v %v", last, err)
 	}
 	out.Reset()
+	if code := run([]string{"api-token:regenerate", "-dir", project, "--id", "1"}, &out, &out); code != 0 {
+		t.Fatalf("regenerate: %s", out.String())
+	}
+	lines = strings.Split(strings.TrimSpace(out.String()), "\n")
+	fresh := lines[len(lines)-1]
+	if c := get(token); c != 401 {
+		t.Fatalf("the old key after regenerate: %d", c)
+	}
+	if c := get(fresh); c != 200 {
+		t.Fatalf("the new key: %d", c)
+	}
+	out.Reset()
 	run([]string{"api-token:list", "-dir", project}, &out, &out)
 	if !strings.Contains(out.String(), "ci") || strings.Contains(out.String(), token) {
 		t.Fatalf("list: %s", out.String())
