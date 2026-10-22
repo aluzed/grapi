@@ -21,6 +21,7 @@ internal/media/       upload, images, providers
 internal/plugins/     i18n, email, graphql, openapi, sentry, mcp
 internal/jsrt/        hooks JS (esbuild + goja), phase 3
 internal/transfer/    export / import / transfer
+internal/extra/       fonctions Enterprise chez Strapi (SSO, audit, history, workflows, releases), tables grapi_*
 admin/                SPA admin (si D1 = B), embarquée via embed
 compat/               banc de compatibilité contre Strapi de référence
 ```
