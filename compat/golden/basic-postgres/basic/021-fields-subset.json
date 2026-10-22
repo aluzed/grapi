@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc2",
+        "id": "#id2",
+        "title": "Defaults only",
+        "views": 0
+      },
+      {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "title": "Hello World",
+        "views": 10
+      },
+      {
+        "documentId": "#doc3",
+        "id": "#id3",
+        "title": "Third one",
+        "views": 3
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 3
+      }
+    }
+  }
+}

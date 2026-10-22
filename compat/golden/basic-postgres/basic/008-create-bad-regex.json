@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "code must match the following: \"/^[A-Z]{3}-[0-9]{3}$/\"",
+            "name": "ValidationError",
+            "path": [
+              "code"
+            ],
+            "value": "abc-1"
+          }
+        ]
+      },
+      "message": "code must match the following: \"/^[A-Z]{3}-[0-9]{3}$/\"",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

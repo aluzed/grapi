@@ -1,0 +1,13 @@
+{
+  "status": 403,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Forbidden",
+      "name": "ForbiddenError",
+      "status": 403
+    }
+  }
+}

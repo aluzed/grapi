@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "This attribute must be unique",
+            "name": "ValidationError",
+            "path": [
+              "code"
+            ],
+            "value": "ABC-001"
+          }
+        ]
+      },
+      "message": "This attribute must be unique",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

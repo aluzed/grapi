@@ -1,0 +1,16 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "id",
+        "source": "body"
+      },
+      "message": "Invalid key id",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "views must be greater than or equal to 0",
+            "name": "ValidationError",
+            "path": [
+              "views"
+            ],
+            "value": -1
+          }
+        ]
+      },
+      "message": "views must be greater than or equal to 0",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

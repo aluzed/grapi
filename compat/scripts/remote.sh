@@ -82,12 +82,41 @@ esac
 
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a"
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
+# dump_schema <name> <dir>: the schema Strapi computed (strapi_database_schema)
+# and the physical one, as reference for grapi's metadata and DDL.
+dump_schema() {
+  name=$1
+  dir=$2
+  mkdir -p "$dir"
+  if [ "$db" = postgres ]; then
+    psql="docker exec $run_id-$name-pg psql -U strapi -d strapi -Atq -c"
+    $psql "select schema from strapi_database_schema" >"$dir/database-schema.json"
+    $psql "select coalesce(json_agg(c order by c.table_name, c.ordinal_position), '[]') from (select table_name, column_name, ordinal_position, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale from information_schema.columns where table_schema = 'public') c" >"$dir/physical-columns.json"
+    $psql "select coalesce(json_agg(i order by i.tablename, i.indexname), '[]') from (select tablename, indexname, indexdef from pg_indexes where schemaname = 'public') i" >"$dir/physical-indexes.json"
+    $psql "select coalesce(json_agg(f order by f.table_name, f.constraint_name), '[]') from (select tc.table_name, tc.constraint_name, tc.constraint_type, pg_get_constraintdef(pc.oid) as definition from information_schema.table_constraints tc join pg_constraint pc on pc.conname = tc.constraint_name where tc.table_schema = 'public' and tc.constraint_type in ('FOREIGN KEY', 'UNIQUE', 'PRIMARY KEY')) f" >"$dir/physical-constraints.json"
+  else
+    docker exec -w /app "$run_id-$name" node -e "
+      const D = require('better-sqlite3');
+      const db = new D('/data/data.db', { readonly: true });
+      const fs = require('fs');
+      process.stdout.write(db.prepare('select schema from strapi_database_schema').get().schema);
+    " >"$dir/database-schema.json"
+    docker exec -w /app "$run_id-$name" node -e "
+      const D = require('better-sqlite3');
+      const db = new D('/data/data.db', { readonly: true });
+      process.stdout.write(JSON.stringify(db.prepare(\"select type, name, tbl_name, sql from sqlite_master where name not like 'sqlite_%' order by tbl_name, type, name\").all(), null, 1));
+    " >"$dir/physical-sqlite-master.json"
+  fi
+  python3 -m json.tool "$dir/database-schema.json" >"$dir/database-schema.tmp" && mv "$dir/database-schema.tmp" "$dir/database-schema.json"
+}
+
 mkdir -p "$here/report"
 golden="$here/golden/$fixture-$db"
 rm -rf "$golden"
 mkdir -p "$golden"
 cp -r "$work/out/a/." "$golden/"
 rm -rf "$golden/raw"
+dump_schema a "$golden/schema"
 report="$here/report/$(date +%Y-%m-%d)-$fixture-$mode-$db.md"
 status=0
 "$here/bin/compat" diff -a "$work/out/a" -b "$work/out/b" -report "$report" \

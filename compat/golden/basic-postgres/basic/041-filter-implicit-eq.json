@@ -1,0 +1,59 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "bigCounter": "9007199254740993",
+        "body": "# Title\n\nSome **markdown**.",
+        "code": "ABC-001",
+        "contact": "hello@example.com",
+        "content": [
+          {
+            "children": [
+              {
+                "text": "Blocks content",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          }
+        ],
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "featured": true,
+        "id": "#id1",
+        "importedAt": null,
+        "meta": {
+          "nested": {
+            "ok": true
+          },
+          "tags": [
+            "a",
+            "b"
+          ]
+        },
+        "price": 19.99,
+        "publishedAt": "\u003cts\u003e",
+        "rating": 4.5,
+        "releaseDate": "2026-10-22",
+        "releaseTime": "14:30:00",
+        "scheduledAt": "2026-10-22T14:30:00.000Z",
+        "slug": null,
+        "stage": "writing",
+        "summary": "First article",
+        "title": "Hello World",
+        "updatedAt": "\u003cts\u003e",
+        "views": 10
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 1
+      }
+    }
+  }
+}

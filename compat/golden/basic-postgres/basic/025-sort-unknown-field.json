@@ -1,0 +1,18 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "nope",
+        "param": "sort",
+        "path": null,
+        "source": "query"
+      },
+      "message": "Invalid key nope",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}
