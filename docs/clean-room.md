@@ -24,6 +24,8 @@ grapi reproduit les fonctionnalités de Strapi 5, pas son code. Ces règles vale
 
 SSO, audit logs, content history, review workflows, releases et preview (tickets `XTR-*` et `ADM-009`) se spécifient **uniquement** à partir de la documentation publique (docs.strapi.io) et de connaissances générales du domaine. Chaque ticket cite les pages consultées.
 
+Le banc observe une instance Community Edition, dont la base contient aussi les tables de ces fonctions (`strapi_release*`, `strapi_workflows*`, `strapi_history_*`) et des fonctions IA (`strapi_ai_*`). Ces tables sont exclues des comparaisons de schéma : grapi conçoit les siennes à partir de la documentation publique. Les schémas intégrés (`internal/builtin`) ne sont extraits que des points d'entrée Community Edition.
+
 ## Données publiques
 
 Les référentiels publics se prennent à leur source (ISO 639, CLDR pour les locales, IANA pour les MIME types), jamais depuis les fichiers JSON de Strapi.

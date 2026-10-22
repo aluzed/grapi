@@ -1,0 +1,56 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays": "seventy",
+        "componentsWithAQuiteLongAttributeNameForTheLinkTable": [
+          {
+            "anotherQuiteLongAttributeNameInsideTheComponent": 1,
+            "id": "#id1",
+            "label": "a"
+          },
+          {
+            "anotherQuiteLongAttributeNameInsideTheComponent": 2,
+            "id": "#id2",
+            "label": "b"
+          }
+        ],
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc3",
+        "dynamicZoneWithALongName": [
+          {
+            "__component": "long-category-name.component-with-a-long-name",
+            "anotherQuiteLongAttributeNameInsideTheComponent": null,
+            "id": "#id3",
+            "label": "dz"
+          }
+        ],
+        "id": "#id1",
+        "mediaAttributeWithAVeryLongNameIndeedForTesting": [],
+        "publishedAt": "\u003cts\u003e",
+        "relatedCounterpartsWithAnUnreasonablyLongAttributeName": [
+          {
+            "createdAt": "\u003cts\u003e",
+            "documentId": "#doc1",
+            "id": "#id1",
+            "name": "First",
+            "publishedAt": "\u003cts\u003e",
+            "updatedAt": "\u003cts\u003e"
+          }
+        ],
+        "title": "Long",
+        "updatedAt": "\u003cts\u003e"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 1
+      }
+    }
+  }
+}

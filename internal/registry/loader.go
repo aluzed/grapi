@@ -23,7 +23,9 @@ type PluginSchemas struct {
 
 // Options of Load.
 type Options struct {
-	Plugins      []PluginSchemas
+	Plugins []PluginSchemas
+	// Admin holds the admin content types, as content-types/<name>/schema.json.
+	Admin        fs.FS
 	CustomFields *schema.CustomFields
 }
 
@@ -42,6 +44,16 @@ func Load(app fs.FS, opts Options) (*Result, error) {
 	l.components()
 	l.apis()
 	l.plugins(opts.Plugins)
+	if opts.Admin != nil {
+		l.admin(opts.Admin)
+	}
+	for _, p := range opts.Plugins {
+		if p.Name == "i18n" {
+			for _, ct := range l.res.Set.ContentTypes.All() {
+				ct.AddLocaleAttributes()
+			}
+		}
+	}
 	l.userCode()
 	if err := errors.Join(l.errs...); err != nil {
 		return nil, err
@@ -160,12 +172,35 @@ func (l *loader) plugins(plugins []PluginSchemas) {
 				l.fail("plugin %s: content type %s: %w", p.Name, ctName, err)
 				continue
 			}
+			if ct.CollectionName == "" {
+				ct.CollectionName = strings.ToLower(p.Name + "_" + ct.Info.SingularName)
+			}
 			if err := ct.Prepare(schema.PluginUID(p.Name, ctName), p.Name); err != nil {
 				l.fail("plugin %s: %w", p.Name, err)
 				continue
 			}
 			l.res.Set.AddContentType(ct)
 		}
+	}
+}
+
+func (l *loader) admin(fsys fs.FS) {
+	for _, ctName := range subdirs(fsys, "content-types") {
+		raw, err := fs.ReadFile(fsys, path.Join("content-types", ctName, "schema.json"))
+		if err != nil {
+			l.fail("admin: content type %s: %w", ctName, err)
+			continue
+		}
+		ct, err := schema.ParseContentType(raw)
+		if err != nil {
+			l.fail("admin: content type %s: %w", ctName, err)
+			continue
+		}
+		if err := ct.Prepare(schema.AdminUID(ctName), "admin"); err != nil {
+			l.fail("admin: %w", err)
+			continue
+		}
+		l.res.Set.AddContentType(ct)
 	}
 }
 

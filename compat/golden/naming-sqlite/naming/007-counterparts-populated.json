@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "id": "#id1",
+        "longEntitiesPointingBackAtThisCounterpartFromFarAway": [
+          {
+            "aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays": "seventy",
+            "createdAt": "\u003cts\u003e",
+            "documentId": "#doc3",
+            "id": "#id1",
+            "publishedAt": "\u003cts\u003e",
+            "title": "Long",
+            "updatedAt": "\u003cts\u003e"
+          }
+        ],
+        "name": "First",
+        "publishedAt": "\u003cts\u003e",
+        "selfReferenceWithAnotherLongNameForTheLinkTable": [],
+        "updatedAt": "\u003cts\u003e"
+      },
+      {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc2",
+        "id": "#id2",
+        "longEntitiesPointingBackAtThisCounterpartFromFarAway": [],
+        "name": "Second",
+        "publishedAt": "\u003cts\u003e",
+        "selfReferenceWithAnotherLongNameForTheLinkTable": [
+          {
+            "createdAt": "\u003cts\u003e",
+            "documentId": "#doc1",
+            "id": "#id1",
+            "name": "First",
+            "publishedAt": "\u003cts\u003e",
+            "updatedAt": "\u003cts\u003e"
+          }
+        ],
+        "updatedAt": "\u003cts\u003e"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

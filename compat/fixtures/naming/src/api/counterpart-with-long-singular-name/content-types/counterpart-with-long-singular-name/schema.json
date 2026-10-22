@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "counterparts_with_long_singular_names",
+  "info": {
+    "singularName": "counterpart-with-long-singular-name",
+    "pluralName": "counterparts-with-long-singular-name",
+    "displayName": "Counterpart"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "longEntitiesPointingBackAtThisCounterpartFromFarAway": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::long-entity.long-entity",
+      "mappedBy": "relatedCounterpartsWithAnUnreasonablyLongAttributeName"
+    },
+    "selfReferenceWithAnotherLongNameForTheLinkTable": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::counterpart-with-long-singular-name.counterpart-with-long-singular-name"
+    }
+  }
+}

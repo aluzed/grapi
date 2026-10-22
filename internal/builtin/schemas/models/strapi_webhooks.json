@@ -1,0 +1,25 @@
+{
+  "uid": "strapi::webhook",
+  "singularName": "strapi_webhooks",
+  "tableName": "strapi_webhooks",
+  "attributes": {
+    "id": {
+      "type": "increments"
+    },
+    "name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "text"
+    },
+    "headers": {
+      "type": "json"
+    },
+    "events": {
+      "type": "json"
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  }
+}

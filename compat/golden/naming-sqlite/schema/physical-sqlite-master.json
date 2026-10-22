@@ -1,0 +1,1130 @@
+[
+ {
+  "type": "index",
+  "name": "admin_permissions_created_by_id_fk",
+  "tbl_name": "admin_permissions",
+  "sql": "CREATE INDEX `admin_permissions_created_by_id_fk` on `admin_permissions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_documents_idx",
+  "tbl_name": "admin_permissions",
+  "sql": "CREATE INDEX `admin_permissions_documents_idx` on `admin_permissions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_updated_by_id_fk",
+  "tbl_name": "admin_permissions",
+  "sql": "CREATE INDEX `admin_permissions_updated_by_id_fk` on `admin_permissions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_permissions",
+  "tbl_name": "admin_permissions",
+  "sql": "CREATE TABLE \"admin_permissions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `action` varchar(255) NULL, `action_parameters` json NULL, `subject` varchar(255) NULL, `properties` json NULL, `conditions` json NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `admin_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_api_token_lnk_fk",
+  "tbl_name": "admin_permissions_api_token_lnk",
+  "sql": "CREATE INDEX `admin_permissions_api_token_lnk_fk` on `admin_permissions_api_token_lnk` (`permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_api_token_lnk_ifk",
+  "tbl_name": "admin_permissions_api_token_lnk",
+  "sql": "CREATE INDEX `admin_permissions_api_token_lnk_ifk` on `admin_permissions_api_token_lnk` (`api_token_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_api_token_lnk_oifk",
+  "tbl_name": "admin_permissions_api_token_lnk",
+  "sql": "CREATE INDEX `admin_permissions_api_token_lnk_oifk` on `admin_permissions_api_token_lnk` (`permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_api_token_lnk_uq",
+  "tbl_name": "admin_permissions_api_token_lnk",
+  "sql": "CREATE UNIQUE INDEX `admin_permissions_api_token_lnk_uq` on `admin_permissions_api_token_lnk` (`permission_id`, `api_token_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_permissions_api_token_lnk",
+  "tbl_name": "admin_permissions_api_token_lnk",
+  "sql": "CREATE TABLE \"admin_permissions_api_token_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `permission_id` integer NULL, `api_token_id` integer NULL, `permission_ord` float NULL, CONSTRAINT `admin_permissions_api_token_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_api_token_lnk_ifk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_api_token_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_api_token_lnk_ifk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_role_lnk_fk",
+  "tbl_name": "admin_permissions_role_lnk",
+  "sql": "CREATE INDEX `admin_permissions_role_lnk_fk` on `admin_permissions_role_lnk` (`permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_role_lnk_ifk",
+  "tbl_name": "admin_permissions_role_lnk",
+  "sql": "CREATE INDEX `admin_permissions_role_lnk_ifk` on `admin_permissions_role_lnk` (`role_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_role_lnk_oifk",
+  "tbl_name": "admin_permissions_role_lnk",
+  "sql": "CREATE INDEX `admin_permissions_role_lnk_oifk` on `admin_permissions_role_lnk` (`permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_permissions_role_lnk_uq",
+  "tbl_name": "admin_permissions_role_lnk",
+  "sql": "CREATE UNIQUE INDEX `admin_permissions_role_lnk_uq` on `admin_permissions_role_lnk` (`permission_id`, `role_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_permissions_role_lnk",
+  "tbl_name": "admin_permissions_role_lnk",
+  "sql": "CREATE TABLE \"admin_permissions_role_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `permission_id` integer NULL, `role_id` integer NULL, `permission_ord` float NULL, CONSTRAINT `admin_permissions_role_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `admin_roles` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_role_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_permissions_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `admin_roles` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "admin_roles_created_by_id_fk",
+  "tbl_name": "admin_roles",
+  "sql": "CREATE INDEX `admin_roles_created_by_id_fk` on `admin_roles` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_roles_documents_idx",
+  "tbl_name": "admin_roles",
+  "sql": "CREATE INDEX `admin_roles_documents_idx` on `admin_roles` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_roles_updated_by_id_fk",
+  "tbl_name": "admin_roles",
+  "sql": "CREATE INDEX `admin_roles_updated_by_id_fk` on `admin_roles` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_roles",
+  "tbl_name": "admin_roles",
+  "sql": "CREATE TABLE \"admin_roles\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `code` varchar(255) NULL, `description` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `admin_roles_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_roles_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_roles_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_roles_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_created_by_id_fk",
+  "tbl_name": "admin_users",
+  "sql": "CREATE INDEX `admin_users_created_by_id_fk` on `admin_users` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_documents_idx",
+  "tbl_name": "admin_users",
+  "sql": "CREATE INDEX `admin_users_documents_idx` on `admin_users` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_updated_by_id_fk",
+  "tbl_name": "admin_users",
+  "sql": "CREATE INDEX `admin_users_updated_by_id_fk` on `admin_users` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_users",
+  "tbl_name": "admin_users",
+  "sql": "CREATE TABLE \"admin_users\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `firstname` varchar(255) NULL, `lastname` varchar(255) NULL, `username` varchar(255) NULL, `email` varchar(255) NULL, `password` varchar(255) NULL, `reset_password_token` varchar(255) NULL, `reset_password_token_expires_at` datetime NULL, `registration_token` varchar(255) NULL, `is_active` boolean NULL, `blocked` boolean NULL, `prefered_language` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `admin_users_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_users_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_users_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `admin_users_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_roles_lnk_fk",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE INDEX `admin_users_roles_lnk_fk` on `admin_users_roles_lnk` (`user_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_roles_lnk_ifk",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE INDEX `admin_users_roles_lnk_ifk` on `admin_users_roles_lnk` (`role_id`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_roles_lnk_ofk",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE INDEX `admin_users_roles_lnk_ofk` on `admin_users_roles_lnk` (`role_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_roles_lnk_oifk",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE INDEX `admin_users_roles_lnk_oifk` on `admin_users_roles_lnk` (`user_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "admin_users_roles_lnk_uq",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE UNIQUE INDEX `admin_users_roles_lnk_uq` on `admin_users_roles_lnk` (`user_id`, `role_id`)"
+ },
+ {
+  "type": "table",
+  "name": "admin_users_roles_lnk",
+  "tbl_name": "admin_users_roles_lnk",
+  "sql": "CREATE TABLE \"admin_users_roles_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` integer NULL, `role_id` integer NULL, `role_ord` float NULL, `user_ord` float NULL, CONSTRAINT `admin_users_roles_lnk_fk` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_users_roles_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `admin_roles` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_users_roles_lnk_fk` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE, CONSTRAINT `admin_users_roles_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `admin_roles` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "table",
+  "name": "components_long_category_name_component_with_a_lonaf97c",
+  "tbl_name": "components_long_category_name_component_with_a_lonaf97c",
+  "sql": "CREATE TABLE `components_long_category_name_component_with_a_lonaf97c` (`id` integer not null primary key autoincrement, `label` varchar(255) null, `another_quite_long_attribute_name_inside_the_component` integer null)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_lo1d48f_self_reference_with_010b7_ifk",
+  "tbl_name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "sql": "CREATE INDEX `counterparts_with_lo1d48f_self_reference_with_010b7_ifk` on `counterparts_with_lo1d48f_self_reference_with_7a4df_lnk` (`inv_counterpart_with_long_singular_name_id`)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_lo1d48f_self_reference_with_010b7_ofk",
+  "tbl_name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "sql": "CREATE INDEX `counterparts_with_lo1d48f_self_reference_with_010b7_ofk` on `counterparts_with_lo1d48f_self_reference_with_7a4df_lnk` (`counterpart_with_long_singular_name_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_lo1d48f_self_reference_with_7010b7_fk",
+  "tbl_name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "sql": "CREATE INDEX `counterparts_with_lo1d48f_self_reference_with_7010b7_fk` on `counterparts_with_lo1d48f_self_reference_with_7a4df_lnk` (`counterpart_with_long_singular_name_id`)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_lo1d48f_self_reference_with_7010b7_uq",
+  "tbl_name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "sql": "CREATE UNIQUE INDEX `counterparts_with_lo1d48f_self_reference_with_7010b7_uq` on `counterparts_with_lo1d48f_self_reference_with_7a4df_lnk` (`counterpart_with_long_singular_name_id`, `inv_counterpart_with_long_singular_name_id`)"
+ },
+ {
+  "type": "table",
+  "name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "tbl_name": "counterparts_with_lo1d48f_self_reference_with_7a4df_lnk",
+  "sql": "CREATE TABLE \"counterparts_with_lo1d48f_self_reference_with_7a4df_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `counterpart_with_long_singular_name_id` integer NULL, `inv_counterpart_with_long_singular_name_id` integer NULL, `counterpart_with_long_singular_name_ord` float NULL, CONSTRAINT `counterparts_with_lo1d48f_self_reference_with_7010b7_fk` FOREIGN KEY (`counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE, CONSTRAINT `counterparts_with_lo1d48f_self_reference_with_010b7_ifk` FOREIGN KEY (`inv_counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE, CONSTRAINT `counterparts_with_lo1d48f_self_reference_with_7010b7_fk` FOREIGN KEY (`counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE, CONSTRAINT `counterparts_with_lo1d48f_self_reference_with_010b7_ifk` FOREIGN KEY (`inv_counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_long_singular_names_created_by_id_fk",
+  "tbl_name": "counterparts_with_long_singular_names",
+  "sql": "CREATE INDEX `counterparts_with_long_singular_names_created_by_id_fk` on `counterparts_with_long_singular_names` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_long_singular_names_documents_idx",
+  "tbl_name": "counterparts_with_long_singular_names",
+  "sql": "CREATE INDEX `counterparts_with_long_singular_names_documents_idx` on `counterparts_with_long_singular_names` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "counterparts_with_long_singular_names_updated_by_id_fk",
+  "tbl_name": "counterparts_with_long_singular_names",
+  "sql": "CREATE INDEX `counterparts_with_long_singular_names_updated_by_id_fk` on `counterparts_with_long_singular_names` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "counterparts_with_long_singular_names",
+  "tbl_name": "counterparts_with_long_singular_names",
+  "sql": "CREATE TABLE \"counterparts_with_long_singular_names\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `counterparts_with_long_singular_names_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `counterparts_with_long_singular_names_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `counterparts_with_long_singular_names_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `counterparts_with_long_singular_names_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "files_created_by_id_fk",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `files_created_by_id_fk` on `files` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "files_documents_idx",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `files_documents_idx` on `files` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "files_updated_by_id_fk",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `files_updated_by_id_fk` on `files` (`updated_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_created_at_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_created_at_index` on `files` (`created_at`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_ext_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_ext_index` on `files` (`ext`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_folder_path_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_folder_path_index` on `files` (`folder_path`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_name_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_name_index` on `files` (`name`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_size_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_size_index` on `files` (`size`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_files_updated_at_index",
+  "tbl_name": "files",
+  "sql": "CREATE INDEX `upload_files_updated_at_index` on `files` (`updated_at`)"
+ },
+ {
+  "type": "table",
+  "name": "files",
+  "tbl_name": "files",
+  "sql": "CREATE TABLE \"files\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `alternative_text` text NULL, `caption` text NULL, `focal_point` json NULL, `width` integer NULL, `height` integer NULL, `formats` json NULL, `hash` varchar(255) NULL, `ext` varchar(255) NULL, `mime` varchar(255) NULL, `size` float NULL, `url` text NULL, `preview_url` text NULL, `provider` varchar(255) NULL, `provider_metadata` json NULL, `folder_path` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `files_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `files_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `files_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `files_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "files_folder_lnk_fk",
+  "tbl_name": "files_folder_lnk",
+  "sql": "CREATE INDEX `files_folder_lnk_fk` on `files_folder_lnk` (`file_id`)"
+ },
+ {
+  "type": "index",
+  "name": "files_folder_lnk_ifk",
+  "tbl_name": "files_folder_lnk",
+  "sql": "CREATE INDEX `files_folder_lnk_ifk` on `files_folder_lnk` (`folder_id`)"
+ },
+ {
+  "type": "index",
+  "name": "files_folder_lnk_oifk",
+  "tbl_name": "files_folder_lnk",
+  "sql": "CREATE INDEX `files_folder_lnk_oifk` on `files_folder_lnk` (`file_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "files_folder_lnk_uq",
+  "tbl_name": "files_folder_lnk",
+  "sql": "CREATE UNIQUE INDEX `files_folder_lnk_uq` on `files_folder_lnk` (`file_id`, `folder_id`)"
+ },
+ {
+  "type": "table",
+  "name": "files_folder_lnk",
+  "tbl_name": "files_folder_lnk",
+  "sql": "CREATE TABLE \"files_folder_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `file_id` integer NULL, `folder_id` integer NULL, `file_ord` float NULL, CONSTRAINT `files_folder_lnk_fk` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE, CONSTRAINT `files_folder_lnk_ifk` FOREIGN KEY (`folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE, CONSTRAINT `files_folder_lnk_fk` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE, CONSTRAINT `files_folder_lnk_ifk` FOREIGN KEY (`folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "files_related_mph_fk",
+  "tbl_name": "files_related_mph",
+  "sql": "CREATE INDEX `files_related_mph_fk` on `files_related_mph` (`file_id`)"
+ },
+ {
+  "type": "index",
+  "name": "files_related_mph_idix",
+  "tbl_name": "files_related_mph",
+  "sql": "CREATE INDEX `files_related_mph_idix` on `files_related_mph` (`related_id`)"
+ },
+ {
+  "type": "index",
+  "name": "files_related_mph_oidx",
+  "tbl_name": "files_related_mph",
+  "sql": "CREATE INDEX `files_related_mph_oidx` on `files_related_mph` (`order`)"
+ },
+ {
+  "type": "table",
+  "name": "files_related_mph",
+  "tbl_name": "files_related_mph",
+  "sql": "CREATE TABLE \"files_related_mph\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `file_id` integer NULL, `related_id` integer NULL, `related_type` varchar(255) NULL, `field` varchar(255) NULL, `order` float NULL, CONSTRAINT `files_related_mph_fk` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE, CONSTRAINT `files_related_mph_fk` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "i18n_locale_created_by_id_fk",
+  "tbl_name": "i18n_locale",
+  "sql": "CREATE INDEX `i18n_locale_created_by_id_fk` on `i18n_locale` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "i18n_locale_documents_idx",
+  "tbl_name": "i18n_locale",
+  "sql": "CREATE INDEX `i18n_locale_documents_idx` on `i18n_locale` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "i18n_locale_updated_by_id_fk",
+  "tbl_name": "i18n_locale",
+  "sql": "CREATE INDEX `i18n_locale_updated_by_id_fk` on `i18n_locale` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "i18n_locale",
+  "tbl_name": "i18n_locale",
+  "sql": "CREATE TABLE \"i18n_locale\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `code` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `i18n_locale_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `i18n_locale_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `i18n_locale_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `i18n_locale_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a9ca92_related_counterpart8f84b_oifk",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE INDEX `long_entities_with_a9ca92_related_counterpart8f84b_oifk` on `long_entities_with_a9ca92_related_counterpartsb03e6_lnk` (`long_entity_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a9ca92_related_counterparts8f84b_ifk",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE INDEX `long_entities_with_a9ca92_related_counterparts8f84b_ifk` on `long_entities_with_a9ca92_related_counterpartsb03e6_lnk` (`counterpart_with_long_singular_name_id`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a9ca92_related_counterparts8f84b_ofk",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE INDEX `long_entities_with_a9ca92_related_counterparts8f84b_ofk` on `long_entities_with_a9ca92_related_counterpartsb03e6_lnk` (`counterpart_with_long_singular_name_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a9ca92_related_counterpartsb8f84b_fk",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE INDEX `long_entities_with_a9ca92_related_counterpartsb8f84b_fk` on `long_entities_with_a9ca92_related_counterpartsb03e6_lnk` (`long_entity_id`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a9ca92_related_counterpartsb8f84b_uq",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE UNIQUE INDEX `long_entities_with_a9ca92_related_counterpartsb8f84b_uq` on `long_entities_with_a9ca92_related_counterpartsb03e6_lnk` (`long_entity_id`, `counterpart_with_long_singular_name_id`)"
+ },
+ {
+  "type": "table",
+  "name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "tbl_name": "long_entities_with_a9ca92_related_counterpartsb03e6_lnk",
+  "sql": "CREATE TABLE \"long_entities_with_a9ca92_related_counterpartsb03e6_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `long_entity_id` integer NULL, `counterpart_with_long_singular_name_id` integer NULL, `counterpart_with_long_singular_name_ord` float NULL, `long_entity_ord` float NULL, CONSTRAINT `long_entities_with_a9ca92_related_counterpartsb8f84b_fk` FOREIGN KEY (`long_entity_id`) REFERENCES `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`id`) ON DELETE CASCADE, CONSTRAINT `long_entities_with_a9ca92_related_counterparts8f84b_ifk` FOREIGN KEY (`counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE, CONSTRAINT `long_entities_with_a9ca92_related_counterpartsb8f84b_fk` FOREIGN KEY (`long_entity_id`) REFERENCES `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`id`) ON DELETE CASCADE, CONSTRAINT `long_entities_with_a9ca92_related_counterparts8f84b_ifk` FOREIGN KEY (`counterpart_with_long_singular_name_id`) REFERENCES `counterparts_with_long_singular_names` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_name_beyd22eb_entity_fk",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "sql": "CREATE INDEX `long_entities_with_a_collection_name_beyd22eb_entity_fk` on `long_entities_with_a_collection_name_beyond_fd22eb_cmps` (`entity_id`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_name_beyd22eb_field_idx",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "sql": "CREATE INDEX `long_entities_with_a_collection_name_beyd22eb_field_idx` on `long_entities_with_a_collection_name_beyond_fd22eb_cmps` (`field`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_name_beyond_fifd22eb_uq",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "sql": "CREATE UNIQUE INDEX `long_entities_with_a_collection_name_beyond_fifd22eb_uq` on `long_entities_with_a_collection_name_beyond_fd22eb_cmps` (`entity_id`, `cmp_id`, `field`, `component_type`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collectiond22eb_component_type_idx",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "sql": "CREATE INDEX `long_entities_with_a_collectiond22eb_component_type_idx` on `long_entities_with_a_collection_name_beyond_fd22eb_cmps` (`component_type`)"
+ },
+ {
+  "type": "table",
+  "name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fd22eb_cmps",
+  "sql": "CREATE TABLE \"long_entities_with_a_collection_name_beyond_fd22eb_cmps\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `entity_id` integer NULL, `cmp_id` integer NULL, `component_type` varchar(255) NULL, `field` varchar(255) NULL, `order` float NULL, CONSTRAINT `long_entities_with_a_collection_name_beyd22eb_entity_fk` FOREIGN KEY (`entity_id`) REFERENCES `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`id`) ON DELETE CASCADE, CONSTRAINT `long_entities_with_a_collection_name_beyd22eb_entity_fk` FOREIGN KEY (`entity_id`) REFERENCES `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_named22eb_documents_idx",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fifty_d22eb",
+  "sql": "CREATE INDEX `long_entities_with_a_collection_named22eb_documents_idx` on `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_nf6607_created_by_id_fk",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fifty_d22eb",
+  "sql": "CREATE INDEX `long_entities_with_a_collection_nf6607_created_by_id_fk` on `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "long_entities_with_a_collection_nf6607_updated_by_id_fk",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fifty_d22eb",
+  "sql": "CREATE INDEX `long_entities_with_a_collection_nf6607_updated_by_id_fk` on `long_entities_with_a_collection_name_beyond_fifty_d22eb` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "long_entities_with_a_collection_name_beyond_fifty_d22eb",
+  "tbl_name": "long_entities_with_a_collection_name_beyond_fifty_d22eb",
+  "sql": "CREATE TABLE \"long_entities_with_a_collection_name_beyond_fifty_d22eb\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `title` varchar(255) NULL, `a_very_long_attribute_name_that_goes_far_beyond_th51886` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `long_entities_with_a_collection_nf6607_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `long_entities_with_a_collection_nf6607_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `long_entities_with_a_collection_nf6607_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `long_entities_with_a_collection_nf6607_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_ai_localization_jobs",
+  "tbl_name": "strapi_ai_localization_jobs",
+  "sql": "CREATE TABLE `strapi_ai_localization_jobs` (`id` integer not null primary key autoincrement, `content_type` varchar(255) not null, `related_document_id` varchar(255) not null, `source_locale` varchar(255) not null, `target_locales` json not null, `status` varchar(255) not null, `created_at` datetime null, `updated_at` datetime null)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_ai_metadata_jobs",
+  "tbl_name": "strapi_ai_metadata_jobs",
+  "sql": "CREATE TABLE `strapi_ai_metadata_jobs` (`id` integer not null primary key autoincrement, `status` varchar(255) not null, `created_at` datetime null, `completed_at` datetime null)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_created_by_id_fk",
+  "tbl_name": "strapi_api_token_permissions",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_created_by_id_fk` on `strapi_api_token_permissions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_documents_idx",
+  "tbl_name": "strapi_api_token_permissions",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_documents_idx` on `strapi_api_token_permissions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_updated_by_id_fk",
+  "tbl_name": "strapi_api_token_permissions",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_updated_by_id_fk` on `strapi_api_token_permissions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_api_token_permissions",
+  "tbl_name": "strapi_api_token_permissions",
+  "sql": "CREATE TABLE \"strapi_api_token_permissions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `action` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_api_token_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_token_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_token_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_token_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_token_lnk_fk",
+  "tbl_name": "strapi_api_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_token_lnk_fk` on `strapi_api_token_permissions_token_lnk` (`api_token_permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_token_lnk_ifk",
+  "tbl_name": "strapi_api_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_token_lnk_ifk` on `strapi_api_token_permissions_token_lnk` (`api_token_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_token_lnk_oifk",
+  "tbl_name": "strapi_api_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_api_token_permissions_token_lnk_oifk` on `strapi_api_token_permissions_token_lnk` (`api_token_permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_token_permissions_token_lnk_uq",
+  "tbl_name": "strapi_api_token_permissions_token_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_api_token_permissions_token_lnk_uq` on `strapi_api_token_permissions_token_lnk` (`api_token_permission_id`, `api_token_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_api_token_permissions_token_lnk",
+  "tbl_name": "strapi_api_token_permissions_token_lnk",
+  "sql": "CREATE TABLE \"strapi_api_token_permissions_token_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `api_token_permission_id` integer NULL, `api_token_id` integer NULL, `api_token_permission_ord` float NULL, CONSTRAINT `strapi_api_token_permissions_token_lnk_fk` FOREIGN KEY (`api_token_permission_id`) REFERENCES `strapi_api_token_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_token_permissions_token_lnk_ifk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_token_permissions_token_lnk_fk` FOREIGN KEY (`api_token_permission_id`) REFERENCES `strapi_api_token_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_token_permissions_token_lnk_ifk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_created_by_id_fk",
+  "tbl_name": "strapi_api_tokens",
+  "sql": "CREATE INDEX `strapi_api_tokens_created_by_id_fk` on `strapi_api_tokens` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_documents_idx",
+  "tbl_name": "strapi_api_tokens",
+  "sql": "CREATE INDEX `strapi_api_tokens_documents_idx` on `strapi_api_tokens` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_updated_by_id_fk",
+  "tbl_name": "strapi_api_tokens",
+  "sql": "CREATE INDEX `strapi_api_tokens_updated_by_id_fk` on `strapi_api_tokens` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_api_tokens",
+  "tbl_name": "strapi_api_tokens",
+  "sql": "CREATE TABLE \"strapi_api_tokens\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `description` varchar(255) NULL, `kind` varchar(255) NULL, `type` varchar(255) NULL, `access_key` varchar(255) NULL, `encrypted_key` text NULL, `last_used_at` datetime NULL, `expires_at` datetime NULL, `lifespan` bigint NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_api_tokens_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_tokens_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_tokens_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_api_tokens_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_admin_user_owner_lnk_fk",
+  "tbl_name": "strapi_api_tokens_admin_user_owner_lnk",
+  "sql": "CREATE INDEX `strapi_api_tokens_admin_user_owner_lnk_fk` on `strapi_api_tokens_admin_user_owner_lnk` (`api_token_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_admin_user_owner_lnk_ifk",
+  "tbl_name": "strapi_api_tokens_admin_user_owner_lnk",
+  "sql": "CREATE INDEX `strapi_api_tokens_admin_user_owner_lnk_ifk` on `strapi_api_tokens_admin_user_owner_lnk` (`user_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_admin_user_owner_lnk_oifk",
+  "tbl_name": "strapi_api_tokens_admin_user_owner_lnk",
+  "sql": "CREATE INDEX `strapi_api_tokens_admin_user_owner_lnk_oifk` on `strapi_api_tokens_admin_user_owner_lnk` (`api_token_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_api_tokens_admin_user_owner_lnk_uq",
+  "tbl_name": "strapi_api_tokens_admin_user_owner_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_api_tokens_admin_user_owner_lnk_uq` on `strapi_api_tokens_admin_user_owner_lnk` (`api_token_id`, `user_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_api_tokens_admin_user_owner_lnk",
+  "tbl_name": "strapi_api_tokens_admin_user_owner_lnk",
+  "sql": "CREATE TABLE \"strapi_api_tokens_admin_user_owner_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `api_token_id` integer NULL, `user_id` integer NULL, `api_token_ord` float NULL, CONSTRAINT `strapi_api_tokens_admin_user_owner_lnk_fk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_tokens_admin_user_owner_lnk_ifk` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_tokens_admin_user_owner_lnk_fk` FOREIGN KEY (`api_token_id`) REFERENCES `strapi_api_tokens` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_api_tokens_admin_user_owner_lnk_ifk` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_core_store_settings",
+  "tbl_name": "strapi_core_store_settings",
+  "sql": "CREATE TABLE `strapi_core_store_settings` (`id` integer not null primary key autoincrement, `key` varchar(255) null, `value` text null, `type` varchar(255) null, `environment` varchar(255) null, `tag` varchar(255) null)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_database_schema",
+  "tbl_name": "strapi_database_schema",
+  "sql": "CREATE TABLE `strapi_database_schema` (`id` integer not null primary key autoincrement, `schema` json, `time` datetime, `hash` varchar(255))"
+ },
+ {
+  "type": "index",
+  "name": "strapi_history_versions_created_by_id_fk",
+  "tbl_name": "strapi_history_versions",
+  "sql": "CREATE INDEX `strapi_history_versions_created_by_id_fk` on `strapi_history_versions` (`created_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_history_versions",
+  "tbl_name": "strapi_history_versions",
+  "sql": "CREATE TABLE \"strapi_history_versions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `content_type` varchar(255) NOT NULL, `related_document_id` varchar(255) NULL, `locale` varchar(255) NULL, `status` varchar(255) NULL, `data` json NULL, `schema` json NULL, `created_at` datetime NULL, `created_by_id` integer NULL, CONSTRAINT `strapi_history_versions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_history_versions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_migrations",
+  "tbl_name": "strapi_migrations",
+  "sql": "CREATE TABLE `strapi_migrations` (`id` integer not null primary key autoincrement, `name` varchar(255), `time` datetime)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_migrations_internal",
+  "tbl_name": "strapi_migrations_internal",
+  "sql": "CREATE TABLE `strapi_migrations_internal` (`id` integer not null primary key autoincrement, `name` varchar(255), `time` datetime)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_created_by_id_fk",
+  "tbl_name": "strapi_release_actions",
+  "sql": "CREATE INDEX `strapi_release_actions_created_by_id_fk` on `strapi_release_actions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_documents_idx",
+  "tbl_name": "strapi_release_actions",
+  "sql": "CREATE INDEX `strapi_release_actions_documents_idx` on `strapi_release_actions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_updated_by_id_fk",
+  "tbl_name": "strapi_release_actions",
+  "sql": "CREATE INDEX `strapi_release_actions_updated_by_id_fk` on `strapi_release_actions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_release_actions",
+  "tbl_name": "strapi_release_actions",
+  "sql": "CREATE TABLE \"strapi_release_actions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `type` varchar(255) NULL, `content_type` varchar(255) NULL, `entry_document_id` varchar(255) NULL, `locale` varchar(255) NULL, `is_entry_valid` boolean NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, CONSTRAINT `strapi_release_actions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_release_actions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_release_actions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_release_actions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_release_lnk_fk",
+  "tbl_name": "strapi_release_actions_release_lnk",
+  "sql": "CREATE INDEX `strapi_release_actions_release_lnk_fk` on `strapi_release_actions_release_lnk` (`release_action_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_release_lnk_ifk",
+  "tbl_name": "strapi_release_actions_release_lnk",
+  "sql": "CREATE INDEX `strapi_release_actions_release_lnk_ifk` on `strapi_release_actions_release_lnk` (`release_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_release_lnk_oifk",
+  "tbl_name": "strapi_release_actions_release_lnk",
+  "sql": "CREATE INDEX `strapi_release_actions_release_lnk_oifk` on `strapi_release_actions_release_lnk` (`release_action_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_release_actions_release_lnk_uq",
+  "tbl_name": "strapi_release_actions_release_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_release_actions_release_lnk_uq` on `strapi_release_actions_release_lnk` (`release_action_id`, `release_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_release_actions_release_lnk",
+  "tbl_name": "strapi_release_actions_release_lnk",
+  "sql": "CREATE TABLE \"strapi_release_actions_release_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `release_action_id` integer NULL, `release_id` integer NULL, `release_action_ord` float NULL, CONSTRAINT `strapi_release_actions_release_lnk_fk` FOREIGN KEY (`release_action_id`) REFERENCES `strapi_release_actions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_release_actions_release_lnk_ifk` FOREIGN KEY (`release_id`) REFERENCES `strapi_releases` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_release_actions_release_lnk_fk` FOREIGN KEY (`release_action_id`) REFERENCES `strapi_release_actions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_release_actions_release_lnk_ifk` FOREIGN KEY (`release_id`) REFERENCES `strapi_releases` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_releases_created_by_id_fk",
+  "tbl_name": "strapi_releases",
+  "sql": "CREATE INDEX `strapi_releases_created_by_id_fk` on `strapi_releases` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_releases_documents_idx",
+  "tbl_name": "strapi_releases",
+  "sql": "CREATE INDEX `strapi_releases_documents_idx` on `strapi_releases` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_releases_updated_by_id_fk",
+  "tbl_name": "strapi_releases",
+  "sql": "CREATE INDEX `strapi_releases_updated_by_id_fk` on `strapi_releases` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_releases",
+  "tbl_name": "strapi_releases",
+  "sql": "CREATE TABLE \"strapi_releases\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `released_at` datetime NULL, `scheduled_at` datetime NULL, `timezone` varchar(255) NULL, `status` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_releases_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_releases_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_releases_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_releases_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_sessions_created_by_id_fk",
+  "tbl_name": "strapi_sessions",
+  "sql": "CREATE INDEX `strapi_sessions_created_by_id_fk` on `strapi_sessions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_sessions_documents_idx",
+  "tbl_name": "strapi_sessions",
+  "sql": "CREATE INDEX `strapi_sessions_documents_idx` on `strapi_sessions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_sessions_updated_by_id_fk",
+  "tbl_name": "strapi_sessions",
+  "sql": "CREATE INDEX `strapi_sessions_updated_by_id_fk` on `strapi_sessions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_sessions",
+  "tbl_name": "strapi_sessions",
+  "sql": "CREATE TABLE \"strapi_sessions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `user_id` varchar(255) NULL, `session_id` varchar(255) NULL, `child_id` varchar(255) NULL, `device_id` varchar(255) NULL, `origin` varchar(255) NULL, `expires_at` datetime NULL, `absolute_expires_at` datetime NULL, `status` varchar(255) NULL, `type` varchar(255) NULL, `metadata` json NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_sessions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_sessions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_sessions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_sessions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_created_by_id_fk",
+  "tbl_name": "strapi_transfer_token_permissions",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_created_by_id_fk` on `strapi_transfer_token_permissions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_documents_idx",
+  "tbl_name": "strapi_transfer_token_permissions",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_documents_idx` on `strapi_transfer_token_permissions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_updated_by_id_fk",
+  "tbl_name": "strapi_transfer_token_permissions",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_updated_by_id_fk` on `strapi_transfer_token_permissions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_transfer_token_permissions",
+  "tbl_name": "strapi_transfer_token_permissions",
+  "sql": "CREATE TABLE \"strapi_transfer_token_permissions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `action` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_transfer_token_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_token_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_token_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_token_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_token_lnk_fk",
+  "tbl_name": "strapi_transfer_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_token_lnk_fk` on `strapi_transfer_token_permissions_token_lnk` (`transfer_token_permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_token_lnk_ifk",
+  "tbl_name": "strapi_transfer_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_token_lnk_ifk` on `strapi_transfer_token_permissions_token_lnk` (`transfer_token_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_token_lnk_oifk",
+  "tbl_name": "strapi_transfer_token_permissions_token_lnk",
+  "sql": "CREATE INDEX `strapi_transfer_token_permissions_token_lnk_oifk` on `strapi_transfer_token_permissions_token_lnk` (`transfer_token_permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_token_permissions_token_lnk_uq",
+  "tbl_name": "strapi_transfer_token_permissions_token_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_transfer_token_permissions_token_lnk_uq` on `strapi_transfer_token_permissions_token_lnk` (`transfer_token_permission_id`, `transfer_token_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_transfer_token_permissions_token_lnk",
+  "tbl_name": "strapi_transfer_token_permissions_token_lnk",
+  "sql": "CREATE TABLE \"strapi_transfer_token_permissions_token_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `transfer_token_permission_id` integer NULL, `transfer_token_id` integer NULL, `transfer_token_permission_ord` float NULL, CONSTRAINT `strapi_transfer_token_permissions_token_lnk_fk` FOREIGN KEY (`transfer_token_permission_id`) REFERENCES `strapi_transfer_token_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_transfer_token_permissions_token_lnk_ifk` FOREIGN KEY (`transfer_token_id`) REFERENCES `strapi_transfer_tokens` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_transfer_token_permissions_token_lnk_fk` FOREIGN KEY (`transfer_token_permission_id`) REFERENCES `strapi_transfer_token_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_transfer_token_permissions_token_lnk_ifk` FOREIGN KEY (`transfer_token_id`) REFERENCES `strapi_transfer_tokens` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_tokens_created_by_id_fk",
+  "tbl_name": "strapi_transfer_tokens",
+  "sql": "CREATE INDEX `strapi_transfer_tokens_created_by_id_fk` on `strapi_transfer_tokens` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_tokens_documents_idx",
+  "tbl_name": "strapi_transfer_tokens",
+  "sql": "CREATE INDEX `strapi_transfer_tokens_documents_idx` on `strapi_transfer_tokens` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_transfer_tokens_updated_by_id_fk",
+  "tbl_name": "strapi_transfer_tokens",
+  "sql": "CREATE INDEX `strapi_transfer_tokens_updated_by_id_fk` on `strapi_transfer_tokens` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_transfer_tokens",
+  "tbl_name": "strapi_transfer_tokens",
+  "sql": "CREATE TABLE \"strapi_transfer_tokens\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `description` varchar(255) NULL, `access_key` varchar(255) NULL, `last_used_at` datetime NULL, `expires_at` datetime NULL, `lifespan` bigint NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_transfer_tokens_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_tokens_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_tokens_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_transfer_tokens_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_webhooks",
+  "tbl_name": "strapi_webhooks",
+  "sql": "CREATE TABLE `strapi_webhooks` (`id` integer not null primary key autoincrement, `name` varchar(255) null, `url` text null, `headers` json null, `events` json null, `enabled` boolean null)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_created_by_id_fk",
+  "tbl_name": "strapi_workflows",
+  "sql": "CREATE INDEX `strapi_workflows_created_by_id_fk` on `strapi_workflows` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_documents_idx",
+  "tbl_name": "strapi_workflows",
+  "sql": "CREATE INDEX `strapi_workflows_documents_idx` on `strapi_workflows` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_updated_by_id_fk",
+  "tbl_name": "strapi_workflows",
+  "sql": "CREATE INDEX `strapi_workflows_updated_by_id_fk` on `strapi_workflows` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_workflows",
+  "tbl_name": "strapi_workflows",
+  "sql": "CREATE TABLE \"strapi_workflows\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `content_types` json NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_workflows_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stage_required_to_publish_lnk_fk",
+  "tbl_name": "strapi_workflows_stage_required_to_publish_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stage_required_to_publish_lnk_fk` on `strapi_workflows_stage_required_to_publish_lnk` (`workflow_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stage_required_to_publish_lnk_ifk",
+  "tbl_name": "strapi_workflows_stage_required_to_publish_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stage_required_to_publish_lnk_ifk` on `strapi_workflows_stage_required_to_publish_lnk` (`workflow_stage_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stage_required_to_publish_lnk_uq",
+  "tbl_name": "strapi_workflows_stage_required_to_publish_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_workflows_stage_required_to_publish_lnk_uq` on `strapi_workflows_stage_required_to_publish_lnk` (`workflow_id`, `workflow_stage_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_workflows_stage_required_to_publish_lnk",
+  "tbl_name": "strapi_workflows_stage_required_to_publish_lnk",
+  "sql": "CREATE TABLE \"strapi_workflows_stage_required_to_publish_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `workflow_id` integer NULL, `workflow_stage_id` integer NULL, CONSTRAINT `strapi_workflows_stage_required_to_publish_lnk_fk` FOREIGN KEY (`workflow_id`) REFERENCES `strapi_workflows` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stage_required_to_publish_lnk_ifk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stage_required_to_publish_lnk_fk` FOREIGN KEY (`workflow_id`) REFERENCES `strapi_workflows` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stage_required_to_publish_lnk_ifk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_created_by_id_fk",
+  "tbl_name": "strapi_workflows_stages",
+  "sql": "CREATE INDEX `strapi_workflows_stages_created_by_id_fk` on `strapi_workflows_stages` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_documents_idx",
+  "tbl_name": "strapi_workflows_stages",
+  "sql": "CREATE INDEX `strapi_workflows_stages_documents_idx` on `strapi_workflows_stages` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_updated_by_id_fk",
+  "tbl_name": "strapi_workflows_stages",
+  "sql": "CREATE INDEX `strapi_workflows_stages_updated_by_id_fk` on `strapi_workflows_stages` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_workflows_stages",
+  "tbl_name": "strapi_workflows_stages",
+  "sql": "CREATE TABLE \"strapi_workflows_stages\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `color` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `strapi_workflows_stages_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_stages_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_stages_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `strapi_workflows_stages_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_permissions_lnk_fk",
+  "tbl_name": "strapi_workflows_stages_permissions_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_permissions_lnk_fk` on `strapi_workflows_stages_permissions_lnk` (`workflow_stage_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_permissions_lnk_ifk",
+  "tbl_name": "strapi_workflows_stages_permissions_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_permissions_lnk_ifk` on `strapi_workflows_stages_permissions_lnk` (`permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_permissions_lnk_ofk",
+  "tbl_name": "strapi_workflows_stages_permissions_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_permissions_lnk_ofk` on `strapi_workflows_stages_permissions_lnk` (`permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_permissions_lnk_uq",
+  "tbl_name": "strapi_workflows_stages_permissions_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_workflows_stages_permissions_lnk_uq` on `strapi_workflows_stages_permissions_lnk` (`workflow_stage_id`, `permission_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_workflows_stages_permissions_lnk",
+  "tbl_name": "strapi_workflows_stages_permissions_lnk",
+  "sql": "CREATE TABLE \"strapi_workflows_stages_permissions_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `workflow_stage_id` integer NULL, `permission_id` integer NULL, `permission_ord` float NULL, CONSTRAINT `strapi_workflows_stages_permissions_lnk_fk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_permissions_lnk_ifk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_permissions_lnk_fk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_permissions_lnk_ifk` FOREIGN KEY (`permission_id`) REFERENCES `admin_permissions` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_workflow_lnk_fk",
+  "tbl_name": "strapi_workflows_stages_workflow_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_workflow_lnk_fk` on `strapi_workflows_stages_workflow_lnk` (`workflow_stage_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_workflow_lnk_ifk",
+  "tbl_name": "strapi_workflows_stages_workflow_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_workflow_lnk_ifk` on `strapi_workflows_stages_workflow_lnk` (`workflow_id`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_workflow_lnk_oifk",
+  "tbl_name": "strapi_workflows_stages_workflow_lnk",
+  "sql": "CREATE INDEX `strapi_workflows_stages_workflow_lnk_oifk` on `strapi_workflows_stages_workflow_lnk` (`workflow_stage_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "strapi_workflows_stages_workflow_lnk_uq",
+  "tbl_name": "strapi_workflows_stages_workflow_lnk",
+  "sql": "CREATE UNIQUE INDEX `strapi_workflows_stages_workflow_lnk_uq` on `strapi_workflows_stages_workflow_lnk` (`workflow_stage_id`, `workflow_id`)"
+ },
+ {
+  "type": "table",
+  "name": "strapi_workflows_stages_workflow_lnk",
+  "tbl_name": "strapi_workflows_stages_workflow_lnk",
+  "sql": "CREATE TABLE \"strapi_workflows_stages_workflow_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `workflow_stage_id` integer NULL, `workflow_id` integer NULL, `workflow_stage_ord` float NULL, CONSTRAINT `strapi_workflows_stages_workflow_lnk_fk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_workflow_lnk_ifk` FOREIGN KEY (`workflow_id`) REFERENCES `strapi_workflows` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_workflow_lnk_fk` FOREIGN KEY (`workflow_stage_id`) REFERENCES `strapi_workflows_stages` (`id`) ON DELETE CASCADE, CONSTRAINT `strapi_workflows_stages_workflow_lnk_ifk` FOREIGN KEY (`workflow_id`) REFERENCES `strapi_workflows` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_created_by_id_fk",
+  "tbl_name": "up_permissions",
+  "sql": "CREATE INDEX `up_permissions_created_by_id_fk` on `up_permissions` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_documents_idx",
+  "tbl_name": "up_permissions",
+  "sql": "CREATE INDEX `up_permissions_documents_idx` on `up_permissions` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_updated_by_id_fk",
+  "tbl_name": "up_permissions",
+  "sql": "CREATE INDEX `up_permissions_updated_by_id_fk` on `up_permissions` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "up_permissions",
+  "tbl_name": "up_permissions",
+  "sql": "CREATE TABLE \"up_permissions\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `action` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `up_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_permissions_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_permissions_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_role_lnk_fk",
+  "tbl_name": "up_permissions_role_lnk",
+  "sql": "CREATE INDEX `up_permissions_role_lnk_fk` on `up_permissions_role_lnk` (`permission_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_role_lnk_ifk",
+  "tbl_name": "up_permissions_role_lnk",
+  "sql": "CREATE INDEX `up_permissions_role_lnk_ifk` on `up_permissions_role_lnk` (`role_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_role_lnk_oifk",
+  "tbl_name": "up_permissions_role_lnk",
+  "sql": "CREATE INDEX `up_permissions_role_lnk_oifk` on `up_permissions_role_lnk` (`permission_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "up_permissions_role_lnk_uq",
+  "tbl_name": "up_permissions_role_lnk",
+  "sql": "CREATE UNIQUE INDEX `up_permissions_role_lnk_uq` on `up_permissions_role_lnk` (`permission_id`, `role_id`)"
+ },
+ {
+  "type": "table",
+  "name": "up_permissions_role_lnk",
+  "tbl_name": "up_permissions_role_lnk",
+  "sql": "CREATE TABLE \"up_permissions_role_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `permission_id` integer NULL, `role_id` integer NULL, `permission_ord` float NULL, CONSTRAINT `up_permissions_role_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `up_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `up_permissions_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `up_roles` (`id`) ON DELETE CASCADE, CONSTRAINT `up_permissions_role_lnk_fk` FOREIGN KEY (`permission_id`) REFERENCES `up_permissions` (`id`) ON DELETE CASCADE, CONSTRAINT `up_permissions_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `up_roles` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "up_roles_created_by_id_fk",
+  "tbl_name": "up_roles",
+  "sql": "CREATE INDEX `up_roles_created_by_id_fk` on `up_roles` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_roles_documents_idx",
+  "tbl_name": "up_roles",
+  "sql": "CREATE INDEX `up_roles_documents_idx` on `up_roles` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "up_roles_updated_by_id_fk",
+  "tbl_name": "up_roles",
+  "sql": "CREATE INDEX `up_roles_updated_by_id_fk` on `up_roles` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "up_roles",
+  "tbl_name": "up_roles",
+  "sql": "CREATE TABLE \"up_roles\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `description` varchar(255) NULL, `type` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `up_roles_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_roles_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_roles_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_roles_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_created_by_id_fk",
+  "tbl_name": "up_users",
+  "sql": "CREATE INDEX `up_users_created_by_id_fk` on `up_users` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_documents_idx",
+  "tbl_name": "up_users",
+  "sql": "CREATE INDEX `up_users_documents_idx` on `up_users` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_updated_by_id_fk",
+  "tbl_name": "up_users",
+  "sql": "CREATE INDEX `up_users_updated_by_id_fk` on `up_users` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "up_users",
+  "tbl_name": "up_users",
+  "sql": "CREATE TABLE \"up_users\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `username` varchar(255) NULL, `email` varchar(255) NULL, `provider` varchar(255) NULL, `password` varchar(255) NULL, `reset_password_token` varchar(255) NULL, `confirmation_token` varchar(255) NULL, `confirmed` boolean NULL, `blocked` boolean NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `up_users_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_users_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_users_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `up_users_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_role_lnk_fk",
+  "tbl_name": "up_users_role_lnk",
+  "sql": "CREATE INDEX `up_users_role_lnk_fk` on `up_users_role_lnk` (`user_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_role_lnk_ifk",
+  "tbl_name": "up_users_role_lnk",
+  "sql": "CREATE INDEX `up_users_role_lnk_ifk` on `up_users_role_lnk` (`role_id`)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_role_lnk_oifk",
+  "tbl_name": "up_users_role_lnk",
+  "sql": "CREATE INDEX `up_users_role_lnk_oifk` on `up_users_role_lnk` (`user_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "up_users_role_lnk_uq",
+  "tbl_name": "up_users_role_lnk",
+  "sql": "CREATE UNIQUE INDEX `up_users_role_lnk_uq` on `up_users_role_lnk` (`user_id`, `role_id`)"
+ },
+ {
+  "type": "table",
+  "name": "up_users_role_lnk",
+  "tbl_name": "up_users_role_lnk",
+  "sql": "CREATE TABLE \"up_users_role_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` integer NULL, `role_id` integer NULL, `user_ord` float NULL, CONSTRAINT `up_users_role_lnk_fk` FOREIGN KEY (`user_id`) REFERENCES `up_users` (`id`) ON DELETE CASCADE, CONSTRAINT `up_users_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `up_roles` (`id`) ON DELETE CASCADE, CONSTRAINT `up_users_role_lnk_fk` FOREIGN KEY (`user_id`) REFERENCES `up_users` (`id`) ON DELETE CASCADE, CONSTRAINT `up_users_role_lnk_ifk` FOREIGN KEY (`role_id`) REFERENCES `up_roles` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_created_by_id_fk",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE INDEX `upload_folders_created_by_id_fk` on `upload_folders` (`created_by_id`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_documents_idx",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE INDEX `upload_folders_documents_idx` on `upload_folders` (`document_id`, `locale`, `published_at`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_path_id_index",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE UNIQUE INDEX `upload_folders_path_id_index` on `upload_folders` (`path_id`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_path_index",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE UNIQUE INDEX `upload_folders_path_index` on `upload_folders` (`path`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_updated_by_id_fk",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE INDEX `upload_folders_updated_by_id_fk` on `upload_folders` (`updated_by_id`)"
+ },
+ {
+  "type": "table",
+  "name": "upload_folders",
+  "tbl_name": "upload_folders",
+  "sql": "CREATE TABLE \"upload_folders\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `name` varchar(255) NULL, `path_id` integer NULL, `path` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `upload_folders_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `upload_folders_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `upload_folders_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `upload_folders_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_parent_lnk_fk",
+  "tbl_name": "upload_folders_parent_lnk",
+  "sql": "CREATE INDEX `upload_folders_parent_lnk_fk` on `upload_folders_parent_lnk` (`folder_id`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_parent_lnk_ifk",
+  "tbl_name": "upload_folders_parent_lnk",
+  "sql": "CREATE INDEX `upload_folders_parent_lnk_ifk` on `upload_folders_parent_lnk` (`inv_folder_id`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_parent_lnk_oifk",
+  "tbl_name": "upload_folders_parent_lnk",
+  "sql": "CREATE INDEX `upload_folders_parent_lnk_oifk` on `upload_folders_parent_lnk` (`folder_ord`)"
+ },
+ {
+  "type": "index",
+  "name": "upload_folders_parent_lnk_uq",
+  "tbl_name": "upload_folders_parent_lnk",
+  "sql": "CREATE UNIQUE INDEX `upload_folders_parent_lnk_uq` on `upload_folders_parent_lnk` (`folder_id`, `inv_folder_id`)"
+ },
+ {
+  "type": "table",
+  "name": "upload_folders_parent_lnk",
+  "tbl_name": "upload_folders_parent_lnk",
+  "sql": "CREATE TABLE \"upload_folders_parent_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `folder_id` integer NULL, `inv_folder_id` integer NULL, `folder_ord` float NULL, CONSTRAINT `upload_folders_parent_lnk_fk` FOREIGN KEY (`folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE, CONSTRAINT `upload_folders_parent_lnk_ifk` FOREIGN KEY (`inv_folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE, CONSTRAINT `upload_folders_parent_lnk_fk` FOREIGN KEY (`folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE, CONSTRAINT `upload_folders_parent_lnk_ifk` FOREIGN KEY (`inv_folder_id`) REFERENCES `upload_folders` (`id`) ON DELETE CASCADE)"
+ }
+]

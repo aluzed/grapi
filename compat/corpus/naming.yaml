@@ -1,0 +1,35 @@
+fixture: naming
+cases:
+  - name: create-counterpart
+    method: POST
+    path: /api/counterparts-with-long-singular-name
+    token: full
+    body: { data: { name: "First" } }
+    save: { counterpart: data.documentId }
+  - name: create-counterpart-self-linked
+    method: POST
+    path: /api/counterparts-with-long-singular-name
+    token: full
+    body: { data: { name: "Second", selfReferenceWithAnotherLongNameForTheLinkTable: ["{{counterpart}}"] } }
+  - name: create-long-entity
+    method: POST
+    path: /api/long-entities
+    token: full
+    body:
+      data:
+        title: "Long"
+        aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays: "seventy"
+        relatedCounterpartsWithAnUnreasonablyLongAttributeName: ["{{counterpart}}"]
+        componentsWithAQuiteLongAttributeNameForTheLinkTable:
+          - { label: "a", anotherQuiteLongAttributeNameInsideTheComponent: 1 }
+          - { label: "b", anotherQuiteLongAttributeNameInsideTheComponent: 2 }
+        dynamicZoneWithALongName:
+          - { __component: long-category-name.component-with-a-long-name, label: "dz" }
+  - name: list-long-entities-populated
+    path: /api/long-entities?populate=*
+  - name: filter-on-long-attribute
+    path: /api/long-entities?filters[aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays][$eq]=seventy
+  - name: sort-on-long-attribute
+    path: /api/long-entities?sort=aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays:desc
+  - name: counterparts-populated
+    path: /api/counterparts-with-long-singular-name?populate=*&sort=name

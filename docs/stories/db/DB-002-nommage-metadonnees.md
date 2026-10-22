@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DB-002 : Nommage et métadonnées compatibles Strapi
@@ -42,10 +42,15 @@ Transformer les schémas (`SCH-*`) en métadonnées de base (tables, colonnes, i
 - Le stockage et la lecture des relations (`DB-006`), le DDL (`DB-003`).
 
 ## Critères d'acceptation
-- [ ] **Vecteurs de test** : chaque cas des tests de Strapi (`core/database/src/utils/identifiers/__tests__/`) est porté en test de table Go et donne la même chaîne. `createHash("myData", 5)` vaut `03f85`.
-- [ ] Pour chaque fixture du banc, la liste complète des tables, colonnes, index et FK générée par grapi est identique à celle de la base créée par Strapi 5.59 (dump `information_schema` trié, comparaison exacte).
-- [ ] Même chose sur la copie de la base dev-freelance.
-- [ ] Un attribut au nom de 70 caractères produit un nom tronqué identique à Strapi.
+- [x] **Vecteurs de test** : chaque cas des tests de Strapi (`core/database/src/utils/identifiers/__tests__/`) est porté en test de table Go et donne la même chaîne (`internal/db/naming/strapi_cases_test.go`), en plus des 1 269 cas golden générés par le vrai `Identifiers`. `createHash("myData", 5)` vaut `93da1` (vérifié dans l'image de référence ; une version antérieure de ce ticket indiquait `03f85`, ce qui était faux).
+- [x] Pour chaque fixture du banc, le schéma calculé par grapi (tables, colonnes, index, FK, dans l'ordre et avec les clés JSON de Strapi) est identique octet pour octet à celui que Strapi 5.59 stocke dans `strapi_database_schema`, sous SQLite comme sous Postgres (`internal/db/metadata/golden_test.go`). Les tables des fonctions Enterprise et IA sont exclues de la comparaison. La comparaison du schéma physique (`information_schema`) relève du DDL, donc de `DB-003`.
+- [x] Même chose pour dev-freelance : les 60 tables du `strapi_database_schema` de la prod sont identiques au golden de la fixture `devfreelance` (vérifié le 2026-10-22, lecture seule), que grapi reproduit.
+- [x] Un attribut au nom de 70 caractères produit un nom tronqué identique à Strapi : fixture `naming` (tables, colonnes, tables de liens et de composants au-delà de 55 caractères).
+
+## Réalisation
+- Les content types que Strapi embarque hors `src/` (admin, upload, i18n, users-permissions) et ses modèles internes (core store, webhooks) sont extraits des points d'entrée Community Edition par `compat/tools/gen-builtin-schemas.js` et embarqués dans `internal/builtin`.
+- Le loader donne aux content types de plugin le `collectionName` par défaut de Strapi (`<plugin>_<singularName>`), charge les content types admin et ajoute `locale` et `localizations` à tous les content types quand i18n est présent, comme le plugin i18n de Strapi.
+- Les relations `oneWay` et `manyWay` sont refusées par les métadonnées (« unknown relation »), comme dans Strapi 5.
 
 ## Notes techniques
 - Le commentaire de Strapi est explicite : toute différence de sortie entraîne une perte de données à la synchronisation. Ce package est donc **figé par des tests golden**, et toute modification du golden exige une revue explicite.
@@ -60,4 +65,4 @@ Transformer les schémas (`SCH-*`) en métadonnées de base (tables, colonnes, i
 - `SCH-001`, `SCH-002`, `DB-001`.
 
 ## Fichiers
-- `internal/db/naming/identifiers.go`, `internal/db/naming/hash.go`, `internal/db/naming/snakecase.go`, `internal/db/naming/identifiers_test.go`, `internal/db/metadata/*.go`
+- `internal/db/naming/*.go`, `internal/db/metadata/*.go`, `internal/builtin/`, `compat/tools/gen-builtin-schemas.js`, `compat/fixtures/naming/`, `compat/corpus/naming.yaml`

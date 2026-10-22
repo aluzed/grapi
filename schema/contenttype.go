@@ -133,6 +133,31 @@ func (ct *ContentType) DraftAndPublish() bool { return ct.boolOption("draftAndPu
 // PopulateCreatorFields reports whether createdBy and updatedBy are public.
 func (ct *ContentType) PopulateCreatorFields() bool { return ct.boolOption("populateCreatorFields") }
 
+// Localized reports whether pluginOptions.i18n.localized is true.
+func (ct *ContentType) Localized() bool {
+	var opts struct {
+		I18n struct {
+			Localized bool `json:"localized"`
+		} `json:"i18n"`
+	}
+	return len(ct.PluginOptions) > 0 && json.Unmarshal(ct.PluginOptions, &opts) == nil && opts.I18n.Localized
+}
+
+// AddLocaleAttributes gives the content type the locale and localizations
+// attributes. Strapi's i18n plugin adds them to every content type, localized
+// or not; they are only private on the non localized ones.
+func (ct *ContentType) AddLocaleAttributes() {
+	private := !ct.Localized()
+	ct.addAuto(AttrLocale, &Attribute{
+		Type: TypeString, Writable: boolPtr(true), Private: boolPtr(private),
+		Configurable: boolPtr(false), Visible: boolPtr(false),
+	})
+	ct.addAuto(AttrLocalizations, &Attribute{
+		Type: TypeRelation, Relation: OneToMany, Target: string(ct.UID), Writable: boolPtr(false),
+		Private: boolPtr(private), Configurable: boolPtr(false), Visible: boolPtr(false), Virtual: true,
+	})
+}
+
 // IsSingleType reports whether the content type holds a single document per locale.
 func (ct *ContentType) IsSingleType() bool { return ct.Kind == SingleType }
 

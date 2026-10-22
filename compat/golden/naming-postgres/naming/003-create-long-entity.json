@@ -1,0 +1,16 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays": "seventy",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc3",
+      "id": "#id1",
+      "publishedAt": "\u003cts\u003e",
+      "title": "Long",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

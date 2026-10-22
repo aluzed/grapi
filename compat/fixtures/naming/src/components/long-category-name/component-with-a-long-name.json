@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_long_category_name_component_with_a_long_names",
+  "info": {
+    "displayName": "Component with a long name"
+  },
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "anotherQuiteLongAttributeNameInsideTheComponent": {
+      "type": "integer"
+    }
+  }
+}

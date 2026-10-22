@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "long_entities_with_a_collection_name_beyond_fifty_five_chars",
+  "info": {
+    "singularName": "long-entity",
+    "pluralName": "long-entities",
+    "displayName": "Long Entity"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "aVeryLongAttributeNameThatGoesFarBeyondTheFiftyFiveCharacterLimitOkays": {
+      "type": "string"
+    },
+    "relatedCounterpartsWithAnUnreasonablyLongAttributeName": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::counterpart-with-long-singular-name.counterpart-with-long-singular-name",
+      "inversedBy": "longEntitiesPointingBackAtThisCounterpartFromFarAway"
+    },
+    "componentsWithAQuiteLongAttributeNameForTheLinkTable": {
+      "type": "component",
+      "repeatable": true,
+      "component": "long-category-name.component-with-a-long-name"
+    },
+    "dynamicZoneWithALongName": {
+      "type": "dynamiczone",
+      "components": [
+        "long-category-name.component-with-a-long-name"
+      ]
+    },
+    "mediaAttributeWithAVeryLongNameIndeedForTesting": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

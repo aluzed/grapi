@@ -110,6 +110,8 @@ type Attribute struct {
 	// Auto marks the attributes grapi adds itself (timestamps, publishedAt,
 	// creator fields): they are not part of the user's schema.json.
 	Auto bool `json:"-"`
+	// Virtual attributes have no storage of their own (i18n localizations).
+	Virtual bool `json:"-"`
 
 	resolvedCustomField bool
 	empty               emptyKeys

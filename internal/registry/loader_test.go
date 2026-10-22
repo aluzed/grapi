@@ -162,3 +162,20 @@ func TestDefaultFactoryUID(t *testing.T) {
 	}
 	_ = schema.UID("")
 }
+
+func TestPluginCollectionNameDefault(t *testing.T) {
+	plugin := fstest.MapFS{
+		"content-types/locale/schema.json": {Data: []byte(`{"info":{"singularName":"locale","pluralName":"locales","displayName":"Locale"},"attributes":{"code":{"type":"string"}}}`)},
+	}
+	res, err := Load(fstest.MapFS{}, Options{Plugins: []PluginSchemas{{Name: "i18n", FS: plugin}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ct, ok := res.Set.ContentType("plugin::i18n.locale")
+	if !ok || ct.CollectionName != "i18n_locale" {
+		t.Fatalf("got %+v, want collectionName i18n_locale", ct)
+	}
+	if _, ok := ct.Attributes.Get("locale"); !ok {
+		t.Fatal("the i18n plugin adds locale to every content type")
+	}
+}

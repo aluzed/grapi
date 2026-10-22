@@ -1,0 +1,25 @@
+{
+  "uid": "strapi::core-store",
+  "singularName": "strapi_core_store_settings",
+  "tableName": "strapi_core_store_settings",
+  "attributes": {
+    "id": {
+      "type": "increments"
+    },
+    "key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "text"
+    },
+    "type": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    }
+  }
+}

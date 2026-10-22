@@ -209,3 +209,20 @@ func Hash(data string, length int) string {
 	_, _ = h.Read(out)
 	return hex.EncodeToString(out)[:length]
 }
+
+// Token is one part of a name built token by token, as Strapi does for
+// component link tables and their columns.
+type Token struct {
+	Name         string
+	ShortName    string
+	Compressible bool
+}
+
+// FromTokens joins tokens with "_" and shortens the compressible ones to fit.
+func (n Namer) FromTokens(tokens ...Token) (string, error) {
+	ts := make([]*token, len(tokens))
+	for i, t := range tokens {
+		ts[i] = &token{name: t.Name, shortName: t.ShortName, compressible: t.Compressible}
+	}
+	return n.fromTokens(ts)
+}

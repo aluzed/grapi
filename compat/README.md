@@ -15,10 +15,11 @@ Le rapport arrive dans `compat/report/<date>-<fixture>-<mode>-<db>.md` (non vers
 | Chemin | Rôle |
 |---|---|
 | `reference/` | Image Strapi de référence (versions figées dans `versions.env`). Les fixtures ne contiennent que des `schema.json` : l'entrypoint génère les routes, controllers et services standards. Le bootstrap donne `find`/`findOne` au rôle Public et écrit deux tokens (`full`, `read`) dans `/data/tokens.json`. Un `fixtures/<nom>/compat.json` facultatif ajoute des locales (`{"locales":[{"code":"fr","name":"French (fr)"}]}`) et des permissions Public (`"publicPermissions":["plugin::users-permissions.user.find"]`) |
-| `fixtures/<nom>/src/` | Projets de test, lus tels quels par les deux moteurs. `devfreelance` copie les schémas de dev-freelance (sans JS) ; son corpus rejoue les appels exacts du front Go (`apps/web/internal/*`) |
+| `fixtures/<nom>/src/` | Projets de test, lus tels quels par les deux moteurs. `devfreelance` copie les schémas de dev-freelance (sans JS) ; son corpus rejoue les appels exacts du front Go (`apps/web/internal/*`). `naming` force des identifiants de plus de 55 caractères (tables, colonnes, tables de liens et de composants) |
 | `corpus/<nom>.yaml` | Cas exécutés dans l'ordre. Champs : `name`, `method`, `path`, `query` (en clair, les valeurs sont encodées par le runner), `token` (`full` ou `read`), `bearer` (jeton brut, ex. `{{jwt}}` tiré d'un login), `body`, `files` (PNG générés envoyés en multipart, ex. `[{ name: a.png, width: 800, height: 600 }]`), `save` (variables tirées de la réponse, ex. `data.documentId`), `skip` |
 | `normalize/` | `id` et `documentId` remplacés par des alias stables (ordre d'apparition), horodatages par `<ts>`, secrets masqués. Un documentId déjà vu qui réapparaît dans un texte (message d'erreur) est remplacé par son alias. L'ordre des clés est ignoré, celui des tableaux non |
 | `cmd/compat/` | `compat run` (un moteur) et `compat diff` (deux sorties) |
+| `tools/` | Générateurs lancés dans l'image de référence : tables de slugify, golden de nommage, et `gen-builtin-schemas.js`, qui extrait vers `internal/builtin/schemas` les content types et modèles internes que Strapi embarque (points d'entrée Community Edition uniquement) |
 | `scripts/` | `bench.sh` (côté Mac : cross-compile, rsync, ssh) et `remote.sh` (côté homelab : instances jetables, nettoyage garanti à la sortie) |
 
 ## Écarts connus de Strapi selon le dialecte
