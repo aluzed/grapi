@@ -34,6 +34,7 @@ import (
 	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/logging"
 	"github.com/aluzed/grapi/internal/media/provider"
+	"github.com/aluzed/grapi/internal/openapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/registry"
 	"github.com/aluzed/grapi/internal/webhooks"
@@ -177,18 +178,45 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	return cfg
 }
 
+type packageJSON struct {
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Dependencies map[string]string `json:"dependencies"`
+}
+
+func readPackage(dir string) packageJSON {
+	var pkg packageJSON
+	if b, err := os.ReadFile(filepath.Join(dir, "package.json")); err == nil { //nolint:gosec // the project directory
+		_ = json.Unmarshal(b, &pkg)
+	}
+	return pkg
+}
+
+// openAPIConfig reads server.openapi['content-api']: access "public"
+// serves the document, "disabled" (the default) does not.
+func openAPIConfig(c *config.Config, dir string) (*httpapi.OpenAPIConfig, error) {
+	base := "server.openapi.content-api."
+	access, _ := c.String(base + "access")
+	switch access {
+	case "", "disabled":
+		return nil, nil
+	case "public":
+	default:
+		return nil, fmt.Errorf("invalid OpenAPI access %q for \"content-api\". Expected one of: disabled, public", access)
+	}
+	pkg := readPackage(dir)
+	cfg := &httpapi.OpenAPIConfig{Info: openapi.Info{Name: pkg.Name, Version: pkg.Version}}
+	cfg.Path, _ = c.String(base + "route.path")
+	return cfg, nil
+}
+
 // graphQLConfig enables the graphql plugin when the project depends on
 // @strapi/plugin-graphql (Strapi enables installed plugins) or when
 // plugins.graphql.enabled is true.
 func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 	enabled, set := c.Bool("plugins.graphql.enabled")
 	if !set {
-		var pkg struct {
-			Dependencies map[string]string `json:"dependencies"`
-		}
-		if b, err := os.ReadFile(filepath.Join(dir, "package.json")); err == nil && json.Unmarshal(b, &pkg) == nil { //nolint:gosec // the project directory
-			_, enabled = pkg.Dependencies["@strapi/plugin-graphql"]
-		}
+		_, enabled = readPackage(dir).Dependencies["@strapi/plugin-graphql"]
 	}
 	if !enabled {
 		return nil
@@ -418,6 +446,16 @@ func LoadProject(dir, configDir string, stderr io.Writer) (*Project, error) {
 	return &Project{Dir: dir, Conf: conf, Res: res, MD: md, Desired: desired, DB: d, Log: log}, nil
 }
 
+// OpenAPI is the project's content API document, with the routes grapi
+// serves. It writes nothing to the database.
+func (p *Project) OpenAPI() ([]byte, error) {
+	cfg := apiConfig(p.Conf, p.Dir)
+	pkg := readPackage(p.Dir)
+	engine := &query.Engine{DB: p.DB, MD: p.MD}
+	api := httpapi.New(cfg, p.DB, p.Res.Set, document.New(engine, p.Res.Set), p.Log)
+	return openapi.JSON(openapi.Generate(p.Res.Set, openapi.Options{Info: openapi.Info{Name: pkg.Name, Version: pkg.Version}, Served: api.Serves}))
+}
+
 // Server is a set-up App: the API handler and the address it is
 // configured to listen on.
 type Server struct {
@@ -490,6 +528,11 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
 		return nil, err
 	}
+	oas, err := openAPIConfig(conf, *dir)
+	if err != nil {
+		return nil, err
+	}
+	apiCfg.OpenAPI = oas
 	if apiCfg.GraphQL != nil {
 		depth := apiCfg.GraphQL.Options.DepthLimit
 		apiCfg.GraphQL.Options = a.graphql

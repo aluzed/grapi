@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # PLG-005 : OpenAPI et documentation (Swagger UI)
@@ -28,6 +28,11 @@ Un générateur OpenAPI 3 unique, qui part du registre des routes et des schéma
 - [ ] Les chemins et opérations du Content API correspondent à ceux du `full_documentation.json` de Strapi pour le même projet (diff des chemins et méthodes dans le banc `SETUP-002`).
 - [ ] `/documentation` avec `restrictedAccess` demande le mot de passe.
 - [ ] Une route custom avec schémas apparaît dans la spec.
+
+## Avancement
+- `internal/openapi` : le document du paquet `@strapi/openapi` de Strapi 5.59 (`server.openapi`), généré depuis le `schema.Set` avec la sémantique zod des validateurs de routes du core (champs requis, défauts, `readOnly`, min/max, `nullable`, entrées et sorties, `$ref` des documents et composants référencés, paramètres de requête dépliés, `operationId` et tags). `TestDocumentMatchesStrapi` compare chaque opération et chaque schéma au document que Strapi sert sur les 7 fixtures du banc (`internal/openapi/testdata/oas-*.json`) : identiques, horodatages des défauts mis à part. Les routes de plugins viennent de Strapi (`plugins.json`, identiques pour tout projet) et sont filtrées sur celles que grapi sert (`Server.Serves`).
+- `GET <prefix>/openapi.json` avec `server.openapi['content-api'].access: public` (test `TestOpenAPIRoute`), `grapi openapi [-o fichier]` sans démarrer le serveur.
+- Reste : Swagger UI et `restrictedAccess` (plugin documentation), surcharges (`RegisterOverride`, `MutateDocumentation`), schémas des routes custom, document admin (avec l'admin), validation par kin-openapi (son support d'OpenAPI 3.1 est partiel) et génération d'un client.
 
 ## Notes techniques
 - `getkin/kin-openapi/openapi3`. Swagger UI embarqué en statique (`embed`), version figée.

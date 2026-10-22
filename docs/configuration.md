@@ -32,6 +32,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `server.host`, `server.port`, `api.rest.prefix`, `api.rest.defaultLimit`, `api.rest.maxLimit`, `api.rest.withCount`, `admin.apiToken.salt`, `database.connection` (`client`, `connection.{host,port,database,user,password,schema,filename,connectionString,ssl}`, `pool.{min,max}`, `acquireConnectionTimeout`, `debug`). `plugins.users-permissions.config.{jwtSecret,jwt.expiresIn,jwt.algorithm,register.allowedFields}` (the secret falls back to `JWT_SECRET`; without either, one is generated and appended to `.env`, as Strapi does). Their types are checked at start: a wrong type stops with the file and the key.
 
+`server.openapi['content-api']`: `access: public` serves the content API's OpenAPI 3.1 document on `<api prefix>/openapi.json` (`route.path` to move it), as Strapi 5.59 does; `disabled` (the default) does not. The document is Strapi's for the same project, limited to the routes grapi serves. `grapi openapi [-o file]` writes it without starting the server.
+
 `api.documents.strictRelations` (false by default): required relations and media are enforced on non-draft writes, as in Strapi. A value other than a boolean stops the start (Strapi fails on the first write).
 
 `middlewares`: a list of names or `{name, config}`. grapi runs `strapi::security` (`contentSecurityPolicy.directives`, or `false` to drop a header) and `strapi::cors` (`origin`, `methods`, `headers`, `expose`, `credentials`, `maxAge`); leaving one out of the list turns it off, as in Strapi. Without the file, both run with Strapi's defaults.

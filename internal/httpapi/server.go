@@ -42,6 +42,8 @@ type Config struct {
 	TrustProxy bool
 	// GraphQL is the graphql plugin, nil when it is not enabled.
 	GraphQL *GraphQLConfig
+	// OpenAPI serves the content API's document, nil when access is disabled.
+	OpenAPI *OpenAPIConfig
 }
 
 // Server serves the content API of every api:: content type.
@@ -120,6 +122,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		}
 	}
 	s.addUploadRoutes()
+	s.addOpenAPI()
 	if err := s.addGraphQL(); err != nil {
 		log.Error("graphql plugin disabled", "error", err)
 	}
