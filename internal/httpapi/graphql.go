@@ -85,7 +85,7 @@ func (s *Server) graphqlHandler(w http.ResponseWriter, r *http.Request, _ *reque
 			_ = json.Unmarshal([]byte(v), &body.Variables)
 		}
 	} else {
-		raw, _ := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		raw, _ := io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
 		dec := json.NewDecoder(bytes.NewReader(raw))
 		dec.UseNumber()
 		if err := dec.Decode(&body); err != nil {

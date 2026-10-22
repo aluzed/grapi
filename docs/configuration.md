@@ -36,7 +36,7 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `api.documents.strictRelations` (false by default): required relations and media are enforced on non-draft writes, as in Strapi. A value other than a boolean stops the start (Strapi fails on the first write).
 
-`middlewares`: a list of names or `{name, config}`. grapi runs `strapi::security` (`contentSecurityPolicy.directives`, or `false` to drop a header) and `strapi::cors` (`origin`, `methods`, `headers`, `expose`, `credentials`, `maxAge`); leaving one out of the list turns it off, as in Strapi. Without the file, both run with Strapi's defaults.
+`middlewares`: a list of names or `{name, config}`. `strapi::body` always runs with koa-body's limits (`jsonLimit` 1mb, `formLimit` and `textLimit` 56kb, as a number of bytes or `"2mb"`): a larger body gets Strapi's 413 before routing. grapi runs `strapi::security` (`contentSecurityPolicy.directives`, or `false` to drop a header) and `strapi::cors` (`origin`, `methods`, `headers`, `expose`, `credentials`, `maxAge`); leaving one out of the list turns it off, as in Strapi. Without the file, both run with Strapi's defaults.
 
 `plugins.email.config`: `provider` (`sendmail` by default, `nodemailer` with `providerOptions.{host,port,secure,auth.user,auth.pass,dkim.*}`, `sendgrid` with `providerOptions.apiKey`, `mailgun` with `providerOptions.{key,username,url,domain}`, `amazon-ses` with `providerOptions.{key,secret,amazon}`), `settings.{defaultFrom,defaultReplyTo}`.
 

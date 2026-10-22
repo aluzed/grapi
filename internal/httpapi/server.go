@@ -395,7 +395,7 @@ func (s *Server) findOne(w http.ResponseWriter, _ *http.Request, rc *requestCont
 // order Strapi's validators report the first invalid key in.
 func readData(r *http.Request) (map[string]any, []string, error) {
 	missing := validationError("Missing \"data\" payload in the request body", nil)
-	raw, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	raw, err := io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
 	if err != nil {
 		return nil, nil, missing
 	}

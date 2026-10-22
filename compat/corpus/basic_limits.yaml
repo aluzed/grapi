@@ -1,0 +1,20 @@
+fixture: basic
+# strapi::body limits: 1mb of JSON by default.
+cases:
+  - name: json-under-limit
+    method: POST
+    path: /api/tags
+    token: full
+    body: { data: { name: "limit-ok" } }
+    pad: 1000000
+  - name: json-over-limit
+    method: POST
+    path: /api/tags
+    token: full
+    body: { data: { name: "limit-ko" } }
+    pad: 1048600
+  - name: json-over-limit-public
+    method: POST
+    path: /api/tags
+    body: { data: { name: "limit-ko" } }
+    pad: 1048600

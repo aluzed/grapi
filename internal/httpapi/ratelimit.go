@@ -133,7 +133,7 @@ func (s *Server) rateLimited(w http.ResponseWriter, r *http.Request) bool {
 	}
 	var body []byte
 	if r.Body != nil {
-		body, _ = io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		body, _ = io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
 		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
 	key := prefixKey(r.URL.Path, clientIP(r, s.cfg.TrustProxy), body)

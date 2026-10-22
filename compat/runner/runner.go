@@ -100,6 +100,9 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		if err != nil {
 			return Result{Error: err.Error()}, nil
 		}
+		if m, ok := expanded.(map[string]any); ok && c.Pad > 0 {
+			m["padding"] = strings.Repeat("x", c.Pad)
+		}
 		b, err := json.Marshal(expanded)
 		if err != nil {
 			return Result{Error: err.Error()}, nil

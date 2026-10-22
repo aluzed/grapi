@@ -6,7 +6,7 @@
       {
         "createdAt": "\u003cts\u003e",
         "description": "Default role given to authenticated user.",
-        "documentId": "#doc7",
+        "documentId": "#doc8",
         "id": "#id4",
         "name": "Authenticated",
         "nb_users": 0,
@@ -17,7 +17,7 @@
       {
         "createdAt": "\u003cts\u003e",
         "description": "Default role given to unauthenticated user.",
-        "documentId": "#doc8",
+        "documentId": "#doc9",
         "id": "#id1",
         "name": "Public",
         "nb_users": 0,

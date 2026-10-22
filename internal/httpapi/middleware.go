@@ -15,6 +15,8 @@ type Middlewares struct {
 	// Security and CORS are nil when the project leaves the middleware out.
 	Security *SecurityConfig
 	CORS     *CORSConfig
+	// Body is strapi::body, which is always on (its limits).
+	Body *BodyLimits
 }
 
 // SecurityConfig is the part of strapi::security (koa-helmet) grapi reads.
@@ -192,6 +194,13 @@ func (m Middlewares) wrap(next http.Handler) http.Handler {
 		if m.CORS != nil && m.CORS.apply(w, r) {
 			return
 		}
+		limits := DefaultBodyLimits
+		if m.Body != nil {
+			limits = *m.Body
+		}
+		if limits.limitBody(w, r) {
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -217,6 +226,8 @@ func ParseMiddlewares(list []any) (Middlewares, error) {
 			m.Security = parseSecurity(cfg)
 		case "strapi::cors":
 			m.CORS = parseCORS(cfg)
+		case "strapi::body":
+			m.Body = parseBodyLimits(cfg)
 		}
 	}
 	return m, nil

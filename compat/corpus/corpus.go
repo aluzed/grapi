@@ -20,16 +20,19 @@ type File struct {
 // Case is one HTTP request. Path, Query, Bearer and string values in Body may
 // use {{var}} placeholders filled from earlier Save entries.
 type Case struct {
-	Name   string            `yaml:"name"`
-	Method string            `yaml:"method"`
-	Path   string            `yaml:"path"`
-	Query  string            `yaml:"query"`
-	Token  string            `yaml:"token"`
-	Bearer string            `yaml:"bearer"`
-	Body   any               `yaml:"body"`
-	Files  []Upload          `yaml:"files"`
-	Save   map[string]string `yaml:"save"`
-	Skip   string            `yaml:"skip"`
+	Name   string `yaml:"name"`
+	Method string `yaml:"method"`
+	Path   string `yaml:"path"`
+	Query  string `yaml:"query"`
+	Token  string `yaml:"token"`
+	Bearer string `yaml:"bearer"`
+	Body   any    `yaml:"body"`
+	// Pad adds a "padding" string of that many bytes to the JSON body, for
+	// the body size limits.
+	Pad   int               `yaml:"pad"`
+	Files []Upload          `yaml:"files"`
+	Save  map[string]string `yaml:"save"`
+	Skip  string            `yaml:"skip"`
 }
 
 // Upload is a generated PNG sent as multipart/form-data under Field ("files"
