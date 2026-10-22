@@ -1,0 +1,21 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": null,
+      "code": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc15",
+      "featured": false,
+      "id": "#id9",
+      "locale": "not a locale!",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Bad",
+      "updatedAt": "\u003cts\u003e",
+      "views": 0
+    },
+    "meta": {}
+  }
+}

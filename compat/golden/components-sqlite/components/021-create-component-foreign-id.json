@@ -1,0 +1,15 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc8",
+      "id": "#id5",
+      "publishedAt": "\u003cts\u003e",
+      "title": "Stolen seo",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

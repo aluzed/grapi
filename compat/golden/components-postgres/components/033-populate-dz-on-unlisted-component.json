@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.rich-text",
+          "body": "Some **text**",
+          "id": "#id1"
+        }
+      ],
+      "documentId": "#doc3",
+      "id": "#id1",
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

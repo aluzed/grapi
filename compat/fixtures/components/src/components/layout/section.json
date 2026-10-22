@@ -1,0 +1,9 @@
+{
+  "collectionName": "components_layout_sections",
+  "info": { "displayName": "Section" },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string" },
+    "columns": { "type": "component", "repeatable": true, "component": "layout.column" }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "children": [
+        {
+          "documentId": "#doc11",
+          "id": "#id4",
+          "rank": 2,
+          "title": "Beta"
+        },
+        {
+          "documentId": "#doc12",
+          "id": "#id5",
+          "rank": 3,
+          "title": "Gamma"
+        }
+      ],
+      "documentId": "#doc10",
+      "id": "#id2",
+      "related": [],
+      "title": "Alpha"
+    },
+    "meta": {}
+  }
+}

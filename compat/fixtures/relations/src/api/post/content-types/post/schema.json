@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "posts",
+  "info": { "singularName": "post", "pluralName": "posts", "displayName": "Post" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "rank": { "type": "integer" },
+    "writer": { "type": "relation", "relation": "manyToOne", "target": "api::writer.writer", "inversedBy": "posts" },
+    "category": { "type": "relation", "relation": "manyToOne", "target": "api::category.category", "inversedBy": "posts" },
+    "tags": { "type": "relation", "relation": "manyToMany", "target": "api::tag.tag", "inversedBy": "posts" },
+    "featuredTag": { "type": "relation", "relation": "oneToOne", "target": "api::tag.tag" },
+    "related": { "type": "relation", "relation": "oneToMany", "target": "api::post.post" },
+    "parent": { "type": "relation", "relation": "manyToOne", "target": "api::post.post", "inversedBy": "children" },
+    "children": { "type": "relation", "relation": "oneToMany", "target": "api::post.post", "mappedBy": "parent" },
+    "mentions": { "type": "relation", "relation": "morphToMany" }
+  }
+}

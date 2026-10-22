@@ -1,0 +1,30 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "links": [
+        {
+          "author": {
+            "documentId": "#doc1",
+            "id": "#id1",
+            "name": "Ada"
+          },
+          "id": "#id1",
+          "label": "Docs",
+          "url": "/docs"
+        },
+        {
+          "author": null,
+          "id": "#id2",
+          "label": "Blog",
+          "url": "/blog"
+        }
+      ],
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

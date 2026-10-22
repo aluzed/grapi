@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Some of the provided components in links are not related to the entity",
+      "name": "ApplicationError",
+      "status": 400
+    }
+  }
+}

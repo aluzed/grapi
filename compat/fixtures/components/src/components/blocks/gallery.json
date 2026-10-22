@@ -1,0 +1,9 @@
+{
+  "collectionName": "components_blocks_galleries",
+  "info": { "displayName": "Gallery" },
+  "options": {},
+  "attributes": {
+    "caption": { "type": "string" },
+    "slides": { "type": "integer", "default": 0 }
+  }
+}

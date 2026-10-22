@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_shared_seos",
+  "info": { "displayName": "Seo" },
+  "options": {},
+  "attributes": {
+    "metaTitle": { "type": "string", "required": true, "maxLength": 60 },
+    "metaDescription": { "type": "text" },
+    "noIndex": { "type": "boolean", "default": false }
+  }
+}

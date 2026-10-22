@@ -1,0 +1,18 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "seo",
+        "param": "fields",
+        "path": "seo",
+        "source": "query"
+      },
+      "message": "Invalid key seo",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

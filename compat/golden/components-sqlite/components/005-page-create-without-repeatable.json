@@ -1,0 +1,19 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc5",
+      "id": "#id4",
+      "layout": null,
+      "links": [],
+      "publishedAt": "\u003cts\u003e",
+      "seo": null,
+      "title": "Contact",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

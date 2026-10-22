@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Document with id \"#doc8\", locale \"fr\" not found",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

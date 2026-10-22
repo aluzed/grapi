@@ -1,0 +1,83 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc11",
+        "id": "#id19",
+        "mentions": [],
+        "title": "Beta",
+        "writer": {
+          "documentId": "#doc2",
+          "id": "#id2",
+          "name": "Linus"
+        }
+      },
+      {
+        "documentId": "#doc12",
+        "id": "#id22",
+        "mentions": [],
+        "title": "Gamma",
+        "writer": null
+      },
+      {
+        "documentId": "#doc13",
+        "id": "#id24",
+        "mentions": [],
+        "title": "Delta",
+        "writer": {
+          "documentId": "#doc2",
+          "id": "#id2",
+          "name": "Linus"
+        }
+      },
+      {
+        "documentId": "#doc14",
+        "id": "#id23",
+        "mentions": [],
+        "title": "Epsilon",
+        "writer": null
+      },
+      {
+        "documentId": "#doc15",
+        "id": "#id8",
+        "mentions": [],
+        "title": "Zeta",
+        "writer": null
+      },
+      {
+        "documentId": "#doc16",
+        "id": "#id11",
+        "mentions": [
+          {
+            "__type": "api::tag.tag",
+            "createdAt": "\u003cts\u003e",
+            "documentId": "#doc7",
+            "id": "#id4",
+            "name": "decomp",
+            "publishedAt": "\u003cts\u003e",
+            "updatedAt": "\u003cts\u003e"
+          }
+        ],
+        "title": "Eta",
+        "writer": null
+      },
+      {
+        "documentId": "#doc10",
+        "id": "#id20",
+        "mentions": [],
+        "title": "Alpha",
+        "writer": null
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 7
+      }
+    }
+  }
+}

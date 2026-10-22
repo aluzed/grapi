@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "English body v2",
+      "code": "A-2",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": false,
+      "id": "#id16",
+      "locale": "en",
+      "localizations": [
+        {
+          "body": "Corps français",
+          "code": "A-FR",
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc10",
+          "featured": true,
+          "id": "#id17",
+          "locale": "fr",
+          "publishedAt": "\u003cts\u003e",
+          "slug": null,
+          "title": "Bonjour (brouillon)",
+          "updatedAt": "\u003cts\u003e",
+          "views": 99
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Hello World",
+      "updatedAt": "\u003cts\u003e",
+      "views": 7
+    },
+    "meta": {}
+  }
+}

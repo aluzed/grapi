@@ -1,0 +1,17 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "subject",
+        "path": "subject",
+        "source": "body"
+      },
+      "message": "Invalid key subject",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

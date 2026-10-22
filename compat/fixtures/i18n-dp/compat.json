@@ -1,0 +1,7 @@
+{
+  "locales": [
+    { "code": "fr", "name": "French (fr)" },
+    { "code": "de", "name": "German (de)" }
+  ],
+  "publicPermissions": ["plugin::i18n.locales.listLocales"]
+}

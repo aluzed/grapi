@@ -1,0 +1,48 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc8",
+        "id": "#id2",
+        "name": "News",
+        "posts": [
+          {
+            "documentId": "#doc10",
+            "id": "#id20",
+            "rank": 10,
+            "title": "Alpha"
+          }
+        ]
+      },
+      {
+        "documentId": "#doc9",
+        "id": "#id4",
+        "name": "Upcoming",
+        "posts": [
+          {
+            "documentId": "#doc14",
+            "id": "#id23",
+            "rank": 5,
+            "title": "Epsilon"
+          },
+          {
+            "documentId": "#doc15",
+            "id": "#id8",
+            "rank": 6,
+            "title": "Zeta"
+          }
+        ]
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

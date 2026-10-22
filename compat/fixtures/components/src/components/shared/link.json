@@ -1,0 +1,10 @@
+{
+  "collectionName": "components_shared_links",
+  "info": { "displayName": "Link" },
+  "options": {},
+  "attributes": {
+    "label": { "type": "string", "required": true },
+    "url": { "type": "string" },
+    "author": { "type": "relation", "relation": "oneToOne", "target": "api::author.author" }
+  }
+}

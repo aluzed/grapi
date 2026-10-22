@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id2",
+      "publishedAt": "\u003cts\u003e",
+      "rank": 1,
+      "title": "Alpha",
+      "updatedAt": "\u003cts\u003e",
+      "writer": {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "Ada",
+        "profile": {
+          "bio": "Countess of computing",
+          "documentId": "#doc3",
+          "id": "#id1"
+        }
+      }
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "1 relation(s) of type api::writer.writer associated with this entity do not exist",
+            "name": "ValidationError",
+            "path": [],
+            "value": {
+              "publishedAt": null,
+              "title": "Broken",
+              "writer": {
+                "set": [
+                  {
+                    "id": "#id10"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "message": "1 relation(s) of type api::writer.writer associated with this entity do not exist",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

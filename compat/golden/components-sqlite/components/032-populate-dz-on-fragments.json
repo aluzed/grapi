@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.hero",
+          "cta": {
+            "author": {
+              "documentId": "#doc2",
+              "id": "#id2",
+              "name": "Linus"
+            },
+            "id": "#id4",
+            "label": "Go",
+            "url": "/go"
+          },
+          "headline": "Welcome",
+          "id": "#id1"
+        },
+        {
+          "__component": "blocks.gallery",
+          "caption": "Shots",
+          "id": "#id1"
+        }
+      ],
+      "documentId": "#doc3",
+      "id": "#id1",
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

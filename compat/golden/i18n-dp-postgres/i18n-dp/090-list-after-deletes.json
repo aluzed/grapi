@@ -1,0 +1,46 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc15",
+        "id": "#id13",
+        "locale": "not a locale!",
+        "title": "Bad"
+      },
+      {
+        "documentId": "#doc13",
+        "id": "#id5",
+        "locale": "en",
+        "title": "Body locale"
+      },
+      {
+        "documentId": "#doc11",
+        "id": "#id3",
+        "locale": "en",
+        "title": "Draft only"
+      },
+      {
+        "documentId": "#doc14",
+        "id": "#id14",
+        "locale": "it",
+        "title": "Italiano"
+      },
+      {
+        "documentId": "#doc12",
+        "id": "#id4",
+        "locale": "fr",
+        "title": "Seulement en français"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 5
+      }
+    }
+  }
+}

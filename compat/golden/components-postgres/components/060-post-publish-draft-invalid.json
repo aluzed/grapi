@@ -1,0 +1,25 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "seo.metaTitle must be a `string` type, but the final value was: `null`.",
+            "name": "ValidationError",
+            "path": [
+              "seo",
+              "metaTitle"
+            ],
+            "value": null
+          }
+        ]
+      },
+      "message": "seo.metaTitle must be a `string` type, but the final value was: `null`.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

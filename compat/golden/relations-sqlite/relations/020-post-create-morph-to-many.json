@@ -1,0 +1,36 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc16",
+      "id": "#id11",
+      "mentions": [
+        {
+          "__type": "api::writer.writer",
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc1",
+          "id": "#id1",
+          "name": "Ada",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e"
+        },
+        {
+          "__type": "api::tag.tag",
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc7",
+          "id": "#id4",
+          "name": "decomp",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e"
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "rank": 7,
+      "title": "Eta",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

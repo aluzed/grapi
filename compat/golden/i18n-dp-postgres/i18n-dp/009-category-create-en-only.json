@@ -1,0 +1,17 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "color": "blue",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc8",
+      "id": "#id5",
+      "locale": "en",
+      "name": "Hardware",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

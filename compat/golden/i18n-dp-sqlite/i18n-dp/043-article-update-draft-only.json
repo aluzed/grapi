@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "Edited draft",
+      "code": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc11",
+      "featured": false,
+      "id": "#id3",
+      "locale": "en",
+      "publishedAt": null,
+      "slug": null,
+      "title": "Draft only",
+      "updatedAt": "\u003cts\u003e",
+      "views": 1
+    },
+    "meta": {}
+  }
+}

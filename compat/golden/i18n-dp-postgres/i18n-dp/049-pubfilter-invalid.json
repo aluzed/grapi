@@ -1,0 +1,16 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "param": "publicationFilter",
+        "source": "query"
+      },
+      "message": "Invalid value for 'publicationFilter'. Expected one of: never-published, has-published-version, modified, unmodified, never-published-document, has-published-version-document, published-without-draft, published-with-draft.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

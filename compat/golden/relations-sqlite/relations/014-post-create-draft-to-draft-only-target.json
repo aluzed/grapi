@@ -1,0 +1,21 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "category": {
+        "documentId": "#doc9",
+        "id": "#id3",
+        "name": "Upcoming"
+      },
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc14",
+      "id": "#id7",
+      "publishedAt": null,
+      "rank": 5,
+      "title": "Epsilon",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

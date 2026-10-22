@@ -1,0 +1,50 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.gallery",
+          "caption": "First now",
+          "id": "#id4",
+          "slides": 1
+        },
+        {
+          "__component": "blocks.hero",
+          "headline": "Second now",
+          "id": "#id2"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc3",
+      "id": "#id1",
+      "layout": {
+        "heading": "Heading only",
+        "id": "#id2"
+      },
+      "links": [
+        {
+          "id": "#id2",
+          "label": "Blog v2",
+          "url": "/blog"
+        },
+        {
+          "id": "#id5",
+          "label": "News",
+          "url": null
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "seo": {
+        "id": "#id5",
+        "metaDescription": null,
+        "metaTitle": "Fresh SEO",
+        "noIndex": false
+      },
+      "title": "Home v2",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "status": 500,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "message": "Internal Server Error",
+      "name": "InternalServerError",
+      "status": 500
+    }
+  }
+}

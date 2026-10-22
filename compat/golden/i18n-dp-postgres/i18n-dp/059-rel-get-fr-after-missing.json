@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "Corps français",
+      "category": {
+        "color": "red",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc7",
+        "id": "#id4",
+        "locale": "fr",
+        "name": "Jeux",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      },
+      "code": "A-1",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": true,
+      "id": "#id17",
+      "locale": "fr",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Bonjour (brouillon)",
+      "updatedAt": "\u003cts\u003e",
+      "views": 5
+    },
+    "meta": {}
+  }
+}

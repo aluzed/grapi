@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "layout": {
+        "columns": [
+          {
+            "id": "#id2",
+            "width": 6
+          },
+          {
+            "id": "#id1",
+            "width": 6
+          }
+        ],
+        "heading": "Two columns",
+        "id": "#id1"
+      },
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

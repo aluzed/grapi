@@ -1,0 +1,46 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc11",
+        "id": "#id4",
+        "title": "Beta",
+        "writer": {
+          "documentId": "#doc2",
+          "id": "#id2",
+          "name": "Linus"
+        }
+      },
+      {
+        "documentId": "#doc13",
+        "id": "#id6",
+        "title": "Delta",
+        "writer": {
+          "documentId": "#doc2",
+          "id": "#id2",
+          "name": "Linus"
+        }
+      },
+      {
+        "documentId": "#doc10",
+        "id": "#id2",
+        "title": "Alpha",
+        "writer": {
+          "documentId": "#doc1",
+          "id": "#id1",
+          "name": "Ada"
+        }
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 3
+      }
+    }
+  }
+}

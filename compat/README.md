@@ -14,10 +14,10 @@ Le rapport arrive dans `compat/report/<date>-<fixture>-<mode>-<db>.md` (non vers
 
 | Chemin | Rôle |
 |---|---|
-| `reference/` | Image Strapi de référence (versions figées dans `versions.env`). Les fixtures ne contiennent que des `schema.json` : l'entrypoint génère les routes, controllers et services standards. Le bootstrap donne `find`/`findOne` au rôle Public et écrit deux tokens (`full`, `read`) dans `/data/tokens.json` |
-| `fixtures/<nom>/src/` | Projets de test, lus tels quels par les deux moteurs |
-| `corpus/<nom>.yaml` | Cas exécutés dans l'ordre. Champs : `name`, `method`, `path`, `query` (en clair, les valeurs sont encodées par le runner), `token` (`full` ou `read`), `body`, `save` (variables tirées de la réponse, ex. `data.documentId`), `skip` |
-| `normalize/` | `id` et `documentId` remplacés par des alias stables (ordre d'apparition), horodatages par `<ts>`, secrets masqués. L'ordre des clés est ignoré, celui des tableaux non |
+| `reference/` | Image Strapi de référence (versions figées dans `versions.env`). Les fixtures ne contiennent que des `schema.json` : l'entrypoint génère les routes, controllers et services standards. Le bootstrap donne `find`/`findOne` au rôle Public et écrit deux tokens (`full`, `read`) dans `/data/tokens.json`. Un `fixtures/<nom>/compat.json` facultatif ajoute des locales (`{"locales":[{"code":"fr","name":"French (fr)"}]}`) et des permissions Public (`"publicPermissions":["plugin::users-permissions.user.find"]`) |
+| `fixtures/<nom>/src/` | Projets de test, lus tels quels par les deux moteurs. `devfreelance` copie les schémas de dev-freelance (sans JS) ; son corpus rejoue les appels exacts du front Go (`apps/web/internal/*`) |
+| `corpus/<nom>.yaml` | Cas exécutés dans l'ordre. Champs : `name`, `method`, `path`, `query` (en clair, les valeurs sont encodées par le runner), `token` (`full` ou `read`), `bearer` (jeton brut, ex. `{{jwt}}` tiré d'un login), `body`, `files` (PNG générés envoyés en multipart, ex. `[{ name: a.png, width: 800, height: 600 }]`), `save` (variables tirées de la réponse, ex. `data.documentId`), `skip` |
+| `normalize/` | `id` et `documentId` remplacés par des alias stables (ordre d'apparition), horodatages par `<ts>`, secrets masqués. Un documentId déjà vu qui réapparaît dans un texte (message d'erreur) est remplacé par son alias. L'ordre des clés est ignoré, celui des tableaux non |
 | `cmd/compat/` | `compat run` (un moteur) et `compat diff` (deux sorties) |
 | `scripts/` | `bench.sh` (côté Mac : cross-compile, rsync, ssh) et `remote.sh` (côté homelab : instances jetables, nettoyage garanti à la sortie) |
 
@@ -27,5 +27,7 @@ Strapi ne répond pas pareil selon la base (vu sur la fixture `basic`) :
 
 - `biginteger` : SQLite perd la précision au-delà de 2^53 (`9007199254740993` revient en `9007199254740992`), Postgres non.
 - `time` : `14:30:00.000` sous SQLite, `14:30:00` sous Postgres.
+- `$containsi` (fixture `devfreelance`) : SQLite ne replie pas la casse hors ASCII (`développeur` ne trouve pas `DÉVELOPPEUR`), Postgres si.
+- i18n (fixture `i18n-dp`) : quand un `PUT ?locale=xx` crée une nouvelle locale, les champs non localisés recopiés viennent d'une ligne choisie sans `ORDER BY` ; SQLite et Postgres ne prennent pas la même, d'où des valeurs `views`/`code` différentes sur les brouillons.
 
 D'où un golden par dialecte. La position de grapi sur ces écarts (les reproduire ou corriger la perte de précision) se décide dans `DB-001`.

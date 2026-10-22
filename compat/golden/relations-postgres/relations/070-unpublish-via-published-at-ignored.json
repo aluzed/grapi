@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc13",
+      "id": "#id24",
+      "publishedAt": "\u003cts\u003e",
+      "title": "Delta"
+    },
+    "meta": {}
+  }
+}

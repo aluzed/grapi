@@ -17,6 +17,30 @@ async function grantPublicRead(strapi) {
   }
 }
 
+// Optional per-fixture settings: { "locales": [{ "code", "name" }], "publicPermissions": ["<action>"] }
+function readFixtureConfig() {
+  const file = process.env.COMPAT_FIXTURE_CONFIG || '/fixture/compat.json';
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+}
+
+async function createLocales(strapi, locales) {
+  const service = strapi.plugin('i18n').service('locales');
+  for (const { code, name } of locales) {
+    if (!(await service.findByCode(code))) await service.create({ code, name });
+  }
+}
+
+async function grantPublic(strapi, actions) {
+  const role = await strapi.db
+    .query('plugin::users-permissions.role')
+    .findOne({ where: { type: 'public' } });
+  for (const action of actions) {
+    await strapi.db
+      .query('plugin::users-permissions.permission')
+      .create({ data: { action, role: role.id } });
+  }
+}
+
 async function createTokens(strapi) {
   const service = strapi.service('admin::api-token');
   const tokens = {};
@@ -33,7 +57,10 @@ async function createTokens(strapi) {
 module.exports = {
   register() {},
   async bootstrap({ strapi }) {
+    const config = readFixtureConfig();
+    await createLocales(strapi, config.locales || []);
     await grantPublicRead(strapi);
+    await grantPublic(strapi, config.publicPermissions || []);
     await createTokens(strapi);
   },
 };

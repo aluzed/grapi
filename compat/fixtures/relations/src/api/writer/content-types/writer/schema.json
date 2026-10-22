@@ -1,0 +1,13 @@
+{
+  "kind": "collectionType",
+  "collectionName": "writers",
+  "info": { "singularName": "writer", "pluralName": "writers", "displayName": "Writer" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true, "unique": true },
+    "profile": { "type": "relation", "relation": "oneToOne", "target": "api::profile.profile", "inversedBy": "writer" },
+    "posts": { "type": "relation", "relation": "oneToMany", "target": "api::post.post", "mappedBy": "writer" },
+    "mentionedIn": { "type": "relation", "relation": "morphMany", "target": "api::post.post", "morphBy": "mentions" },
+    "pinnedComment": { "type": "relation", "relation": "morphOne", "target": "api::comment.comment", "morphBy": "subject" }
+  }
+}

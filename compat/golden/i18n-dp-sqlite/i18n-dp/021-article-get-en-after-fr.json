@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "English body",
+      "code": "A-FR",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": true,
+      "id": "#id2",
+      "locale": "en",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Hello World",
+      "updatedAt": "\u003cts\u003e",
+      "views": 99
+    },
+    "meta": {}
+  }
+}

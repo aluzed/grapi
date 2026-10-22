@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "layout": {
+        "columns": [],
+        "heading": "Heading only",
+        "id": "#id2"
+      },
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

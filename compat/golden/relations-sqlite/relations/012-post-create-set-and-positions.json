@@ -1,0 +1,45 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc12",
+      "id": "#id5",
+      "parent": {
+        "documentId": "#doc10",
+        "id": "#id2",
+        "title": "Alpha"
+      },
+      "publishedAt": "\u003cts\u003e",
+      "rank": 3,
+      "related": [
+        {
+          "documentId": "#doc10",
+          "id": "#id2",
+          "title": "Alpha"
+        },
+        {
+          "documentId": "#doc11",
+          "id": "#id4",
+          "title": "Beta"
+        }
+      ],
+      "tags": [
+        {
+          "documentId": "#doc4",
+          "id": "#id1",
+          "name": "retro"
+        },
+        {
+          "documentId": "#doc6",
+          "id": "#id3",
+          "name": "remake"
+        }
+      ],
+      "title": "Gamma",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

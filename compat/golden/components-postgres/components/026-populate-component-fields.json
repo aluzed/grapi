@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "links": [
+        {
+          "id": "#id1",
+          "label": "Docs"
+        },
+        {
+          "id": "#id2",
+          "label": "Blog"
+        }
+      ],
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

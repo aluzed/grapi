@@ -1,0 +1,77 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc11",
+        "featuredTag": null,
+        "id": "#id19",
+        "tags": [],
+        "title": "Beta"
+      },
+      {
+        "documentId": "#doc12",
+        "featuredTag": null,
+        "id": "#id22",
+        "tags": [
+          {
+            "documentId": "#doc5",
+            "id": "#id2",
+            "name": "snes"
+          }
+        ],
+        "title": "Gamma"
+      },
+      {
+        "documentId": "#doc13",
+        "featuredTag": null,
+        "id": "#id24",
+        "tags": [],
+        "title": "Delta"
+      },
+      {
+        "documentId": "#doc14",
+        "featuredTag": null,
+        "id": "#id23",
+        "tags": [],
+        "title": "Epsilon"
+      },
+      {
+        "documentId": "#doc15",
+        "featuredTag": null,
+        "id": "#id8",
+        "tags": [],
+        "title": "Zeta"
+      },
+      {
+        "documentId": "#doc16",
+        "featuredTag": null,
+        "id": "#id11",
+        "tags": [],
+        "title": "Eta"
+      },
+      {
+        "documentId": "#doc10",
+        "featuredTag": null,
+        "id": "#id20",
+        "tags": [
+          {
+            "documentId": "#doc7",
+            "id": "#id4",
+            "name": "decomp"
+          }
+        ],
+        "title": "Alpha"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 7
+      }
+    }
+  }
+}

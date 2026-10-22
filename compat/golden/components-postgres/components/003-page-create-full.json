@@ -1,0 +1,55 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.hero",
+          "headline": "Welcome",
+          "id": "#id1"
+        },
+        {
+          "__component": "blocks.rich-text",
+          "body": "Some **text**",
+          "id": "#id1"
+        },
+        {
+          "__component": "blocks.gallery",
+          "caption": "Shots",
+          "id": "#id1",
+          "slides": 3
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc3",
+      "id": "#id1",
+      "layout": {
+        "heading": "Two columns",
+        "id": "#id1"
+      },
+      "links": [
+        {
+          "id": "#id1",
+          "label": "Docs",
+          "url": "/docs"
+        },
+        {
+          "id": "#id2",
+          "label": "Blog",
+          "url": "/blog"
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "seo": {
+        "id": "#id1",
+        "metaDescription": "The home page",
+        "metaTitle": "Home SEO",
+        "noIndex": false
+      },
+      "title": "Home",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

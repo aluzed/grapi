@@ -1,0 +1,42 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "body[0].__component must be one of the following values: blocks.gallery, blocks.hero, blocks.rich-text, layout.cell, layout.column, layout.section, shared.link, shared.seo",
+            "name": "ValidationError",
+            "path": [
+              "body",
+              "0",
+              "__component"
+            ],
+            "value": "blocks.nope"
+          },
+          {
+            "message": "Invalid relations",
+            "name": "ValidationError",
+            "path": [],
+            "value": {
+              "body": [
+                {
+                  "__component": "blocks.nope",
+                  "headline": "x"
+                }
+              ],
+              "links": [],
+              "publishedAt": "\u003cts\u003e",
+              "title": "Bad dz"
+            }
+          }
+        ]
+      },
+      "message": "2 errors occurred",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

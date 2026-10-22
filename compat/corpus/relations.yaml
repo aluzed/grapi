@@ -1,0 +1,402 @@
+fixture: relations
+cases:
+  # Seed: targets first, ids and documentIds saved for later cases.
+  - name: writer-create-ada
+    method: POST
+    path: /api/writers
+    token: full
+    save: { w1: data.documentId, w1id: data.id }
+    body: { data: { name: "Ada" } }
+  - name: writer-create-linus
+    method: POST
+    path: /api/writers
+    token: full
+    save: { w2: data.documentId, w2id: data.id }
+    body: { data: { name: "Linus" } }
+  - name: profile-create-from-mapped-side
+    method: POST
+    path: /api/profiles
+    token: full
+    query: "populate=writer"
+    save: { pr1: data.documentId }
+    body: { data: { bio: "Countess of computing", writer: "{{w1}}" } }
+  - name: tag-create-retro
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t1: data.documentId }
+    body: { data: { name: "retro" } }
+  - name: tag-create-snes
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t2: data.documentId }
+    body: { data: { name: "snes" } }
+  - name: tag-create-remake
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t3: data.documentId }
+    body: { data: { name: "remake" } }
+  - name: tag-create-decomp
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t4: data.documentId }
+    body: { data: { name: "decomp" } }
+  - name: category-create-published
+    method: POST
+    path: /api/categories
+    token: full
+    save: { c1: data.documentId }
+    body: { data: { name: "News" } }
+  - name: category-create-draft-only
+    method: POST
+    path: /api/categories
+    token: full
+    query: "status=draft"
+    save: { c2: data.documentId }
+    body: { data: { name: "Upcoming" } }
+
+  # Create with every relation input style.
+  - name: post-create-shorthand
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate=*"
+    save: { p1: data.documentId }
+    body:
+      data:
+        title: "Alpha"
+        rank: 1
+        writer: "{{w1}}"
+        category: "{{c1}}"
+        tags: ["{{t1}}", "{{t2}}"]
+        featuredTag: "{{t1}}"
+  - name: post-create-longhand-connect
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate[writer][fields][0]=name&populate[tags][fields][0]=name&populate[parent][fields][0]=title"
+    save: { p2: data.documentId }
+    body:
+      data:
+        title: "Beta"
+        rank: 2
+        writer: { connect: [{ documentId: "{{w2}}" }] }
+        tags: { connect: [{ documentId: "{{t2}}" }, { documentId: "{{t3}}" }] }
+        parent: { connect: ["{{p1}}"] }
+  - name: post-create-set-and-positions
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate[tags][fields][0]=name&populate[related][fields][0]=title&populate[parent][fields][0]=title"
+    save: { p3: data.documentId }
+    body:
+      data:
+        title: "Gamma"
+        rank: 3
+        parent: { set: [{ documentId: "{{p1}}" }] }
+        related: ["{{p1}}", "{{p2}}"]
+        tags:
+          connect:
+            - { documentId: "{{t3}}" }
+            - { documentId: "{{t1}}", position: { before: "{{t3}}" } }
+  - name: post-create-numeric-id-shorthand
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate[writer][fields][0]=name"
+    save: { p4: data.documentId }
+    body: { data: { title: "Delta", rank: 4, writer: "{{w2id}}" } }
+  - name: post-create-draft-to-draft-only-target
+    method: POST
+    path: /api/posts
+    token: full
+    query: "status=draft&populate[category][fields][0]=name"
+    save: { p5: data.documentId }
+    body: { data: { title: "Epsilon", rank: 5, category: "{{c2}}", writer: "{{w1}}" } }
+  - name: post-create-published-to-draft-only-target
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate[category][fields][0]=name"
+    save: { p6: data.documentId }
+    body: { data: { title: "Zeta", rank: 6, category: "{{c2}}" } }
+  - name: post-draft-view-of-draft-only-target
+    path: /api/posts/{{p6}}
+    query: "status=draft&populate[category][fields][0]=name"
+  - name: post-create-unknown-target
+    method: POST
+    path: /api/posts
+    token: full
+    body: { data: { title: "Broken", tags: ["doesnotexist000000000000"] } }
+  - name: post-create-unknown-numeric-target
+    method: POST
+    path: /api/posts
+    token: full
+    body: { data: { title: "Broken", writer: 999999 } }
+  - name: post-create-position-unknown-anchor
+    method: POST
+    path: /api/posts
+    token: full
+    body:
+      data:
+        title: "Broken anchor"
+        tags: { connect: [{ documentId: "{{t1}}", position: { after: "{{t4}}" } }] }
+  - name: post-create-morph-to-many
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate[mentions]=true"
+    save: { p7: data.documentId }
+    body:
+      data:
+        title: "Eta"
+        rank: 7
+        mentions:
+          - { documentId: "{{w1}}", __type: "api::writer.writer" }
+          - { documentId: "{{t4}}", __type: "api::tag.tag" }
+  - name: post-create-morph-missing-type
+    method: POST
+    path: /api/posts
+    token: full
+    body: { data: { title: "No type", mentions: ["{{w1}}"] } }
+  - name: comment-create-morph-to-one-object-rejected
+    method: POST
+    path: /api/comments
+    token: full
+    body: { data: { body: "Nice post", subject: { documentId: "{{p1}}", __type: "api::post.post" } } }
+  - name: comment-create-morph-to-one-array
+    method: POST
+    path: /api/comments
+    token: full
+    body: { data: { body: "Nice post", subject: [{ documentId: "{{p1}}", __type: "api::post.post" }] } }
+  - name: writer-update-morph-many-side
+    method: PUT
+    path: /api/writers/{{w2}}
+    token: full
+    query: "fields[0]=name&populate[mentionedIn][fields][0]=title"
+    body: { data: { mentionedIn: ["{{p4}}"] } }
+  - name: post-morph-written-from-inverse
+    path: /api/posts/{{p4}}
+    query: "fields[0]=title&populate[mentions]=true"
+
+  # Populate.
+  - name: populate-star
+    path: /api/posts
+    query: "populate=*&sort=rank:asc"
+  - name: populate-nested-object
+    path: /api/posts/{{p1}}
+    query: "populate[writer][populate][profile][fields][0]=bio&populate[writer][fields][0]=name"
+  - name: populate-fields-sort
+    path: /api/posts/{{p2}}
+    query: "populate[tags][fields][0]=name&populate[tags][sort]=name:asc"
+  - name: populate-filters
+    path: /api/posts
+    query: "fields[0]=title&populate[tags][fields][0]=name&populate[tags][filters][name][$eq]=snes&sort=rank:asc&filters[rank][$lte]=3"
+  - name: populate-count
+    path: /api/posts
+    query: "fields[0]=title&populate[tags][count]=true&populate[children][count]=true&sort=rank:asc"
+  - name: populate-inverse-one-to-many
+    path: /api/writers
+    query: "fields[0]=name&populate[posts][fields][0]=title&populate[posts][sort]=rank:asc&sort=name:asc"
+  - name: populate-inverse-one-to-many-draft-status
+    path: /api/writers
+    query: "status=draft&fields[0]=name&populate[posts][fields][0]=title&populate[posts][sort]=rank:asc&sort=name:asc"
+  - name: populate-inverse-many-to-many-order
+    path: /api/tags
+    query: "fields[0]=name&populate[posts][fields][0]=title&sort=name:asc"
+  - name: populate-self-children
+    path: /api/posts/{{p1}}
+    query: "fields[0]=title&populate[children][fields][0]=title&populate[children][sort]=rank:asc&populate[related][fields][0]=title"
+  - name: populate-one-to-one-both-sides
+    path: /api/profiles
+    query: "populate[writer][populate][profile][fields][0]=bio"
+  - name: populate-morph-many-inverse
+    path: /api/writers
+    query: "fields[0]=name&populate[mentionedIn][fields][0]=title&populate[pinnedComment][fields][0]=body&sort=name:asc"
+  - name: populate-morph-on-fragment
+    path: /api/posts/{{p7}}
+    query: "fields[0]=title&populate[mentions][on][api::writer.writer][fields][0]=name&populate[mentions][on][api::tag.tag][fields][0]=name"
+  - name: populate-morph-count
+    path: /api/posts/{{p7}}
+    query: "fields[0]=title&populate[mentions][count]=true"
+  - name: populate-morph-to-one
+    path: /api/comments
+    query: "populate[subject][on][api::post.post][fields][0]=title&populate[subject][on][api::writer.writer][fields][0]=name&sort=body:asc"
+  - name: populate-unknown-relation
+    path: /api/posts
+    query: "populate[nope]=true"
+  - name: populate-fields-unknown
+    path: /api/posts
+    query: "populate[tags][fields][0]=nope"
+
+  # Filters and sort through relations.
+  - name: filter-many-to-one
+    path: /api/posts
+    query: "fields[0]=title&filters[writer][name][$eq]=Ada&sort=rank:asc"
+  - name: filter-nested-two-levels
+    path: /api/posts
+    query: "fields[0]=title&filters[writer][profile][bio][$containsi]=countess&sort=rank:asc"
+  - name: filter-many-to-many-in-distinct
+    path: /api/posts
+    query: "fields[0]=title&filters[tags][name][$in][0]=retro&filters[tags][name][$in][1]=snes&sort=rank:asc"
+  - name: filter-relation-null
+    path: /api/posts
+    query: "fields[0]=title&filters[writer][id][$null]=true&sort=rank:asc"
+  - name: filter-by-related-document-id
+    path: /api/posts
+    query: "fields[0]=title&filters[parent][documentId][$eq]={{p1}}&sort=rank:asc"
+  - name: filter-inverse-side
+    path: /api/writers
+    query: "fields[0]=name&filters[posts][title][$eq]=Beta"
+  - name: filter-or-across-relations
+    path: /api/posts
+    query: "fields[0]=title&filters[$or][0][category][name][$eq]=News&filters[$or][1][tags][name][$eq]=remake&sort=rank:asc"
+  - name: filter-morph-rejected
+    path: /api/posts
+    query: "filters[mentions][name][$eq]=Ada"
+  - name: sort-through-relation
+    path: /api/posts
+    query: "fields[0]=title&populate[writer][fields][0]=name&filters[writer][id][$notNull]=true&sort[0]=writer.name:desc&sort[1]=rank:asc"
+
+  # Updates with connect / disconnect / set and positions.
+  - name: update-connect-start
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{t3}}", position: { start: true } }] } } }
+  - name: update-connect-end
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{t4}}", position: { end: true } }] } } }
+  - name: update-reconnect-after-moves
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{t4}}", position: { after: "{{t3}}" } }] } } }
+  - name: update-disconnect-shorthand
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { disconnect: ["{{t2}}"] } } }
+  - name: update-connect-and-disconnect
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: ["{{t2}}"], disconnect: [{ documentId: "{{t4}}" }] } } }
+  - name: update-set-reorders
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { set: ["{{t4}}", "{{t1}}"] } } }
+  - name: update-shorthand-empty-clears
+    method: PUT
+    path: /api/posts/{{p2}}
+    token: full
+    query: "populate[tags][fields][0]=name&populate[writer][fields][0]=name"
+    body: { data: { tags: [], writer: null } }
+  - name: update-omitted-relation-kept
+    method: PUT
+    path: /api/posts/{{p1}}
+    token: full
+    query: "populate[tags][fields][0]=name&populate[writer][fields][0]=name"
+    body: { data: { rank: 10 } }
+  - name: update-one-to-one-steals
+    method: POST
+    path: /api/profiles
+    token: full
+    query: "populate=writer"
+    body: { data: { bio: "Second profile", writer: "{{w1}}" } }
+  - name: after-one-to-one-steal
+    path: /api/profiles
+    query: "populate[writer][fields][0]=name&sort=bio:asc"
+  - name: update-many-to-one-from-inverse
+    method: PUT
+    path: /api/writers/{{w2}}
+    token: full
+    query: "fields[0]=name&populate[posts][fields][0]=title"
+    body: { data: { posts: { connect: ["{{p2}}"] } } }
+
+  # Draft and publish.
+  - name: update-draft-only-keeps-published
+    method: PUT
+    path: /api/posts/{{p3}}
+    token: full
+    query: "status=draft&populate[tags][fields][0]=name"
+    body: { data: { tags: { set: ["{{t2}}"] } } }
+  - name: published-view-unchanged
+    path: /api/posts/{{p3}}
+    query: "fields[0]=title&populate[tags][fields][0]=name"
+  - name: publish-by-update
+    method: PUT
+    path: /api/posts/{{p3}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: {} }
+  - name: publish-target-category
+    method: PUT
+    path: /api/categories/{{c2}}
+    token: full
+    query: "populate[posts][fields][0]=title"
+    body: { data: {} }
+  - name: published-post-after-target-publish
+    path: /api/posts/{{p6}}
+    query: "fields[0]=title&populate[category][fields][0]=name"
+  - name: publish-draft-only-post
+    method: PUT
+    path: /api/posts/{{p5}}
+    token: full
+    query: "populate[category][fields][0]=name&populate[writer][fields][0]=name"
+    body: { data: {} }
+  - name: categories-populate-posts-both-status
+    path: /api/categories
+    query: "fields[0]=name&populate[posts][fields][0]=title&populate[posts][sort]=rank:asc&sort=name:asc"
+  - name: categories-draft-populate-posts
+    path: /api/categories
+    query: "status=draft&fields[0]=name&populate[posts][fields][0]=title&populate[posts][sort]=rank:asc&sort=name:asc"
+  - name: unpublish-via-published-at-ignored
+    method: PUT
+    path: /api/posts/{{p4}}
+    token: full
+    query: "fields[0]=title&fields[1]=publishedAt"
+    body: { data: { publishedAt: null } }
+  - name: delete-draft-status-rejected
+    method: DELETE
+    path: /api/posts/{{p4}}
+    token: full
+    query: "status=draft"
+
+  # Deleting a target.
+  - name: delete-target-tag
+    method: DELETE
+    path: /api/tags/{{t1}}
+    token: full
+  - name: after-delete-target-many-to-many
+    path: /api/posts
+    query: "fields[0]=title&populate[tags][fields][0]=name&populate[featuredTag][fields][0]=name&sort=rank:asc"
+  - name: delete-target-writer
+    method: DELETE
+    path: /api/writers/{{w1}}
+    token: full
+  - name: after-delete-writer-relations
+    path: /api/posts
+    query: "fields[0]=title&populate[writer][fields][0]=name&populate[mentions]=true&sort=rank:asc"
+  - name: after-delete-writer-profiles
+    path: /api/profiles
+    query: "populate[writer][fields][0]=name&sort=bio:asc"
+  - name: delete-self-parent
+    method: DELETE
+    path: /api/posts/{{p1}}
+    token: full
+  - name: after-delete-self-parent
+    path: /api/posts
+    query: "fields[0]=title&populate[parent][fields][0]=title&populate[related][fields][0]=title&sort=rank:asc"

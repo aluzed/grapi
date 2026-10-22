@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "articles": [
+        {
+          "documentId": "#doc10",
+          "id": "#id16",
+          "locale": "en",
+          "title": "Hello World"
+        }
+      ],
+      "color": "red",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc7",
+      "id": "#id2",
+      "locale": "en",
+      "name": "Games",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

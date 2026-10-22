@@ -1,0 +1,64 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc11",
+        "id": "#id19",
+        "parent": null,
+        "related": [],
+        "title": "Beta"
+      },
+      {
+        "documentId": "#doc12",
+        "id": "#id22",
+        "parent": null,
+        "related": [
+          {
+            "documentId": "#doc11",
+            "id": "#id19",
+            "title": "Beta"
+          }
+        ],
+        "title": "Gamma"
+      },
+      {
+        "documentId": "#doc13",
+        "id": "#id24",
+        "parent": null,
+        "related": [],
+        "title": "Delta"
+      },
+      {
+        "documentId": "#doc14",
+        "id": "#id23",
+        "parent": null,
+        "related": [],
+        "title": "Epsilon"
+      },
+      {
+        "documentId": "#doc15",
+        "id": "#id8",
+        "parent": null,
+        "related": [],
+        "title": "Zeta"
+      },
+      {
+        "documentId": "#doc16",
+        "id": "#id11",
+        "parent": null,
+        "related": [],
+        "title": "Eta"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 6
+      }
+    }
+  }
+}

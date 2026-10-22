@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "bio": "Countess of computing",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc3",
+        "id": "#id1",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e",
+        "writer": null
+      },
+      {
+        "bio": "Second profile",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc17",
+        "id": "#id2",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e",
+        "writer": null
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

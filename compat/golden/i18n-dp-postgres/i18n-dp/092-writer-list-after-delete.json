@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc4",
+        "id": "#id2",
+        "name": "Ada"
+      },
+      {
+        "documentId": "#doc6",
+        "id": "#id5",
+        "name": "Linus"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

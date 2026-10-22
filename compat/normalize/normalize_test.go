@@ -37,3 +37,13 @@ func TestValueMasksSecretsAndUploads(t *testing.T) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
+
+func TestValueRewritesKnownDocumentIdsInText(t *testing.T) {
+	n := New()
+	n.Value(decode(t, `{"data":{"documentId":"a0m3rrff51lml58a81ho8hlp"}}`))
+	got := n.Value(decode(t, `{"error":{"message":"Document with id \"a0m3rrff51lml58a81ho8hlp\", locale \"fr\" not found","other":"zzzzzzzzzzzzzzzzzzzzzzzz"}}`))
+	want := decode(t, `{"error":{"message":"Document with id \"#doc1\", locale \"fr\" not found","other":"zzzzzzzzzzzzzzzzzzzzzzzz"}}`)
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}

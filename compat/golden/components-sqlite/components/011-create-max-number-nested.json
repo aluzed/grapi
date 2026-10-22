@@ -1,0 +1,27 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "layout.columns[0].width must be less than or equal to 12",
+            "name": "ValidationError",
+            "path": [
+              "layout",
+              "columns",
+              "0",
+              "width"
+            ],
+            "value": 13
+          }
+        ]
+      },
+      "message": "layout.columns[0].width must be less than or equal to 12",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

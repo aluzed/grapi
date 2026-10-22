@@ -1,0 +1,344 @@
+fixture: components
+cases:
+  - name: author-create-ada
+    method: POST
+    path: /api/authors
+    token: full
+    save: { a1: data.documentId }
+    body: { data: { name: "Ada" } }
+  - name: author-create-linus
+    method: POST
+    path: /api/authors
+    token: full
+    save: { a2: data.documentId }
+    body: { data: { name: "Linus" } }
+
+  # Creation, every component kind at once.
+  - name: page-create-full
+    method: POST
+    path: /api/pages
+    token: full
+    query: "populate=*"
+    save: { p1: data.documentId, seo1: data.seo.id, link1: data.links.0.id, link2: data.links.1.id }
+    body:
+      data:
+        title: "Home"
+        seo: { metaTitle: "Home SEO", metaDescription: "The home page" }
+        links:
+          - { label: "Docs", url: "/docs", author: "{{a1}}" }
+          - { label: "Blog", url: "/blog" }
+        layout:
+          heading: "Two columns"
+          columns:
+            - { width: 6, cell: { text: "left", authors: ["{{a1}}", "{{a2}}"] } }
+            - { width: 6, cell: { text: "right" } }
+        body:
+          - { __component: "blocks.hero", headline: "Welcome", cta: { label: "Go", url: "/go", author: "{{a2}}" } }
+          - { __component: "blocks.rich-text", body: "Some **text**" }
+          - { __component: "blocks.gallery", caption: "Shots", slides: 3 }
+  - name: page-create-minimal
+    method: POST
+    path: /api/pages
+    token: full
+    query: "populate=*"
+    save: { p2: data.documentId }
+    body: { data: { title: "About", links: [{ label: "Home" }] } }
+  - name: page-create-without-repeatable
+    method: POST
+    path: /api/pages
+    token: full
+    query: "populate=*"
+    save: { p3: data.documentId }
+    body: { data: { title: "Contact" } }
+
+  # Validation errors.
+  - name: create-repeatable-empty-below-min
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Empty links", links: [] } }
+  - name: create-repeatable-over-max
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Too many", links: [{ label: "a" }, { label: "b" }, { label: "c" }, { label: "d" }] } }
+  - name: create-required-inside-repeatable
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "No label", links: [{ label: "ok" }, { url: "/missing-label" }] } }
+  - name: create-max-length-inside-component
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Long seo", seo: { metaTitle: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" } } }
+  - name: create-required-three-levels-deep
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Deep", layout: { columns: [{ width: 4, cell: { text: "ok" } }, { width: 4, cell: {} }] } } }
+  - name: create-max-number-nested
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Wide", layout: { columns: [{ width: 13 }] } } }
+  - name: create-component-wrong-type
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Bad seo", seo: "not an object" } }
+  - name: create-repeatable-not-array
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Bad links", links: { label: "single" } } }
+  - name: create-dz-unknown-component
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Bad dz", body: [{ __component: "blocks.nope", headline: "x" }] } }
+  - name: create-dz-missing-component-key
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "No key", body: [{ headline: "x" }] } }
+  - name: create-dz-component-not-allowed
+    method: POST
+    path: /api/posts
+    token: full
+    save: { gp: data.documentId }
+    body: { data: { title: "Gallery in post", seo: { metaTitle: "x" }, blocks: [{ __component: "blocks.gallery", caption: "no" }] } }
+  - name: dz-component-not-allowed-stored
+    path: /api/posts/{{gp}}
+    query: "populate[blocks][populate]=*"
+  - name: create-dz-required-inside
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Hero without headline", body: [{ __component: "blocks.hero" }] } }
+  - name: create-dz-over-max
+    method: POST
+    path: /api/posts
+    token: full
+    body:
+      data:
+        title: "Three blocks"
+        seo: { metaTitle: "x" }
+        blocks:
+          - { __component: "blocks.rich-text", body: "1" }
+          - { __component: "blocks.rich-text", body: "2" }
+          - { __component: "blocks.rich-text", body: "3" }
+  - name: create-component-relation-unknown
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Ghost author", links: [{ label: "x", author: "doesnotexist000000000000" }] } }
+  - name: create-component-foreign-id
+    method: POST
+    path: /api/pages
+    token: full
+    body: { data: { title: "Stolen seo", seo: { id: "{{seo1}}", metaTitle: "Stolen" } } }
+
+  # Reads and populate.
+  - name: find-without-populate
+    path: /api/pages/{{p1}}
+  - name: populate-star-one-level
+    path: /api/pages/{{p1}}
+    query: "populate=*"
+  - name: populate-deep-nested
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[layout][populate][columns][populate][cell][populate][authors][fields][0]=name"
+  - name: populate-nested-star
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[layout][populate]=*"
+  - name: populate-component-fields
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[links][fields][0]=label"
+  - name: populate-relation-in-component
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[links][populate][author][fields][0]=name"
+  - name: populate-component-filters
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[links][filters][label][$eq]=Blog"
+  - name: populate-component-sort
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[links][sort]=label:asc"
+  - name: populate-dz-true
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[body]=true"
+  - name: populate-dz-populate-star
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[body][populate]=*"
+  - name: populate-dz-on-fragments
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[body][on][blocks.hero][populate][cta][populate][author][fields][0]=name&populate[body][on][blocks.gallery][fields][0]=caption"
+  - name: populate-dz-on-unlisted-component
+    path: /api/pages/{{p1}}
+    query: "fields[0]=title&populate[body][on][blocks.rich-text]=true"
+  - name: populate-dz-star-rejected
+    path: /api/pages/{{p1}}
+    query: "populate[body]=*"
+  - name: populate-dz-on-unknown-component
+    path: /api/pages/{{p1}}
+    query: "populate[body][on][blocks.nope]=true"
+  - name: populate-dz-nested-without-on
+    path: /api/pages/{{p1}}
+    query: "populate[body][populate][cta]=true"
+  - name: populate-component-unknown-field
+    path: /api/pages/{{p1}}
+    query: "populate[seo][fields][0]=nope"
+  - name: fields-component-rejected
+    path: /api/pages/{{p1}}
+    query: "fields[0]=seo"
+  - name: populate-list-mixed
+    path: /api/pages
+    query: "fields[0]=title&populate[seo]=true&populate[links][fields][0]=label&sort=title:asc"
+
+  # Filters and sort on component fields.
+  - name: filter-single-component
+    path: /api/pages
+    query: "fields[0]=title&filters[seo][metaTitle][$eq]=Home SEO"
+  - name: filter-repeatable-component
+    path: /api/pages
+    query: "fields[0]=title&filters[links][label][$in][0]=Docs&filters[links][label][$in][1]=Home&sort=title:asc"
+  - name: filter-three-levels-deep
+    path: /api/pages
+    query: "fields[0]=title&filters[layout][columns][cell][text][$eq]=left"
+  - name: filter-relation-inside-component
+    path: /api/pages
+    query: "fields[0]=title&filters[links][author][name][$eq]=Ada"
+  - name: filter-component-null
+    path: /api/pages
+    query: "fields[0]=title&filters[seo][id][$null]=true&sort=title:asc"
+  - name: filter-dynamic-zone-rejected
+    path: /api/pages
+    query: "filters[body][headline][$eq]=Welcome"
+  - name: sort-by-component-field
+    path: /api/pages
+    query: "fields[0]=title&sort=seo.metaTitle:asc"
+
+  # Updates.
+  - name: update-component-with-id-in-place
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "fields[0]=title&populate[seo]=true"
+    body: { data: { seo: { id: "{{seo1}}", metaTitle: "Home SEO v2" } } }
+  - name: update-component-without-id-replaces
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "fields[0]=title&populate[seo]=true"
+    body: { data: { seo: { metaTitle: "Fresh SEO" } } }
+  - name: update-repeatable-keep-and-add
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "fields[0]=title&populate[links][populate]=author"
+    body: { data: { links: [{ id: "{{link2}}", label: "Blog v2" }, { label: "News" }] } }
+  - name: update-repeatable-replace-all
+    method: PUT
+    path: /api/pages/{{p2}}
+    token: full
+    query: "fields[0]=title&populate[links]=true"
+    body: { data: { links: [{ label: "Only" }] } }
+  - name: update-component-foreign-id
+    method: PUT
+    path: /api/pages/{{p2}}
+    token: full
+    body: { data: { links: [{ id: "{{link1}}", label: "Not mine" }] } }
+  - name: update-nested-partial
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "fields[0]=title&populate[layout][populate][columns][populate]=cell"
+    body: { data: { layout: { heading: "Heading only" } } }
+  - name: update-dz-reorder-replace
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "fields[0]=title&populate[body][populate]=*"
+    body:
+      data:
+        body:
+          - { __component: "blocks.gallery", caption: "First now", slides: 1 }
+          - { __component: "blocks.hero", headline: "Second now" }
+  - name: update-omitted-components-kept
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "populate=*"
+    body: { data: { title: "Home v2" } }
+  - name: update-component-relation-connect
+    method: PUT
+    path: /api/pages/{{p3}}
+    token: full
+    query: "fields[0]=title&populate[seo]=true&populate[links][populate][author][fields][0]=name"
+    body: { data: { links: [{ label: "Linus", author: { connect: ["{{a2}}"] } }] } }
+  - name: update-clear-component-and-dz
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    query: "populate=*"
+    body: { data: { seo: null, body: [] } }
+  - name: update-repeatable-null-below-min
+    method: PUT
+    path: /api/pages/{{p1}}
+    token: full
+    body: { data: { links: null } }
+
+  # Draft and publish on a type with a required component.
+  - name: post-create-missing-required-component
+    method: POST
+    path: /api/posts
+    token: full
+    body: { data: { title: "No seo" } }
+  - name: post-create-draft-skips-required
+    method: POST
+    path: /api/posts
+    token: full
+    query: "status=draft&populate=*"
+    save: { d1: data.documentId }
+    body: { data: { title: "Draft no seo", seo: { metaDescription: "no title yet" } } }
+  - name: post-publish-draft-invalid
+    method: PUT
+    path: /api/posts/{{d1}}
+    token: full
+    body: { data: {} }
+  - name: post-create-published
+    method: POST
+    path: /api/posts
+    token: full
+    query: "populate=*"
+    save: { d2: data.documentId }
+    body:
+      data:
+        title: "Published"
+        seo: { metaTitle: "Pub SEO" }
+        blocks: [{ __component: "blocks.hero", headline: "Hi", cta: { label: "More" } }]
+  - name: post-update-draft-components
+    method: PUT
+    path: /api/posts/{{d2}}
+    token: full
+    query: "status=draft&populate=*"
+    body: { data: { seo: { metaTitle: "Draft SEO" }, blocks: [{ __component: "blocks.rich-text", body: "draft" }] } }
+  - name: post-published-components-unchanged
+    path: /api/posts/{{d2}}
+    query: "populate[seo]=true&populate[blocks][on][blocks.hero][populate]=cta"
+  - name: post-draft-components
+    path: /api/posts/{{d2}}
+    query: "status=draft&populate=*"
+  - name: post-republish-copies-components
+    method: PUT
+    path: /api/posts/{{d2}}
+    token: full
+    query: "populate=*"
+    body: { data: {} }
+
+  - name: delete-page-with-components
+    method: DELETE
+    path: /api/pages/{{p1}}
+    token: full
+  - name: after-delete-list
+    path: /api/pages
+    query: "fields[0]=title&populate[links]=true&sort=title:asc"

@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.hero",
+          "cta": {
+            "id": "#id4",
+            "label": "Go",
+            "url": "/go"
+          },
+          "headline": "Welcome",
+          "id": "#id1"
+        },
+        {
+          "__component": "blocks.rich-text",
+          "body": "Some **text**",
+          "id": "#id1"
+        },
+        {
+          "__component": "blocks.gallery",
+          "caption": "Shots",
+          "id": "#id1",
+          "slides": 3
+        }
+      ],
+      "documentId": "#doc3",
+      "id": "#id1",
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

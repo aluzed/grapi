@@ -1,0 +1,9 @@
+{
+  "collectionName": "components_layout_columns",
+  "info": { "displayName": "Column" },
+  "options": {},
+  "attributes": {
+    "width": { "type": "integer", "min": 1, "max": 12 },
+    "cell": { "type": "component", "repeatable": false, "component": "layout.cell" }
+  }
+}

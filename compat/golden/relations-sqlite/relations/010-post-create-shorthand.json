@@ -1,0 +1,62 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "category": {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc8",
+        "id": "#id2",
+        "name": "News",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      },
+      "children": [],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featuredTag": {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc4",
+        "id": "#id1",
+        "name": "retro",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      },
+      "id": "#id2",
+      "mentions": [],
+      "parent": null,
+      "publishedAt": "\u003cts\u003e",
+      "rank": 1,
+      "related": [],
+      "tags": [
+        {
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc4",
+          "id": "#id1",
+          "name": "retro",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e"
+        },
+        {
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc5",
+          "id": "#id2",
+          "name": "snes",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e"
+        }
+      ],
+      "title": "Alpha",
+      "updatedAt": "\u003cts\u003e",
+      "writer": {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "Ada",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      }
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc10",
+        "id": "#id2",
+        "rank": 1,
+        "title": "Alpha"
+      },
+      {
+        "documentId": "#doc11",
+        "id": "#id4",
+        "rank": 2,
+        "title": "Beta"
+      },
+      {
+        "documentId": "#doc12",
+        "id": "#id5",
+        "rank": 3,
+        "title": "Gamma"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 3
+      }
+    }
+  }
+}

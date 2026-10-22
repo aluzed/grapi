@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "category": {
+        "documentId": "#doc9",
+        "id": "#id4",
+        "name": "Upcoming"
+      },
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc14",
+      "id": "#id23",
+      "publishedAt": "\u003cts\u003e",
+      "rank": 5,
+      "title": "Epsilon",
+      "updatedAt": "\u003cts\u003e",
+      "writer": {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "Ada"
+      }
+    },
+    "meta": {}
+  }
+}

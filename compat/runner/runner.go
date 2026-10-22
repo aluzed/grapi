@@ -5,8 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -82,7 +87,15 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		target += "?" + encodeQuery(query)
 	}
 	var body io.Reader
-	if c.Body != nil {
+	contentType := ""
+	switch {
+	case len(c.Files) > 0:
+		b, ct, err := multipartBody(c.Files)
+		if err != nil {
+			return Result{Error: err.Error()}, nil
+		}
+		body, contentType = bytes.NewReader(b), ct
+	case c.Body != nil:
 		expanded, err := expandValue(c.Body, vars)
 		if err != nil {
 			return Result{Error: err.Error()}, nil
@@ -91,14 +104,14 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		if err != nil {
 			return Result{Error: err.Error()}, nil
 		}
-		body = bytes.NewReader(b)
+		body, contentType = bytes.NewReader(b), "application/json"
 	}
 	req, err := http.NewRequest(c.Method, target, body)
 	if err != nil {
 		return Result{Error: err.Error()}, nil
 	}
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
 	}
 	if c.Token != "" {
 		key, ok := t.Tokens[c.Token]
@@ -106,6 +119,13 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 			return Result{Error: fmt.Sprintf("unknown token %q", c.Token)}, nil
 		}
 		req.Header.Set("Authorization", "Bearer "+key)
+	}
+	if c.Bearer != "" {
+		bearer, err := expand(c.Bearer, vars)
+		if err != nil {
+			return Result{Error: err.Error()}, nil
+		}
+		req.Header.Set("Authorization", "Bearer "+bearer)
 	}
 	resp, err := t.Client.Do(req)
 	if err != nil {
@@ -149,6 +169,43 @@ func encodeQuery(q string) string {
 		}
 	}
 	return strings.Join(pairs, "&")
+}
+
+func multipartBody(files []corpus.Upload) ([]byte, string, error) {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	for _, f := range files {
+		field := f.Field
+		if field == "" {
+			field = "files"
+		}
+		h := textproto.MIMEHeader{}
+		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, field, f.Name))
+		h.Set("Content-Type", "image/png")
+		part, err := w.CreatePart(h)
+		if err != nil {
+			return nil, "", err
+		}
+		if err := png.Encode(part, gradient(f.Width, f.Height)); err != nil {
+			return nil, "", err
+		}
+	}
+	if err := w.Close(); err != nil {
+		return nil, "", err
+	}
+	return buf.Bytes(), w.FormDataContentType(), nil
+}
+
+// gradient is a deterministic image; a flat color would make every resized
+// format collapse to a few bytes, which hides size handling.
+func gradient(width, height int) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := range height {
+		for x := range width {
+			img.Set(x, y, color.RGBA{R: uint8(x * 255 / width), G: uint8(y * 255 / height), B: 128, A: 255}) //nolint:gosec // x < width, y < height: always below 255
+		}
+	}
+	return img
 }
 
 func mediaType(ct string) string {

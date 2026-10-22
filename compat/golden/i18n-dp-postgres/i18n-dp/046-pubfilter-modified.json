@@ -1,0 +1,58 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "body": "Corps français",
+        "code": "A-1",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc10",
+        "featured": true,
+        "id": "#id11",
+        "locale": "fr",
+        "publishedAt": null,
+        "slug": null,
+        "title": "Bonjour (brouillon)",
+        "updatedAt": "\u003cts\u003e",
+        "views": 5
+      },
+      {
+        "body": "Edited draft",
+        "code": null,
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc11",
+        "featured": false,
+        "id": "#id3",
+        "locale": "en",
+        "publishedAt": null,
+        "slug": null,
+        "title": "Draft only",
+        "updatedAt": "\u003cts\u003e",
+        "views": 1
+      },
+      {
+        "body": "English body",
+        "code": "A-1",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc10",
+        "featured": true,
+        "id": "#id1",
+        "locale": "en",
+        "publishedAt": null,
+        "slug": null,
+        "title": "Hello World",
+        "updatedAt": "\u003cts\u003e",
+        "views": 5
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 3
+      }
+    }
+  }
+}

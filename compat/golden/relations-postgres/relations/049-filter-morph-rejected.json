@@ -1,0 +1,18 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "mentions",
+        "param": "filters",
+        "path": "mentions",
+        "source": "query"
+      },
+      "message": "Invalid key mentions",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

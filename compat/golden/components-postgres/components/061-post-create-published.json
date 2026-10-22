@@ -1,0 +1,28 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "blocks": [
+        {
+          "__component": "blocks.hero",
+          "headline": "Hi",
+          "id": "#id3"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id7",
+      "publishedAt": "\u003cts\u003e",
+      "seo": {
+        "id": "#id8",
+        "metaDescription": null,
+        "metaTitle": "Pub SEO",
+        "noIndex": false
+      },
+      "title": "Published",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

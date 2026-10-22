@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc12",
+      "id": "#id5",
+      "tags": [
+        {
+          "documentId": "#doc4",
+          "id": "#id1",
+          "name": "retro"
+        },
+        {
+          "documentId": "#doc6",
+          "id": "#id3",
+          "name": "remake"
+        }
+      ],
+      "title": "Gamma"
+    },
+    "meta": {}
+  }
+}

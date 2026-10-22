@@ -1,0 +1,15 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 0,
+        "pageSize": 25,
+        "total": 0
+      }
+    }
+  }
+}

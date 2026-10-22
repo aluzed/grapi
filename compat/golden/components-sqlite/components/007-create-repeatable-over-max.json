@@ -1,0 +1,37 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "links field must have less than or equal to 3 items",
+            "name": "ValidationError",
+            "path": [
+              "links"
+            ],
+            "value": [
+              {
+                "label": "a"
+              },
+              {
+                "label": "b"
+              },
+              {
+                "label": "c"
+              },
+              {
+                "label": "d"
+              }
+            ]
+          }
+        ]
+      },
+      "message": "links field must have less than or equal to 3 items",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

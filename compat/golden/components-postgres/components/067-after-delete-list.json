@@ -1,0 +1,52 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc4",
+        "id": "#id2",
+        "links": [
+          {
+            "id": "#id6",
+            "label": "Only",
+            "url": null
+          }
+        ],
+        "title": "About"
+      },
+      {
+        "documentId": "#doc5",
+        "id": "#id4",
+        "links": [
+          {
+            "id": "#id7",
+            "label": "Linus",
+            "url": null
+          }
+        ],
+        "title": "Contact"
+      },
+      {
+        "documentId": "#doc6",
+        "id": "#id3",
+        "links": [],
+        "title": "Empty links"
+      },
+      {
+        "documentId": "#doc8",
+        "id": "#id5",
+        "links": [],
+        "title": "Stolen seo"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 4
+      }
+    }
+  }
+}

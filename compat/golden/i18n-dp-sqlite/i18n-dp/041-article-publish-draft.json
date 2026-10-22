@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "Now published",
+      "code": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc11",
+      "featured": false,
+      "id": "#id15",
+      "locale": "en",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Draft only",
+      "updatedAt": "\u003cts\u003e",
+      "views": 1
+    },
+    "meta": {}
+  }
+}

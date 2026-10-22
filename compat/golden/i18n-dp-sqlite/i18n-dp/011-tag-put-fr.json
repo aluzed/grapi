@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc9",
+      "id": "#id2",
+      "label": "rétro",
+      "locale": "fr",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e",
+      "weight": 3
+    },
+    "meta": {}
+  }
+}

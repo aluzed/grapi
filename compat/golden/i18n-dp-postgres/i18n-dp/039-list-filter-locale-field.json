@@ -1,0 +1,44 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "body": "Corps français",
+        "code": "A-FR",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc10",
+        "featured": true,
+        "id": "#id10",
+        "locale": "fr",
+        "publishedAt": "\u003cts\u003e",
+        "slug": null,
+        "title": "Bonjour le monde",
+        "updatedAt": "\u003cts\u003e",
+        "views": 99
+      },
+      {
+        "body": null,
+        "code": null,
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc12",
+        "featured": false,
+        "id": "#id6",
+        "locale": "fr",
+        "publishedAt": "\u003cts\u003e",
+        "slug": null,
+        "title": "Seulement en français",
+        "updatedAt": "\u003cts\u003e",
+        "views": 2
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

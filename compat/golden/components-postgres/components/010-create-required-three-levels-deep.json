@@ -1,0 +1,27 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "layout.columns[1].cell.text must be defined.",
+            "name": "ValidationError",
+            "path": [
+              "layout",
+              "columns",
+              "1",
+              "cell",
+              "text"
+            ]
+          }
+        ]
+      },
+      "message": "layout.columns[1].cell.text must be defined.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

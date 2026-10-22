@@ -1,0 +1,40 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "blocks field must have less than or equal to 2 items",
+            "name": "ValidationError",
+            "path": [
+              "blocks"
+            ],
+            "value": [
+              {
+                "__component": "blocks.rich-text",
+                "body": "1",
+                "id": "#id2"
+              },
+              {
+                "__component": "blocks.rich-text",
+                "body": "2",
+                "id": "#id4"
+              },
+              {
+                "__component": "blocks.rich-text",
+                "body": "3",
+                "id": "#id3"
+              }
+            ]
+          }
+        ]
+      },
+      "message": "blocks field must have less than or equal to 2 items",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

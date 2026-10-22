@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id18",
+      "publishedAt": "\u003cts\u003e",
+      "rank": 1,
+      "tags": [
+        {
+          "documentId": "#doc7",
+          "id": "#id4",
+          "name": "decomp"
+        },
+        {
+          "documentId": "#doc4",
+          "id": "#id1",
+          "name": "retro"
+        }
+      ],
+      "title": "Alpha",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "category": {
+        "documentId": "#doc9",
+        "id": "#id3",
+        "name": "Upcoming"
+      },
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc15",
+      "id": "#id9",
+      "publishedAt": null,
+      "rank": 6,
+      "title": "Zeta",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

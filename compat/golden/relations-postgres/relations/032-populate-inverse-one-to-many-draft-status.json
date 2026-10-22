@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "Ada",
+        "posts": [
+          {
+            "documentId": "#doc10",
+            "id": "#id1",
+            "rank": 1,
+            "title": "Alpha"
+          },
+          {
+            "documentId": "#doc14",
+            "id": "#id7",
+            "rank": 5,
+            "title": "Epsilon"
+          }
+        ]
+      },
+      {
+        "documentId": "#doc2",
+        "id": "#id2",
+        "name": "Linus",
+        "posts": [
+          {
+            "documentId": "#doc11",
+            "id": "#id3",
+            "rank": 2,
+            "title": "Beta"
+          },
+          {
+            "documentId": "#doc13",
+            "id": "#id12",
+            "rank": 4,
+            "title": "Delta"
+          }
+        ]
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

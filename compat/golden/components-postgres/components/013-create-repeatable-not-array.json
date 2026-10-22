@@ -1,0 +1,26 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "links must be a `array` type, but the final value was: `{\n  \"label\": \"\\\"single\\\"\"\n}`.",
+            "name": "ValidationError",
+            "path": [
+              "links"
+            ],
+            "value": {
+              "label": "single"
+            }
+          }
+        ]
+      },
+      "message": "links must be a `array` type, but the final value was: `{\n  \"label\": \"\\\"single\\\"\"\n}`.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

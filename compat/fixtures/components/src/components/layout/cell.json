@@ -1,0 +1,9 @@
+{
+  "collectionName": "components_layout_cells",
+  "info": { "displayName": "Cell" },
+  "options": {},
+  "attributes": {
+    "text": { "type": "string", "required": true },
+    "authors": { "type": "relation", "relation": "oneToMany", "target": "api::author.author" }
+  }
+}

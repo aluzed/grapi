@@ -1,0 +1,18 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "key": "populate",
+        "param": "populate",
+        "path": "body",
+        "source": "query"
+      },
+      "message": "Invalid key populate at body",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "body[0].headline must be defined.",
+            "name": "ValidationError",
+            "path": [
+              "body",
+              "0",
+              "headline"
+            ]
+          }
+        ]
+      },
+      "message": "body[0].headline must be defined.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

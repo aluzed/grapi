@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "seo": {
+        "id": "#id1",
+        "metaDescription": "The home page",
+        "metaTitle": "Home SEO v2",
+        "noIndex": false
+      },
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

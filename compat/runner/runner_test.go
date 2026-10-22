@@ -2,6 +2,8 @@ package runner
 
 import (
 	"encoding/json"
+	"image"
+	"image/png"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -58,5 +60,48 @@ func TestRunSavesAndExpandsVariables(t *testing.T) {
 	_ = json.Unmarshal(raw, &res)
 	if res.Error == "" {
 		t.Error("undefined variable must be reported as an error")
+	}
+}
+
+func TestRunSendsBearerAndGeneratedFiles(t *testing.T) {
+	var gotAuth, gotName, gotType string
+	var gotSize image.Point
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		if f, h, err := r.FormFile("files"); err == nil {
+			gotName, gotType = h.Filename, h.Header.Get("Content-Type")
+			if img, err := png.Decode(f); err == nil {
+				gotSize = img.Bounds().Size()
+			}
+		}
+		_, _ = io.WriteString(w, `{"jwt":"secret-jwt"}`)
+	}))
+	defer srv.Close()
+
+	files := []corpus.File{{Name: "f", Fixture: "x", Cases: []corpus.Case{
+		{Name: "login", Method: "POST", Path: "/auth", Save: map[string]string{"jwt": "jwt"}},
+		{Name: "upload", Method: "POST", Path: "/upload", Bearer: "{{jwt}}", Files: []corpus.Upload{{Name: "a.png", Width: 40, Height: 30}}},
+	}}}
+	if err := Run(Target{BaseURL: srv.URL}, files, t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "Bearer secret-jwt" {
+		t.Errorf("auth = %q", gotAuth)
+	}
+	if gotName != "a.png" || gotType != "image/png" || gotSize != image.Pt(40, 30) {
+		t.Errorf("file name=%q type=%q size=%v", gotName, gotType, gotSize)
+	}
+}
+
+func TestGeneratedFilesAreStable(t *testing.T) {
+	f := []corpus.Upload{{Name: "a.png", Width: 64, Height: 48}}
+	a, _, err := multipartBody(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _, _ := multipartBody(f)
+	// Boundaries differ between calls; the PNG bytes in between must not.
+	if len(a) != len(b) {
+		t.Errorf("generated bodies differ in size: %d vs %d", len(a), len(b))
 	}
 }

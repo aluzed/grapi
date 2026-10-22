@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "blocks": [
+        {
+          "__component": "blocks.rich-text",
+          "body": "draft",
+          "id": "#id2"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id3",
+      "publishedAt": null,
+      "seo": {
+        "id": "#id9",
+        "metaDescription": null,
+        "metaTitle": "Draft SEO",
+        "noIndex": false
+      },
+      "title": "Published",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

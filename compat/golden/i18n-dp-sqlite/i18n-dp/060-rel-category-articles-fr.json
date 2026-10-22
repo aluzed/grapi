@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "articles": [
+        {
+          "documentId": "#doc12",
+          "id": "#id6",
+          "locale": "fr",
+          "title": "Seulement en français"
+        },
+        {
+          "documentId": "#doc10",
+          "id": "#id17",
+          "locale": "fr",
+          "title": "Bonjour (brouillon)"
+        }
+      ],
+      "color": "red",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc7",
+      "id": "#id4",
+      "locale": "fr",
+      "name": "Jeux",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

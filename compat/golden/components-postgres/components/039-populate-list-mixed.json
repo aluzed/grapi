@@ -1,0 +1,75 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc4",
+        "id": "#id2",
+        "links": [
+          {
+            "id": "#id3",
+            "label": "Home"
+          }
+        ],
+        "seo": null,
+        "title": "About"
+      },
+      {
+        "documentId": "#doc5",
+        "id": "#id4",
+        "links": [],
+        "seo": null,
+        "title": "Contact"
+      },
+      {
+        "documentId": "#doc6",
+        "id": "#id3",
+        "links": [],
+        "seo": null,
+        "title": "Empty links"
+      },
+      {
+        "documentId": "#doc3",
+        "id": "#id1",
+        "links": [
+          {
+            "id": "#id1",
+            "label": "Docs"
+          },
+          {
+            "id": "#id2",
+            "label": "Blog"
+          }
+        ],
+        "seo": {
+          "id": "#id1",
+          "metaDescription": "The home page",
+          "metaTitle": "Home SEO",
+          "noIndex": false
+        },
+        "title": "Home"
+      },
+      {
+        "documentId": "#doc8",
+        "id": "#id5",
+        "links": [],
+        "seo": {
+          "id": "#id5",
+          "metaDescription": null,
+          "metaTitle": "Stolen",
+          "noIndex": false
+        },
+        "title": "Stolen seo"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 5
+      }
+    }
+  }
+}

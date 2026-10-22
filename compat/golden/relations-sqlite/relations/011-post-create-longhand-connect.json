@@ -1,0 +1,38 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc11",
+      "id": "#id4",
+      "parent": {
+        "documentId": "#doc10",
+        "id": "#id2",
+        "title": "Alpha"
+      },
+      "publishedAt": "\u003cts\u003e",
+      "rank": 2,
+      "tags": [
+        {
+          "documentId": "#doc5",
+          "id": "#id2",
+          "name": "snes"
+        },
+        {
+          "documentId": "#doc6",
+          "id": "#id3",
+          "name": "remake"
+        }
+      ],
+      "title": "Beta",
+      "updatedAt": "\u003cts\u003e",
+      "writer": {
+        "documentId": "#doc2",
+        "id": "#id2",
+        "name": "Linus"
+      }
+    },
+    "meta": {}
+  }
+}

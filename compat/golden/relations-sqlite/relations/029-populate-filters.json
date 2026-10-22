@@ -1,0 +1,46 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc10",
+        "id": "#id2",
+        "tags": [
+          {
+            "documentId": "#doc5",
+            "id": "#id2",
+            "name": "snes"
+          }
+        ],
+        "title": "Alpha"
+      },
+      {
+        "documentId": "#doc11",
+        "id": "#id4",
+        "tags": [
+          {
+            "documentId": "#doc5",
+            "id": "#id2",
+            "name": "snes"
+          }
+        ],
+        "title": "Beta"
+      },
+      {
+        "documentId": "#doc12",
+        "id": "#id5",
+        "tags": [],
+        "title": "Gamma"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 3
+      }
+    }
+  }
+}

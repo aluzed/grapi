@@ -4,8 +4,13 @@ package normalize
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
+
+// documentIDPattern matches Strapi documentIds (cuid2) embedded in free text,
+// such as error messages naming the document they could not find.
+var documentIDPattern = regexp.MustCompile(`\b[a-z0-9]{24}\b`)
 
 var timestampKeys = map[string]bool{
 	"createdAt": true, "updatedAt": true, "publishedAt": true, "firstPublishedAt": true,
@@ -63,7 +68,21 @@ func (n *Normalizer) walk(key string, v any) any {
 			return "<upload-url>"
 		}
 	}
+	if s, ok := v.(string); ok {
+		return n.knownDocumentIDs(sortComponentUIDLists(s))
+	}
 	return v
+}
+
+// knownDocumentIDs only rewrites ids already seen in a documentId field, so
+// unrelated 24-character words stay untouched.
+func (n *Normalizer) knownDocumentIDs(s string) string {
+	return documentIDPattern.ReplaceAllStringFunc(s, func(m string) string {
+		if a, ok := n.docs[m]; ok {
+			return a
+		}
+		return m
+	})
 }
 
 func alias(table map[string]string, prefix, raw string) string {

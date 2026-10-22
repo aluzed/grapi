@@ -1,0 +1,25 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "links[1].label must be defined.",
+            "name": "ValidationError",
+            "path": [
+              "links",
+              "1",
+              "label"
+            ]
+          }
+        ]
+      },
+      "message": "links[1].label must be defined.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc3",
+      "id": "#id1",
+      "layout": {
+        "columns": [
+          {
+            "cell": {
+              "authors": [
+                {
+                  "documentId": "#doc1",
+                  "id": "#id1",
+                  "name": "Ada"
+                },
+                {
+                  "documentId": "#doc2",
+                  "id": "#id2",
+                  "name": "Linus"
+                }
+              ],
+              "id": "#id1",
+              "text": "left"
+            },
+            "id": "#id2",
+            "width": 6
+          },
+          {
+            "cell": {
+              "authors": [],
+              "id": "#id2",
+              "text": "right"
+            },
+            "id": "#id1",
+            "width": 6
+          }
+        ],
+        "heading": "Two columns",
+        "id": "#id1"
+      },
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

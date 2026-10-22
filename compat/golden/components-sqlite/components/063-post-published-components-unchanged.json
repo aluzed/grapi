@@ -1,0 +1,33 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "blocks": [
+        {
+          "__component": "blocks.hero",
+          "cta": {
+            "id": "#id9",
+            "label": "More",
+            "url": null
+          },
+          "headline": "Hi",
+          "id": "#id3"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id5",
+      "publishedAt": "\u003cts\u003e",
+      "seo": {
+        "id": "#id8",
+        "metaDescription": null,
+        "metaTitle": "Pub SEO",
+        "noIndex": false
+      },
+      "title": "Published",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

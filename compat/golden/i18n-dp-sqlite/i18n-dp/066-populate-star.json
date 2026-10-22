@@ -1,0 +1,67 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "Corps français",
+      "category": {
+        "color": "red",
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc7",
+        "id": "#id4",
+        "locale": "fr",
+        "name": "Jeux",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      },
+      "code": "A-FR",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": true,
+      "id": "#id17",
+      "locale": "fr",
+      "localizations": [
+        {
+          "body": "English body v2",
+          "code": "A-2",
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc10",
+          "featured": false,
+          "id": "#id16",
+          "locale": "en",
+          "publishedAt": "\u003cts\u003e",
+          "slug": null,
+          "title": "Hello World",
+          "updatedAt": "\u003cts\u003e",
+          "views": 7
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "tags": [
+        {
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc9",
+          "id": "#id2",
+          "label": "rétro",
+          "locale": "fr",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e",
+          "weight": 3
+        }
+      ],
+      "title": "Bonjour (brouillon)",
+      "updatedAt": "\u003cts\u003e",
+      "views": 99,
+      "writer": {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc4",
+        "id": "#id2",
+        "name": "Ada",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      }
+    },
+    "meta": {}
+  }
+}

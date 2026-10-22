@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc5",
+      "id": "#id4",
+      "links": [
+        {
+          "author": {
+            "documentId": "#doc2",
+            "id": "#id2",
+            "name": "Linus"
+          },
+          "id": "#id7",
+          "label": "Linus",
+          "url": null
+        }
+      ],
+      "seo": null,
+      "title": "Contact"
+    },
+    "meta": {}
+  }
+}

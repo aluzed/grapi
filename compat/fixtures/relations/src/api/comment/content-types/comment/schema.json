@@ -1,0 +1,10 @@
+{
+  "kind": "collectionType",
+  "collectionName": "comments",
+  "info": { "singularName": "comment", "pluralName": "comments", "displayName": "Comment" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "body": { "type": "string", "required": true },
+    "subject": { "type": "relation", "relation": "morphToOne" }
+  }
+}

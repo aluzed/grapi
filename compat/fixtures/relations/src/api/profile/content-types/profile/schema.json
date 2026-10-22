@@ -1,0 +1,10 @@
+{
+  "kind": "collectionType",
+  "collectionName": "profiles",
+  "info": { "singularName": "profile", "pluralName": "profiles", "displayName": "Profile" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "bio": { "type": "string", "required": true },
+    "writer": { "type": "relation", "relation": "oneToOne", "target": "api::writer.writer", "mappedBy": "profile" }
+  }
+}

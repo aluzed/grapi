@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc16",
+      "id": "#id11",
+      "mentions": [
+        {
+          "__type": "api::writer.writer",
+          "documentId": "#doc1",
+          "id": "#id1",
+          "name": "Ada"
+        },
+        {
+          "__type": "api::tag.tag",
+          "documentId": "#doc7",
+          "id": "#id4",
+          "name": "decomp"
+        }
+      ],
+      "title": "Eta"
+    },
+    "meta": {}
+  }
+}

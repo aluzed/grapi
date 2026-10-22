@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "Corps français",
+      "code": "A-2",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": false,
+      "id": "#id10",
+      "locale": "fr",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "Bonjour le monde",
+      "updatedAt": "\u003cts\u003e",
+      "views": 7
+    },
+    "meta": {}
+  }
+}

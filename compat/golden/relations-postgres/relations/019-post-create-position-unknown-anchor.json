@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "There was a problem connecting relation with id 1 at position {\"after\":4,\"locale\":\"en\"}. The relation with id 4 needs to be connected first.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

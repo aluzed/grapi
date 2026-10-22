@@ -1,0 +1,73 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc7",
+        "id": "#id4",
+        "name": "decomp",
+        "posts": []
+      },
+      {
+        "documentId": "#doc6",
+        "id": "#id3",
+        "name": "remake",
+        "posts": [
+          {
+            "documentId": "#doc11",
+            "id": "#id4",
+            "title": "Beta"
+          },
+          {
+            "documentId": "#doc12",
+            "id": "#id5",
+            "title": "Gamma"
+          }
+        ]
+      },
+      {
+        "documentId": "#doc4",
+        "id": "#id1",
+        "name": "retro",
+        "posts": [
+          {
+            "documentId": "#doc10",
+            "id": "#id2",
+            "title": "Alpha"
+          },
+          {
+            "documentId": "#doc12",
+            "id": "#id5",
+            "title": "Gamma"
+          }
+        ]
+      },
+      {
+        "documentId": "#doc5",
+        "id": "#id2",
+        "name": "snes",
+        "posts": [
+          {
+            "documentId": "#doc10",
+            "id": "#id2",
+            "title": "Alpha"
+          },
+          {
+            "documentId": "#doc11",
+            "id": "#id4",
+            "title": "Beta"
+          }
+        ]
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 4
+      }
+    }
+  }
+}

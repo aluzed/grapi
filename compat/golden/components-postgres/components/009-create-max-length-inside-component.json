@@ -1,0 +1,25 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "seo.metaTitle must be at most 60 characters",
+            "name": "ValidationError",
+            "path": [
+              "seo",
+              "metaTitle"
+            ],
+            "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          }
+        ]
+      },
+      "message": "seo.metaTitle must be at most 60 characters",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

@@ -1,0 +1,403 @@
+fixture: i18n-dp
+cases:
+  # Locales: en is created by the i18n plugin, fr and de by compat.json.
+  - name: locales-list
+    path: /api/i18n/locales
+  - name: articles-empty
+    path: /api/articles
+
+  # Writers: draft & publish without i18n.
+  - name: writer-create
+    method: POST
+    path: /api/writers
+    token: full
+    save: { w1: data.documentId }
+    body: { data: { name: "Ada" } }
+  - name: writer-create-locale-ignored
+    method: POST
+    path: /api/writers
+    query: "locale=fr"
+    token: full
+    save: { w2: data.documentId }
+    body: { data: { name: "Grace" } }
+  - name: writer-create-locale-in-body
+    method: POST
+    path: /api/writers
+    token: full
+    body: { data: { name: "Linus", locale: "fr" } }
+  - name: writer-list-locale-param
+    path: /api/writers
+    query: "locale=fr&sort=name:asc"
+
+  # Categories: localized target of a localized relation.
+  - name: category-create-en
+    method: POST
+    path: /api/categories
+    token: full
+    save: { c1: data.documentId }
+    body: { data: { name: "Games", color: "red" } }
+  - name: category-put-fr
+    method: PUT
+    path: /api/categories/{{c1}}
+    query: "locale=fr"
+    token: full
+    body: { data: { name: "Jeux" } }
+  - name: category-create-en-only
+    method: POST
+    path: /api/categories
+    token: full
+    save: { c2: data.documentId }
+    body: { data: { name: "Hardware", color: "blue" } }
+
+  # Tags: localized without draft & publish.
+  - name: tag-create-en
+    method: POST
+    path: /api/tags
+    token: full
+    save: { t1: data.documentId }
+    body: { data: { label: "retro", weight: 3 } }
+  - name: tag-put-fr
+    method: PUT
+    path: /api/tags/{{t1}}
+    query: "locale=fr"
+    token: full
+    body: { data: { label: "rétro" } }
+  - name: tag-list-draft-status
+    path: /api/tags
+    query: "status=draft&locale=*&sort[0]=label:asc"
+
+  # Articles: creation in the default locale and in other locales.
+  - name: article-create-en
+    method: POST
+    path: /api/articles
+    token: full
+    save: { a1: data.documentId }
+    body:
+      data:
+        title: "Hello World"
+        body: "English body"
+        views: 5
+        featured: true
+        code: "A-1"
+        category: "{{c1}}"
+        writer: "{{w1}}"
+        tags: ["{{t1}}"]
+  - name: article-create-draft
+    method: POST
+    path: /api/articles
+    query: "status=draft"
+    token: full
+    save: { a2: data.documentId }
+    body: { data: { title: "Draft only", body: "Not published", views: 1 } }
+  - name: article-create-fr-direct
+    method: POST
+    path: /api/articles
+    query: "locale=fr"
+    token: full
+    save: { a3: data.documentId }
+    body: { data: { title: "Seulement en français", views: 2, category: "{{c1}}" } }
+  - name: article-create-locale-in-body
+    method: POST
+    path: /api/articles
+    token: full
+    save: { a4: data.documentId }
+    body: { data: { title: "Body locale", locale: "de" } }
+  - name: article-create-unknown-locale
+    method: POST
+    path: /api/articles
+    query: "locale=it"
+    token: full
+    body: { data: { title: "Italiano" } }
+  - name: article-create-invalid-locale
+    method: POST
+    path: /api/articles
+    query: "locale=not a locale!"
+    token: full
+    body: { data: { title: "Bad" } }
+  - name: article-create-missing-title
+    method: POST
+    path: /api/articles
+    query: "locale=fr"
+    token: full
+    body: { data: { body: "no title" } }
+
+  # Second locale of the same document.
+  - name: article-put-fr
+    method: PUT
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+    token: full
+    body: { data: { title: "Bonjour le monde", body: "Corps français", views: 99, code: "A-FR" } }
+  - name: article-get-en-after-fr
+    path: /api/articles/{{a1}}
+  - name: article-get-fr
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+  - name: article-put-fr-draft
+    method: PUT
+    path: /api/articles/{{a1}}
+    query: "locale=fr&status=draft"
+    token: full
+    body: { data: { title: "Bonjour (brouillon)" } }
+  - name: article-get-fr-published
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+  - name: article-get-fr-draft
+    path: /api/articles/{{a1}}
+    query: "locale=fr&status=draft"
+  - name: article-put-de-draft
+    method: PUT
+    path: /api/articles/{{a1}}
+    query: "locale=de&status=draft"
+    token: full
+    body: { data: { title: "Hallo Welt" } }
+  - name: article-get-de-published
+    path: /api/articles/{{a1}}
+    query: "locale=de"
+  - name: article-get-de-draft
+    path: /api/articles/{{a1}}
+    query: "locale=de&status=draft"
+  - name: article-get-unknown-locale
+    path: /api/articles/{{a1}}
+    query: "locale=it"
+  - name: article-get-invalid-locale
+    path: /api/articles/{{a1}}
+    query: "locale=not a locale!"
+  - name: article-get-locale-all
+    path: /api/articles/{{a1}}
+    query: "locale=*"
+
+  # Lists per locale and status.
+  - name: list-default
+    path: /api/articles
+    query: "sort=title:asc"
+  - name: list-fr
+    path: /api/articles
+    query: "locale=fr&sort=title:asc"
+  - name: list-all-locales
+    path: /api/articles
+    query: "locale=*&sort[0]=title:asc"
+  - name: list-all-locales-draft
+    path: /api/articles
+    query: "locale=*&status=draft&sort[0]=title:asc"
+  - name: list-unknown-locale
+    path: /api/articles
+    query: "locale=it"
+  - name: list-invalid-locale
+    path: /api/articles
+    query: "locale=not a locale!"
+  - name: list-invalid-status
+    path: /api/articles
+    query: "status=archived"
+  - name: list-filter-locale-field
+    path: /api/articles
+    query: "locale=*&filters[locale][$eq]=fr&sort=title:asc"
+  - name: list-fields-locale
+    path: /api/articles
+    query: "locale=*&fields[0]=title&fields[1]=locale&sort[0]=title:asc"
+
+  # Publication through the status param on update.
+  - name: article-publish-draft
+    method: PUT
+    path: /api/articles/{{a2}}
+    query: "status=published"
+    token: full
+    body: { data: { body: "Now published" } }
+  - name: article-get-after-publish
+    path: /api/articles/{{a2}}
+  - name: article-update-draft-only
+    method: PUT
+    path: /api/articles/{{a2}}
+    query: "status=draft"
+    token: full
+    body: { data: { body: "Edited draft" } }
+
+  # publicationFilter (and its deprecated boolean predecessor).
+  - name: pubfilter-never-published
+    path: /api/articles
+    query: "locale=*&status=draft&publicationFilter=never-published&sort[0]=title:asc"
+  - name: pubfilter-has-published-version
+    path: /api/articles
+    query: "locale=*&status=draft&publicationFilter=has-published-version&sort[0]=title:asc"
+  - name: pubfilter-modified
+    path: /api/articles
+    query: "locale=*&status=draft&publicationFilter=modified&sort[0]=title:asc"
+  - name: pubfilter-published-with-draft
+    path: /api/articles
+    query: "locale=*&publicationFilter=published-with-draft&sort[0]=title:asc"
+  - name: pubfilter-never-published-on-published
+    path: /api/articles
+    query: "publicationFilter=never-published"
+  - name: pubfilter-invalid
+    path: /api/articles
+    query: "publicationFilter=sometimes"
+  - name: has-published-version-false
+    path: /api/articles
+    query: "locale=*&status=draft&hasPublishedVersion=false&sort[0]=title:asc"
+
+  # Non-localized fields are shared by every locale of a document.
+  - name: sync-update-en
+    method: PUT
+    path: /api/articles/{{a1}}
+    token: full
+    body: { data: { views: 7, featured: false, code: "A-2", body: "English body v2" } }
+  - name: sync-get-fr
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+  - name: sync-get-de-draft
+    path: /api/articles/{{a1}}
+    query: "locale=de&status=draft"
+  - name: sync-get-fr-draft
+    path: /api/articles/{{a1}}
+    query: "locale=fr&status=draft"
+
+  # Relations resolved per locale.
+  - name: rel-connect-fr
+    method: PUT
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+    token: full
+    body: { data: { category: "{{c1}}", writer: "{{w1}}", tags: ["{{t1}}"] } }
+  - name: rel-get-en
+    path: /api/articles/{{a1}}
+    query: "populate[0]=category&populate[1]=writer&populate[2]=tags"
+  - name: rel-get-fr
+    path: /api/articles/{{a1}}
+    query: "locale=fr&populate[0]=category&populate[1]=writer&populate[2]=tags"
+  - name: rel-connect-missing-target-locale
+    method: PUT
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+    token: full
+    body: { data: { category: "{{c2}}" } }
+  - name: rel-get-fr-after-missing
+    path: /api/articles/{{a1}}
+    query: "locale=fr&populate=category"
+  - name: rel-category-articles-fr
+    path: /api/categories/{{c1}}
+    query: "locale=fr&populate[articles][fields][0]=title&populate[articles][fields][1]=locale"
+  - name: rel-category-articles-en
+    path: /api/categories/{{c1}}
+    query: "populate[articles][fields][0]=title&populate[articles][fields][1]=locale"
+  - name: rel-writer-articles
+    path: /api/writers/{{w1}}
+    query: "populate[articles][fields][0]=title&populate[articles][fields][1]=locale"
+  - name: rel-filter-by-category-name
+    path: /api/articles
+    query: "locale=fr&filters[category][name][$eq]=Jeux&sort=title:asc"
+
+  # localizations relation.
+  - name: populate-localizations
+    path: /api/articles/{{a1}}
+    query: "populate=localizations"
+  - name: populate-localizations-fields
+    path: /api/articles/{{a1}}
+    query: "locale=fr&populate[localizations][fields][0]=title&populate[localizations][fields][1]=locale"
+  - name: populate-star
+    path: /api/articles/{{a1}}
+    query: "locale=fr&populate=*"
+  - name: populate-localizations-writer
+    path: /api/writers/{{w1}}
+    query: "populate=localizations"
+
+  # Localized single type.
+  - name: homepage-missing
+    path: /api/homepage
+  - name: homepage-put-en
+    method: PUT
+    path: /api/homepage
+    token: full
+    body: { data: { headline: "Welcome", maintenance: true } }
+  - name: homepage-put-fr
+    method: PUT
+    path: /api/homepage
+    query: "locale=fr"
+    token: full
+    body: { data: { headline: "Bienvenue" } }
+  - name: homepage-get-fr
+    path: /api/homepage
+    query: "locale=fr"
+  - name: homepage-put-fr-draft
+    method: PUT
+    path: /api/homepage
+    query: "locale=fr&status=draft"
+    token: full
+    body: { data: { headline: "Bienvenue (brouillon)" } }
+  - name: homepage-get-fr-draft
+    path: /api/homepage
+    query: "locale=fr&status=draft"
+  - name: homepage-get-de
+    path: /api/homepage
+    query: "locale=de"
+  - name: homepage-get-locale-all
+    path: /api/homepage
+    query: "locale=*"
+  - name: homepage-populate-localizations
+    path: /api/homepage
+    query: "populate[localizations][fields][0]=headline&populate[localizations][fields][1]=locale"
+  - name: homepage-delete-fr
+    method: DELETE
+    path: /api/homepage
+    query: "locale=fr"
+    token: full
+  - name: homepage-get-fr-after-delete
+    path: /api/homepage
+    query: "locale=fr"
+  - name: homepage-get-en-after-delete
+    path: /api/homepage
+
+  # Deletion: one locale, unknown locale, draft status, every locale.
+  - name: delete-fr
+    method: DELETE
+    path: /api/articles/{{a1}}
+    query: "locale=fr"
+    token: full
+  - name: delete-fr-get-fr
+    path: /api/articles/{{a1}}
+    query: "locale=fr&status=draft"
+  - name: delete-fr-get-en
+    path: /api/articles/{{a1}}
+    query: "fields[0]=title"
+  - name: delete-unknown-locale
+    method: DELETE
+    path: /api/articles/{{a1}}
+    query: "locale=it"
+    token: full
+  - name: delete-status-draft
+    method: DELETE
+    path: /api/articles/{{a1}}
+    query: "status=draft"
+    token: full
+  - name: delete-all-locales
+    method: DELETE
+    path: /api/articles/{{a1}}
+    query: "locale=*"
+    token: full
+  - name: delete-all-get-de
+    path: /api/articles/{{a1}}
+    query: "locale=de&status=draft"
+  - name: delete-all-locales-again
+    method: DELETE
+    path: /api/articles/{{a1}}
+    query: "locale=*"
+    token: full
+  - name: delete-default-locale-only-fr-doc
+    method: DELETE
+    path: /api/articles/{{a3}}
+    token: full
+  - name: delete-other-locale-doc
+    method: DELETE
+    path: /api/articles/{{a4}}
+    query: "locale=de"
+    token: full
+  - name: list-after-deletes
+    path: /api/articles
+    query: "locale=*&status=draft&fields[0]=title&fields[1]=locale&sort[0]=title:asc"
+  - name: writer-delete-locale-param
+    method: DELETE
+    path: /api/writers/{{w2}}
+    query: "locale=fr"
+    token: full
+  - name: writer-list-after-delete
+    path: /api/writers
+    query: "sort=name:asc&fields[0]=name"

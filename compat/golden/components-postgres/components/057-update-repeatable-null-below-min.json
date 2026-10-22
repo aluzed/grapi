@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "links must be a `array` type, but the final value was: `null`.",
+            "name": "ValidationError",
+            "path": [
+              "links"
+            ],
+            "value": null
+          }
+        ]
+      },
+      "message": "links must be a `array` type, but the final value was: `null`.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

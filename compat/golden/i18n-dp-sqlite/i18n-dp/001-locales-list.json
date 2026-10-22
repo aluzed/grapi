@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": [
+    {
+      "code": "en",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc1",
+      "id": "#id1",
+      "isDefault": true,
+      "name": "English (en)",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    {
+      "code": "fr",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc2",
+      "id": "#id2",
+      "isDefault": false,
+      "name": "French (fr)",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    {
+      "code": "de",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc3",
+      "id": "#id3",
+      "isDefault": false,
+      "name": "German (de)",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    }
+  ]
+}

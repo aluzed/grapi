@@ -1,0 +1,30 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "mentionedIn": [],
+        "name": "Ada",
+        "pinnedComment": null
+      },
+      {
+        "documentId": "#doc2",
+        "id": "#id2",
+        "mentionedIn": [],
+        "name": "Linus",
+        "pinnedComment": null
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

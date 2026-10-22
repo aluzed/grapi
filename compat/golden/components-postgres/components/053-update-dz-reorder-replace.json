@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.gallery",
+          "caption": "First now",
+          "id": "#id4",
+          "slides": 1
+        },
+        {
+          "__component": "blocks.hero",
+          "cta": null,
+          "headline": "Second now",
+          "id": "#id2"
+        }
+      ],
+      "documentId": "#doc3",
+      "id": "#id1",
+      "title": "Home"
+    },
+    "meta": {}
+  }
+}

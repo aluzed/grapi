@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc2",
+      "id": "#id2",
+      "name": "Linus",
+      "posts": [
+        {
+          "documentId": "#doc13",
+          "id": "#id6",
+          "title": "Delta"
+        },
+        {
+          "documentId": "#doc11",
+          "id": "#id19",
+          "title": "Beta"
+        }
+      ]
+    },
+    "meta": {}
+  }
+}

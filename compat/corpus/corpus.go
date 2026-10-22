@@ -17,17 +17,28 @@ type File struct {
 	Cases   []Case `yaml:"cases"`
 }
 
-// Case is one HTTP request. Path, Query and string values in Body may use
-// {{var}} placeholders filled from earlier Save entries.
+// Case is one HTTP request. Path, Query, Bearer and string values in Body may
+// use {{var}} placeholders filled from earlier Save entries.
 type Case struct {
 	Name   string            `yaml:"name"`
 	Method string            `yaml:"method"`
 	Path   string            `yaml:"path"`
 	Query  string            `yaml:"query"`
 	Token  string            `yaml:"token"`
+	Bearer string            `yaml:"bearer"`
 	Body   any               `yaml:"body"`
+	Files  []Upload          `yaml:"files"`
 	Save   map[string]string `yaml:"save"`
 	Skip   string            `yaml:"skip"`
+}
+
+// Upload is a generated PNG sent as multipart/form-data under Field ("files"
+// when empty). Generating it keeps binaries out of the repo and is byte-stable.
+type Upload struct {
+	Field  string `yaml:"field"`
+	Name   string `yaml:"name"`
+	Width  int    `yaml:"width"`
+	Height int    `yaml:"height"`
 }
 
 // Load reads every *.yaml file of dir whose fixture matches (all when fixture is empty).
@@ -73,6 +84,17 @@ func loadFile(path string) (File, error) {
 		seen[c.Name] = true
 		if c.Method == "" {
 			f.Cases[i].Method = "GET"
+		}
+		if c.Token != "" && c.Bearer != "" {
+			return File{}, fmt.Errorf("%s: case %q sets both token and bearer", path, c.Name)
+		}
+		if len(c.Files) > 0 && c.Body != nil {
+			return File{}, fmt.Errorf("%s: case %q sets both files and body", path, c.Name)
+		}
+		for _, file := range c.Files {
+			if file.Name == "" || file.Width <= 0 || file.Height <= 0 {
+				return File{}, fmt.Errorf("%s: case %q has a file without name or size", path, c.Name)
+			}
 		}
 	}
 	return f, nil

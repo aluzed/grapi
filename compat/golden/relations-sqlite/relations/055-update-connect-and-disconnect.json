@@ -1,0 +1,33 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "id": "#id17",
+      "publishedAt": "\u003cts\u003e",
+      "rank": 1,
+      "tags": [
+        {
+          "documentId": "#doc6",
+          "id": "#id3",
+          "name": "remake"
+        },
+        {
+          "documentId": "#doc4",
+          "id": "#id1",
+          "name": "retro"
+        },
+        {
+          "documentId": "#doc5",
+          "id": "#id2",
+          "name": "snes"
+        }
+      ],
+      "title": "Alpha",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

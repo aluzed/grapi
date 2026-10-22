@@ -1,0 +1,10 @@
+{
+  "kind": "collectionType",
+  "collectionName": "writers",
+  "info": { "singularName": "writer", "pluralName": "writers", "displayName": "Writer" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "articles": { "type": "relation", "relation": "oneToMany", "target": "api::article.article", "mappedBy": "writer" }
+  }
+}

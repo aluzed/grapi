@@ -1,0 +1,82 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "children": {
+          "count": 2
+        },
+        "documentId": "#doc10",
+        "id": "#id2",
+        "tags": {
+          "count": 2
+        },
+        "title": "Alpha"
+      },
+      {
+        "children": {
+          "count": 0
+        },
+        "documentId": "#doc11",
+        "id": "#id4",
+        "tags": {
+          "count": 2
+        },
+        "title": "Beta"
+      },
+      {
+        "children": {
+          "count": 0
+        },
+        "documentId": "#doc12",
+        "id": "#id5",
+        "tags": {
+          "count": 2
+        },
+        "title": "Gamma"
+      },
+      {
+        "children": {
+          "count": 0
+        },
+        "documentId": "#doc13",
+        "id": "#id6",
+        "tags": {
+          "count": 0
+        },
+        "title": "Delta"
+      },
+      {
+        "children": {
+          "count": 0
+        },
+        "documentId": "#doc15",
+        "id": "#id8",
+        "tags": {
+          "count": 0
+        },
+        "title": "Zeta"
+      },
+      {
+        "children": {
+          "count": 0
+        },
+        "documentId": "#doc16",
+        "id": "#id11",
+        "tags": {
+          "count": 0
+        },
+        "title": "Eta"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 6
+      }
+    }
+  }
+}

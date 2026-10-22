@@ -1,0 +1,11 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tags",
+  "info": { "singularName": "tag", "pluralName": "tags", "displayName": "Tag" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true, "unique": true },
+    "posts": { "type": "relation", "relation": "manyToMany", "target": "api::post.post", "mappedBy": "tags" },
+    "mentionedIn": { "type": "relation", "relation": "morphMany", "target": "api::post.post", "morphBy": "mentions" }
+  }
+}

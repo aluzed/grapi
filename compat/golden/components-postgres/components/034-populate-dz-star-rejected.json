@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Invalid nested populate for page.body (api::page.page). Expected a fragment (\"on\") or \"count\" but found \"*\"",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

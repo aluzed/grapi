@@ -1,0 +1,24 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {
+        "errors": [
+          {
+            "message": "title must be a `string` type, but the final value was: `null`.",
+            "name": "ValidationError",
+            "path": [
+              "title"
+            ],
+            "value": null
+          }
+        ]
+      },
+      "message": "title must be a `string` type, but the final value was: `null`.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

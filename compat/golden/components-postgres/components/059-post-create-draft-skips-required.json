@@ -1,0 +1,22 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "blocks": [],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc9",
+      "id": "#id5",
+      "publishedAt": null,
+      "seo": {
+        "id": "#id7",
+        "metaDescription": "no title yet",
+        "metaTitle": null,
+        "noIndex": false
+      },
+      "title": "Draft no seo",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}
