@@ -34,6 +34,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `server.openapi['content-api']`: `access: public` serves the content API's OpenAPI 3.1 document on `<api prefix>/openapi.json` (`route.path` to move it), as Strapi 5.59 does; `disabled` (the default) does not. The document is Strapi's for the same project, limited to the routes grapi serves. `grapi openapi [-o file]` writes it without starting the server.
 
+`server.webhooks`: `retries` (3; Strapi makes none), `defaultHeaders`, and `blockPrivateNetworks` (false), a grapi option that refuses deliveries to loopback, private and link-local addresses.
+
 `api.documents.strictRelations` (false by default): required relations and media are enforced on non-draft writes, as in Strapi. A value other than a boolean stops the start (Strapi fails on the first write).
 
 `middlewares`: a list of names or `{name, config}`. `strapi::body` always runs with koa-body's limits (`jsonLimit` 1mb, `formLimit` and `textLimit` 56kb, as a number of bytes or `"2mb"`): a larger body gets Strapi's 413 before routing. grapi runs `strapi::security` (`contentSecurityPolicy.directives`, or `false` to drop a header) and `strapi::cors` (`origin`, `methods`, `headers`, `expose`, `credentials`, `maxAge`); leaving one out of the list turns it off, as in Strapi. Without the file, both run with Strapi's defaults.

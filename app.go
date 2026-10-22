@@ -615,6 +615,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		retries = n
 	}
 	hookCfg := webhooks.Config{Retries: retries, DefaultHeaders: map[string]string{}}
+	hookCfg.BlockPrivateNetworks, _ = conf.Bool("server.webhooks.blockPrivateNetworks")
 	if h, ok := conf.Get("server.webhooks.defaultHeaders").(map[string]any); ok {
 		for k, v := range h {
 			hookCfg.DefaultHeaders[k] = fmt.Sprint(v)

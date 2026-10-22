@@ -22,6 +22,9 @@ type Config struct {
 	Retries int
 	// Backoff is the first wait between tries, doubled each time.
 	Backoff time.Duration
+	// BlockPrivateNetworks refuses deliveries to loopback, private and
+	// link-local addresses (SSRF protection, a grapi option).
+	BlockPrivateNetworks bool
 }
 
 // Webhook is a row of strapi_webhooks.
@@ -54,6 +57,9 @@ type job struct {
 func (r *Runner) Start(ctx context.Context) func() {
 	if r.Client == nil {
 		r.Client = &http.Client{Timeout: 10 * time.Second}
+		if r.Config.BlockPrivateNetworks {
+			r.Client.Transport = publicOnlyTransport()
+		}
 	}
 	if r.Log == nil {
 		r.Log = slog.Default()

@@ -32,7 +32,8 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 ## Avancement
 - Fait : `internal/webhooks` : webhooks lus dans `strapi_webhooks` à chaque événement, payload `{event, createdAt, model, uid, entry}`, en-têtes `defaultHeaders` puis webhook puis `X-Strapi-Event` et `Content-Type`, délai de 10 s, 5 envois en parallèle, nouvelles tentatives avec backoff exponentiel (`server.webhooks.retries`, 3 par défaut, 0 pour le comportement de Strapi).
 - Écart avec le ticket : la file n'est pas persistée en base (une table de plus modifierait le schéma d'une base Strapi). `contentTypeEvents` n'existe pas dans Strapi 5.59.0 publié (il est sur la branche principale après le tag).
-- Reste : API admin (CRUD, trigger), protection SSRF optionnelle, comparaison avec un récepteur d'échos sur le banc.
+- Protection SSRF optionnelle : `server.webhooks.blockPrivateNetworks: true` refuse les livraisons vers les adresses de loopback, privées et link-local, contrôlées à la connexion (après DNS), `TestPublicOnlyTransport`.
+- Reste : API admin (CRUD, trigger), comparaison avec un récepteur d'échos sur le banc.
 
 ## Notes techniques
 - Client HTTP dédié, avec délais d'attente et sans suivi de redirection vers des IP privées si `server.webhooks.blockPrivateIPs` est actif (protection SSRF, en option).
