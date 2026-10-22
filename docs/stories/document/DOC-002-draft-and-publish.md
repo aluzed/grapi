@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DOC-002 : Draft & Publish
@@ -31,6 +31,10 @@ Reproduire exactement le cycle de vie brouillon / publié de Strapi 5, y compris
 - [ ] Les 8 modes de `publicationFilter` renvoient les mêmes documents que Strapi sur un jeu de fixtures couvrant chaque état.
 - [ ] Sans D&P, `publish` n'existe pas (erreur explicite) et `published_at` est toujours renseigné.
 - [ ] Banc de compatibilité : séquence create, publish, update, publish, unpublish, discardDraft identique à Strapi (contenu des deux versions, relations, `publishedAt`).
+
+## Avancement
+- Publish, unpublish et discardDraft copient les versions avec leurs composants et leurs relations sortantes (résolues vers la version cible, `allowMissingId`) : séquence identique à Strapi sur `components--docs.yaml`.
+- Reste : la resynchronisation des relations entrantes (`unidirectional-relations`, `bidirectional-relations`, `self-referential-relations`), `publicationFilter`.
 
 ## Notes techniques
 - Le recâblage est le point le plus délicat de toute la couche données : écrire d'abord les tests de caractérisation contre Strapi.

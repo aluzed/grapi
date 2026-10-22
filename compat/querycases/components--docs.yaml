@@ -1,0 +1,69 @@
+fixture: components
+isolated: true
+cases:
+  - { name: author-1, uid: api::author.author, op: docCreate, params: { data: { name: "Ana" } }, save: { a1: documentId } }
+  - { name: author-2, uid: api::author.author, op: docCreate, params: { data: { name: "Bob" } }, save: { a2: documentId } }
+  - name: create-page
+    ignoreIds: true
+    uid: api::page.page
+    op: docCreate
+    save: { page: documentId }
+    params:
+      data:
+        title: "Home"
+        seo: { metaTitle: "Home", metaDescription: "Welcome", noIndex: false }
+        links:
+          - { label: "One", url: "/1", author: "{{a1}}" }
+          - { label: "Two", url: "/2" }
+          - { label: "Three", url: "/3", author: { documentId: "{{a2}}" } }
+        layout:
+          heading: "Intro"
+          columns:
+            - { width: 6, cell: { text: "left", authors: ["{{a1}}", "{{a2}}"] } }
+            - { width: 6, cell: { text: "right" } }
+        body:
+          - { __component: blocks.hero, headline: "Big", cta: { label: "Go", url: "/go" } }
+          - { __component: blocks.rich-text, body: "text" }
+          - { __component: blocks.gallery, caption: "pics", slides: 3 }
+          - { __component: blocks.rich-text, body: "more" }
+      populate:
+        seo: true
+        links: { populate: ["author"] }
+        layout: { populate: { columns: { populate: { cell: { populate: ["authors"] } } } } }
+        body: { populate: "*" }
+  - { name: cmps-after-create, uid: pages_cmps, op: table }
+  - { name: links-after-create, uid: components_shared_links, op: table }
+  - { name: link-authors, uid: components_shared_links_author_lnk, op: table }
+  - { name: cell-authors, uid: components_layout_cells_authors_lnk, op: table }
+  - { name: heroes-cmps, uid: components_blocks_heroes_cmps, op: table }
+  - { name: read-page, uid: api::page.page, op: docFindOne, params: { documentId: "{{page}}", populate: { links: true, body: { on: { blocks.hero: { populate: ["cta"] }, blocks.gallery: true } } } }, save: { link1: links.0.id } }
+  - { name: update-seo-only, uid: api::page.page, op: docUpdate, params: { documentId: "{{page}}", data: { seo: { metaTitle: "Changed" } }, populate: ["seo", "links"] } }
+  - { name: cmps-after-seo, uid: pages_cmps, op: table }
+  - { name: update-links-keep-one, uid: api::page.page, op: docUpdate, params: { documentId: "{{page}}", data: { links: [{ id: "{{link1}}", label: "One again" }, { label: "Four", url: "/4" }] }, populate: ["links"] } }
+  - { name: links-after-keep, uid: components_shared_links, op: table }
+  - { name: error-foreign-component, uid: api::page.page, op: docUpdate, params: { documentId: "{{page}}", data: { links: [{ id: 9999, label: "x" }] } } }
+  - { name: dz-replace, uid: api::page.page, op: docUpdate, params: { documentId: "{{page}}", data: { body: [{ __component: blocks.gallery, caption: "only", slides: 1 }] }, populate: { body: { populate: "*" } } } }
+  - { name: cmps-after-dz, uid: pages_cmps, op: table }
+  - { name: count-pages, uid: api::page.page, op: docCount }
+  - { name: delete-page, uid: api::page.page, op: docDelete, params: { documentId: "{{page}}" } }
+  - { name: cmps-after-delete, uid: pages_cmps, op: table }
+  - { name: seos-after-delete, uid: components_shared_seos, op: table }
+  - { name: links-after-delete, uid: components_shared_links, op: table }
+  - { name: sections-after-delete, uid: components_layout_sections, op: table }
+  - { name: columns-after-delete, uid: components_layout_columns, op: table }
+  - { name: cells-after-delete, uid: components_layout_cells, op: table }
+  - { name: heroes-after-delete, uid: components_blocks_heroes, op: table }
+  - { name: post-draft, uid: api::post.post, op: docCreate, params: { data: { title: "P", seo: { metaTitle: "p" }, blocks: [{ __component: blocks.rich-text, body: "b" }] } }, save: { post: documentId } }
+  - { name: post-publish, uid: api::post.post, op: docPublish, params: { documentId: "{{post}}" } }
+  - { name: posts-cmps-after-publish, uid: posts_cmps, op: table }
+  - { name: post-read-published, uid: api::post.post, op: docFindOne, params: { documentId: "{{post}}", status: published, populate: ["seo", "blocks"] } }
+  - { name: post-read-draft, uid: api::post.post, op: docFindOne, params: { documentId: "{{post}}", populate: ["seo"] } }
+  - { name: post-update-draft, uid: api::post.post, op: docUpdate, params: { documentId: "{{post}}", data: { title: "P2" } } }
+  - { name: post-list-published, uid: api::post.post, op: docFindMany, params: { status: published } }
+  - { name: post-list-draft, uid: api::post.post, op: docFindMany, params: {} }
+  - { name: post-discard, uid: api::post.post, op: docDiscardDraft, params: { documentId: "{{post}}" } }
+  - { name: post-unpublish, uid: api::post.post, op: docUnpublish, params: { documentId: "{{post}}" } }
+  - { name: post-count-published, uid: api::post.post, op: docCount, params: { status: published } }
+  - { name: post-create-published, uid: api::post.post, op: docCreate, params: { status: published, data: { title: "Pub", seo: { metaTitle: "x" } }, populate: ["seo"] } }
+  - { name: posts-final, uid: posts, op: table }
+  - { name: posts-cmps-final, uid: posts_cmps, op: table }

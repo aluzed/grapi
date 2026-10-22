@@ -68,6 +68,30 @@ type relItem struct {
 	raw      any
 }
 
+// typeOf reads a morph item's type from its type field (__type, or
+// __component for dynamic zones).
+func (it relItem) typeOf(field string) string {
+	if field == "" || field == "__type" {
+		return it.Type
+	}
+	if m, ok := it.raw.(map[string]any); ok {
+		if s, ok := m[field].(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+// withType resolves the type of every item from field.
+func withType(items []relItem, field string) []relItem {
+	out := make([]relItem, len(items))
+	for i, it := range items {
+		it.Type = it.typeOf(field)
+		out[i] = it
+	}
+	return out
+}
+
 func toIDArray(v any) ([]relItem, error) {
 	var list []any
 	switch x := v.(type) {
@@ -1442,4 +1466,27 @@ func (e *Engine) Table(ctx context.Context, table string) ([]map[string]any, err
 		rows = []map[string]any{}
 	}
 	return rows, err
+}
+
+// Load reads relations of one entry, Strapi's db.query(uid).load: the value
+// of field, or of each field when several are asked.
+func (e *Engine) Load(ctx context.Context, uid string, id any, fields []string, params map[string]any) (map[string]any, error) {
+	populate := map[string]any{}
+	for _, f := range fields {
+		if params != nil {
+			populate[f] = params
+		} else {
+			populate[f] = true
+		}
+	}
+	row, err := e.FindOne(ctx, uid, Params{Where: map[string]any{"id": id}, Select: []string{"id"}, Populate: populate})
+	if err != nil || row == nil {
+		return nil, err
+	}
+	out := map[string]any{}
+	for _, f := range fields {
+		v, _ := row.Get(f)
+		out[f] = v
+	}
+	return out, nil
 }

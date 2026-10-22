@@ -39,6 +39,10 @@ type Params struct {
 	Populate any
 }
 
+// FilterFunc gives the filters of a model: Strapi's query `filters` function,
+// applied to the root model and to every populated one (status filters).
+type FilterFunc func(m *metadata.Model) any
+
 // Row is a row read back, keyed by attribute name in column order.
 type Row = *schema.OrderedMap[any]
 
@@ -370,8 +374,16 @@ func (b *builder) initWith(p Params, wheres []any) error {
 		return err
 	}
 	b.orderBy = terms
-	if p.Filters != nil {
-		wheres = append(wheres, p.Filters)
+	switch f := p.Filters.(type) {
+	case nil:
+	case FilterFunc:
+		if w := f(b.model); w != nil {
+			if m, ok := w.(map[string]any); !ok || len(m) > 0 {
+				wheres = append(wheres, w)
+			}
+		}
+	default:
+		wheres = append(wheres, f)
 	}
 	if len(wheres) > 0 {
 		f, err := b.processWhere(wheres, b.model, "")

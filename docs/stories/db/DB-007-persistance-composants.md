@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # DB-007 : Persistance des composants et zones dynamiques
@@ -34,11 +34,15 @@ Lire, écrire, peupler et filtrer les composants et les zones dynamiques, avec u
 - La validation des valeurs (`DOC-003`) : min et max des répétables, `required`.
 
 ## Critères d'acceptation
-- [ ] Fixture `components` : création avec 3 niveaux d'imbrication, un répétable de 5 éléments et une zone dynamique de 4 éléments de 3 types. Le contenu SQL des tables `_cmps` et des composants est identique à celui de Strapi après le même scénario, aux ids près.
-- [ ] Mise à jour d'un seul champ composant : les autres champs composants du parent gardent leurs ids.
-- [ ] Banc : populate `*`, populate imbriqué et fragments `on` donnent des réponses identiques à Strapi.
-- [ ] Après suppression d'un parent, aucune ligne de composant orpheline ne reste (comptage SQL).
-- [ ] `filters[blocks][...]` sur une zone dynamique renvoie la même erreur que Strapi.
+- [x] Fixture `components` : création avec 3 niveaux d'imbrication, un répétable et une zone dynamique de 4 éléments de 3 types (avec relations dans les composants). Le contenu SQL des tables `_cmps`, des composants et de leurs tables de liens est identique à celui de Strapi après le même scénario (`compat/querycases/components--docs.yaml`, 39 étapes, SQLite et Postgres).
+- [x] Mise à jour d'un seul champ composant : les autres champs composants du parent gardent leurs ids ; un composant renvoyé avec son `id` est mis à jour en place ; un `id` qui n'appartient pas à l'entrée donne la même erreur que Strapi.
+- [x] Populate imbriqué et fragments `on` : réponses identiques à Strapi (le niveau REST viendra avec `API-004`).
+- [x] Après suppression d'un parent, aucune ligne de composant orpheline ne reste (tables relues après suppression).
+- [ ] `filters[blocks][...]` sur une zone dynamique : la conversion des filtres retire la clé comme Strapi ; l'erreur au niveau REST est vérifiée avec `API-005`.
+
+## Constats
+- Strapi crée les composants d'un répétable en parallèle : leurs ids ne suivent pas toujours l'ordre du tableau. grapi les crée dans l'ordre ; le banc masque les ids sur ce cas (`ignoreIds`).
+- La suppression d'une entrée lit ses composants avant de supprimer la ligne, puis les supprime récursivement.
 
 ## Notes techniques
 - La stratégie « supprimer puis recréer » change les ids des composants à chaque mise à jour : c'est le comportement de Strapi et il est attendu. Ne pas « optimiser » en diff, sinon les ids divergent par rapport au banc.

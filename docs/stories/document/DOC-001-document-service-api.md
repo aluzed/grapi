@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DOC-001 : Document Service : API et documentId
@@ -27,11 +27,16 @@ Exposer `document.Service(uid)` avec la même surface fonctionnelle que `strapi.
 
 ## Critères d'acceptation
 - [ ] `documentId` généré conforme au format cuid2 Strapi (regex `^[a-z0-9]{24}$`) et unique (test sur 1M générations).
-- [ ] `FindMany` sans `status` renvoie les brouillons, comme Strapi.
+- [x] `FindMany` sans `status` renvoie les brouillons, comme Strapi (`post-list-draft`).
 - [ ] `Create` puis `FindOne` avec `status: published` renvoie `nil` tant que rien n'est publié (D&P actif).
 - [ ] `Update` sur une locale absente crée la ligne de locale avec les champs non localisés recopiés.
-- [ ] Une erreur au milieu d'un `Create` avec composants annule toute l'écriture (rollback).
+- [x] Une erreur au milieu d'un `Create` avec composants annule toute l'écriture (une seule transaction).
 - [ ] Banc de compatibilité : findMany, findOne, create, update, delete et clone sur les 21 cas de caractérisation de dev-freelance (admin, REST, documents) donnent le même résultat que Strapi 5.59.
+
+## Avancement
+- `internal/document` : `FindMany`, `FindFirst`, `FindOne`, `Count`, `Create`, `Update`, `Delete`, `Publish`, `Unpublish`, `DiscardDraft`, conversion des paramètres (`params.go`, port de `convert-query-params`), résolution documentId vers id dans les données (`relations.go`), composants (`components.go`).
+- Banc : opérations `doc*` dans le mode `query` (`components--docs.yaml`, identique à Strapi sur SQLite et Postgres).
+- Reste : `clone`, la copie des champs non localisés (`copyNonLocalizedFields`), les événements (`DOC-005`), le validateur d'entrées (`DOC-003`).
 
 ## Notes techniques
 - La signature Go prend un `context.Context` qui porte la transaction, l'auth et la locale de requête.

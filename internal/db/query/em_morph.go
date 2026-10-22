@@ -88,6 +88,7 @@ func (e *Engine) attachMorphToMany(ctx context.Context, m *metadata.Model, id an
 	if len(dataset) == 0 {
 		dataset = rel.connect
 	}
+	dataset = withType(dataset, mc.TypeField)
 	o := NewOrderer(nil, true)
 	links := make([]*Link, len(dataset))
 	for i, it := range dataset {
@@ -251,6 +252,9 @@ func (e *Engine) updateMorphTarget(ctx context.Context, m *metadata.Model, id an
 func (e *Engine) updateMorphToMany(ctx context.Context, m *metadata.Model, id any, name string, a *metadata.Attribute, rel assocs) error {
 	jt := a.JoinTable
 	mc := jt.MorphColumn
+	rel.set = withType(rel.set, mc.TypeField)
+	rel.connect = withType(rel.connect, mc.TypeField)
+	rel.disconnect = withType(rel.disconnect, mc.TypeField)
 	on, onArgs := onCond(e, jt.On)
 	hasSet, hasConnect, hasDisconnect := len(rel.set) > 0, len(rel.connect) > 0, len(rel.disconnect) > 0
 	if !hasSet && (hasConnect || hasDisconnect) {

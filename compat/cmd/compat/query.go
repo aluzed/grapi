@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -14,6 +17,7 @@ import (
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/document"
 )
 
 // queryCases is a compat/querycases file: rows inserted through Strapi's
@@ -39,11 +43,17 @@ type queryCase struct {
 	Params map[string]any `json:"params,omitempty" yaml:"params"`
 	// ExactError requires the same error message as Strapi.
 	ExactError bool `json:"exactError,omitempty" yaml:"exactError"`
+	// IgnoreIDs masks ids: Strapi creates nested components in parallel,
+	// so their ids are not in a stable order.
+	IgnoreIDs bool `json:"ignoreIds,omitempty" yaml:"ignoreIds"`
+	// Save keeps values of the result (dotted paths) for later {{name}}.
+	Save map[string]string `json:"save,omitempty" yaml:"save"`
 }
 
 type queryResult struct {
 	Name       string `json:"name"`
 	ExactError bool   `json:"exactError,omitempty"`
+	IgnoreIDs  bool   `json:"ignoreIds,omitempty"`
 	Result     any    `json:"result,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
@@ -94,7 +104,7 @@ func queryCmd(args []string) error {
 	if err := json.Unmarshal(raw, &c); err != nil {
 		return err
 	}
-	_, md, err := builtin.Load(os.DirFS(*fixture))
+	res, md, err := builtin.Load(os.DirFS(*fixture))
 	if err != nil {
 		return err
 	}
@@ -109,6 +119,7 @@ func queryCmd(args []string) error {
 	}
 	defer func() { _ = d.Close() }()
 	e := &query.Engine{DB: d, MD: md}
+	docs := document.New(e, res.Set)
 	if *seed {
 		for _, s := range c.Seed {
 			if _, err := e.Create(ctx, s.UID, s.Data, query.Params{}); err != nil {
@@ -117,15 +128,29 @@ func queryCmd(args []string) error {
 		}
 	}
 	results := make([]queryResult, 0, len(c.Cases))
+	vars := map[string]any{}
 	for _, qc := range c.Cases {
-		p, err := toParams(qc.Params)
-		r := queryResult{Name: qc.Name, ExactError: qc.ExactError}
-		if err == nil {
-			r.Result, err = runCase(ctx, e, qc, p)
+		qc.Params, _ = fillVars(qc.Params, vars).(map[string]any)
+		r := queryResult{Name: qc.Name, ExactError: qc.ExactError, IgnoreIDs: qc.IgnoreIDs}
+		var err error
+		if strings.HasPrefix(qc.Op, "doc") {
+			r.Result, err = runDocCase(ctx, docs, qc)
+		} else {
+			var p query.Params
+			p, err = toParams(qc.Params)
+			if err == nil {
+				r.Result, err = runCase(ctx, e, qc, p)
+			}
 		}
 		if err != nil {
 			r.Error = err.Error()
 			r.Result = nil
+		}
+		if len(qc.Save) > 0 && r.Error == "" {
+			norm := normalizeJSON(r.Result)
+			for k, path := range qc.Save {
+				vars[k] = pickPath(norm, path)
+			}
 		}
 		results = append(results, r)
 	}
@@ -184,6 +209,62 @@ func runCase(ctx context.Context, e *query.Engine, qc queryCase, p query.Params)
 			rows = []query.Row{}
 		}
 		return rows, err
+	}
+	return nil, fmt.Errorf("unknown op %q", qc.Op)
+}
+
+func runDocCase(ctx context.Context, docs *document.Service, qc queryCase) (any, error) {
+	p := document.Params{}
+	for k, v := range qc.Params {
+		p[k] = v
+	}
+	docID, _ := p["documentId"].(string)
+	delete(p, "documentId")
+	result := func(doc string, rows []query.Row) map[string]any {
+		entries := make([]any, len(rows))
+		for i, r := range rows {
+			entries[i] = r
+		}
+		return map[string]any{"documentId": doc, "entries": entries}
+	}
+	one := func(r query.Row, err error) (any, error) {
+		if r == nil {
+			return nil, err
+		}
+		return r, err
+	}
+	switch qc.Op {
+	case "docFindMany":
+		rows, err := docs.FindMany(ctx, qc.UID, p)
+		if rows == nil {
+			rows = []query.Row{}
+		}
+		return rows, err
+	case "docFindFirst":
+		return one(docs.FindFirst(ctx, qc.UID, p))
+	case "docFindOne":
+		return one(docs.FindOne(ctx, qc.UID, docID, p))
+	case "docCount":
+		return docs.Count(ctx, qc.UID, p)
+	case "docCreate":
+		return one(docs.Create(ctx, qc.UID, p))
+	case "docUpdate":
+		return one(docs.Update(ctx, qc.UID, docID, p))
+	case "docDelete":
+		res, err := docs.Delete(ctx, qc.UID, docID, p)
+		if err != nil {
+			return nil, err
+		}
+		return result(res.DocumentID, res.Entries), nil
+	case "docPublish":
+		rows, err := docs.Publish(ctx, qc.UID, docID, p)
+		return result(docID, rows), err
+	case "docUnpublish":
+		rows, err := docs.Unpublish(ctx, qc.UID, docID, p)
+		return result(docID, rows), err
+	case "docDiscardDraft":
+		rows, err := docs.DiscardDraft(ctx, qc.UID, docID, p)
+		return result(docID, rows), err
 	}
 	return nil, fmt.Errorf("unknown op %q", qc.Op)
 }
@@ -278,6 +359,9 @@ func queryDiffCmd(args []string) error {
 			if *volatile {
 				xa, ya = maskVolatile(xa), maskVolatile(ya)
 			}
+			if y.IgnoreIDs {
+				xa, ya = maskKey(xa, "id"), maskKey(ya, "id")
+			}
 			same = reflect.DeepEqual(xa, ya)
 		}
 		if same {
@@ -287,7 +371,8 @@ func queryDiffCmd(args []string) error {
 		diff++
 		ja, _ := json.Marshal(x)
 		jb, _ := json.Marshal(y)
-		fmt.Fprintf(&body, "\n## %s : DIFF\n\n- Strapi: `%s`\n- grapi: `%s`\n", name, truncate(string(ja)), truncate(string(jb)))
+		where := firstDiff(maskIf(*volatile, normalizeJSON(x.Result)), maskIf(*volatile, normalizeJSON(y.Result)), "$")
+		fmt.Fprintf(&body, "\n## %s : DIFF\n\n- first difference: `%s`\n- Strapi: `%s`\n- grapi: `%s`\n", name, where, truncate(string(ja)), truncate(string(jb)))
 	}
 	out := fmt.Sprintf("# %s\n\n| OK | DIFF |\n|---|---|\n| %d | %d |\n%s", *title, ok, diff, body.String())
 	if len(empty) > 0 {
@@ -329,6 +414,120 @@ func maskVolatile(v any) any {
 		}
 	}
 	return v
+}
+
+var varPattern = regexp.MustCompile(`\{\{(\w+)\}\}`)
+
+func fillVars(v any, vars map[string]any) any {
+	switch x := v.(type) {
+	case string:
+		if m := varPattern.FindStringSubmatch(x); m != nil && m[0] == x {
+			return vars[m[1]]
+		}
+		return varPattern.ReplaceAllStringFunc(x, func(s string) string {
+			return fmt.Sprint(vars[varPattern.FindStringSubmatch(s)[1]])
+		})
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = fillVars(e, vars)
+		}
+		return out
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			out[k] = fillVars(e, vars)
+		}
+		return out
+	}
+	return v
+}
+
+func pickPath(v any, path string) any {
+	for _, k := range strings.Split(path, ".") {
+		switch x := v.(type) {
+		case map[string]any:
+			v = x[k]
+		case []any:
+			i, err := strconv.Atoi(k)
+			if err != nil || i >= len(x) {
+				return nil
+			}
+			v = x[i]
+		default:
+			return nil
+		}
+	}
+	return v
+}
+
+func maskKey(v any, key string) any {
+	switch x := v.(type) {
+	case map[string]any:
+		for k, val := range x {
+			if k == key {
+				x[k] = "<id>"
+				continue
+			}
+			x[k] = maskKey(val, key)
+		}
+	case []any:
+		for i := range x {
+			x[i] = maskKey(x[i], key)
+		}
+	}
+	return v
+}
+
+func maskIf(on bool, v any) any {
+	if on {
+		return maskVolatile(v)
+	}
+	return v
+}
+
+// firstDiff names the first path where two JSON values differ.
+func firstDiff(a, b any, path string) string {
+	switch x := a.(type) {
+	case map[string]any:
+		y, ok := b.(map[string]any)
+		if !ok {
+			return fmt.Sprintf("%s: %v vs %v", path, short(a), short(b))
+		}
+		keys := map[string]bool{}
+		for k := range x {
+			keys[k] = true
+		}
+		for k := range y {
+			keys[k] = true
+		}
+		sorted := make([]string, 0, len(keys))
+		for k := range keys {
+			sorted = append(sorted, k)
+		}
+		sort.Strings(sorted)
+		for _, k := range sorted {
+			if !reflect.DeepEqual(x[k], y[k]) {
+				return firstDiff(x[k], y[k], path+"."+k)
+			}
+		}
+	case []any:
+		y, ok := b.([]any)
+		if !ok || len(x) != len(y) {
+			return fmt.Sprintf("%s: length %d vs %v", path, len(x), short(b))
+		}
+		for i := range x {
+			if !reflect.DeepEqual(x[i], y[i]) {
+				return firstDiff(x[i], y[i], fmt.Sprintf("%s[%d]", path, i))
+			}
+		}
+	}
+	return fmt.Sprintf("%s: %v vs %v", path, short(a), short(b))
+}
+
+func short(v any) string {
+	b, _ := json.Marshal(v)
+	return truncate(string(b))
 }
 
 func isEmptyResult(v any) bool {
