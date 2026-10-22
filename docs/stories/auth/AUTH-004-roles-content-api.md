@@ -34,6 +34,10 @@ Reproduire le modèle rôles et permissions de users-permissions et son applicat
 - [ ] Un populate vers un type non lisible par le rôle est retiré de la réponse (banc).
 - [ ] **Compat DB (D3)** : les rôles et permissions d'une base Strapi existante s'appliquent sans conversion.
 
+## Avancement
+- Fait : vérification des permissions du rôle Public et du rôle de l'utilisateur sur chaque route (`internal/httpapi/auth.go`), restriction des relations en lecture et en écriture. `internal/bootstrap` crée au démarrage les rôles Authenticated et Public et les 13 permissions par défaut de Strapi 5.59 quand la base n'en a aucune, ainsi que les réglages `grant`, `email` et `advanced`.
+- Divergence voulue : grapi ne purge jamais les permissions des actions qu'il ne connaît pas (Strapi le fait au boot). Tant que les contrôleurs JS custom (`EXT-003`) ne sont pas lus, une purge détruirait les permissions de ces routes sur une base existante. Le critère « contrôleur supprimé, permissions purgées » attend donc `EXT-003`.
+
 ## Notes techniques
 - Mettre en cache les permissions par rôle, avec invalidation sur écriture dans `up_permissions` (lifecycle `DB-009`).
 - L'ordre des stratégies sur le Content API : `api-token` (`AUTH-008`) puis `users-permissions`, comme Strapi.

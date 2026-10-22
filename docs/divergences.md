@@ -43,6 +43,12 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 
 - **Ordre des ids des composants frères** : Strapi crée les entrées d'un composant répétable en parallèle (`p-map`). Sous SQLite, l'ordre des insertions suit alors la profondeur d'imbrication de chaque entrée : une colonne qui contient plus de composants imbriqués est insérée après sa sœur et reçoit un id plus grand. grapi les crée dans l'ordre de la liste. Les ids diffèrent, pas l'ordre des entrées dans la réponse (banc : `components / 024`, `025` en mode grapi).
 
+## Bootstrap (`internal/bootstrap`)
+
+- **Permissions des actions inconnues** : Strapi supprime au démarrage les permissions dont l'action ne correspond à aucun contrôleur. grapi ne supprime rien : il ne voit pas encore les contrôleurs JS custom, et la purge détruirait leurs permissions sur une base Strapi.
+- **Réglage `grant`** : Strapi le réécrit à chaque démarrage dès qu'il diffère des valeurs par défaut ; grapi seulement quand la fusion change la valeur stockée.
+- **Locale initiale** : avec `STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE` autre que `en`, grapi nomme la locale par son code (Strapi prend le nom dans sa liste ISO).
+
 ## Médias (`internal/media`, `internal/httpapi/upload.go`)
 
 - **Octets des images** : sharp (libvips) et l'encodeur Go ne produisent pas les mêmes fichiers. Les dimensions de l'original et des formats sont identiques (même calcul `fit: inside` que sharp), les tailles (`size`, `sizeInBytes`) ne le sont pas. Le banc masque ces deux champs sur les objets image.

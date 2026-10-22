@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aluzed/grapi/internal/bootstrap"
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/db"
@@ -322,6 +323,10 @@ func start(args []string, stderr io.Writer) error {
 		return err
 	}
 	engine := &query.Engine{DB: d, MD: md}
+	initLocale, _ := conf.Env.Lookup("GRAPI_PLUGIN_I18N_INIT_LOCALE_CODE", log)
+	if err := bootstrap.Run(ctx, engine, res.Set, bootstrap.Options{InitLocale: initLocale, Log: log}); err != nil {
+		return fmt.Errorf("bootstrap: %w", err)
+	}
 	apiCfg := apiConfig(conf, *dir)
 	if list, ok := conf.Get("middlewares").([]any); ok {
 		mw, err := httpapi.ParseMiddlewares(list)
