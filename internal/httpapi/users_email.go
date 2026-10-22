@@ -154,6 +154,12 @@ func (s *Server) authResetPassword(w http.ResponseWriter, r *http.Request, rc *r
 }
 
 func (s *Server) authEmailConfirmation(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
+	return s.emailConfirmation(w, r, rc, false)
+}
+
+// emailConfirmation confirms the account of the token; returnUser answers
+// {jwt, user} (the GraphQL mutation) instead of redirecting.
+func (s *Server) emailConfirmation(w http.ResponseWriter, r *http.Request, rc *requestContext, returnUser bool) error {
 	ctx := r.Context()
 	q := map[string]any{}
 	if v, ok := rc.query["confirmation"]; ok {
@@ -171,6 +177,9 @@ func (s *Server) authEmailConfirmation(w http.ResponseWriter, r *http.Request, r
 	}
 	if _, err := s.editUser(ctx, users[0], map[string]any{"confirmed": true, "confirmationToken": nil}); err != nil {
 		return err
+	}
+	if returnUser {
+		return s.sendAuth(w, users[0], rc.auth)
 	}
 	var advanced upAdvancedFull
 	if err := s.auth.store(ctx, "advanced", &advanced); err != nil {

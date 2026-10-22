@@ -876,6 +876,12 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 			return nil, err
 		}
 		return map[string]any{"data": user}, nil
+	case "emailConfirmation":
+		h := func(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
+			rc.query = map[string]any{"confirmation": a["confirmation"]}
+			return g.s.emailConfirmation(w, r, rc, true)
+		}
+		return g.rest(h, "GET", nil, nil, "", userUID)
 	case "createUsersPermissionsRole":
 		return g.rest(g.s.roleCreate, "POST", a["data"], nil, "", roleUID)
 	case "updateUsersPermissionsRole":

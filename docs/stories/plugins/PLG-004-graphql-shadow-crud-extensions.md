@@ -45,7 +45,8 @@ Les mêmes mécanismes de personnalisation et de sécurité, exposés en Go (mod
 - Test d'intégration `TestGraphQLExtensions` (extension SDL, scope, `auth: false`, policy, `depthLimit`, shadow CRUD vu par introspection).
 - Banc `graphql` étendu (SQLite et Postgres) : `register` (dont compte déjà pris), `login` (dont mauvais mot de passe), `me` avec JWT, `changePassword` invalide, `forgotPassword`, tous identiques à Strapi.
 - CRUD des rôles (`createUsersPermissionsRole`, `update`, `delete`) branché sur les routes de rôles (`AUTH-004`), au banc `graphql` (43 cas).
-- Reste : middlewares de résolveur, `shadowCRUD: false` global, `emailConfirmation`, limite de complexité.
+- `emailConfirmation` : la confirmation REST avec `returnUser` (`{jwt, user}` au lieu de la redirection), jeton invalide au banc.
+- Reste : middlewares de résolveur, `shadowCRUD: false` global, limite de complexité.
 
 ## Notes techniques
 - Pour la fusion du SDL : parser avec `gqlparser`, puis convertir les définitions en objets `graphql-go`. C'est à écrire, il n'y a pas de pont existant mûr.

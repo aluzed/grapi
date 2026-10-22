@@ -207,3 +207,7 @@ cases:
     path: /graphql
     token: full
     body: { query: "mutation { deleteUsersPermissionsRole(id: \"999\") { ok } }" }
+  - name: gql-email-confirmation-invalid
+    method: POST
+    path: /graphql
+    body: { query: "mutation { emailConfirmation(confirmation: \"nope\") { jwt } }" }

@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "emailConfirmation": null
+    },
+    "errors": [
+      {
+        "extensions": {
+          "code": "BAD_USER_INPUT",
+          "error": {
+            "details": {},
+            "message": "Invalid token",
+            "name": "ValidationError"
+          }
+        },
+        "message": "Invalid token",
+        "path": [
+          "emailConfirmation"
+        ]
+      }
+    ]
+  }
+}
