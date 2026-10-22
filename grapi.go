@@ -28,6 +28,8 @@ type App struct {
 	opts                Options
 	lifecycles          *query.Lifecycles
 	documentMiddlewares []document.Middleware
+	routes              []customRoute
+	docs                *document.Service
 }
 
 // New returns an App for the project in opts.Dir.
@@ -40,6 +42,10 @@ func New(opts Options) *App {
 	}
 	return &App{opts: opts, lifecycles: &query.Lifecycles{}}
 }
+
+// Documents is the Document Service, available once Setup ran (in route
+// handlers and hooks).
+func (a *App) Documents() *document.Service { return a.docs }
 
 func (a *App) stderr() io.Writer {
 	if a.opts.Stderr != nil {

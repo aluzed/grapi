@@ -353,7 +353,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	for _, m := range a.documentMiddlewares {
 		docs.Use(m)
 	}
+	a.docs = docs
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
+	a.addRoutes(api)
 	host, _ := conf.String("server.host")
 	port, _ := conf.Int("server.port")
 	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p}, nil

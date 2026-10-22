@@ -56,6 +56,10 @@ type route struct {
 	uid     string
 	action  string
 	handler func(w http.ResponseWriter, r *http.Request, rc *requestContext) error
+	// scope overrides uid.action; public routes skip authentication
+	// (config.auth: false).
+	scope  string
+	public bool
 }
 
 type requestContext struct {
@@ -104,7 +108,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	s.handler = mw.wrap(http.HandlerFunc(s.route))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
-		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales})
+		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false})
 	}
 	return s
 }
@@ -142,20 +146,20 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	if ct.IsSingleType() {
 		p := []string{base, ct.Info.SingularName}
 		s.routes = append(s.routes,
-			route{"GET", p, uid, "find", s.singleFind},
-			route{"PUT", p, uid, "update", s.singleUpdate},
-			route{"DELETE", p, uid, "delete", s.singleDelete},
+			route{"GET", p, uid, "find", s.singleFind, "", false},
+			route{"PUT", p, uid, "update", s.singleUpdate, "", false},
+			route{"DELETE", p, uid, "delete", s.singleDelete, "", false},
 		)
 		return
 	}
 	list := []string{base, ct.Info.PluralName}
 	one := []string{base, ct.Info.PluralName, ":id"}
 	s.routes = append(s.routes,
-		route{"GET", list, uid, "find", s.find},
-		route{"GET", one, uid, "findOne", s.findOne},
-		route{"POST", list, uid, "create", s.create},
-		route{"PUT", one, uid, "update", s.update},
-		route{"DELETE", one, uid, "delete", s.remove},
+		route{"GET", list, uid, "find", s.find, "", false},
+		route{"GET", one, uid, "findOne", s.findOne, "", false},
+		route{"POST", list, uid, "create", s.create, "", false},
+		route{"PUT", one, uid, "update", s.update, "", false},
+		route{"DELETE", one, uid, "delete", s.remove, "", false},
 	)
 }
 
@@ -225,12 +229,23 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params map[string]string) {
 	ctx := r.Context()
+	if rt.public {
+		rc := &requestContext{auth: &Auth{scopes: map[string]bool{}}, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
+		if err := rt.handler(w, r, rc); err != nil {
+			writeError(w, err, s.log)
+		}
+		return
+	}
 	auth, err := s.auth.authenticate(ctx, r)
 	if err != nil {
 		writeError(w, err, s.log)
 		return
 	}
-	if !auth.Allowed(rt.uid + "." + rt.action) {
+	scope := rt.uid + "." + rt.action
+	if rt.scope != "" {
+		scope = rt.scope
+	}
+	if !auth.Allowed(scope) {
 		if auth.Strategy == "users-permissions" {
 			writeError(w, errForbidden, s.log)
 		} else {

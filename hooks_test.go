@@ -2,6 +2,7 @@ package grapi_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/fs"
@@ -15,6 +16,7 @@ import (
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/hook"
+	"github.com/aluzed/grapi/internal/db/query"
 )
 
 // Mirrors the dev-freelance needs from the EXT-002 sketch; it only checks
@@ -100,4 +102,73 @@ func copyDir(src, dst string) error {
 		}
 		return os.WriteFile(target, b, 0o600)
 	})
+}
+
+func TestCustomRoutes(t *testing.T) {
+	dir := t.TempDir()
+	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	t.Setenv("JWT_SECRET", "test")
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	app.Route("POST", "/account/anonymize", "api::account.account.anonymize", func(c *grapi.Request) error {
+		if c.User == nil {
+			return grapi.Error(http.StatusUnauthorized, "Authentication required")
+		}
+		if c.Body()["currentPassword"] == nil {
+			return grapi.Error(http.StatusBadRequest, "Current password is required")
+		}
+		return c.JSON(http.StatusOK, map[string]any{"ok": true, "user": c.User["username"]})
+	})
+	app.PublicRoute("GET", "/ping/:name", func(c *grapi.Request) error {
+		return c.JSON(http.StatusOK, map[string]any{"pong": c.Params["name"]})
+	})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = srv.Close() }()
+	ts := httptest.NewServer(srv.Handler)
+	defer ts.Close()
+	do := func(method, path, token, body string) (int, map[string]any) {
+		req, _ := http.NewRequest(method, ts.URL+path, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = res.Body.Close() }()
+		var out map[string]any
+		_ = json.NewDecoder(res.Body).Decode(&out)
+		return res.StatusCode, out
+	}
+	_, reg := do("POST", "/api/auth/local/register", "", `{"username":"alex","email":"alex@example.com","password":"Passw0rd!"}`)
+	jwt, _ := reg["jwt"].(string)
+	if code, _ := do("GET", "/api/ping/go", "", ""); code != 200 {
+		t.Fatalf("public route: %d", code)
+	}
+	if code, out := do("POST", "/api/account/anonymize", jwt, `{}`); code != 403 {
+		t.Fatalf("without the permission: %d %v", code, out)
+	}
+	role, err := app.Documents().E.FindOne(context.Background(), "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "authenticated"}})
+	if err != nil || role == nil {
+		t.Fatal(err)
+	}
+	roleID, _ := role.Get("id")
+	if _, err := app.Documents().E.Create(context.Background(), "plugin::users-permissions.permission", query.Data{"action": "api::account.account.anonymize", "role": roleID}, query.Params{}); err != nil {
+		t.Fatal(err)
+	}
+	code, out := do("POST", "/api/account/anonymize", jwt, `{}`)
+	errBody, _ := out["error"].(map[string]any)
+	if code != 400 || errBody["name"] != "BadRequestError" || errBody["message"] != "Current password is required" {
+		t.Fatalf("bad request: %d %v", code, out)
+	}
+	if code, out := do("POST", "/api/account/anonymize", jwt, `{"currentPassword":"x"}`); code != 200 || out["user"] != "alex" {
+		t.Fatalf("authorized: %d %v", code, out)
+	}
 }

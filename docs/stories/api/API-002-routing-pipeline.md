@@ -32,6 +32,10 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 - [ ] Une `PolicyError` garde son message et son status 403 dans la réponse.
 - [ ] Banc de compatibilité : codes de statut identiques à Strapi sur la matrice rôle x route de dev-freelance.
 
+## Avancement
+- Fait : routes custom en Go (`grapi.App.Route`, `PublicRoute` pour `auth: false`), placées avant les routes core, avec le scope de permission à la Strapi (`api::account.account.anonymize`) et les erreurs `ctx.badRequest`/`ctx.unauthorized` (`grapi.Error`, noms http-errors). Test : `hooks_test.go` (`TestCustomRoutes`).
+- Reste : routes déclarées dans `src/api/*/routes/*` (fichiers JS ou déclaratifs), policies et middlewares de route, `routes:list`.
+
 ## Notes techniques
 - Conflits de routes (même méthode et chemin) : erreur au démarrage, Strapi laisse gagner la première.
 - Garder la liste des routes compilée une fois au démarrage, rechargée à chaud par le CTB (`ADM-006`).

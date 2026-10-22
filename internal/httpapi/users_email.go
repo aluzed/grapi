@@ -39,13 +39,13 @@ func (s *Server) addUsersEmailRoutes() {
 	base := strings.TrimPrefix(s.cfg.Prefix, "/")
 	auth := "plugin::users-permissions.auth"
 	s.routes = append(s.routes,
-		route{"POST", []string{base, "auth", "forgot-password"}, auth, "forgotPassword", s.authForgotPassword},
-		route{"POST", []string{base, "auth", "reset-password"}, auth, "resetPassword", s.authResetPassword},
-		route{"GET", []string{base, "auth", "email-confirmation"}, auth, "emailConfirmation", s.authEmailConfirmation},
-		route{"POST", []string{base, "auth", "send-email-confirmation"}, auth, "sendEmailConfirmation", s.authSendEmailConfirmation},
+		route{"POST", []string{base, "auth", "forgot-password"}, auth, "forgotPassword", s.authForgotPassword, "", false},
+		route{"POST", []string{base, "auth", "reset-password"}, auth, "resetPassword", s.authResetPassword, "", false},
+		route{"GET", []string{base, "auth", "email-confirmation"}, auth, "emailConfirmation", s.authEmailConfirmation, "", false},
+		route{"POST", []string{base, "auth", "send-email-confirmation"}, auth, "sendEmailConfirmation", s.authSendEmailConfirmation, "", false},
 	)
 	if s.cfg.Email != nil {
-		s.routes = append(s.routes, route{"POST", []string{base, "email"}, "plugin::email.email", "send", s.emailSend})
+		s.routes = append(s.routes, route{"POST", []string{base, "email"}, "plugin::email.email", "send", s.emailSend, "", false})
 	}
 }
 

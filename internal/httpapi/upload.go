@@ -63,10 +63,10 @@ func (s *Server) addUploadRoutes() {
 	base := strings.TrimPrefix(s.cfg.Prefix, "/")
 	uid := "plugin::upload.content-api"
 	s.routes = append(s.routes,
-		route{"POST", []string{base, "upload"}, uid, "upload", s.upload},
-		route{"GET", []string{base, "upload", "files"}, uid, "find", s.uploadFind},
-		route{"GET", []string{base, "upload", "files", ":id"}, uid, "findOne", s.uploadFindOne},
-		route{"DELETE", []string{base, "upload", "files", ":id"}, uid, "destroy", s.uploadDestroy},
+		route{"POST", []string{base, "upload"}, uid, "upload", s.upload, "", false},
+		route{"GET", []string{base, "upload", "files"}, uid, "find", s.uploadFind, "", false},
+		route{"GET", []string{base, "upload", "files", ":id"}, uid, "findOne", s.uploadFindOne, "", false},
+		route{"DELETE", []string{base, "upload", "files", ":id"}, uid, "destroy", s.uploadDestroy, "", false},
 	)
 }
 
