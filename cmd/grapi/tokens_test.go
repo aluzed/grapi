@@ -2,10 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -98,6 +101,16 @@ func TestTokensAndPermissions(t *testing.T) {
 	}
 	if c := get(token); c != 200 {
 		t.Fatalf("custom token: %d", c)
+	}
+	p, err := grapi.LoadProject(project, "", io.Discard)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var last sql.NullString
+	err = p.DB.QueryRow(context.Background(), `select cast("last_used_at" as varchar) from "strapi_api_tokens"`).Scan(&last)
+	_ = p.DB.Close()
+	if err != nil || !last.Valid || last.String == "" {
+		t.Fatalf("lastUsedAt is set on use: %v %v", last, err)
 	}
 	out.Reset()
 	run([]string{"api-token:list", "-dir", project}, &out, &out)

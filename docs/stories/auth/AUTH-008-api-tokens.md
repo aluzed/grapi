@@ -38,7 +38,8 @@ Les mêmes tokens, avec le même format de stockage, pour qu'un token créé par
 
 ## Avancement
 - Fait : stratégie `api-token` sur le Content API (read-only, full-access, custom, expiration en 401). Création, liste et suppression en CLI (`grapi api-token:create|list|delete`, `cmd/grapi/tokens.go`) : 128 octets aléatoires, `accessKey` en HMAC-SHA512 avec le sel, `encryptedKey` au format du service de chiffrement de l'admin (`v1:iv:data:tag`, AES-256-GCM sur le SHA-256 de `admin.secrets.encryptionKey`, déchiffré par Node à l'identique), durées de vie 7, 30 ou 90 jours.
-- Reste : endpoints admin, `regenerate`, admin tokens, mise à jour de `lastUsedAt`.
+- `lastUsedAt` mis à jour à l'usage comme `updateLastUsedAt` (au plus une fois par heure), vérifié dans `TestTokensAndPermissions`.
+- Reste : endpoints admin, `regenerate`, admin tokens.
 
 ## Notes techniques
 - Vérifier dans `encryption.ts` le format exact de la copie chiffrée (concaténation IV, tag et ciphertext, encodage) et le reproduire. Prévoir un TU sur une valeur générée par Strapi.

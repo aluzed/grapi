@@ -141,11 +141,11 @@ func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error
 
 func (a *authenticator) apiToken(ctx context.Context, token string) (*Auth, error) {
 	var (
-		id      int64
-		typ     string
-		expires sql.NullString
+		id               int64
+		typ              string
+		expires, lastUse sql.NullString
 	)
-	err := a.db.QueryRow(ctx, `select "id", "type", cast("expires_at" as varchar) from "strapi_api_tokens" where "access_key" = `+a.db.Dialect.Placeholder(1), a.hash(token)).Scan(&id, &typ, &expires)
+	err := a.db.QueryRow(ctx, `select "id", "type", cast("expires_at" as varchar), cast("last_used_at" as varchar) from "strapi_api_tokens" where "access_key" = `+a.db.Dialect.Placeholder(1), a.hash(token)).Scan(&id, &typ, &expires, &lastUse)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -156,6 +156,9 @@ func (a *authenticator) apiToken(ctx context.Context, token string) (*Auth, erro
 		if t, ok := parseStoredTime(expires.String); ok && t.Before(time.Now()) {
 			return nil, newError(http.StatusUnauthorized, "UnauthorizedError", "Token expired")
 		}
+	}
+	if err := a.touchToken(ctx, id, lastUse); err != nil {
+		return nil, err
 	}
 	auth := &Auth{Strategy: "api-token", TokenType: typ, scopes: map[string]bool{}}
 	if typ == "custom" {
@@ -175,6 +178,19 @@ func (a *authenticator) apiToken(ctx context.Context, token string) (*Auth, erro
 		}
 	}
 	return auth, nil
+}
+
+// touchToken is updateLastUsedAt: lastUsedAt is written at most once an
+// hour.
+func (a *authenticator) touchToken(ctx context.Context, id int64, last sql.NullString) error {
+	now := time.Now()
+	if last.Valid && last.String != "" {
+		if t, ok := parseStoredTime(last.String); ok && now.Sub(t) < time.Hour {
+			return nil
+		}
+	}
+	_, err := a.engine.Update(ctx, "admin::api-token", map[string]any{"id": id}, query.Data{"lastUsedAt": now.UTC().Format("2006-01-02T15:04:05.000Z")}, query.Params{})
+	return err
 }
 
 // parseStoredTime reads expires_at: an ISO string under Postgres, epoch
