@@ -31,6 +31,7 @@ type App struct {
 	routes              []customRoute
 	docs                *document.Service
 	stopWebhooks        func()
+	cronTasks           []cronTask
 }
 
 // New returns an App for the project in opts.Dir.

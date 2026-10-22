@@ -22,6 +22,7 @@ import (
 	"github.com/aluzed/grapi/internal/bootstrap"
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/config"
+	"github.com/aluzed/grapi/internal/cron"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/migrate"
@@ -373,7 +374,17 @@ func (a *App) setup(p *Project) (*Server, error) {
 		}
 	}
 	runner := &webhooks.Runner{DB: d, Hub: docs.Events, Config: hookCfg, Log: log}
-	a.stopWebhooks = runner.Start(context.Background())
+	stopWebhooks := runner.Start(context.Background())
+	scheduler := cron.New(log)
+	cronEnabled, _ := conf.Bool("server.cron.enabled")
+	if err := a.startCron(cronEnabled, scheduler); err != nil {
+		stopWebhooks()
+		return nil, err
+	}
+	a.stopWebhooks = func() {
+		scheduler.Stop()
+		stopWebhooks()
+	}
 	a.docs = docs
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
 	a.addRoutes(api)
