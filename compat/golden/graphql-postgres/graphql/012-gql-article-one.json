@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "article": {
+        "links": [
+          {
+            "metaTitle": "L1"
+          },
+          {
+            "metaTitle": "L2"
+          }
+        ],
+        "seo": {
+          "metaDescription": null,
+          "metaTitle": "Hello SEO"
+        },
+        "tags": [
+          {
+            "name": "go",
+            "weight": 3
+          },
+          {
+            "name": "rust",
+            "weight": 1
+          }
+        ],
+        "tags_connection": {
+          "nodes": [
+            {
+              "name": "go"
+            },
+            {
+              "name": "rust"
+            }
+          ]
+        },
+        "title": "Hello World"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "errors": [
+      {
+        "extensions": {
+          "code": "GRAPHQL_PARSE_FAILED"
+        },
+        "locations": [
+          {
+            "column": 20,
+            "line": 1
+          }
+        ],
+        "message": "Syntax Error: Expected Name, found \u003cEOF\u003e."
+      }
+    ]
+  }
+}

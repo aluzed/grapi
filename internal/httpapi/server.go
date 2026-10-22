@@ -13,6 +13,7 @@ import (
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
+	"github.com/aluzed/grapi/internal/graphql"
 	"github.com/aluzed/grapi/internal/jsnum"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/schema"
@@ -39,6 +40,8 @@ type Config struct {
 	ServerURL, AdminURL string
 	// TrustProxy is server.proxy: the client IP comes from X-Forwarded-For.
 	TrustProxy bool
+	// GraphQL is the graphql plugin, nil when it is not enabled.
+	GraphQL *GraphQLConfig
 }
 
 // Server serves the content API of every api:: content type.
@@ -51,6 +54,7 @@ type Server struct {
 	routes  []route
 	handler http.Handler
 	limiter limiter
+	gql     *graphql.Schema
 }
 
 type route struct {
@@ -115,6 +119,9 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		}
 	}
 	s.addUploadRoutes()
+	if err := s.addGraphQL(); err != nil {
+		log.Error("graphql plugin disabled", "error", err)
+	}
 	mw := DefaultMiddlewares()
 	if cfg.Middlewares != nil {
 		mw = *cfg.Middlewares

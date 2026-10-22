@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "tags": [
+        {
+          "articles": [
+            {
+              "title": "Hello World"
+            },
+            {
+              "title": "Second post"
+            }
+          ],
+          "name": "go"
+        },
+        {
+          "articles": [
+            {
+              "title": "Hello World"
+            }
+          ],
+          "name": "rust"
+        }
+      ]
+    }
+  }
+}

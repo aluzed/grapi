@@ -1,0 +1,37 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "bigCounter": null,
+      "body": null,
+      "code": null,
+      "contact": null,
+      "content": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc3",
+      "featured": true,
+      "id": "#id2",
+      "importedAt": null,
+      "meta": {
+        "k": [
+          1,
+          2
+        ]
+      },
+      "price": null,
+      "publishedAt": "\u003cts\u003e",
+      "rating": 4.5,
+      "releaseDate": "2026-01-02",
+      "releaseTime": null,
+      "scheduledAt": null,
+      "slug": null,
+      "stage": "idea",
+      "summary": null,
+      "title": "Hello World",
+      "updatedAt": "\u003cts\u003e",
+      "views": 10
+    },
+    "meta": {}
+  }
+}

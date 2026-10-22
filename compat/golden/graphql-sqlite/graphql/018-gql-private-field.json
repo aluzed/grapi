@@ -1,0 +1,20 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "errors": [
+      {
+        "extensions": {
+          "code": "GRAPHQL_VALIDATION_FAILED"
+        },
+        "locations": [
+          {
+            "column": 14,
+            "line": 1
+          }
+        ],
+        "message": "Cannot query field \"internalNote\" on type \"Article\"."
+      }
+    ]
+  }
+}

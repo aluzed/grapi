@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "articles": [
+        {
+          "publishedAt": null,
+          "title": "Draft only"
+        },
+        {
+          "publishedAt": null,
+          "title": "Hello World"
+        },
+        {
+          "publishedAt": null,
+          "title": "Second post"
+        }
+      ]
+    }
+  }
+}

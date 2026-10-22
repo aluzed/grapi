@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "articles": [
+        {
+          "title": "Hello World"
+        },
+        {
+          "title": "Second post"
+        }
+      ]
+    }
+  }
+}

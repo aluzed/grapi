@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "articles": [
+        {
+          "documentId": "#doc3",
+          "featured": true,
+          "meta": {
+            "k": [
+              1,
+              2
+            ]
+          },
+          "rating": 4.5,
+          "releaseDate": "2026-01-02",
+          "stage": "idea",
+          "title": "Hello World",
+          "views": 10
+        },
+        {
+          "documentId": "#doc4",
+          "featured": false,
+          "meta": null,
+          "rating": null,
+          "releaseDate": null,
+          "stage": "idea",
+          "title": "Second post",
+          "views": 3
+        }
+      ]
+    }
+  }
+}

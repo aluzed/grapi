@@ -106,3 +106,15 @@ func KebabCase(s string) string { return strings.ReplaceAll(snakeCase(s), "_", "
 
 // SnakeCase is lodash's snakeCase.
 func SnakeCase(s string) string { return snakeCase(s) }
+
+// PascalCase is lodash's upperFirst(camelCase(s)).
+func PascalCase(s string) string { return pascalCase(s) }
+
+// CamelCase is lodash's camelCase.
+func CamelCase(s string) string {
+	ws := words(s)
+	if len(ws) == 0 {
+		return ""
+	}
+	return strings.ToLower(ws[0]) + pascalCase(strings.Join(ws[1:], " "))
+}

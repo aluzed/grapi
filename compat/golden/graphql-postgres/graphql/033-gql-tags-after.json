@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "tags": [
+        {
+          "name": "go",
+          "weight": 3
+        },
+        {
+          "name": "rust",
+          "weight": 1
+        }
+      ]
+    }
+  }
+}

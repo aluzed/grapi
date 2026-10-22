@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "all": {
+        "pageInfo": {
+          "pageSize": 10,
+          "total": 3
+        }
+      },
+      "first": [
+        {
+          "__typename": "Article",
+          "title": "Draft only"
+        }
+      ]
+    }
+  }
+}

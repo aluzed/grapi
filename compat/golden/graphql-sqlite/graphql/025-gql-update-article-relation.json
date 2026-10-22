@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "updateArticle": {
+        "tags": [
+          {
+            "name": "zig"
+          }
+        ],
+        "title": "Draft only"
+      }
+    }
+  }
+}

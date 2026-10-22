@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -164,6 +165,7 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	if e, err := emailService(c); err == nil {
 		cfg.Email = e
 	}
+	cfg.GraphQL = graphQLConfig(c, dir)
 	if fields, ok := c.Get(up + "register.allowedFields").([]any); ok {
 		for _, f := range fields {
 			if s, ok := f.(string); ok {
@@ -172,6 +174,33 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 	}
 	return cfg
+}
+
+// graphQLConfig enables the graphql plugin when the project depends on
+// @strapi/plugin-graphql (Strapi enables installed plugins) or when
+// plugins.graphql.enabled is true.
+func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
+	enabled, set := c.Bool("plugins.graphql.enabled")
+	if !set {
+		var pkg struct {
+			Dependencies map[string]string `json:"dependencies"`
+		}
+		if b, err := os.ReadFile(filepath.Join(dir, "package.json")); err == nil && json.Unmarshal(b, &pkg) == nil { //nolint:gosec // the project directory
+			_, enabled = pkg.Dependencies["@strapi/plugin-graphql"]
+		}
+	}
+	if !enabled {
+		return nil
+	}
+	base := "plugins.graphql.config."
+	g := &httpapi.GraphQLConfig{Introspection: c.Env["NODE_ENV"] != "production"}
+	g.Endpoint, _ = c.String(base + "endpoint")
+	g.DefaultLimit, _ = c.Int(base + "defaultLimit")
+	g.MaxLimit, _ = c.Int(base + "maxLimit")
+	if v, ok := c.Bool(base + "apolloServer.introspection"); ok {
+		g.Introspection = v
+	}
+	return g
 }
 
 // uploadProvider builds the provider of plugins.upload.config: aws-s3

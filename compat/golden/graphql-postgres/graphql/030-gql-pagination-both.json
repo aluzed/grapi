@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "errors": [
+      {
+        "extensions": {
+          "code": "STRAPI_PAGINATION_ERROR",
+          "error": {
+            "details": {},
+            "message": "Cannot use both page \u0026 offset pagination in the same query",
+            "name": "PaginationError"
+          }
+        },
+        "message": "Cannot use both page \u0026 offset pagination in the same query",
+        "path": [
+          "articles"
+        ]
+      }
+    ]
+  }
+}

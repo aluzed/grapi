@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createTag": null
+    },
+    "errors": [
+      {
+        "extensions": {
+          "code": "FORBIDDEN",
+          "error": {
+            "details": {},
+            "message": "Forbidden access",
+            "name": "ForbiddenError"
+          }
+        },
+        "message": "Forbidden access",
+        "path": [
+          "createTag"
+        ]
+      }
+    ]
+  }
+}

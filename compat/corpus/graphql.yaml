@@ -1,0 +1,158 @@
+fixture: graphql
+# GraphQL plugin: seed through REST, then the same data read and written
+# through POST /graphql.
+cases:
+  - name: seed-tag-go
+    method: POST
+    path: /api/tags
+    token: full
+    save: { tGo: data.documentId }
+    body: { data: { name: "go", weight: 3 } }
+  - name: seed-tag-rust
+    method: POST
+    path: /api/tags
+    token: full
+    save: { tRust: data.documentId }
+    body: { data: { name: "rust", weight: 1 } }
+  - name: seed-article-hello
+    method: POST
+    path: /api/articles
+    query: "status=published"
+    token: full
+    save: { a1: data.documentId }
+    body: { data: { title: "Hello World", views: 10, featured: true, rating: 4.5, stage: "idea", releaseDate: "2026-01-02", meta: { k: [1, 2] }, internalNote: "secret", tags: ["{{tGo}}", "{{tRust}}"], seo: { metaTitle: "Hello SEO" }, links: [{ metaTitle: "L1" }, { metaTitle: "L2" }] } }
+  - name: seed-article-second
+    method: POST
+    path: /api/articles
+    query: "status=published"
+    token: full
+    save: { a2: data.documentId }
+    body: { data: { title: "Second post", views: 3, featured: false, tags: ["{{tGo}}"] } }
+  - name: seed-article-draft
+    method: POST
+    path: /api/articles
+    query: "status=draft"
+    token: full
+    save: { a3: data.documentId }
+    body: { data: { title: "Draft only", views: 1 } }
+
+  - name: gql-articles
+    method: POST
+    path: /graphql
+    body: { query: "{ articles { documentId title views featured rating stage releaseDate meta } }" }
+  - name: gql-articles-sort-pagination
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(sort: [\"title:desc\"], pagination: { page: 1, pageSize: 1 }) { title } }" }
+  - name: gql-articles-filters
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(filters: { views: { gte: 5 }, title: { containsi: \"hello\" } }) { title views } }" }
+  - name: gql-articles-filters-or-not
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(filters: { or: [{ title: { eq: \"Second post\" } }, { featured: { eq: true } }], not: { views: { lt: 1 } } }, sort: \"title\") { title } }" }
+  - name: gql-articles-filter-relation
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(filters: { tags: { name: { eq: \"rust\" } } }) { title } }" }
+  - name: gql-articles-connection
+    method: POST
+    path: /graphql
+    body: { query: "{ articles_connection(pagination: { pageSize: 1 }, sort: \"title\") { nodes { title } pageInfo { page pageSize pageCount total } } }" }
+  - name: gql-article-one
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { article(documentId: $id) { title tags(sort: \"name\") { name weight } tags_connection { nodes { name } } seo { metaTitle metaDescription } links { metaTitle } } }", variables: { id: "{{a1}}" } }
+  - name: gql-article-draft-status
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { article(documentId: $id, status: DRAFT) { title } }", variables: { id: "{{a3}}" } }
+  - name: gql-article-draft-default
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { article(documentId: $id) { title } }", variables: { id: "{{a3}}" } }
+  - name: gql-articles-drafts
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ articles(status: DRAFT, sort: \"title\") { title publishedAt } }" }
+  - name: gql-tags-with-articles
+    method: POST
+    path: /graphql
+    body: { query: "{ tags(sort: \"name\") { name articles(sort: \"title\") { title } } }" }
+  - name: gql-homepage-empty
+    method: POST
+    path: /graphql
+    body: { query: "{ homepage { title } }" }
+  - name: gql-private-field
+    method: POST
+    path: /graphql
+    body: { query: "{ articles { internalNote } }" }
+  - name: gql-unknown-field
+    method: POST
+    path: /graphql
+    body: { query: "{ articles { nope } }" }
+  - name: gql-syntax-error
+    method: POST
+    path: /graphql
+    body: { query: "{ articles { title " }
+
+  - name: gql-create-forbidden
+    method: POST
+    path: /graphql
+    body: { query: "mutation { createTag(data: { name: \"public\" }) { name } }" }
+  - name: gql-create
+    method: POST
+    path: /graphql
+    token: full
+    save: { t3: data.createTag.documentId }
+    body: { query: "mutation { createTag(data: { name: \"zig\", weight: 7 }) { documentId name weight } }" }
+  - name: gql-create-invalid
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { createArticle(data: { title: \"x\", views: \"many\" }) { title } }" }
+  - name: gql-update
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!) { updateTag(documentId: $id, data: { weight: 8 }) { name weight } }", variables: { id: "{{t3}}" } }
+  - name: gql-update-article-relation
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!, $t: ID!) { updateArticle(documentId: $id, data: { tags: [$t] }) { title tags { name } } }", variables: { id: "{{a3}}", t: "{{t3}}" } }
+  - name: gql-delete
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!) { deleteTag(documentId: $id) { documentId } }", variables: { id: "{{t3}}" } }
+  - name: gql-articles-with-tags
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(sort: \"title\") { title tags { name } } }" }
+  - name: gql-variables-missing
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { article(documentId: $id) { title } }" }
+  - name: gql-fragments-alias
+    method: POST
+    path: /graphql
+    body: { query: "query { first: articles(pagination: { limit: 1 }, sort: \"title\") { ...A } all: articles_connection { pageInfo { total pageSize } } } fragment A on Article { title __typename }" }
+  - name: gql-pagination-both
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(pagination: { page: 1, start: 0 }) { title } }" }
+  - name: gql-sort-private
+    method: POST
+    path: /graphql
+    body: { query: "{ articles(sort: \"internalNote\") { title } }" }
+  - name: gql-get
+    method: GET
+    path: /graphql
+    query: "query=%7B%20tags%20%7B%20name%20%7D%20%7D"
+  - name: gql-tags-after
+    method: POST
+    path: /graphql
+    body: { query: "{ tags(sort: \"name\") { name weight } }" }

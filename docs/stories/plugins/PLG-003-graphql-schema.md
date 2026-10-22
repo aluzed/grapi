@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # PLG-003 : GraphQL : schéma généré dynamiquement
@@ -37,6 +37,14 @@ Générer au démarrage, puis à chaque rechargement de schéma (`ADM-006`), un 
 - [ ] Une série de requêtes (liste paginée, filtres imbriqués, populate de zone dynamique avec fragments, mutation create avec composant) donne des réponses JSON identiques (banc).
 - [ ] Le schéma est reconstruit après un changement de content type, sans redémarrage.
 - [ ] Introspection fonctionnelle (graphql-codegen tourne sur le schéma de grapi).
+
+## Avancement
+- `internal/graphql` : schéma (`schema.go`) dérivé du `schema.Set` comme le shadow CRUD du plugin (types, `FiltersInput`, `Input`, enums, zones dynamiques, `GenericMorph`, réponses, queries et mutations, extensions upload, users-permissions et i18n, élagage des types inaccessibles). `TestSchemaMatchesStrapi` compare le schéma à celui que Strapi 5.59 publie par introspection sur les 7 fixtures du banc (`internal/graphql/testdata/sdl-*.graphql`) : identique type par type, champ par champ, arguments et valeurs par défaut compris, hors types Enterprise de review-workflows (clean-room).
+- Exécuteur maison (`exec.go`) sur `vektah/gqlparser` (MIT) pour le parsing et la validation, dont les messages sont ceux de graphql-js : fragments, alias, `@skip`/`@include`, propagation des null, sérialisation des scalaires, introspection (`introspection.go`) autorisée hors production comme Apollo. Choix contre `graphql-go/graphql`, dont les messages d'erreur ne sont pas ceux de graphql-js.
+- Résolveurs dans `internal/httpapi/graphql.go`, branchés sur le Document Service et la validation REST : `transformArgs`, pagination `withDefaultPagination` (10 par défaut), filtres convertis en opérateurs Strapi, héritage du statut de la query racine par les relations, mutations avec `sanitize.input`, single types (`update` qui crée, `delete` en `NotFoundError`), format d'erreurs du plugin (`FORBIDDEN`, `BAD_USER_INPUT`, `STRAPI_*`), CSRF d'Apollo, codes 400 de parsing, validation et variables.
+- Activation : dépendance `@strapi/plugin-graphql` dans le `package.json` du projet, ou `plugins.graphql.enabled` (`docs/configuration.md`).
+- Banc `graphql` (fixture et corpus dédiés, 33 cas), SQLite et Postgres : 33/33 en mode grapi, contrôle inverse OK.
+- Reste : `updateUploadFile` et le CRUD des rôles users-permissions (réponse `NotImplementedError`), rate limit des mutations d'auth, héritage de `publicationFilter` par les relations, cas banc pour composants imbriqués, zones dynamiques, `locale` et médias, graphql-codegen sur le schéma.
 
 ## Notes techniques
 - Le schéma est dynamique, ce qui exclut gqlgen. Utiliser `graphql-go/graphql` (`graphql.NewObject`, `NewUnion`, `NewInputObject` à la volée). `vektah/gqlparser` sert à parser le SDL des extensions (`PLG-004`).

@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createTag": {
+        "documentId": "#doc6",
+        "name": "zig",
+        "weight": 7
+      }
+    }
+  }
+}

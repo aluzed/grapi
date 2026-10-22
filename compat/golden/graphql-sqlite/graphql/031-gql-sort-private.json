@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "errors": [
+      {
+        "extensions": {
+          "code": "BAD_USER_INPUT",
+          "error": {
+            "details": {
+              "key": "internalNote",
+              "param": "sort",
+              "path": "internalNote",
+              "source": "query"
+            },
+            "message": "Invalid key internalNote",
+            "name": "ValidationError"
+          }
+        },
+        "message": "Invalid key internalNote",
+        "path": [
+          "articles"
+        ]
+      }
+    ]
+  }
+}

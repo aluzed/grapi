@@ -62,6 +62,11 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 - Webhooks : nouvelles tentatives par défaut ; Strapi n'en fait aucune (`EXT-006`).
 - Archives d'export natives en AES-256-GCM ; Strapi chiffre en AES-128-ECB, format que grapi sait lire et, sur demande, écrire (`CLI-004`).
 
+## GraphQL (`internal/graphql`, `internal/httpapi/graphql.go`)
+
+- Pas de types `ReviewWorkflows*` : review workflows est une fonction Enterprise que grapi conçoit à part (clean-room).
+- Pas de page d'accueil Apollo (sandbox) sur `GET /graphql` : grapi répond comme une requête GET sans en-tête, bloquée par la protection CSRF.
+
 ## À trancher
 
 - `biginteger` sous SQLite : Strapi perd la précision au-delà de 2^53 (voir `compat/README.md`). Le reproduire ou non se décide dans `DB-001`.
