@@ -496,6 +496,13 @@ func (a *App) setup(p *Project) (*Server, error) {
 		apiCfg.GraphQL.Options.DepthLimit = depth
 	}
 	docs := document.New(engine, res.Set)
+	switch v := conf.Get("api.documents.strictRelations").(type) {
+	case nil:
+	case bool:
+		docs.StrictRelations = v
+	default:
+		return nil, fmt.Errorf("invalid config.api.documents.strictRelations value: %q, expected boolean (true or false)", fmt.Sprint(v))
+	}
 	for _, m := range a.documentMiddlewares {
 		docs.Use(m)
 	}

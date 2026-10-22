@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DOC-006 : Résolution des relations par documentId
@@ -16,7 +16,7 @@ Accepter toutes les formes d'entrée relationnelle de Strapi 5 et les résoudre 
 - Résolution de locale : si source et cible sont localisées, la locale cible est forcée à celle de la source ; si seule la cible l'est, `relation.locale` ou la locale de la source ; sinon aucune.
 - Résolution de status : un brouillon se lie aux brouillons des cibles, la version publiée aux versions publiées (recâblage à la publication, `DOC-002`).
 - `__type` pour les cibles morphTo, `__component` pour les zones dynamiques.
-- Mode `api.documents.strictRelations` : une cible introuvable est une erreur au lieu d'être ignorée.
+- Mode `api.documents.strictRelations` : en 5.59, il impose les relations et médias `required` sur les écritures hors brouillon (`relationRequiredFails` du validateur d'entités).
 
 ## Hors périmètre
 - Le stockage et l'ordre (`DB-006`).
@@ -26,6 +26,11 @@ Accepter toutes les formes d'entrée relationnelle de Strapi 5 et les résoudre 
 - [ ] `connect` avec `position.before` d'un documentId inexistant : même erreur que Strapi.
 - [ ] Doublons et cycles de positions détectés (erreur).
 - [ ] Banc de compatibilité sur un post lié à des thèmes et une catégorie, en FR et EN.
+
+## Avancement
+- Formes courtes et longues, `connect`/`disconnect`/`set`, positions (`before`, `after`, `start`, `end`, ancre inconnue), cibles `__type` des morphTo et relations entre types localisés couvertes par les bancs `relations` (78/78) et `i18n-dp` (92/92) en mode grapi, SQLite et Postgres, contrôle inverse compris.
+- `api.documents.strictRelations` (`internal/document/validate.go`, `Service.StrictRelations`) : relations et médias `required` imposés hors brouillon, avec les règles de Strapi (absence en création, valeur qui vide le champ en mise à jour, `disconnect` seul sur un to-one, `connect: []` sans effet). Test `TestStrictRelations`.
+- Reste : doublons et cycles de positions au banc, scénario FR/EN post, thèmes et catégorie.
 
 ## Notes techniques
 - Cache par requête documentId vers ids (id-map) pour éviter N requêtes.

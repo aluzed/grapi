@@ -2,6 +2,7 @@ package document_test
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,8 +18,13 @@ import (
 
 func service(t *testing.T, fixture string) *document.Service {
 	t.Helper()
+	return serviceOf(t, os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", fixture)))
+}
+
+func serviceOf(t *testing.T, app fs.FS) *document.Service {
+	t.Helper()
 	ctx := context.Background()
-	res, md, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", fixture)))
+	res, md, err := builtin.Load(app)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -208,6 +208,73 @@ func (v *validator) object(attrs *schema.OrderedMap[*schema.Attribute], data map
 
 func boolOf(b *bool) bool { return b != nil && *b }
 
+func isToOne(a *schema.Attribute) bool {
+	if a.Type == schema.TypeMedia {
+		return !a.IsMultiple()
+	}
+	switch a.Relation {
+	case schema.OneToOne, schema.ManyToOne, schema.OneWay, schema.MorphToOne, schema.MorphOne:
+		return true
+	}
+	return false
+}
+
+// hasRelationValue tells whether a relation or media value attaches at
+// least one entry, whatever its shape.
+func hasRelationValue(value any) bool {
+	switch x := value.(type) {
+	case nil:
+		return false
+	case []any:
+		return len(x) > 0
+	case map[string]any:
+		for _, k := range []string{"connect", "set"} {
+			if c, ok := x[k]; ok && c != nil {
+				list, isList := c.([]any)
+				return !isList || len(list) > 0
+			}
+		}
+	}
+	return true
+}
+
+func nonEmpty(v any) bool {
+	list, isList := v.([]any)
+	return v != nil && (!isList || len(list) > 0)
+}
+
+// isDisconnectOnly is a payload that only removes entries.
+func isDisconnectOnly(value any) bool {
+	m, ok := value.(map[string]any)
+	if !ok || m["set"] != nil || nonEmpty(m["connect"]) {
+		return false
+	}
+	return nonEmpty(m["disconnect"])
+}
+
+// relationRequiredFails is the entity validator's: on creation the field
+// must attach something, on update only a present value that empties it
+// fails.
+func relationRequiredFails(creation bool, value any, present, toOne bool) bool {
+	if creation && isDisconnectOnly(value) {
+		return true
+	}
+	if !creation {
+		if !present {
+			return false
+		}
+		if isDisconnectOnly(value) {
+			return toOne
+		}
+		if m, ok := value.(map[string]any); ok && m["connect"] != nil {
+			if list, isList := m["connect"].([]any); m["set"] == nil && isList && len(list) == 0 {
+				return false
+			}
+		}
+	}
+	return !hasRelationValue(value)
+}
+
 // attribute validates one value and returns its cast form; keep is false
 // when the key stays absent.
 func (v *validator) attribute(a *schema.Attribute, name string, value any, present bool, path []string, comp *componentScope) (any, bool) {
@@ -217,6 +284,9 @@ func (v *validator) attribute(a *schema.Attribute, name string, value any, prese
 	}
 	switch a.Type {
 	case schema.TypeMedia, schema.TypeRelation:
+		if v.s.StrictRelations && !v.isDraft && boolOf(a.Required) && relationRequiredFails(v.creation, value, present, isToOne(a)) {
+			v.failMsg(path, value, name+" must be defined.")
+		}
 		return value, present
 	case schema.TypeComponent:
 		return v.component(a, value, present, path)

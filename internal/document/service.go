@@ -22,6 +22,9 @@ type Service struct {
 	mw   middlewares
 	// Events receives entry.create, entry.update... (nil: no events).
 	Events *events.Hub
+	// StrictRelations is api.documents.strictRelations: required relations
+	// and media are enforced on non-draft writes.
+	StrictRelations bool
 }
 
 // New returns the document service of an application.
