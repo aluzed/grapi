@@ -44,6 +44,14 @@ func (n *Normalizer) walk(key string, v any) any {
 		for k, child := range t {
 			out[k] = n.walk(k, child)
 		}
+		// Image bytes depend on the encoder (sharp or Go), the dimensions do not.
+		if mime, _ := t["mime"].(string); strings.HasPrefix(mime, "image/") && t["hash"] != nil {
+			for _, k := range []string{"size", "sizeInBytes"} {
+				if _, ok := out[k]; ok {
+					out[k] = "<image-size>"
+				}
+			}
+		}
 		return out
 	case []any:
 		out := make([]any, len(t))

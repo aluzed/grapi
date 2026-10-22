@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"syscall"
 	"time"
@@ -95,7 +96,7 @@ func dbFromEnv(e config.Env) db.Config {
 }
 
 // apiConfig reads api.rest and admin.apiToken.salt.
-func apiConfig(c *config.Config) httpapi.Config {
+func apiConfig(c *config.Config, dir string) httpapi.Config {
 	cfg := httpapi.Config{}
 	cfg.Prefix, _ = c.String("api.rest.prefix")
 	cfg.DefaultLimit, _ = c.Int("api.rest.defaultLimit")
@@ -117,6 +118,25 @@ func apiConfig(c *config.Config) httpapi.Config {
 		cfg.Users.JWTExpiresIn = strconv.Itoa(n)
 	}
 	cfg.Users.JWTAlgorithm, _ = c.String(up + "jwt.algorithm")
+	public, _ := c.String("server.dirs.public")
+	if public == "" {
+		public = "./public"
+	}
+	if !filepath.IsAbs(public) {
+		public = filepath.Join(dir, public)
+	}
+	cfg.Upload.PublicDir = public
+	if n, ok := c.Int("plugins.upload.config.sizeLimit"); ok {
+		cfg.Upload.SizeLimit = int64(n)
+	}
+	if bps, ok := c.Get("plugins.upload.config.breakpoints").(map[string]any); ok {
+		for name, v := range bps {
+			if n, ok := v.(int); ok {
+				cfg.Upload.Breakpoints = append(cfg.Upload.Breakpoints, httpapi.Breakpoint{Name: name, Size: n})
+			}
+		}
+		sort.Slice(cfg.Upload.Breakpoints, func(i, j int) bool { return cfg.Upload.Breakpoints[i].Size > cfg.Upload.Breakpoints[j].Size })
+	}
 	if fields, ok := c.Get(up + "register.allowedFields").([]any); ok {
 		for _, f := range fields {
 			if s, ok := f.(string); ok {
@@ -210,7 +230,7 @@ func start(args []string, stderr io.Writer) error {
 		return err
 	}
 	engine := &query.Engine{DB: d, MD: md}
-	apiCfg := apiConfig(conf)
+	apiCfg := apiConfig(conf, *dir)
 	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
 		return err
 	}

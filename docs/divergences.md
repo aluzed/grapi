@@ -42,6 +42,13 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 
 - **Ordre des ids des composants frères** : Strapi crée les entrées d'un composant répétable en parallèle (`p-map`). Sous SQLite, l'ordre des insertions suit alors la profondeur d'imbrication de chaque entrée : une colonne qui contient plus de composants imbriqués est insérée après sa sœur et reçoit un id plus grand. grapi les crée dans l'ordre de la liste. Les ids diffèrent, pas l'ordre des entrées dans la réponse (banc : `components / 024`, `025` en mode grapi).
 
+## Médias (`internal/media`, `internal/httpapi/upload.go`)
+
+- **Octets des images** : sharp (libvips) et l'encodeur Go ne produisent pas les mêmes fichiers. Les dimensions de l'original et des formats sont identiques (même calcul `fit: inside` que sharp), les tailles (`size`, `sizeInBytes`) ne le sont pas. Le banc masque ces deux champs sur les objets image.
+- **Optimisation PNG** : avec `sizeOptimization`, sharp ré-encode un PNG en palette (libimagequant, qualité 80). grapi ré-encode en compression maximale sans quantification et garde l'original si le résultat est plus gros, ce qui est le cas le plus fréquent.
+- **Build Go pur** (en attendant libvips, décision D4) : pas de formats pour les WebP (pas d'encodeur WebP en Go), pas d'orientation EXIF (`autoOrientation`), AVIF et SVG sont reconnus mais ni redimensionnés ni optimisés, comme chez Strapi pour le SVG.
+- **Dossier `public/uploads` absent** : Strapi refuse de démarrer ; grapi le crée au premier upload.
+
 ## API et serveur
 
 - Aucun en-tête `X-Powered-By`, et `/_health` n'envoie pas l'en-tête `strapi` : le serveur ne se signale pas (`API-008`, `API-001`).

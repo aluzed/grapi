@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # MEDIA-001 : Modèle File/Folder et API d'upload (Content API + admin)
@@ -35,6 +35,10 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - [ ] **Compat DB (D3)** : les 4 536 fichiers de la copie de base dev-freelance sont servis avec la même URL.
 - [ ] Un upload au-delà de `sizeLimit` renvoie 413 avec le format d'erreur `API-007`.
 - [ ] Aucun fichier temporaire ne reste après une erreur (TU).
+
+## Avancement
+- Fait : `POST /api/upload` (multipart `files`, `fileInfo`, `ref`/`refId`/`field`), dossier « API Uploads », provider local, `GET /api/upload/files[/:id]`, `DELETE /api/upload/files/:id`, fichiers servis depuis `public/`. Banc dev-freelance en mode grapi : 116/116 (8 uploads PNG).
+- Reste : remplacement (`?id=`) et mise à jour des infos, upload depuis l'API d'un content type (`files.<champ>`), allow/deny lists de `security`, routes admin, événements.
 
 ## Notes techniques
 - Streamer le multipart (`mime/multipart.Reader`) vers un fichier temporaire, sans tout charger en mémoire.

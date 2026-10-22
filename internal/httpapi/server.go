@@ -29,6 +29,7 @@ type Config struct {
 	// WithCount is api.rest.withCount (true by default).
 	WithCount *bool
 	Users     UsersConfig
+	Upload    UploadConfig
 }
 
 // Server serves the content API of every api:: content type.
@@ -77,7 +78,14 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		}
 		s.addContentType(uid, ct)
 	}
+	if cfg.Upload.Breakpoints == nil {
+		s.cfg.Upload.Breakpoints = DefaultBreakpoints
+	}
+	if cfg.Upload.SizeLimit == 0 {
+		s.cfg.Upload.SizeLimit = 1000000000
+	}
 	s.addUsersRoutes()
+	s.addUploadRoutes()
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
 		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales})
@@ -174,6 +182,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		s.serve(w, r, rt, params)
+		return
+	}
+	if (r.Method == http.MethodGet || r.Method == http.MethodHead) && s.servePublic(w, r) {
 		return
 	}
 	// Strapi serves public files on GET /*, so any other method on an

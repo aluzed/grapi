@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # MEDIA-002 : Traitement d'image (miniature, breakpoints, optimisation, orientation, animés)

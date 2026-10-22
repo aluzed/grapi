@@ -127,6 +127,11 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		}
 		req.Header.Set("Authorization", "Bearer "+bearer)
 	}
+	if c.Method != "" && c.Method != http.MethodGet {
+		// Writes in the same millisecond tie on createdAt, and the tie order
+		// is the engine's: keep the timestamps distinct.
+		defer time.Sleep(2 * time.Millisecond)
+	}
 	resp, err := t.Client.Do(req)
 	if err != nil {
 		return Result{Error: err.Error()}, nil

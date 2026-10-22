@@ -55,6 +55,8 @@ Constats tirés des fixtures et des golden (`compat/golden/`). Ils font partie d
 
 - `components / 065-post-republish-copies-components` sous Postgres : l'ordre des ids de l'article et de son composant `seo` varie d'une exécution à l'autre (1 écart sur 3 en mode Strapi contre Strapi). Un écart sur ce cas seul n'est pas une régression.
 
+- Deux écritures dans la même milliseconde ont le même `createdAt`, et un tri sur ce champ les rend dans l'ordre du moteur. grapi est assez rapide pour que cela arrive dans le corpus : le runner attend 2 ms après chaque écriture.
+
 ## Lecture
 
 - `populate[dz]=*` renvoie 400 : il faut des fragments `on` ou `[populate]=*`.
