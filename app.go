@@ -485,6 +485,9 @@ func (p *Project) OpenAPI() ([]byte, error) {
 	return openapi.JSON(openapi.Generate(p.Res.Set, openapi.Options{Info: openapi.Info{Name: pkg.Name, Version: pkg.Version}, Served: api.Serves}))
 }
 
+// GraphQLEnabled reports whether the graphql plugin is on.
+func (p *Project) GraphQLEnabled() bool { return graphQLConfig(p.Conf, p.Dir) != nil }
+
 // Routes is the project's route table, without starting anything.
 func (p *Project) Routes() []httpapi.RouteInfo {
 	engine := &query.Engine{DB: p.DB, MD: p.MD}

@@ -41,6 +41,18 @@ func report(args []string, stdout, stderr io.Writer) error {
 	sort.Strings(cts)
 	sort.Strings(plugins)
 	fmt.Fprintf(stdout, "content types: %d (%s)\nplugins: %s\n", len(cts), strings.Join(cts, ", "), strings.Join(plugins, ", "))
+	value := func(key, def string) string {
+		if v, _ := p.Conf.String(key); v != "" {
+			return v
+		}
+		return def
+	}
+	graphql := "off"
+	if p.GraphQLEnabled() {
+		graphql = "on"
+	}
+	fmt.Fprintf(stdout, "graphql: %s\nopenapi: %s\nupload provider: %s\nemail provider: %s\n", graphql,
+		value("server.openapi.content-api.access", "disabled"), value("plugins.upload.config.provider", "local"), value("plugins.email.config.provider", "sendmail"))
 	_ = stderr
 	return nil
 }
