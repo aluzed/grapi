@@ -184,7 +184,7 @@ status: todo
 ---
 ```
 
-Valeurs possibles : `todo`, `in-progress`, `done`. Le statut change dans le même commit que le code qui le justifie : un ticket passe à `in-progress` au premier commit qui le touche, et à `done` quand tous ses critères d'acceptation sont remplis. `make check-stories` (lancé en CI) refuse un ticket sans statut valide.
+Valeurs possibles : `todo`, `in-progress`, `done`. Le statut change dans le même commit que le code qui le justifie : un ticket passe à `in-progress` au premier commit qui le touche, et à `done` quand tous ses critères d'acceptation sont remplis. `make check-stories` (inclus dans `make lint` et `make ci`) refuse un ticket sans statut valide.
 
 ## Règles transverses
 

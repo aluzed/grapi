@@ -34,7 +34,7 @@ Tout agent qui travaille sur grapi reçoit la liste des chemins interdits et l'i
 
 ## Dépendances
 
-- Go : `go-licenses` en CI, avec cette liste blanche : MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, MPL-2.0. Tout le reste est refusé (GPL, LGPL, AGPL, SSPL, BUSL, etc.).
+- Go : `go-licenses` (`make licenses`, inclus dans `make ci`), avec cette liste blanche : MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, MPL-2.0. Tout le reste est refusé (GPL, LGPL, AGPL, SSPL, BUSL, etc.).
 - npm (admin) : même liste blanche, vérifiée par `license-checker` quand l'admin arrive.
 - `make notice` génère `NOTICE`, la liste des dépendances embarquées dans le binaire avec leurs licences.
 

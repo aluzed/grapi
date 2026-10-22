@@ -1,8 +1,13 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
-GOLANGCI_LINT ?= golangci-lint
+GOBIN := $(shell go env GOPATH)/bin
+GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
+GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: ci build test test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+
+# What GitHub Actions used to run, locally (Actions is off on the repo).
+ci: lint licenses test test-integration-homelab
 
 build:
 	go build -trimpath -ldflags "$(LDFLAGS)" -o dist/grapi ./cmd/grapi
@@ -38,7 +43,7 @@ bench-compat:
 ALLOWED_LICENSES := MIT,BSD-2-Clause,BSD-3-Clause,Apache-2.0,ISC,MPL-2.0
 
 licenses:
-	go-licenses check ./... --allowed_licenses=$(ALLOWED_LICENSES)
+	$(GO_LICENSES) check ./... --allowed_licenses=$(ALLOWED_LICENSES)
 
 notice:
-	go-licenses report ./... --ignore github.com/aluzed/grapi > NOTICE
+	$(GO_LICENSES) report ./... --ignore github.com/aluzed/grapi > NOTICE

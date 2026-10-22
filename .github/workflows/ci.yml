@@ -1,9 +1,8 @@
 name: ci
 
+# Disabled: run `make ci` locally instead.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

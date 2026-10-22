@@ -16,7 +16,8 @@ Pre-alpha: nothing usable yet. The plan lives in [`docs/feasibility.md`](docs/fe
 make build             # dist/grapi
 make test              # unit tests
 make test-integration  # Postgres (GRAPI_TEST_PG_DSN) and SQLite
-make lint              # golangci-lint + em-dash check
+make lint              # golangci-lint + em-dash and story status checks
+make ci                # everything CI would run (GitHub Actions is off): lint, licenses, tests, Postgres on the homelab
 ```
 
 Requires Go 1.26 and golangci-lint v2.14.0.
