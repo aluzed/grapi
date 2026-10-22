@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # EXT-008 : Registre de hooks (series, waterfall, parallel, bail)
@@ -22,8 +22,13 @@ Un registre de hooks typés en Go, avec les quatre sémantiques.
 - Les lifecycles de base (`DB-009`) et les middlewares de documents (`DOC-004`), qui ont leurs propres mécanismes.
 
 ## Critères d'acceptation
-- [ ] Tests des 4 sémantiques, y compris erreurs et annulation par `context`.
-- [ ] Un plugin peut s'abonner à `afterSync` pour créer des données de seed.
+- [x] Tests des 4 sémantiques, y compris erreurs et annulation par `context`.
+- [x] Un plugin peut s'abonner à `afterSync` pour créer des données de seed.
+
+## Avancement
+- Paquet public `hook` (`hook/registry.go`) : `Series`, `Waterfall`, `Parallel` et `Bail` génériques, désinscription par la fonction que rend `Register`, annulation par `context` ; `Registry` (`Register`, `Get`, `Delete`) exposé par `app.Hooks()`. Tests `hook/registry_test.go` (avec `-race`).
+- `strapi::content-types.beforeSync` et `afterSync` (`Parallel[SyncEvent]`, comme Strapi) : `beforeSync` avant la synchronisation du schéma, `afterSync` une fois les services prêts, pour qu'un handler puisse créer des données (`TestPhases`). Strapi appelle `afterSync` juste après la synchronisation, avant ses services ; l'écart est voulu.
+- Reste : `oldContentTypes` dans l'événement (les schémas d'avant la synchronisation).
 
 ## Notes techniques
 - Génériques Go, pas d'`interface{}` dans l'API publique.

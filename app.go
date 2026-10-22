@@ -20,6 +20,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aluzed/grapi/hook"
+
 	"github.com/aluzed/grapi/internal/bootstrap"
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/config"
@@ -530,6 +532,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 			return nil, fmt.Errorf("register: %w", err)
 		}
 	}
+	if err := a.syncHook(ctx, hook.BeforeSync, res.Set); err != nil {
+		return nil, fmt.Errorf("%s: %w", hook.BeforeSync, err)
+	}
 	err := migrate.WithLock(ctx, d, func(ctx context.Context) error {
 		ran, err := migrate.Run(ctx, d, migrate.Options{RunMigrations: true, Log: log})
 		if err != nil {
@@ -628,6 +633,11 @@ func (a *App) setup(p *Project) (*Server, error) {
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
 	if err := a.addRoutes(api); err != nil {
 		return nil, err
+	}
+	// After the sync and once the services exist, so that a handler can seed.
+	if err := a.syncHook(ctx, hook.AfterSync, res.Set); err != nil {
+		a.stopWebhooks()
+		return nil, fmt.Errorf("%s: %w", hook.AfterSync, err)
 	}
 	for _, fn := range a.onBootstrap {
 		if err := fn(ctx); err != nil {

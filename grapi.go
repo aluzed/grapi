@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/aluzed/grapi/hook"
+
 	"github.com/aluzed/grapi/internal/graphql"
 
 	"github.com/aluzed/grapi/internal/db/query"
@@ -38,6 +40,7 @@ type App struct {
 	stopWebhooks        func()
 	cronTasks           []cronTask
 	graphql             graphql.Options
+	hooks               *hook.Registry
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error
@@ -53,7 +56,10 @@ func New(opts Options) *App {
 	if opts.Version == "" {
 		opts.Version = "dev"
 	}
-	return &App{opts: opts, lifecycles: &query.Lifecycles{}}
+	hooks := &hook.Registry{}
+	hooks.Register(hook.BeforeSync, &hook.Parallel[hook.SyncEvent]{})
+	hooks.Register(hook.AfterSync, &hook.Parallel[hook.SyncEvent]{})
+	return &App{opts: opts, lifecycles: &query.Lifecycles{}, hooks: hooks}
 }
 
 // Documents is the Document Service, available once Setup ran (in route

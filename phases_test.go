@@ -10,6 +10,7 @@ import (
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
+	"github.com/aluzed/grapi/hook"
 )
 
 func TestPhases(t *testing.T) {
@@ -34,6 +35,15 @@ func TestPhases(t *testing.T) {
 		_, err := app.Documents().Create(ctx, "api::tag.tag", document.Params{"data": map[string]any{"name": "seeded"}})
 		return err
 	})
+	after := app.Hooks().Get(hook.AfterSync).(*hook.Parallel[hook.SyncEvent])
+	after.Register(func(ctx context.Context, ev hook.SyncEvent) (hook.SyncEvent, error) {
+		calls = append(calls, "afterSync")
+		if len(ev.ContentTypes) == 0 {
+			t.Error("afterSync gets the content types")
+		}
+		_, err := app.Documents().Create(ctx, "api::tag.tag", document.Params{"data": map[string]any{"name": "from afterSync"}})
+		return ev, err
+	})
 	app.OnDestroy(func(context.Context) error {
 		calls = append(calls, "destroy")
 		return nil
@@ -45,7 +55,7 @@ func TestPhases(t *testing.T) {
 	if err := srv.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(calls, ",") != "register,bootstrap,destroy" {
+	if strings.Join(calls, ",") != "register,afterSync,bootstrap,destroy" {
 		t.Fatalf("calls %v", calls)
 	}
 

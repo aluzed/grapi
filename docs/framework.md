@@ -25,6 +25,16 @@ app.OnDestroy(func(ctx context.Context) error { return nil })   // when the serv
 
 An error in `OnRegister` or `OnBootstrap` stops the start.
 
+## Hooks (`strapi.hook`)
+
+```go
+after := app.Hooks().Get(hook.AfterSync).(*hook.Parallel[hook.SyncEvent])
+off := after.Register(func(ctx context.Context, ev hook.SyncEvent) (hook.SyncEvent, error) { return ev, nil })
+app.Hooks().Register("plugin::my-plugin.ready", &hook.Series[string]{})
+```
+
+`hook.Series`, `hook.Waterfall`, `hook.Parallel` and `hook.Bail` are Strapi's four hook kinds. `hook.BeforeSync` runs before the schema sync, `hook.AfterSync` once the services are ready (so it can seed data), before `OnBootstrap`.
+
 ## Row lifecycles (`db.lifecycles.subscribe`)
 
 ```go
