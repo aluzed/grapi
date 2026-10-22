@@ -30,7 +30,8 @@ Le même rate limiting, avec les mêmes clés, la même configuration et le mêm
 
 ## Avancement
 - Fait : middleware `rateLimit` de users-permissions sur auth local, register, forgot, reset, change-password et send-email-confirmation, clé `buildPrefixKey` à l'identique (routes sans identifiant comprises), fenêtre fixe en mémoire comme koa2-ratelimit, en-têtes `X-RateLimit-*` et `Retry-After`, 429 `RateLimitError`, config `ratelimit` (`enabled`, `interval` en ms ou `{min: 5}`, `max`), IP réelle avec `server.proxy`. Banc dev-freelance : la 11e connexion sur `/api/auth/local` donne le même 429 que Strapi (`ratelimit-login-11`).
-- Reste : `POST /api/email`, routes admin (`admin.rateLimit`), stockage Redis.
+- Vérifié dans Strapi 5.59 : `POST /api/email` n'a pas de rate limit ; les routes limitées sont les 6 de grapi plus `/connect/(.*)`, qui viendra avec `AUTH-005`. Les mutations GraphQL d'auth partagent le compteur des routes REST (`PLG-004`).
+- Reste : `/connect/(.*)` (avec `AUTH-005`), routes admin (`admin.rateLimit`), stockage Redis.
 
 ## Notes techniques
 - `ulule/limiter/v3` (mémoire + Redis) ou un compteur maison à fenêtre fixe. Le comportement de koa2-ratelimit est une fenêtre fixe, à reproduire pour ne pas surprendre.
