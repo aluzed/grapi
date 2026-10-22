@@ -56,15 +56,15 @@ func (i Info) MarshalJSON() ([]byte, error) { return withExtra(infoFields(i), i.
 
 // ContentType is a schema.json of src/api or of a plugin, plus what grapi derives from it.
 type ContentType struct {
-	Kind           string                      `json:"kind,omitempty"`
-	CollectionName string                      `json:"collectionName,omitempty"`
-	Info           Info                        `json:"info"`
-	Options        OrderedMap[json.RawMessage] `json:"options,omitzero"`
-	PluginOptions  json.RawMessage             `json:"pluginOptions,omitempty"`
-	Attributes     OrderedMap[*Attribute]      `json:"attributes"`
-	Indexes        json.RawMessage             `json:"indexes,omitempty"`
-	ForeignKeys    json.RawMessage             `json:"foreignKeys,omitempty"`
-	Extra          map[string]json.RawMessage  `json:"-"`
+	Kind           string                       `json:"kind,omitempty"`
+	CollectionName string                       `json:"collectionName,omitempty"`
+	Info           Info                         `json:"info"`
+	Options        *OrderedMap[json.RawMessage] `json:"options,omitempty"`
+	PluginOptions  json.RawMessage              `json:"pluginOptions,omitempty"`
+	Attributes     OrderedMap[*Attribute]       `json:"attributes"`
+	Indexes        json.RawMessage              `json:"indexes,omitempty"`
+	ForeignKeys    json.RawMessage              `json:"foreignKeys,omitempty"`
+	Extra          map[string]json.RawMessage   `json:"-"`
 
 	UID       UID      `json:"-"`
 	ModelName string   `json:"-"`
@@ -122,6 +122,9 @@ func (ct *ContentType) PopulateCreatorFields() bool { return ct.boolOption("popu
 func (ct *ContentType) IsSingleType() bool { return ct.Kind == SingleType }
 
 func (ct *ContentType) boolOption(name string) bool {
+	if ct.Options == nil {
+		return false
+	}
 	raw, ok := ct.Options.Get(name)
 	if !ok {
 		return false

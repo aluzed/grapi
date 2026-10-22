@@ -8,11 +8,11 @@ import (
 // Component is a src/components/<category>/<name>.json file. Components have an
 // id but no documentId, timestamps or publication state.
 type Component struct {
-	CollectionName string                      `json:"collectionName,omitempty"`
-	Info           Info                        `json:"info"`
-	Options        OrderedMap[json.RawMessage] `json:"options,omitzero"`
-	Attributes     OrderedMap[*Attribute]      `json:"attributes"`
-	Extra          map[string]json.RawMessage  `json:"-"`
+	CollectionName string                       `json:"collectionName,omitempty"`
+	Info           Info                         `json:"info"`
+	Options        *OrderedMap[json.RawMessage] `json:"options,omitempty"`
+	Attributes     OrderedMap[*Attribute]       `json:"attributes"`
+	Extra          map[string]json.RawMessage   `json:"-"`
 
 	UID       UID    `json:"-"`
 	Category  string `json:"-"`

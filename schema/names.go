@@ -100,3 +100,6 @@ func snakeCase(s string) string {
 	}
 	return strings.Join(ws, "_")
 }
+
+// KebabCase is lodash's kebabCase.
+func KebabCase(s string) string { return strings.ReplaceAll(snakeCase(s), "_", "-") }
