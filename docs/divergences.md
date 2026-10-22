@@ -38,6 +38,10 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 
 - **Transaction** : une écriture et ses relations sont dans une seule transaction. Strapi insère la ligne, puis rattache les relations dans une seconde transaction et supprime la ligne à la main si cela échoue.
 
+## Document Service : composants (`internal/document/components.go`)
+
+- **Ordre des ids des composants frères** : Strapi crée les entrées d'un composant répétable en parallèle (`p-map`). Sous SQLite, l'ordre des insertions suit alors la profondeur d'imbrication de chaque entrée : une colonne qui contient plus de composants imbriqués est insérée après sa sœur et reçoit un id plus grand. grapi les crée dans l'ordre de la liste. Les ids diffèrent, pas l'ordre des entrées dans la réponse (banc : `components / 024`, `025` en mode grapi).
+
 ## API et serveur
 
 - Aucun en-tête `X-Powered-By`, et `/_health` n'envoie pas l'en-tête `strapi` : le serveur ne se signale pas (`API-008`, `API-001`).

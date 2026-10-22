@@ -57,7 +57,8 @@ func toDB(attrType string, v any, sqlite bool) (any, error) {
 		if sqlite {
 			return t.UnixMilli(), nil
 		}
-		return t, nil
+		// A JavaScript Date holds milliseconds: Strapi never stores finer.
+		return t.Truncate(time.Millisecond), nil
 	}
 	return v, nil
 }

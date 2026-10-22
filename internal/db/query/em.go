@@ -146,6 +146,16 @@ func parsePosition(m map[string]any) *Position {
 			p.keys = append(p.keys, k)
 		}
 	}
+	for k, v := range m {
+		switch k {
+		case "before", "after", "start", "end":
+		default:
+			if p.extra == nil {
+				p.extra = map[string]any{}
+			}
+			p.extra[k] = v
+		}
+	}
 	return p
 }
 

@@ -115,10 +115,16 @@ func start(args []string, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	log := slog.New(slog.NewTextHandler(stderr, nil))
+	level := new(slog.LevelVar)
+	log := slog.New(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
 	conf, err := config.Load(config.Options{Dir: *dir, ConfigDir: *configDir, Log: log})
 	if err != nil {
 		return err
+	}
+	if l, ok := conf.Env.Lookup("GRAPI_LOG_LEVEL", log); ok && l != "" {
+		if err := level.UnmarshalText([]byte(l)); err != nil {
+			return fmt.Errorf("GRAPI_LOG_LEVEL: %w", err)
+		}
 	}
 	res, md, err := builtin.Load(os.DirFS(*dir))
 	if err != nil {

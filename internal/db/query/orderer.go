@@ -1,6 +1,7 @@
 package query
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -24,8 +25,10 @@ func (e *RelationError) Unwrap() error { return ErrInvalidRelation }
 type Position struct {
 	Before, After any
 	Start, End    bool
-	// keys keeps the order of the position's keys for error messages.
-	keys []string
+	// keys keeps the order of the position's keys for error messages, and
+	// extra the other keys (locale, __type) they print too.
+	keys  []string
+	extra map[string]any
 }
 
 func (p *Position) before() string { return idKey(p.Before) }
@@ -70,6 +73,15 @@ func (p *Position) json() string {
 			continue
 		}
 		parts = append(parts, strconv.Quote(k)+":"+v)
+	}
+	extra := make([]string, 0, len(p.extra))
+	for k := range p.extra {
+		extra = append(extra, k)
+	}
+	sort.Strings(extra)
+	for _, k := range extra {
+		b, _ := json.Marshal(p.extra[k])
+		parts = append(parts, strconv.Quote(k)+":"+string(b))
 	}
 	return "{" + strings.Join(parts, ",") + "}"
 }

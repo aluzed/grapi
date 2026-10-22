@@ -175,7 +175,7 @@ grapi)
   else
     set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/b/data.db"
   fi
-  env "$@" HOST=127.0.0.1 PORT="$grapi_port" \
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_LOG_LEVEL=debug \
     "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
   grapi_pid=$!
   i=0
@@ -199,6 +199,10 @@ esac
 
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a"
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
+if [ "$mode" = grapi ]; then
+  mkdir -p "$here/report"
+  cp "$work/grapi.log" "$here/report/$(date +%F)-$fixture-grapi-$db.log"
+fi
 # dump_schema <name> <dir>: the schema Strapi computed (strapi_database_schema)
 # and the physical one, as reference for grapi's metadata and DDL.
 dump_schema() {

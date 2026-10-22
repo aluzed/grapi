@@ -508,6 +508,9 @@ func merge(a, b map[string]any) map[string]any {
 	return out
 }
 
+// DefaultLocale is the i18n default locale code from the core store.
+func (s *Service) DefaultLocale(ctx context.Context) any { return s.defaultLocale(ctx) }
+
 // defaultLocale reads i18n's default locale from the core store.
 func (s *Service) defaultLocale(ctx context.Context) any {
 	var raw string

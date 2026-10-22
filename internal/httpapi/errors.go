@@ -72,18 +72,15 @@ func writeError(w http.ResponseWriter, err error, log *slog.Logger) {
 	if api == nil {
 		log.Error("request failed", "error", err)
 		api = newError(http.StatusInternalServerError, "InternalServerError", "Internal Server Error")
+	} else {
+		log.Debug("request rejected", "status", api.Status, "name", api.Name, "message", api.Message)
 	}
-	details := api.Details
-	if details == nil {
-		details = map[string]any{}
+	body := map[string]any{"status": api.Status, "name": api.Name, "message": api.Message}
+	if api.Status < http.StatusInternalServerError {
+		body["details"] = api.Details
+		if api.Details == nil {
+			body["details"] = map[string]any{}
+		}
 	}
-	writeJSON(w, api.Status, map[string]any{
-		"data": nil,
-		"error": map[string]any{
-			"status":  api.Status,
-			"name":    api.Name,
-			"message": api.Message,
-			"details": details,
-		},
-	})
+	writeJSON(w, api.Status, map[string]any{"data": nil, "error": body})
 }

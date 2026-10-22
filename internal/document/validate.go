@@ -3,6 +3,7 @@ package document
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/jsnum"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -22,10 +24,23 @@ import (
 
 // fieldError is one yup error.
 type fieldError struct {
-	Path    []string `json:"path"`
-	Message string   `json:"message"`
-	Name    string   `json:"name"`
-	Value   any      `json:"value"`
+	Path    []string
+	Message string
+	Name    string
+	Value   any
+}
+
+// undefined is JavaScript's undefined: the key is left out of the JSON.
+type undefinedValue struct{}
+
+var undefined any = undefinedValue{}
+
+func (e fieldError) MarshalJSON() ([]byte, error) {
+	m := map[string]any{"path": e.Path, "message": e.Message, "name": e.Name}
+	if _, undef := e.Value.(undefinedValue); !undef {
+		m["value"] = e.Value
+	}
+	return json.Marshal(m)
 }
 
 type validator struct {
@@ -63,27 +78,56 @@ func (v *validator) failMsg(path []string, value any, msg string) {
 	v.errs = append(v.errs, fieldError{Path: append([]string(nil), path...), Message: msg, Name: "ValidationError", Value: value})
 }
 
-// printValue is yup's printValue with quoted strings.
-func printValue(v any) string {
+func printSimple(v any) (string, bool) {
 	switch x := v.(type) {
 	case nil:
-		return "null"
+		return "null", true
+	case undefinedValue:
+		return "undefined", true
 	case bool:
-		return strconv.FormatBool(x)
+		return strconv.FormatBool(x), true
 	case float64:
-		if math.IsNaN(x) {
-			return "NaN"
-		}
-		return strconv.FormatFloat(x, 'f', -1, 64)
+		return jsnum.String(x), true
 	case string:
-		return `"` + x + `"`
+		return `"` + x + `"`, true
 	}
-	b, _ := json.MarshalIndent(v, "", "  ")
+	return "", false
+}
+
+// printValue is yup's printValue(value, true): inside objects, every
+// primitive goes through JSON.stringify as its printed string.
+func printValue(v any) string {
+	if s, ok := printSimple(v); ok {
+		return s
+	}
+	b, _ := json.MarshalIndent(printedTree(v), "", "  ")
 	return string(b)
 }
 
+func printedTree(v any) any {
+	switch x := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			if _, undef := e.(undefinedValue); !undef {
+				out[k] = printedTree(e)
+			}
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = printedTree(e)
+		}
+		return out
+	}
+	s, _ := printSimple(v)
+	return s
+}
+
 func notType(path []string, typ string, value, original any) string {
-	cast := original != nil && !sameValue(original, value)
+	_, undef := original.(undefinedValue)
+	cast := original != nil && !undef && !sameValue(original, value)
 	msg := fmt.Sprintf("%s must be a `%s` type, but the final value was: `%s`", pathString(path), typ, printValue(value))
 	if cast {
 		return msg + fmt.Sprintf(" (cast from the value `%s`).", printValue(original))
@@ -121,10 +165,13 @@ func writableAttrs(attrs *schema.OrderedMap[*schema.Attribute]) []string {
 func (s *Service) validateEntity(ctx context.Context, ct *schema.ContentType, data map[string]any, creation, isDraft bool, locale any, entityID any) (map[string]any, error) {
 	v := &validator{s: s, ctx: ctx, creation: creation, isDraft: isDraft, locale: locale, root: ct, entityID: entityID}
 	out := v.object(&ct.Attributes, data, nil, nil)
-	if len(v.errs) == 0 {
-		if err := s.checkRelationsExist(ctx, string(ct.UID), out); err != nil {
-			v.errs = append(v.errs, fieldError{Path: []string{}, Message: err.Error(), Name: "ValidationError"})
+	if err := s.checkRelationsExist(ctx, string(ct.UID), out); err != nil {
+		msg := "Invalid relations"
+		var ve *ValidationError
+		if errors.As(err, &ve) {
+			msg = ve.Msg
 		}
+		v.errs = append(v.errs, fieldError{Path: []string{}, Message: msg, Name: "ValidationError", Value: out})
 	}
 	if len(v.errs) == 0 {
 		return out, nil
@@ -179,18 +226,45 @@ func (v *validator) attribute(a *schema.Attribute, name string, value any, prese
 	required := !v.isDraft && boolOf(a.Required)
 	if !present {
 		if required && v.creation {
-			v.fail(path, nil, "${path} must be defined.")
+			v.fail(path, undefined, "${path} must be defined.")
 		}
 		return nil, false
+	}
+	if value == nil && required && !alwaysNullable(a.Type) {
+		v.failMsg(path, nil, notType(path, yupType(a.Type), nil, nil))
+		return nil, true
 	}
 	cast, ok := v.scalar(a, name, value, path, comp)
 	if !ok {
 		return cast, true
 	}
-	if required && !v.creation && cast == nil {
-		v.fail(path, cast, "${path} cannot be null.")
+	if required && cast == nil {
+		if v.creation {
+			v.fail(path, nil, "${path} must be defined.")
+		} else {
+			v.fail(path, nil, "${path} cannot be null.")
+		}
 	}
 	return cast, true
+}
+
+// alwaysNullable are the types whose yup schema accepts null whatever the
+// required option: mixed() and boolean().nullable().
+func alwaysNullable(t string) bool {
+	switch t {
+	case schema.TypeBoolean, schema.TypeJSON, schema.TypeBigInteger, schema.TypeDate, schema.TypeTime,
+		schema.TypeDateTime, schema.TypeTimestamp, schema.TypeBlocks:
+		return true
+	}
+	return false
+}
+
+func yupType(t string) string {
+	switch t {
+	case schema.TypeInteger, schema.TypeFloat, schema.TypeDecimal:
+		return "number"
+	}
+	return "string"
 }
 
 func hasDefault(a *schema.Attribute) bool {
@@ -230,27 +304,25 @@ func isStringType(t string) bool {
 	return false
 }
 
-// yupNumberCast is yup's number transform: strings are parsed with
-// parseFloat after removing spaces, anything else goes through Number.
-func yupNumberCast(v any) any {
+var jsSpace = regexp.MustCompile(`\s`)
+
+// yupNumberCast is yup 0.32's number transform: whitespace removed, then
+// +value, then parseFloat when that is NaN.
+func yupNumberCast(v any) float64 {
 	switch x := v.(type) {
 	case float64:
 		return x
 	case string:
-		t := strings.ReplaceAll(x, " ", "")
+		t := jsSpace.ReplaceAllString(x, "")
 		if t == "" {
 			return math.NaN()
 		}
-		if f, err := strconv.ParseFloat(t, 64); err == nil {
+		if f := jsnum.Number(t); !math.IsNaN(f) {
 			return f
 		}
-		// parseFloat keeps a numeric prefix; Number() of the rest is NaN.
-		return math.NaN()
+		return jsnum.ParseFloat(t)
 	case bool:
-		if x {
-			return float64(1)
-		}
-		return float64(0)
+		return jsnum.ParseFloat(strconv.FormatBool(x))
 	}
 	return math.NaN()
 }
@@ -259,10 +331,6 @@ func (v *validator) scalar(a *schema.Attribute, name string, value any, path []s
 	switch {
 	case isStringType(a.Type):
 		if value == nil {
-			if boolOf(a.Required) && !v.isDraft {
-				v.failMsg(path, nil, notType(path, "string", nil, nil))
-				return nil, false
-			}
 			return nil, true
 		}
 		str, ok := value.(string)
@@ -316,9 +384,12 @@ func (v *validator) scalar(a *schema.Attribute, name string, value any, path []s
 		case nil:
 		case string:
 		case float64:
-			str = strconv.FormatFloat(x, 'f', -1, 64)
+			str = jsnum.String(x)
 		case bool:
 			str = strconv.FormatBool(x)
+		default:
+			v.failMsg(path, value, notType(path, "string", value, nil))
+			return value, false
 		}
 		if s, ok := str.(string); ok || str == nil {
 			for _, e := range a.Enum {
@@ -358,12 +429,12 @@ func (v *validator) scalar(a *schema.Attribute, name string, value any, path []s
 		if value == nil {
 			return nil, true
 		}
-		f := yupNumberCast(value).(float64)
+		f := yupNumberCast(value)
 		if math.IsNaN(f) {
 			v.failMsg(path, f, notType(path, "number", f, value))
 			return value, false
 		}
-		if a.Type == schema.TypeInteger && f != math.Trunc(f) {
+		if a.Type == schema.TypeInteger && !jsnum.IsInteger(f) {
 			v.fail(path, f, "${path} must be an integer")
 		}
 		if a.Type != schema.TypeInteger && math.IsInf(f, 0) {
@@ -471,13 +542,9 @@ func (v *validator) component(a *schema.Attribute, value any, present bool, path
 	if boolOf(a.Repeatable) {
 		if !present {
 			if v.creation {
-				v.fail(path, nil, "${path} must be defined.")
+				v.fail(path, undefined, "${path} must be defined.")
 			}
 			return nil, false
-		}
-		if value == nil {
-			v.fail(path, nil, "${path} cannot be null.")
-			return nil, true
 		}
 		list, ok := value.([]any)
 		if !ok {
@@ -489,11 +556,7 @@ func (v *validator) component(a *schema.Attribute, value any, present bool, path
 			p := append(append([]string(nil), path...), strconv.Itoa(i))
 			m, ok := item.(map[string]any)
 			if !ok {
-				if item == nil {
-					v.fail(p, nil, "${path} cannot be null.")
-				} else {
-					v.failMsg(p, item, notType(p, "object", item, nil))
-				}
+				v.failMsg(p, item, notType(p, "object", item, nil))
 				out[i] = item
 				continue
 			}
@@ -512,14 +575,11 @@ func (v *validator) component(a *schema.Attribute, value any, present bool, path
 	required := !v.isDraft && boolOf(a.Required)
 	if !present {
 		if required && v.creation {
-			v.fail(path, nil, "${path} must be defined.")
+			v.fail(path, undefined, "${path} must be defined.")
 		}
 		return nil, false
 	}
-	if value == nil {
-		if required {
-			v.fail(path, nil, "${path} cannot be null.")
-		}
+	if value == nil && !required {
 		return nil, true
 	}
 	m, ok := value.(map[string]any)
@@ -533,13 +593,9 @@ func (v *validator) component(a *schema.Attribute, value any, present bool, path
 func (v *validator) dynamicZone(a *schema.Attribute, value any, present bool, path []string) (any, bool) {
 	if !present {
 		if v.creation {
-			v.fail(path, nil, "${path} must be defined.")
+			v.fail(path, undefined, "${path} must be defined.")
 		}
 		return nil, false
-	}
-	if value == nil {
-		v.fail(path, nil, "${path} cannot be null.")
-		return nil, true
 	}
 	list, ok := value.([]any)
 	if !ok {
@@ -556,16 +612,24 @@ func (v *validator) dynamicZone(a *schema.Attribute, value any, present bool, pa
 		p := append(append([]string(nil), path...), strconv.Itoa(i))
 		m, ok := item.(map[string]any)
 		if !ok {
-			v.fail(p, item, "${path} cannot be null.")
+			v.failMsg(p, item, notType(p, "object", item, nil))
 			out[i] = item
 			continue
 		}
-		comp, _ := m["__component"].(string)
+		raw, hasKey := m["__component"]
+		comp, isStr := raw.(string)
+		if f, isNum := raw.(float64); isNum {
+			comp, isStr = jsnum.String(f), true
+		}
 		cp := append(append([]string(nil), p...), "__component")
 		c, known := v.s.Set.Component(schema.UID(comp))
 		switch {
-		case m["__component"] == nil:
-			v.fail(cp, nil, "${path} is a required field")
+		case !hasKey:
+			v.fail(cp, undefined, "${path} is a required field")
+		case raw == nil:
+			v.failMsg(cp, nil, notType(cp, "string", nil, nil))
+		case !isStr:
+			v.failMsg(cp, raw, notType(cp, "string", raw, nil))
 		case !known:
 			v.fail(cp, comp, "${path} must be one of the following values: %s", strings.Join(all, ", "))
 		}
@@ -591,7 +655,9 @@ func (v *validator) dynamicZone(a *schema.Attribute, value any, present bool, pa
 func (s *Service) checkRelationsExist(ctx context.Context, uid string, data map[string]any) error {
 	store := map[string][]any{}
 	var order []string
-	s.relationsStore(uid, data, store, &order)
+	if err := s.relationsStore(uid, data, store, &order); err != nil {
+		return err
+	}
 	for _, target := range order {
 		seen := map[string]bool{}
 		var ids []any
@@ -613,10 +679,13 @@ func (s *Service) checkRelationsExist(ctx context.Context, uid string, data map[
 	return nil
 }
 
-func (s *Service) relationsStore(uid string, data map[string]any, store map[string][]any, order *[]string) {
+func (s *Service) relationsStore(uid string, data map[string]any, store map[string][]any, order *[]string) error {
+	if len(data) == 0 {
+		return nil
+	}
 	m := s.model(uid)
-	if m == nil || len(data) == 0 {
-		return
+	if m == nil {
+		return fmt.Errorf("unknown model %s", uid)
 	}
 	for name, a := range m.attrs.All() {
 		value := data[name]
@@ -657,17 +726,23 @@ func (s *Service) relationsStore(uid string, data map[string]any, store map[stri
 			}
 		case schema.TypeComponent:
 			for _, c := range toArray(value) {
-				if cm, ok := c.(map[string]any); ok {
-					s.relationsStore(a.Component, cm, store, order)
+				cm, _ := c.(map[string]any)
+				if err := s.relationsStore(a.Component, cm, store, order); err != nil {
+					return err
 				}
 			}
 		case schema.TypeDynamicZone:
 			for _, c := range toArray(value) {
-				if cm, ok := c.(map[string]any); ok {
-					comp, _ := cm["__component"].(string)
-					s.relationsStore(comp, cm, store, order)
+				cm, _ := c.(map[string]any)
+				comp, _ := cm["__component"].(string)
+				if !truthy(cm["__component"]) {
+					return validation("Cannot build relations store from dynamiczone, component identifier is undefined")
+				}
+				if err := s.relationsStore(comp, cm, store, order); err != nil {
+					return err
 				}
 			}
 		}
 	}
+	return nil
 }

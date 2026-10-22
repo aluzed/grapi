@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # AUTH-002 : Utilisateurs finaux : inscription, connexion, JWT, confirmation e-mail, mot de passe, `/users/me`, CRUD

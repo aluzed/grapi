@@ -216,7 +216,13 @@ func (b *builder) processAttributeWhere(attrType string, where any, operator str
 	return b.processSingleAttributeWhere(attrType, where, operator)
 }
 
+// Subquery is a SQL select used as the operand of $in or $notIn.
+type Subquery struct{ SQL string }
+
 func (b *builder) processSingleAttributeWhere(attrType string, where any, operator string) (any, error) {
+	if sq, ok := where.(Subquery); ok {
+		return sq, nil
+	}
 	m, ok := where.(map[string]any)
 	if !ok {
 		if attrType != "" && slices.Contains(castOperators, operator) && where != nil {
@@ -415,6 +421,14 @@ func (b *builder) applyOperator(column, op string, value any, w *sqlWriter) erro
 			w.args = append(w.args, s.args...)
 		}
 	case "$in", "$notIn":
+		if sq, ok := value.(Subquery); ok {
+			not := ""
+			if op == "$notIn" {
+				not = "not "
+			}
+			w.sql.WriteString(col + " " + not + "in (" + sq.SQL + ")")
+			return nil
+		}
 		list := castArray(value)
 		if len(list) == 0 {
 			if op == "$in" {

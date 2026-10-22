@@ -235,7 +235,7 @@ func (s *Service) addDocumentIDToPopulate(uid string, populate any) any {
 // transformParamsToQuery: the lookup goes into the where.
 func (s *Service) toQuery(uid string, p Params) (query.Params, error) {
 	allowed := Params{}
-	for _, k := range []string{"_q", "sort", "filters", "fields", "populate", "page", "pageSize", "start", "limit", "status", "locale"} {
+	for _, k := range []string{"_q", "sort", "filters", "fields", "populate", "page", "pageSize", "start", "limit", "status", "locale", "publicationFilter", "hasPublishedVersion"} {
 		if v, ok := p[k]; ok {
 			allowed[k] = v
 		}
@@ -248,6 +248,9 @@ func (s *Service) toQuery(uid string, p Params) (query.Params, error) {
 	}
 	q, err := s.TransformQuery(uid, allowed)
 	if err != nil {
+		return q, err
+	}
+	if err := s.withPublicationFilter(&q, allowed); err != nil {
 		return q, err
 	}
 	lookup := lookupOf(p)
@@ -362,7 +365,22 @@ func (s *Service) Count(ctx context.Context, uid string, p Params) (int64, error
 
 // Create creates a document, published right away when status is
 // "published" on a draft and publish type.
+// It runs through the i18n document middleware (syncLocales).
 func (s *Service) Create(ctx context.Context, uid string, p Params) (query.Row, error) {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return nil, err
+	}
+	var out query.Row
+	err = s.syncLocales(ctx, ct, documentParam(p), func() (any, error) {
+		var err error
+		out, err = s.createDocument(ctx, uid, p)
+		return rowID(out), err
+	})
+	return out, err
+}
+
+func (s *Service) createDocument(ctx context.Context, uid string, p Params) (query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -536,7 +554,22 @@ func (s *Service) updateEntry(ctx context.Context, ct *schema.ContentType, entry
 
 // Update updates the draft of documentID (or creates the requested locale of
 // an existing document), then publishes when status is "published".
+// It runs through the i18n document middleware (syncLocales).
 func (s *Service) Update(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return nil, err
+	}
+	var out query.Row
+	err = s.syncLocales(ctx, ct, documentID, func() (any, error) {
+		var err error
+		out, err = s.updateDocument(ctx, uid, documentID, p)
+		return rowID(out), err
+	})
+	return out, err
+}
+
+func (s *Service) updateDocument(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -578,7 +611,11 @@ func (s *Service) Update(ctx context.Context, uid, documentID string, p Params) 
 			}
 			if exists != nil {
 				cp := clone(qp)
-				cp["data"] = merge(dataOf(qp), map[string]any{schema.AttrDocumentID: documentID})
+				merged, err := s.copyNonLocalizedFields(ctx, ct, documentID, merge(dataOf(qp), map[string]any{schema.AttrDocumentID: documentID}))
+				if err != nil {
+					return err
+				}
+				cp["data"] = merged
 				if result, err = s.createEntry(ctx, ct, cp); err != nil {
 					return err
 				}
@@ -690,7 +727,22 @@ func (s *Service) versionLookup(ctx context.Context, ct *schema.ContentType, p P
 
 // Publish publishes the drafts of documentID: their published versions are
 // replaced by copies of the drafts.
+// It runs through the i18n document middleware (syncLocales).
 func (s *Service) Publish(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return nil, err
+	}
+	var out []query.Row
+	err = s.syncLocales(ctx, ct, documentID, func() (any, error) {
+		var err error
+		out, err = s.publishDocument(ctx, uid, documentID, p)
+		return firstRowID(out), err
+	})
+	return out, err
+}
+
+func (s *Service) publishDocument(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -817,7 +869,22 @@ func (s *Service) Unpublish(ctx context.Context, uid, documentID string, p Param
 
 // DiscardDraft replaces the drafts of documentID with copies of its
 // published versions.
+// It runs through the i18n document middleware (syncLocales).
 func (s *Service) DiscardDraft(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return nil, err
+	}
+	var out []query.Row
+	err = s.syncLocales(ctx, ct, documentID, func() (any, error) {
+		var err error
+		out, err = s.discardDraftDocument(ctx, uid, documentID, p)
+		return firstRowID(out), err
+	})
+	return out, err
+}
+
+func (s *Service) discardDraftDocument(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -875,4 +942,26 @@ func (s *Service) DiscardDraft(ctx context.Context, uid, documentID string, p Pa
 func jsonString(v any) (string, error) {
 	b, err := marshalJSON(v)
 	return string(b), err
+}
+
+func rowID(r query.Row) any {
+	if r == nil {
+		return nil
+	}
+	id, _ := r.Get("id")
+	return id
+}
+
+func firstRowID(rows []query.Row) any {
+	if len(rows) == 0 {
+		return nil
+	}
+	return rowID(rows[0])
+}
+
+func documentParam(p Params) string {
+	if d, ok := p["documentId"].(string); ok {
+		return d
+	}
+	return ""
 }

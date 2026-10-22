@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -87,7 +88,7 @@ func joinPath(parent, key string) string {
 
 // restricted reports whether a relation's target cannot be read with auth.
 func (s *Server) restricted(m *schemaModel, key string, a *schema.Attribute, auth *Auth) bool {
-	if a == nil || a.Type != schema.TypeRelation || isMorphTo(a) {
+	if auth == nil || a == nil || a.Type != schema.TypeRelation || isMorphTo(a) {
 		return false
 	}
 	if (key == schema.AttrCreatedBy || key == schema.AttrUpdatedBy) && m.ct != nil && m.ct.PopulateCreatorFields() {
@@ -258,7 +259,10 @@ func (s *Server) validateFields(fields any, m *schemaModel, path string) error {
 			continue
 		}
 		a := m.attr(f)
-		if a == nil || !isScalar(a) || isPrivate(a) || a.Type == schema.TypePassword {
+		if a == nil {
+			return invalidKey(f, path, "fields")
+		}
+		if !isScalar(a) || isPrivate(a) || a.Type == schema.TypePassword {
 			return invalidKey(f, joinPath(path, f), "fields")
 		}
 	}
@@ -302,6 +306,11 @@ func (s *Server) validatePopulate(populate any, m *schemaModel, path string) err
 				return err
 			}
 		}
+		for _, p := range strings.Split(x, ",") {
+			if err := s.privateInPopulatePath(strings.Split(strings.TrimSpace(p), "."), m, path); err != nil {
+				return err
+			}
+		}
 	case []any:
 		for _, e := range x {
 			str, ok := e.(string)
@@ -317,10 +326,13 @@ func (s *Server) validatePopulate(populate any, m *schemaModel, path string) err
 			value := x[key]
 			a := m.attr(key)
 			p := joinPath(path, key)
-			if !isPopulatable(a) {
+			if a == nil {
 				if isBooleanLike(key) {
 					continue
 				}
+				return invalidKey(key, path, "populate")
+			}
+			if !isPopulatable(a) {
 				return invalidKey(key, p, "populate")
 			}
 			if isPrivate(a) {
@@ -366,19 +378,23 @@ func (s *Server) validatePopulateOptions(value any, m *schemaModel, path string)
 	}
 	for _, k := range sortedKeys(vm) {
 		v := vm[k]
+		var nested error
 		switch k {
 		case "sort":
-			if err := s.validateSort(v, m, "", nil); err != nil {
-				return err
-			}
+			nested = s.validateSort(v, m, "", nil)
 		case "filters":
-			if err := s.validateFilters(v, m, "", nil); err != nil {
-				return err
-			}
+			nested = s.validateFilters(v, m, "", nil)
 		case "fields":
-			if err := s.validateFields(v, m, ""); err != nil {
-				return err
+			nested = s.validateFields(v, m, "")
+		}
+		if api, ok := nested.(*APIError); ok && api != nil {
+			if d, ok := api.Details.(map[string]any); ok {
+				d["param"] = "populate"
 			}
+			return api
+		}
+		switch k {
+		case "sort", "filters", "fields":
 		case "populate":
 			if err := s.validatePopulate(v, m, path); err != nil {
 				return err
@@ -398,6 +414,25 @@ func (s *Server) validatePopulateOptions(value any, m *schemaModel, path string)
 			}
 			return api
 		}
+	}
+	return nil
+}
+
+// privateInPopulatePath is the throwPrivate pass over a dot notation path.
+func (s *Server) privateInPopulatePath(segments []string, m *schemaModel, prefix string) error {
+	for _, seg := range segments {
+		if m == nil || seg == "" {
+			return nil
+		}
+		a := m.attr(seg)
+		if a == nil {
+			return nil
+		}
+		prefix = joinPath(prefix, seg)
+		if isPrivate(a) {
+			return invalidKey(seg, prefix, "populate")
+		}
+		m = s.target(a)
 	}
 	return nil
 }
@@ -446,6 +481,11 @@ func (s *Server) validatePopulatePath(segments []string, m *schemaModel, prefix 
 
 // validateQuery is contentAPI.validate.query.
 func (s *Server) validateQuery(q map[string]any, m *schemaModel, auth *Auth) error {
+	if v, ok := q["publicationFilter"]; ok {
+		if _, err := document.ParsePublicationFilter(v); err != nil {
+			return validationError(err.Error(), map[string]any{"source": "query", "param": "publicationFilter"})
+		}
+	}
 	if f, ok := q["filters"]; ok && truthy(f) {
 		if err := s.validateFilters(f, m, "", auth); err != nil {
 			return err
@@ -523,7 +563,13 @@ func (s *Server) sanitizePopulate(populate any, m *schemaModel, auth *Auth) any 
 			if a == nil || isPrivate(a) || s.restricted(m, key, a, auth) {
 				continue
 			}
-			if isMorphTo(a) || a.Type == schema.TypeDynamicZone {
+			if isMorphTo(a) {
+				if v, keep := s.sanitizeMorphPopulate(value, auth); keep {
+					out[key] = v
+				}
+				continue
+			}
+			if a.Type == schema.TypeDynamicZone {
 				if vm, ok := value.(map[string]any); ok {
 					if on, ok := vm["on"].(map[string]any); ok {
 						newOn := map[string]any{}
@@ -553,6 +599,64 @@ func (s *Server) sanitizePopulate(populate any, m *schemaModel, auth *Auth) any 
 		return out
 	}
 	return populate
+}
+
+func isMorphCount(v any) bool { return v == true || v == "true" }
+
+// sanitizeMorphPopulate is removeRestrictedRelations on a morphTo populate:
+// "true" and {count} become a fragment over every readable content type.
+func (s *Server) sanitizeMorphPopulate(value any, auth *Auth) (any, bool) {
+	vm, isObj := value.(map[string]any)
+	on, hasOn := vm["on"].(map[string]any)
+	if isObj && vm["__type"] == nil && hasOn {
+		newOn := map[string]any{}
+		for t, tp := range on {
+			if auth.Allowed(t + ".find") {
+				newOn[t] = s.sanitizePopulateOptions(tp, s.schemaOf(t), auth)
+			}
+		}
+		if len(newOn) == 0 {
+			return nil, false
+		}
+		nv := map[string]any{}
+		for k, v := range vm {
+			nv[k] = v
+		}
+		if c, ok := vm["count"]; ok && isMorphCount(c) {
+			nv["count"] = true
+		}
+		nv["on"] = newOn
+		return nv, true
+	}
+	_, onKey := vm["on"]
+	if isMorphCount(value) || isObj && isMorphCount(vm["count"]) && !onKey {
+		newOn := map[string]any{}
+		for uid := range s.set.ContentTypes.All() {
+			if auth.Allowed(uid + ".find") {
+				newOn[uid] = true
+			}
+		}
+		if len(newOn) == 0 {
+			return nil, false
+		}
+		if !isObj {
+			return map[string]any{"on": newOn}, true
+		}
+		nv := map[string]any{}
+		for k, v := range vm {
+			nv[k] = v
+		}
+		nv["count"] = true
+		nv["on"] = newOn
+		return nv, true
+	}
+	if c, ok := vm["count"].(float64); ok && len(vm) == 1 {
+		return map[string]any{"count": c}, true
+	}
+	if list, ok := value.([]any); ok && len(list) == 0 {
+		return value, true
+	}
+	return nil, false
 }
 
 func (s *Server) sanitizePopulateOptions(value any, m *schemaModel, auth *Auth) any {
@@ -709,7 +813,7 @@ func bodyInvalidKey(key string, path any) *APIError {
 // validateInput is Strapi's validate.input: id and documentId first, then
 // the non writable root attributes, then the unrecognized keys, each pass
 // in body order.
-func (s *Server) validateInput(data map[string]any, keys []string, m *schemaModel) error {
+func (s *Server) validateInput(data map[string]any, keys []string, m *schemaModel, auth *Auth) error {
 	for _, k := range []string{"id", schema.AttrDocumentID} {
 		if _, ok := data[k]; ok {
 			return bodyInvalidKey(k, false)
@@ -726,6 +830,134 @@ func (s *Server) validateInput(data map[string]any, keys []string, m *schemaMode
 			return bodyInvalidKey(k, nil)
 		}
 		if err := s.unrecognizedIn(data[k], a, k); err != nil {
+			return err
+		}
+	}
+	if auth == nil {
+		return nil
+	}
+	for _, k := range keys {
+		if err := s.restrictedRelation(data, k, m.attr(k), m, k, auth); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// restrictedRelation is Strapi's throwRestrictedRelations for one key.
+func (s *Server) restrictedRelation(data map[string]any, key string, a *schema.Attribute, m *schemaModel, path string, auth *Auth) error {
+	if a == nil {
+		return nil
+	}
+	switch a.Type {
+	case schema.TypeComponent:
+		c := s.schemaOf(a.Component)
+		for _, item := range toList(data[key]) {
+			if err := s.restrictedIn(item, c, path, auth); err != nil {
+				return err
+			}
+		}
+		return nil
+	case schema.TypeDynamicZone:
+		for _, item := range toList(data[key]) {
+			im, _ := item.(map[string]any)
+			uid, _ := im["__component"].(string)
+			if err := s.restrictedIn(item, s.schemaOf(uid), path, auth); err != nil {
+				return err
+			}
+		}
+		return nil
+	case schema.TypeRelation:
+	default:
+		return nil
+	}
+	invalid := bodyInvalidKey(key, path)
+	if !isMorphTo(a) {
+		if (key == schema.AttrCreatedBy || key == schema.AttrUpdatedBy) && m.ct != nil && m.ct.PopulateCreatorFields() {
+			return nil
+		}
+		if !auth.Allowed(a.Target + ".find") {
+			return invalid
+		}
+		return nil
+	}
+	value := data[key]
+	if value == true {
+		return nil
+	}
+	elements := func(v any) error {
+		list, ok := v.([]any)
+		if !ok {
+			return invalid
+		}
+		for _, e := range list {
+			em, ok := e.(map[string]any)
+			t, isStr := em["__type"].(string)
+			if !ok || !isStr || !auth.Allowed(t+".find") {
+				return invalid
+			}
+		}
+		return nil
+	}
+	vm, isObj := value.(map[string]any)
+	if isObj && vm["count"] == true {
+		return nil
+	}
+	_, hasConnect := vm["connect"]
+	_, hasSet := vm["set"]
+	_, hasDisconnect := vm["disconnect"]
+	opts, hasOptions := vm["options"]
+	switch {
+	case isObj && (hasConnect || hasSet || hasDisconnect || hasOptions):
+		for _, op := range []string{"connect", "set", "disconnect"} {
+			v := vm[op]
+			if v == nil {
+				v = []any{}
+			}
+			if err := elements(v); err != nil {
+				return err
+			}
+		}
+		if opts == nil {
+			return nil
+		}
+		om, ok := opts.(map[string]any)
+		if !ok {
+			return invalid
+		}
+		for _, k := range sortedKeys(om) {
+			if _, isBool := om[k].(bool); k != "strict" || !isBool {
+				return bodyInvalidKey(k, path)
+			}
+		}
+		return nil
+	case isObj && vm["__type"] == nil && isMapValue(vm["on"]):
+		for _, uid := range sortedKeys(vm["on"].(map[string]any)) {
+			if !auth.Allowed(uid + ".find") {
+				return invalid
+			}
+		}
+		return nil
+	}
+	return elements(value)
+}
+
+func isMapValue(v any) bool {
+	_, ok := v.(map[string]any)
+	return ok
+}
+
+func (s *Server) restrictedIn(item any, m *schemaModel, path string, auth *Auth) error {
+	obj, ok := item.(map[string]any)
+	if !ok || m == nil {
+		return nil
+	}
+	for _, k := range sortedKeys(obj) {
+		a := m.attr(k)
+		if a == nil {
+			continue
+		}
+		if err := s.restrictedRelation(obj, k, a, m, path+"."+k, auth); err != nil {
 			return err
 		}
 	}

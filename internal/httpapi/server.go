@@ -74,7 +74,35 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		}
 		s.addContentType(uid, ct)
 	}
+	if _, ok := set.ContentType(localeUID); ok {
+		base := strings.TrimPrefix(cfg.Prefix, "/")
+		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales})
+	}
 	return s
+}
+
+const localeUID = "plugin::i18n.locale"
+
+// listLocales is the i18n plugin's content API: the raw list, not wrapped
+// in data, with isDefault.
+func (s *Server) listLocales(w http.ResponseWriter, r *http.Request, _ *requestContext) error {
+	rows, err := s.docs.E.FindMany(r.Context(), localeUID, query.Params{})
+	if err != nil {
+		return err
+	}
+	def := s.docs.DefaultLocale(r.Context())
+	out := make([]any, 0, len(rows))
+	for _, row := range rows {
+		m, _ := s.sanitizeOutput(row, s.schemaOf(localeUID), nil).(*schema.OrderedMap[any])
+		if m == nil {
+			continue
+		}
+		code, _ := m.Get("code")
+		m.Set("isDefault", def == code)
+		out = append(out, m)
+	}
+	writeJSON(w, http.StatusOK, out)
+	return nil
 }
 
 func splitPath(p string) []string {
@@ -317,7 +345,7 @@ func (s *Server) writeParams(r *http.Request, rc *requestContext) (document.Para
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateInput(data, keys, rc.model); err != nil {
+	if err := s.validateInput(data, keys, rc.model, rc.auth); err != nil {
 		return nil, err
 	}
 	p := fetchParams(q)

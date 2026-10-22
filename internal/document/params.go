@@ -612,7 +612,21 @@ func (s *Service) convertPopulateObject(populate map[string]any, m *model) (any,
 		}
 		subMap, _ := sub.(map[string]any)
 		if isMorphLike(attr) {
+			keys := make([]string, 0, len(subMap))
 			for k := range subMap {
+				keys = append(keys, k)
+			}
+			switch x := sub.(type) {
+			case string:
+				if x != "" {
+					keys = append(keys, "0")
+				}
+			case []any:
+				if len(x) > 0 {
+					keys = append(keys, "0")
+				}
+			}
+			for _, k := range keys {
 				if k != "populate" && k != "on" && k != "count" {
 					raw, _ := jsonString(sub)
 					return nil, validation("Invalid nested populate for %s.%s (%s). Expected a fragment (\"on\") or \"count\" but found %s", m.info.SingularName, key, m.uid, raw)
