@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -59,7 +60,12 @@ func TestGraphQLExtensions(t *testing.T) {
 		}},
 		ResolversConfig: map[string]grapi.GraphQLResolverConfig{
 			"Query.popularTags": {Scope: "api::tag.tag.find"},
-			"Query.hello":       {Auth: &no},
+			"Query.hello": {Auth: &no, Middlewares: []grapi.GraphQLMiddlewareFunc{
+				func(_ context.Context, _ *grapi.GraphQLFieldContext, next func() (any, error)) (any, error) {
+					v, err := next()
+					return fmt.Sprint(v, "!"), err
+				},
+			}},
 			"Query.homepage": {Auth: &no, Policies: []grapi.GraphQLPolicyFunc{
 				func(context.Context, *grapi.GraphQLFieldContext) (bool, error) { return false, nil },
 			}},
@@ -74,7 +80,7 @@ func TestGraphQLExtensions(t *testing.T) {
 	defer ts.Close()
 
 	_, out := gql(t, ts.URL, `{ hello }`)
-	if out["data"].(map[string]any)["hello"] != "world" {
+	if out["data"].(map[string]any)["hello"] != "world!" {
 		t.Errorf("hello: %v", out)
 	}
 	_, out = gql(t, ts.URL, `{ popularTags { name } }`)

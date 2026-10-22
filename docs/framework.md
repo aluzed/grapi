@@ -88,4 +88,4 @@ gql.Use(grapi.GraphQLExtension{
 })
 ```
 
-The plugin is on when the project depends on `@strapi/plugin-graphql` or sets `plugins.graphql.enabled` (`docs/configuration.md`). Fields of `Query` and `Mutation` always go through the permission check; an `Auth` pointing to false lifts it, `Policies` add checks, on added and on generated fields alike.
+The plugin is on when the project depends on `@strapi/plugin-graphql` or sets `plugins.graphql.enabled` (`docs/configuration.md`). Fields of `Query` and `Mutation` always go through the permission check; an `Auth` pointing to false lifts it, `Middlewares` wrap the resolver (they call `next()`), `Policies` run after them, on added and on generated fields alike.

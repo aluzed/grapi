@@ -493,9 +493,22 @@ func (g *gqlResolver) Resolve(ctx context.Context, fc *graphql.FieldContext) (an
 	if err := g.authorize(fc); err != nil {
 		return nil, err
 	}
-	if err := g.policies(ctx, fc); err != nil {
-		return nil, err
+	// wrap-resolvers: the middlewares, then the policies, then the resolver.
+	mws := fc.Field.Middlewares
+	var run func(i int) (any, error)
+	run = func(i int) (any, error) {
+		if i < len(mws) {
+			return mws[i](ctx, fc, func() (any, error) { return run(i + 1) })
+		}
+		if err := g.policies(ctx, fc); err != nil {
+			return nil, err
+		}
+		return g.resolve(ctx, fc)
 	}
+	return run(0)
+}
+
+func (g *gqlResolver) resolve(ctx context.Context, fc *graphql.FieldContext) (any, error) {
 	f := fc.Field
 	switch f.Kind {
 	case graphql.FieldExtension:

@@ -695,7 +695,7 @@ func (e *executor) field(ctx context.Context, typ *Def, parent any, sel *ast.Fie
 		root, rootArgs = meta, args
 	}
 	var v any
-	plain := meta == nil || meta.Kind == FieldValue && meta.Scope == "" && len(meta.Policies) == 0 && !isRoot(typ)
+	plain := meta == nil || meta.Kind == FieldValue && meta.Scope == "" && len(meta.Policies) == 0 && len(meta.Middlewares) == 0 && !isRoot(typ)
 	if plain {
 		v = valueOf(parent, sel.Name)
 	} else {

@@ -14,6 +14,8 @@ type (
 	GraphQLResolveFunc = graphql.ResolveFunc
 	// GraphQLPolicyFunc is a resolver policy.
 	GraphQLPolicyFunc = graphql.PolicyFunc
+	// GraphQLMiddlewareFunc wraps a resolver.
+	GraphQLMiddlewareFunc = graphql.MiddlewareFunc
 	// GraphQLFieldContext is what resolvers and policies get.
 	GraphQLFieldContext = graphql.FieldContext
 )

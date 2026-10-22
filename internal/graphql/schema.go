@@ -73,9 +73,10 @@ type Field struct {
 	NoAuth bool
 	// Default is an input field's default value.
 	Default string
-	// Resolve and Policies come from extensions.
-	Resolve  ResolveFunc
-	Policies []PolicyFunc
+	// Resolve, Policies and Middlewares come from extensions.
+	Resolve     ResolveFunc
+	Policies    []PolicyFunc
+	Middlewares []MiddlewareFunc
 }
 
 // ResolveFunc resolves an extension field.
@@ -83,6 +84,9 @@ type ResolveFunc func(ctx context.Context, fc *FieldContext) (any, error)
 
 // PolicyFunc is a resolver policy: false or an error rejects the call.
 type PolicyFunc func(ctx context.Context, fc *FieldContext) (bool, error)
+
+// MiddlewareFunc wraps a resolver; next runs the rest of the chain.
+type MiddlewareFunc func(ctx context.Context, fc *FieldContext, next func() (any, error)) (any, error)
 
 // Options customize the generated schema: the extension service of the
 // plugin (strapi.plugin('graphql').service('extension')).
@@ -118,9 +122,10 @@ type Extension struct {
 // ResolverConfig is a resolversConfig entry. Auth false skips the
 // permission check; Scope replaces the one of a generated field.
 type ResolverConfig struct {
-	Auth     *bool
-	Scope    string
-	Policies []PolicyFunc
+	Auth        *bool
+	Scope       string
+	Policies    []PolicyFunc
+	Middlewares []MiddlewareFunc
 }
 
 // EnumValue maps a GraphQL enum value to the stored one.
@@ -348,6 +353,7 @@ func (b *builder) applyExtensions() error {
 				f.Scope = cfg.Scope
 			}
 			f.Policies = append(f.Policies, cfg.Policies...)
+			f.Middlewares = append(f.Middlewares, cfg.Middlewares...)
 		}
 	}
 	return nil
