@@ -23,6 +23,7 @@ import (
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/media"
+	"github.com/aluzed/grapi/internal/media/provider"
 )
 
 const (
@@ -39,6 +40,10 @@ type UploadConfig struct {
 	SizeLimit int64
 	// Breakpoints are the responsive formats, largest first.
 	Breakpoints []Breakpoint
+	// Provider stores the files (the local provider when nil) under
+	// ProviderName, the value of files.provider.
+	Provider     provider.Provider
+	ProviderName string
 }
 
 // Breakpoint is one responsive format.
@@ -276,7 +281,7 @@ func (s *Server) updateFileInfo(w http.ResponseWriter, r *http.Request, rc *requ
 		return err
 	}
 	s.emitMedia("media.update", row)
-	row.Set("isUrlSigned", false)
+	s.signFile(ctx, row)
 	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
 	return nil
 }
@@ -308,7 +313,7 @@ func (s *Server) replaceFile(w http.ResponseWriter, r *http.Request, rc *request
 	if err != nil {
 		return err
 	}
-	row.Set("isUrlSigned", false)
+	s.signFile(ctx, row)
 	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
 	return nil
 }
@@ -346,7 +351,7 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, rc *request
 		if err != nil {
 			return err
 		}
-		row.Set("isUrlSigned", false)
+		s.signFile(ctx, row)
 		out = append(out, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
 	}
 	writeJSON(w, http.StatusCreated, out)
@@ -515,7 +520,7 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			file["height"] = img.PageHeight
 		}
 	}
-	url, err := s.storeLocal(src, hash, ext)
+	url, err := s.store(ctx, src, hash, ext, mimeType, metas["path"])
 	if err != nil {
 		return nil, err
 	}
@@ -533,7 +538,7 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			if err != nil {
 				return err
 			}
-			u, err := s.storeLocal(dst, fh, ext)
+			u, err := s.store(ctx, dst, fh, ext, mimeType, metas["path"])
 			if err != nil {
 				return err
 			}
@@ -561,7 +566,8 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			file["formats"] = formats
 		}
 	}
-	file["provider"] = "local"
+	_, providerName := s.provider()
+	file["provider"] = providerName
 	if existing == nil {
 		row, err := s.docs.E.Create(ctx, fileUID, file, query.Params{})
 		if err == nil {
@@ -580,7 +586,7 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 					continue
 				}
 				if fm, ok := f.(map[string]any); ok {
-					s.removeLocalFile(fm["hash"], fm["ext"])
+					s.removeStored(ctx, fm["hash"], fm["ext"], fm["path"])
 				}
 			}
 		}
@@ -616,34 +622,72 @@ func nilIfEmpty(s string) any {
 	return s
 }
 
-// storeLocal is the local provider: <public>/uploads/<hash><ext>.
-func (s *Server) storeLocal(src, hash, ext string) (string, error) {
-	dir := filepath.Join(s.cfg.Upload.PublicDir, "uploads")
-	if err := os.MkdirAll(dir, 0o750); err != nil {
-		return "", err
+func (s *Server) provider() (provider.Provider, string) {
+	if s.cfg.Upload.Provider != nil {
+		return s.cfg.Upload.Provider, s.cfg.Upload.ProviderName
 	}
-	name := filepath.Base(hash + ext)
+	return &provider.Local{PublicDir: s.cfg.Upload.PublicDir}, "local"
+}
+
+// store hands the file to the provider and returns its URL.
+func (s *Server) store(ctx context.Context, src, hash, ext, mimeType, path string) (string, error) {
 	in, err := os.Open(src) //nolint:gosec // a temporary upload file
 	if err != nil {
 		return "", err
 	}
 	defer func() { _ = in.Close() }()
-	tmp, err := os.CreateTemp(dir, ".upload-")
+	st, err := in.Stat()
 	if err != nil {
 		return "", err
 	}
-	if _, err := io.Copy(tmp, in); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(tmp.Name())
+	p, _ := s.provider()
+	f := &provider.File{Hash: hash, Ext: ext, Mime: mimeType, Path: path, Size: st.Size()}
+	if err := p.Upload(ctx, f, in); err != nil {
 		return "", err
 	}
-	if err := tmp.Close(); err != nil {
-		return "", err
+	return f.URL, nil
+}
+
+// signFile is signFileUrls: private providers get signed URLs, for the
+// file and its formats.
+func (s *Server) signFile(ctx context.Context, row query.Row) {
+	row.Set("isUrlSigned", false)
+	p, name := s.provider()
+	if prov, _ := row.Get("provider"); prov != name || !p.IsPrivate() {
+		return
 	}
-	if err := os.Rename(tmp.Name(), filepath.Join(dir, name)); err != nil {
-		return "", err
+	sign := func(m interface {
+		Get(string) (any, bool)
+	}, set func(string, any),
+	) {
+		hash, _ := m.Get("hash")
+		ext, _ := m.Get("ext")
+		path, _ := m.Get("path")
+		h, _ := hash.(string)
+		e, _ := ext.(string)
+		pa, _ := path.(string)
+		if u, err := p.SignedURL(ctx, &provider.File{Hash: h, Ext: e, Path: pa}); err == nil {
+			set("url", u)
+		}
 	}
-	return "/uploads/" + name, nil
+	sign(row, func(k string, v any) { row.Set(k, v) })
+	if formats, ok := row.Get("formats"); ok {
+		if fm, ok := formats.(map[string]any); ok {
+			for _, f := range fm {
+				if m, ok := f.(map[string]any); ok {
+					sign(mapGetter(m), func(k string, v any) { m[k] = v })
+				}
+			}
+		}
+	}
+	row.Set("isUrlSigned", true)
+}
+
+type mapGetter map[string]any
+
+func (m mapGetter) Get(k string) (any, bool) {
+	v, ok := m[k]
+	return v, ok
 }
 
 func (s *Server) uploadFind(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
@@ -662,7 +706,7 @@ func (s *Server) uploadFind(w http.ResponseWriter, r *http.Request, rc *requestC
 	}
 	out := make([]any, 0, len(rows))
 	for _, row := range rows {
-		row.Set("isUrlSigned", false)
+		s.signFile(r.Context(), row)
 		out = append(out, s.sanitizeOutput(row, rc.model, rc.auth))
 	}
 	writeJSON(w, http.StatusOK, out)
@@ -707,7 +751,7 @@ func (s *Server) uploadFindOne(w http.ResponseWriter, r *http.Request, rc *reque
 	if row == nil {
 		return newError(http.StatusNotFound, "NotFoundError", "file.notFound")
 	}
-	row.Set("isUrlSigned", false)
+	s.signFile(r.Context(), row)
 	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, rc.model, rc.auth))
 	return nil
 }
@@ -727,31 +771,39 @@ func (s *Server) uploadDestroy(w http.ResponseWriter, r *http.Request, rc *reque
 	if row == nil {
 		return newError(http.StatusNotFound, "NotFoundError", "file.notFound")
 	}
-	if provider, _ := row.Get("provider"); provider == "local" {
-		s.removeLocal(row)
-	}
+	s.removeFromProvider(ctx, row)
 	if _, err := s.docs.E.Delete(ctx, fileUID, map[string]any{"id": id}, query.Params{}); err != nil {
 		return err
 	}
 	s.emitMedia("media.delete", row)
-	row.Set("isUrlSigned", false)
+	s.signFile(ctx, row)
 	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
 	return nil
 }
 
-func (s *Server) removeLocalFile(hash, ext any) {
+func (s *Server) removeStored(ctx context.Context, hash, ext, path any) {
 	h, _ := hash.(string)
 	e, _ := ext.(string)
-	if h != "" {
-		_ = os.Remove(filepath.Join(s.cfg.Upload.PublicDir, "uploads", filepath.Base(h+e)))
+	pa, _ := path.(string)
+	if h == "" {
+		return
+	}
+	p, _ := s.provider()
+	if err := p.Delete(ctx, &provider.File{Hash: h, Ext: e, Path: pa}); err != nil {
+		s.log.Error("upload: could not delete a file from the provider", "hash", h, "error", err)
 	}
 }
 
-func (s *Server) removeLocal(row query.Row) {
-	remove := s.removeLocalFile
+// removeFromProvider deletes a file and its formats when they belong to
+// the configured provider.
+func (s *Server) removeFromProvider(ctx context.Context, row query.Row) {
+	_, name := s.provider()
+	if prov, _ := row.Get("provider"); prov != name {
+		return
+	}
 	hash, _ := row.Get("hash")
 	ext, _ := row.Get("ext")
-	remove(hash, ext)
+	s.removeStored(ctx, hash, ext, nil)
 	formats, _ := row.Get("formats")
 	if fm, ok := formats.(map[string]any); ok {
 		keys := make([]string, 0, len(fm))
@@ -761,7 +813,7 @@ func (s *Server) removeLocal(row query.Row) {
 		sort.Strings(keys)
 		for _, k := range keys {
 			if f, ok := fm[k].(map[string]any); ok {
-				remove(f["hash"], f["ext"])
+				s.removeStored(ctx, f["hash"], f["ext"], f["path"])
 			}
 		}
 	}

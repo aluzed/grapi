@@ -39,7 +39,11 @@ Définir l'interface provider de grapi et fournir le provider local.
 - [ ] **Compat DB (D3)** : les URLs `/uploads/...` d'une base Strapi existante sont servies depuis le même dossier, sans renommage.
 - [ ] Un provider custom enregistré en Go est utilisé à la place du local (TU avec un provider factice).
 - [ ] Le remplacement d'un fichier local garde le même `hash` et met à jour les formats (intégration).
-- [ ] Une tentative de traversée de chemin (`../`) dans un nom de fichier est neutralisée (TU).
+- [x] Une tentative de traversée de chemin (`../`) dans un nom de fichier est neutralisée (TU).
+
+## Avancement
+- Fait : `internal/media/provider` (`Upload`, `Delete`, `IsPrivate`, `SignedURL`), provider local (écriture atomique, suppression idempotente), choix du provider par `plugins.upload.config.provider`, URL signées dans les réponses des routes upload (`isUrlSigned`), suppression limitée aux fichiers du provider configuré.
+- Reste : `Replacer`, `SizeChecker`, enregistrement de providers custom en mode framework, signature des URL dans les populate du Content API.
 
 ## Notes techniques
 - Écriture atomique : fichier temporaire dans le même dossier, puis `os.Rename`.

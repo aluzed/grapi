@@ -34,6 +34,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `middlewares`: a list of names or `{name, config}`. grapi runs `strapi::security` (`contentSecurityPolicy.directives`, or `false` to drop a header) and `strapi::cors` (`origin`, `methods`, `headers`, `expose`, `credentials`, `maxAge`); leaving one out of the list turns it off, as in Strapi. Without the file, both run with Strapi's defaults.
 
+`plugins.upload.config`: `provider` (`local` by default, or `aws-s3` with `providerOptions` as `@strapi/provider-upload-aws-s3` takes them: `baseUrl`, `rootPath`, `s3Options.{region,endpoint,forcePathStyle,credentials,params.{Bucket,ACL,signedUrlExpires}}`), `sizeLimit` (bytes), `breakpoints`.
+
 Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a generated Strapi project.
 
 ## Variables

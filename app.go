@@ -31,6 +31,7 @@ import (
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/events"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/internal/media/provider"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/registry"
 	"github.com/aluzed/grapi/internal/webhooks"
@@ -143,6 +144,14 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	if n, ok := c.Int("plugins.upload.config.sizeLimit"); ok {
 		cfg.Upload.SizeLimit = int64(n)
 	}
+	if name, _ := c.String("plugins.upload.config.provider"); name != "" && name != "local" {
+		prov, err := uploadProvider(c, name)
+		if err != nil {
+			slog.Default().Error("upload provider", "error", err)
+		} else {
+			cfg.Upload.Provider, cfg.Upload.ProviderName = prov, name
+		}
+	}
 	if bps, ok := c.Get("plugins.upload.config.breakpoints").(map[string]any); ok {
 		for name, v := range bps {
 			if n, ok := v.(int); ok {
@@ -163,6 +172,49 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 	}
 	return cfg
+}
+
+// uploadProvider builds the provider of plugins.upload.config: aws-s3
+// takes @strapi/provider-upload-aws-s3's providerOptions.
+func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
+	if name != "aws-s3" {
+		return nil, fmt.Errorf("upload provider %q is not supported yet", name)
+	}
+	base := "plugins.upload.config.providerOptions."
+	str := func(keys ...string) string {
+		for _, k := range keys {
+			if v, ok := c.String(base + k); ok && v != "" {
+				return v
+			}
+		}
+		return ""
+	}
+	p := &provider.S3{
+		BaseURL:      str("baseUrl"),
+		RootPath:     str("rootPath"),
+		Region:       str("s3Options.region", "region"),
+		Endpoint:     str("s3Options.endpoint", "endpoint"),
+		AccessKey:    str("s3Options.credentials.accessKeyId", "accessKeyId"),
+		Secret:       str("s3Options.credentials.secretAccessKey", "secretAccessKey"),
+		SessionToken: str("s3Options.credentials.sessionToken"),
+		Bucket:       str("s3Options.params.Bucket", "params.Bucket"),
+		ACL:          "public-read",
+	}
+	p.ForcePathStyle, _ = c.Bool(base + "s3Options.forcePathStyle")
+	for _, k := range []string{"s3Options.params", "params"} {
+		if params, ok := c.Get(base + k).(map[string]any); ok {
+			if acl, has := params["ACL"]; has {
+				p.ACL, _ = acl.(string)
+			}
+			if exp, ok := params["signedUrlExpires"].(int); ok {
+				p.SignedURLExpires = time.Duration(exp) * time.Second
+			}
+		}
+	}
+	if p.Bucket == "" {
+		return nil, fmt.Errorf("upload AWS S3 provider: `params` are required in the config object")
+	}
+	return p, nil
 }
 
 // rateLimitConfig reads a koa2-ratelimit config: interval in ms or as

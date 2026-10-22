@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # MEDIA-004 : Provider S3 (R2, MinIO, privé, URLs signées)
@@ -29,6 +29,10 @@ Un provider S3 avec les mêmes options de configuration, pour qu'une config Stra
 - [ ] Bucket privé : les URLs renvoyées par l'API sont signées et expirent (intégration).
 - [ ] Avec `baseUrl`, les URLs pointent sur le CDN, formats compris.
 - [ ] Un upload de 200 Mo passe en multipart sans dépasser 100 Mo de RSS.
+
+## Avancement
+- Fait : provider `aws-s3` sans SDK (SigV4 maison, vérifiée sur le vecteur officiel d'AWS) : clé `rootPath/path/hash+ext`, ACL `public-read` par défaut (absente si `ACL` est vidée, `private` donne des URL signées, 15 minutes par défaut), `endpoint` et `forcePathStyle` pour les stockages compatibles, `baseUrl` pour un CDN, options `s3Options` et anciennes options à la racine. Test d'intégration (`s3_integration_test.go`) passé le 2026-10-22 contre RustFS sur le homelab (MinIO n'est plus distribué en image) : upload, lecture signée de l'original et de la miniature, suppression.
+- Reste : envoi multipart pour les gros fichiers, options avancées du provider (checksum, classe de stockage, chiffrement, tags).
 
 ## Notes techniques
 - `aws-sdk-go-v2` : `service/s3`, `feature/s3/manager` (multipart) et `s3.NewPresignClient`.
