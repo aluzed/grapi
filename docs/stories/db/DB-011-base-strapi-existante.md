@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DB-011 : Ouverture d'une base Strapi 5 existante sans migration
@@ -31,11 +31,16 @@ Démarrer grapi sur une base créée et utilisée par Strapi 5.59, sans aucune m
 - Les bases v4.
 
 ## Critères d'acceptation
-- [ ] Sur une copie de la base de prod de dev-freelance (sur le homelab, jamais sur le serveur de prod), `grapi --dry-run-sync` renvoie `UNCHANGED`.
-- [ ] `grapi db:check` sur cette copie ne remonte aucune erreur.
+- [x] Sur une copie de la base de prod de dev-freelance (sur le homelab, jamais sur le serveur de prod), `grapi --dry-run-sync` renvoie `UNCHANGED`.
+- [x] `grapi db:check` sur cette copie ne remonte aucune erreur.
 - [ ] Aller-retour : Strapi 5.59 crée la base, grapi crée, modifie et publie 20 entrées (relations, composants, médias), puis Strapi redémarre sur la même base sans changement de schéma. Le banc donne alors des réponses identiques depuis les deux moteurs.
 - [ ] Les comptes admin et utilisateurs finaux existants se connectent avec leur mot de passe sous grapi (dépend de `AUTH-002` et `AUTH-007`, test reporté en phase 2 pour l'admin).
-- [ ] Le dump SQL de schéma (`pg_dump --schema-only`) est identique avant et après un démarrage de grapi.
+- [x] Le dump SQL de schéma (`pg_dump --schema-only`) est identique avant et après un démarrage de grapi.
+
+## Avancement
+- 2026-10-22, copie de prod sur le homelab (supprimée ensuite) : `grapi db:sync --dry-run` donne `UNCHANGED` avec le hash stocké identique, `grapi db:check` donne `OK`, et après un `grapi start` le dump `--schema-only` (hors jeton `\restrict` aléatoire de pg_dump) ainsi que `strapi_database_schema`, `strapi_migrations_internal` et `strapi_core_store_settings` sont inchangés.
+- Le hash coïncide parce que grapi reprend du schéma stocké les tables des fonctions qu'il ne reproduit pas (`strapi_release*`, `strapi_workflows*`, `strapi_history_*`, `strapi_ai_*`).
+- Reste : l'aller-retour Strapi, grapi, Strapi avec 20 entrées écrites par grapi ; la connexion des comptes existants.
 
 ## Notes techniques
 - Toujours travailler sur une copie : la base de prod est copiée en flux vers le homelab (serveur vers homelab, sans jamais afficher de secret), comme pour les tests de la mise à jour Strapi 5.59.

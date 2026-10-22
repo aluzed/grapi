@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -513,10 +513,10 @@ func (s *Service) DefaultLocale(ctx context.Context) any { return s.defaultLocal
 
 // defaultLocale reads i18n's default locale from the core store.
 func (s *Service) defaultLocale(ctx context.Context) any {
-	var raw string
-	err := s.E.DB.QueryRow(ctx, `select "value" from "strapi_core_store_settings" where "key" = 'plugin_i18n_default_locale'`).Scan(&raw)
-	if err != nil {
+	var code any
+	found, err := store.Store{DB: s.E.DB}.Get(ctx, store.Scope{Type: "plugin", Name: "i18n"}, "default_locale", &code)
+	if err != nil || !found {
 		return "en"
 	}
-	return strings.Trim(raw, `"`)
+	return code
 }

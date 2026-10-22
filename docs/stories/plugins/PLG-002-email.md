@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # PLG-002 : E-mail : service, templates, providers

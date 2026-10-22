@@ -25,6 +25,7 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 ## Base de données : synchronisation du schéma (`internal/db/schemasync`)
 
 - **Tables des fonctions que grapi ne reproduit pas** (`strapi_release*`, `strapi_workflows*`, `strapi_history_*`, `strapi_ai_*`) : elles ne sont jamais supprimées, même avec `forceMigration` (actif par défaut chez Strapi). Sans cela, ouvrir une base Strapi avec grapi détruirait les releases, les workflows et l'historique. Strapi les supprimerait si leur fonction disparaissait du projet.
+- **Hash du schéma stocké** : grapi ajoute à son schéma les tables de ces fonctions telles que le schéma stocké en base les décrit (jamais depuis le code de Strapi). Le hash coïncide alors avec celui de Strapi : ouvrir une base Strapi ne réécrit rien, et Strapi retrouve son schéma au redémarrage.
 - **Index modifié sans `forceMigration`** : Strapi ne supprime pas l'ancien index mais tente de recréer le nouveau, et la synchro échoue (« already exists »). grapi garde l'ancien index et le signale dans les logs.
 - **Changement de type d'une colonne sous SQLite** : comme knex, grapi reconstruit la table (nouvelle table, copie, échange). knex régénère tout le `CREATE TABLE` ; grapi ne réécrit que les colonnes modifiées et garde le reste du texte tel quel. La structure obtenue est la même.
 - **Suppression d'une colonne sous SQLite** : `ALTER TABLE ... DROP COLUMN` natif, là où knex reconstruit la table.

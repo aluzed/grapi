@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # MIG-002 : Recette dev-freelance
@@ -38,11 +38,16 @@ Démontrer que le front Go de dev-freelance fonctionne à l'identique contre gra
 ## Critères d'acceptation
 - [ ] Les hash des 7 endpoints sont **identiques** entre Strapi 5.59 et grapi sur la même copie de base : posts, categories, themes, sticky-posts, memes, projects, theme-pages.
 - [ ] Les 21 cas de caractérisation donnent 0 différence sur les chemins REST et Document Service.
-- [ ] Le corpus du banc `devfreelance` est entièrement OK, ou chaque DIFF restant est listé dans `docs/divergences.md` avec sa justification.
+- [x] Le corpus du banc `devfreelance` est entièrement OK, ou chaque DIFF restant est listé dans `docs/divergences.md` avec sa justification.
 - [ ] Le front `apps/web` rend les 7 pages types à l'identique contre les deux moteurs.
-- [ ] Un upload d'image via l'API produit les formats `thumbnail` et `small` (comme en prod).
+- [x] Un upload d'image via l'API produit les formats `thumbnail` et `small` (comme en prod).
 - [ ] Le rapport de perf indique req/s, p50/p99 et la mémoire au repos, au pic et après retour au repos, pour Strapi sous Bun et pour grapi.
-- [ ] Le homelab est nettoyé après la recette : conteneurs, images, copies de base et dossiers temporaires.
+- [x] Le homelab est nettoyé après la recette : conteneurs, images, copies de base et dossiers temporaires.
+
+## Avancement
+- 2026-10-22 : sur une copie de la base de prod (homelab, supprimée ensuite), les 41 appels GET du front (`compat/corpus/devfreelance-prod.yaml`, slugs tirés des données) donnent 44/44 réponses identiques entre Strapi 5.59 (image de référence du banc avec les schémas réels de dev-freelance) et grapi. Les contrôleurs custom de dev-freelance (JS) ne sont pas dans la comparaison : ils attendent `EXT-003`.
+- Banc `devfreelance` en mode grapi : 116/116 sous SQLite et Postgres.
+- Reste : le front `apps/web` contre les deux moteurs, le rapport de perf, les 21 cas de caractérisation.
 
 ## Notes techniques
 - La génération IA appelle un vrai LLM : utiliser un faux endpoint en test (même forme de réponse), et ne faire qu'un seul essai réel, comme pour la vérification des middlewares de la 5.59.

@@ -10,6 +10,16 @@ The public content API stays wire-compatible with Strapi 5, so an existing front
 
 Pre-alpha. `grapi start` serves the REST content API of a Strapi project (configuration: [`docs/configuration.md`](docs/configuration.md)). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
 
+## Commands
+
+```sh
+grapi start -dir <project> [-config <dir>]    # serve the content API
+grapi db:sync --dry-run -dir <project>       # what the start-up schema sync would change (read only)
+grapi db:check -dir <project>                # consistency report: schema, documentIds, orphan links, password hashes
+```
+
+On a database created by Strapi 5, run `db:sync --dry-run` and `db:check` first, on a copy.
+
 ## Development
 
 ```sh

@@ -30,3 +30,14 @@ func TestParseQueryMatchesQs(t *testing.T) {
 		}
 	}
 }
+
+func FuzzParseQuery(f *testing.F) {
+	for _, seed := range []string{"a[b][c]=1", "a[]=1&a[]=2", "a[[]b]=x", "%E9=%ZZ", "a[101]=x", "__proto__[x]=1"} {
+		f.Add(seed)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		if _, err := json.Marshal(ParseQuery(s)); err != nil {
+			t.Fatalf("%q: %v", s, err)
+		}
+	})
+}

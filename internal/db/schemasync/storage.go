@@ -48,11 +48,25 @@ func ensureSchemaTable(ctx context.Context, d *db.DB) error {
 	return err
 }
 
-// ReadStored returns the last stored schema, or nil when there is none.
+// ReadStored returns the last stored schema, or nil when there is none. It
+// creates the schema table when missing, as Strapi does.
 func ReadStored(ctx context.Context, d *db.DB) (*Stored, error) {
 	if err := ensureSchemaTable(ctx, d); err != nil {
 		return nil, err
 	}
+	return readStored(ctx, d)
+}
+
+// peekStored is ReadStored without writing anything.
+func peekStored(ctx context.Context, d *db.DB) (*Stored, error) {
+	ok, err := hasTable(ctx, d, schemaTable)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return readStored(ctx, d)
+}
+
+func readStored(ctx context.Context, d *db.DB) (*Stored, error) {
 	var (
 		raw  string
 		hash sql.NullString

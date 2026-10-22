@@ -21,6 +21,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/media"
 )
 
@@ -283,13 +284,11 @@ func fileInfos(raw []string, n int) ([]map[string]any, error) {
 
 func (s *Server) uploadSettings(ctx context.Context, v *uploadSettings) error {
 	*v = uploadSettings{SizeOptimization: true, ResponsiveDimensions: true}
-	var raw *string
-	err := s.auth.db.QueryRow(ctx, `select "value" from "strapi_core_store_settings" where "key" = `+s.auth.db.Dialect.Placeholder(1), "plugin_upload_settings").Scan(&raw)
-	if err != nil || raw == nil {
-		return nil //nolint:nilerr // no stored settings: the plugin defaults
-	}
-	return json.Unmarshal([]byte(*raw), v)
+	_, err := store.Store{DB: s.auth.db}.Get(ctx, uploadScope, "settings", v)
+	return err
 }
+
+var uploadScope = store.Scope{Type: "plugin", Name: "upload"}
 
 // apiUploadFolder is the "API Uploads" folder, created on first use and
 // remembered in the core store.
@@ -297,11 +296,9 @@ func (s *Server) apiUploadFolder(ctx context.Context) (query.Row, error) {
 	var stored struct {
 		ID any `json:"id"`
 	}
-	var raw *string
-	key := "plugin_upload_api-folder"
-	err := s.auth.db.QueryRow(ctx, `select "value" from "strapi_core_store_settings" where "key" = `+s.auth.db.Dialect.Placeholder(1), key).Scan(&raw)
-	if err == nil && raw != nil {
-		_ = json.Unmarshal([]byte(*raw), &stored)
+	st := store.Store{DB: s.auth.db}
+	if _, err := st.Get(ctx, uploadScope, "api-folder", &stored); err != nil {
+		return nil, err
 	}
 	if stored.ID != nil {
 		folder, err := s.docs.E.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": stored.ID}})
@@ -333,13 +330,7 @@ func (s *Server) apiUploadFolder(ctx context.Context) (query.Row, error) {
 		return nil, err
 	}
 	id, _ := folder.Get("id")
-	value, _ := json.Marshal(map[string]any{"id": id})
-	if stored.ID != nil || raw != nil {
-		_, err = s.auth.db.Exec(ctx, `update "strapi_core_store_settings" set "value" = `+s.auth.db.Dialect.Placeholder(1)+` where "key" = `+s.auth.db.Dialect.Placeholder(2), string(value), key)
-	} else {
-		_, err = s.auth.db.Exec(ctx, `insert into "strapi_core_store_settings" ("key", "value", "type") values (`+s.auth.db.Dialect.Placeholder(1)+`, `+s.auth.db.Dialect.Placeholder(2)+`, 'object')`, key, string(value))
-	}
-	return folder, err
+	return folder, st.Set(ctx, uploadScope, "api-folder", map[string]any{"id": id})
 }
 
 func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]any, folderPath any, metas map[string]string, settings uploadSettings, dir string) (query.Row, error) {

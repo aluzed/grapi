@@ -22,11 +22,13 @@ import (
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/db"
+	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/migrate"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/schemasync"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/internal/registry"
 )
 
 // dbConfig reads database.connection, or the DATABASE_* variables of a
@@ -173,41 +175,66 @@ func ensureJWTSecret(cfg *httpapi.Config, c *config.Config, dir string, log *slo
 	return nil
 }
 
-func start(args []string, stderr io.Writer) error {
-	fs := flag.NewFlagSet("start", flag.ContinueOnError)
-	dir := fs.String("dir", ".", "project directory (the one holding src/)")
-	configDir := fs.String("config", "", "configuration directory (default <dir>/config)")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
+// project is a loaded Strapi project: its config, schemas and database.
+type project struct {
+	dir     string
+	conf    *config.Config
+	res     *registry.Result
+	md      *metadata.Metadata
+	desired *metadata.Schema
+	db      *db.DB
+	log     *slog.Logger
+}
+
+func loadProject(dir, configDir string, stderr io.Writer) (*project, error) {
 	level := new(slog.LevelVar)
 	log := slog.New(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
-	conf, err := config.Load(config.Options{Dir: *dir, ConfigDir: *configDir, Log: log})
+	conf, err := config.Load(config.Options{Dir: dir, ConfigDir: configDir, Log: log})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if l, ok := conf.Env.Lookup("GRAPI_LOG_LEVEL", log); ok && l != "" {
 		if err := level.UnmarshalText([]byte(l)); err != nil {
-			return fmt.Errorf("GRAPI_LOG_LEVEL: %w", err)
+			return nil, fmt.Errorf("GRAPI_LOG_LEVEL: %w", err)
 		}
 	}
-	res, md, err := builtin.Load(os.DirFS(*dir))
+	res, md, err := builtin.Load(os.DirFS(dir))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, w := range res.Warnings {
 		log.Warn(w)
 	}
 	desired, err := md.Schema()
 	if err != nil {
+		return nil, err
+	}
+	d, err := db.Open(context.Background(), dbConfig(conf, dir), log)
+	if err != nil {
+		return nil, err
+	}
+	return &project{dir: dir, conf: conf, res: res, md: md, desired: desired, db: d, log: log}, nil
+}
+
+func projectFlags(name string) (*flag.FlagSet, *string, *string) {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	dir := fs.String("dir", ".", "project directory (the one holding src/)")
+	configDir := fs.String("config", "", "configuration directory (default <dir>/config)")
+	return fs, dir, configDir
+}
+
+func start(args []string, stderr io.Writer) error {
+	fs, dirFlag, configDir := projectFlags("start")
+	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	ctx := context.Background()
-	d, err := db.Open(ctx, dbConfig(conf, *dir), log)
+	p, err := loadProject(*dirFlag, *configDir, stderr)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = d.Close() }()
+	defer func() { _ = p.db.Close() }()
+	dir, conf, res, md, desired, d, log := &p.dir, p.conf, p.res, p.md, p.desired, p.db, p.log
+	ctx := context.Background()
 	err = migrate.WithLock(ctx, d, func(ctx context.Context) error {
 		ran, err := migrate.Run(ctx, d, migrate.Options{RunMigrations: true, Log: log})
 		if err != nil {
@@ -231,6 +258,13 @@ func start(args []string, stderr io.Writer) error {
 	}
 	engine := &query.Engine{DB: d, MD: md}
 	apiCfg := apiConfig(conf, *dir)
+	if list, ok := conf.Get("middlewares").([]any); ok {
+		mw, err := httpapi.ParseMiddlewares(list)
+		if err != nil {
+			return fmt.Errorf("config middlewares: %w", err)
+		}
+		apiCfg.Middlewares = &mw
+	}
 	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
 		return err
 	}

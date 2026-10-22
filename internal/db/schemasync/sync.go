@@ -33,6 +33,7 @@ func Sync(ctx context.Context, d *db.DB, desired *metadata.Schema, opts Options)
 	if err != nil {
 		return "", fmt.Errorf("read stored schema: %w", err)
 	}
+	desired = withUnimplementedTables(desired, stored)
 	hash, err := Hash(desired)
 	if err != nil {
 		return "", err
@@ -40,19 +41,10 @@ func Sync(ctx context.Context, d *db.DB, desired *metadata.Schema, opts Options)
 	if !opts.MigrationsRan && stored != nil && stored.Hash == hash {
 		return Unchanged, nil
 	}
-	database, err := Inspect(ctx, d, opts.Schema)
-	if err != nil {
-		return "", fmt.Errorf("inspect database: %w", err)
-	}
-	persisted, err := persistedTables(ctx, d)
+	changes, err := plan(ctx, d, stored, desired, opts)
 	if err != nil {
 		return "", err
 	}
-	var previous *metadata.Schema
-	if stored != nil {
-		previous = stored.Schema
-	}
-	changes := Diff(dialect{d.Dialect}, database, previous, desired, persisted)
 	if changes.Status == Changed {
 		if err := apply(ctx, d, changes, opts); err != nil {
 			return "", err
@@ -62,6 +54,65 @@ func Sync(ctx context.Context, d *db.DB, desired *metadata.Schema, opts Options)
 		return "", fmt.Errorf("store schema: %w", err)
 	}
 	return changes.Status, nil
+}
+
+// Plan is the sync without writing anything: the stored hash comparison
+// and the changes a full sync would apply.
+func Plan(ctx context.Context, d *db.DB, desired *metadata.Schema, opts Options) (hashMatches bool, changes *Changes, err error) {
+	stored, err := peekStored(ctx, d)
+	if err != nil {
+		return false, nil, fmt.Errorf("read stored schema: %w", err)
+	}
+	desired = withUnimplementedTables(desired, stored)
+	hash, err := Hash(desired)
+	if err != nil {
+		return false, nil, err
+	}
+	changes, err = plan(ctx, d, stored, desired, opts)
+	return stored != nil && stored.Hash == hash, changes, err
+}
+
+func plan(ctx context.Context, d *db.DB, stored *Stored, desired *metadata.Schema, opts Options) (*Changes, error) {
+	database, err := Inspect(ctx, d, opts.Schema)
+	if err != nil {
+		return nil, fmt.Errorf("inspect database: %w", err)
+	}
+	persisted, err := persistedTables(ctx, d)
+	if err != nil {
+		return nil, err
+	}
+	var previous *metadata.Schema
+	if stored != nil {
+		previous = stored.Schema
+	}
+	return Diff(dialect{d.Dialect}, database, previous, desired, persisted), nil
+}
+
+// withUnimplementedTables adds to desired the tables of the Strapi features
+// grapi does not implement (releases, workflows, history, AI), as the
+// stored schema defines them. The hash then matches Strapi's, so opening a
+// Strapi database writes nothing, and Strapi finds its schema back.
+func withUnimplementedTables(desired *metadata.Schema, stored *Stored) *metadata.Schema {
+	if stored == nil || stored.Schema == nil {
+		return desired
+	}
+	have := map[string]bool{}
+	for _, t := range desired.Tables {
+		have[t.Name] = true
+	}
+	out := &metadata.Schema{Tables: append([]*metadata.Table(nil), desired.Tables...)}
+	for _, t := range stored.Schema.Tables {
+		if have[t.Name] {
+			continue
+		}
+		for _, p := range reservedPrefixes {
+			if strings.HasPrefix(t.Name, p) {
+				out.Tables = append(out.Tables, t)
+				break
+			}
+		}
+	}
+	return out
 }
 
 type dialect struct{ d db.Dialect }

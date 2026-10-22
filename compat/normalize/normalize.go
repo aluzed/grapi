@@ -5,6 +5,7 @@ package normalize
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -41,8 +42,14 @@ func (n *Normalizer) walk(key string, v any) any {
 	switch t := v.(type) {
 	case map[string]any:
 		out := make(map[string]any, len(t))
-		for k, child := range t {
-			out[k] = n.walk(k, child)
+		// Aliases go by first appearance: walk the keys in a fixed order.
+		keys := make([]string, 0, len(t))
+		for k := range t {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			out[k] = n.walk(k, t[k])
 		}
 		// Image bytes depend on the encoder (sharp or Go), the dimensions do not.
 		if mime, _ := t["mime"].(string); strings.HasPrefix(mime, "image/") && t["hash"] != nil {

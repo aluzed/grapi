@@ -14,6 +14,19 @@ const cases = [
   'a[0][b]=1&a[0][c]=2&a[1][b]=3', 'a[0]=1&a[0]=2', 'a[][b]=1&a[][b]=2',
   'k=' + 'x'.repeat(5), 'deep' + '[a]'.repeat(25) + '=1', 'status=published&locale=fr',
   'filters[author][name][$null]', 'a[b][]=1&a[b][]=2&a[b][5]=3', '=x', '&&a=1&&',
+  'a[01]=x', 'a[-1]=x', 'a[ 1]=x', 'a[1.5]=x', 'a[0x1]=x', 'a[1e2]=x', 'a.b=1', 'a[b.c]=1',
+  'caf%C3%A9=1', 'a=1;b=2', 'a=%20', 'a=null', 'a=b=c', 'a[b]c=1', 'a[b][c]=1&a[b]=2',
+  'a[b]=2&a[b][c]=1', 'a[][]=1', '[]=1', '[a]=1', 'a[]=', 'a[b][]=', 'a[]&a[]=2', 'a&a=2',
+  'a[0]=1&a[2]=3', 'a[0]=1&a[100]=2', 'a[0]=1&a[101]=2', 'a[100]=1&a[0]=2', 'a[b][0]=1&a[b][1]=2&a[b][1]=3',
+  'a=1&b=2&a=3', 'a[]=1&a=2', 'a=1&a[]=2', 'filters[slug][$eq]=premiers-pas-go&populate[0]=author&populate[1]=author.picture',
+  'filters[$and][0][a][$eq]=1&filters[$and][1][b][$ne]=2', 'pagination[limit]=-1', 'pagination[start]=10&pagination[limit]=5',
+  'sort=createdAt%3Adesc', 'a=%E2%82%AC', 'a=%F0%9F%98%80', 'a=%C3', 'a=%25', 'a%5Bb%5D=1', 'a%5bb%5d=1',
+  'a[b%5Dc]=1', 'a[%5B]=1', 'deep' + '[a]'.repeat(20) + '=1', 'deep' + '[a]'.repeat(21) + '=1',
+  'a[' + 'x'.repeat(30) + ']=1', 'locale=fr&status=draft&filters[title][$containsi]=Été',
+  'fields[0]=title&fields[1]=description&fields[2]=slug&fields[3]=publishedAt',
+  'populate[cover][fields][0]=url&populate[cover][fields][1]=formats', 'a[b]=1&a[b]=2',
+  'x[y][]=1&x[y][]=2&x[y][]=3', 'k=v&k', 'k&k=v', 'a=+', 'a=%2B%2B', 'a[toString]=1', 'hasOwnProperty=1',
+  Array.from({ length: 1005 }, (_, i) => `p${i}=${i}`).join('&'),
 ];
 const out = cases.map((c) => ({ input: c, output: qs.parse(c, settings) }));
 process.stdout.write(JSON.stringify(out, null, 1));

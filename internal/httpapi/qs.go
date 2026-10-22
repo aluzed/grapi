@@ -4,7 +4,6 @@ package httpapi
 
 import (
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -105,56 +104,64 @@ func combine(a, b any) any {
 	return out
 }
 
-var qsBrackets = regexp.MustCompile(`(\[[^[\]]*])`)
+// splitKeyIntoSegments is qs 6.16's: bracket groups are balanced, and an
+// unterminated group or what lies past the depth stays one literal segment.
+func splitKeyIntoSegments(key string) ([]string, bool) {
+	var segments []string
+	first := strings.IndexByte(key, '[')
+	parent := key
+	if first >= 0 {
+		parent = key[:first]
+	}
+	if parent != "" {
+		if protoKeys[parent] {
+			return nil, false
+		}
+		segments = append(segments, parent)
+	}
+	open, collected := first, 0
+	for open >= 0 && collected < qsDepth {
+		level, closeAt := 1, -1
+		for i := open + 1; i < len(key) && closeAt < 0; i++ {
+			switch key[i] {
+			case '[':
+				level++
+			case ']':
+				level--
+				if level == 0 {
+					closeAt = i
+				}
+			}
+		}
+		if closeAt < 0 {
+			return append(segments, "["+key[open:]+"]"), true
+		}
+		seg := key[open : closeAt+1]
+		if protoKeys[seg[1:len(seg)-1]] {
+			return nil, false
+		}
+		segments = append(segments, seg)
+		collected++
+		next := strings.IndexByte(key[closeAt+1:], '[')
+		if next < 0 {
+			open = -1
+		} else {
+			open = closeAt + 1 + next
+		}
+	}
+	if open >= 0 {
+		segments = append(segments, "["+key[open:]+"]")
+	}
+	return segments, true
+}
 
 func parseKeys(key string, val any) any {
 	if key == "" {
 		return nil
 	}
-	var keys []string
-	loc := qsBrackets.FindStringIndex(key)
-	parent := key
-	if loc != nil {
-		parent = key[:loc[0]]
-	} else if i := strings.Index(key, "["); i > 0 {
-		// An unclosed bracket: the rest is one literal segment.
-		if protoKeys[key[:i]] {
-			return nil
-		}
-		return parseObject([]string{key[:i], "[" + key[i:] + "]"}, val)
-	}
-	if protoKeys[parent] {
+	keys, ok := splitKeyIntoSegments(key)
+	if !ok {
 		return nil
-	}
-	if parent != "" {
-		keys = append(keys, parent)
-	}
-	rest := key
-	offset := 0
-	if loc != nil {
-		rest = key[loc[0]:]
-		offset = loc[0]
-	}
-	_ = offset
-	i := 0
-	consumed := 0
-	for i < qsDepth {
-		m := qsBrackets.FindStringIndex(rest[consumed:])
-		if m == nil {
-			break
-		}
-		seg := rest[consumed+m[0] : consumed+m[1]]
-		if protoKeys[seg[1:len(seg)-1]] {
-			return nil
-		}
-		keys = append(keys, seg)
-		consumed += m[1]
-		i++
-	}
-	if loc != nil && i == qsDepth {
-		if m := qsBrackets.FindStringIndex(rest[consumed:]); m != nil {
-			keys = append(keys, "["+rest[consumed+m[0]:]+"]")
-		}
 	}
 	return parseObject(keys, val)
 }

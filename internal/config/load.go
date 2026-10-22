@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
+
+	"github.com/aluzed/grapi/internal/jsnum"
 )
 
 var extensions = map[string]bool{".yaml": true, ".yml": true, ".json": true}
@@ -70,7 +72,7 @@ func Load(opts Options) (*Config, error) {
 	if dir == "" {
 		dir = filepath.Join(opts.Dir, "config")
 	}
-	c := &Config{root: defaults(), Env: env, Environment: environment, sources: map[string]string{}}
+	c := &Config{root: defaults(env), Env: env, Environment: environment, sources: map[string]string{}}
 	r := &resolver{env: env, root: opts.Dir}
 	for _, d := range []string{dir, filepath.Join(dir, "env", environment)} {
 		files, err := loadDir(d, r, log)
@@ -227,11 +229,21 @@ func merge(dst, src any) any {
 	return src
 }
 
-func defaults() map[string]any {
+// defaults are Strapi's defaultServerConfig and friends. Like Strapi, the
+// server takes HOST and PORT when the project config does not set them.
+func defaults(env Env) map[string]any {
+	host := any("0.0.0.0")
+	if h := env["HOST"]; h != "" {
+		host = h
+	}
+	port := any(1337)
+	if p := jsnum.Number(env["PORT"]); jsnum.IsInteger(p) && p != 0 {
+		port = int(p)
+	}
 	return map[string]any{
 		"server": map[string]any{
-			"host":   "0.0.0.0",
-			"port":   1337,
+			"host":   host,
+			"port":   port,
 			"proxy":  false,
 			"cron":   map[string]any{"enabled": false},
 			"dirs":   map[string]any{"public": "./public"},

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # API-003 : Parseur de query string compatible qs
@@ -23,9 +23,12 @@ Un parseur Go qui produit le même arbre que `qs.parse` avec les options de Stra
 - L'interprétation sémantique des paramètres (`API-004`).
 
 ## Critères d'acceptation
-- [ ] Table de 100 cas générés en exécutant le vrai `qs.parse` (fixtures JSON produites sur le homelab) : résultat identique à 100 %.
-- [ ] Fuzzing (`go test -fuzz`) sans panique ni explosion mémoire (limite de paramètres, défaut 1000 comme qs `parameterLimit`).
-- [ ] Les paramètres déjà peuplés en mémoire sont mis en cache par requête.
+- [x] Table de 100 cas générés en exécutant le vrai `qs.parse` (fixtures JSON produites sur le homelab) : résultat identique à 100 %.
+- [x] Fuzzing (`go test -fuzz`) sans panique ni explosion mémoire (limite de paramètres, défaut 1000 comme qs `parameterLimit`).
+- [x] Les paramètres déjà peuplés en mémoire sont mis en cache par requête.
+
+## Avancement
+- Port de qs 6.16.0 (la version de Strapi 5.59), découpage des clés à crochets équilibrés compris. 103 cas produits par le vrai `qs.parse` dans l'image de référence (`compat/tools/gen-qs-golden.js`, `internal/httpapi/testdata/qs-golden.json`), dont un de 1 005 paramètres. `FuzzParseQuery` : 240 000 exécutions sans panique. La requête est analysée une seule fois, dans `serve`.
 
 ## Notes techniques
 - Représentation : `map[string]any`, `[]any`, `string`, `nil`. Garder l'ordre des clés n'est pas nécessaire pour qs mais utile pour les messages d'erreur : utiliser une map ordonnée si besoin.

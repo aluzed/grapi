@@ -16,6 +16,7 @@ import (
 	"github.com/aluzed/grapi/internal/auth/users"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/db/store"
 )
 
 // Auth is who a request acts as: the public role, an API token or an end
@@ -222,15 +223,8 @@ func (a *authenticator) permissions(ctx context.Context, q string, arg any) (*Au
 
 // store reads a users-permissions setting from the core store.
 func (a *authenticator) store(ctx context.Context, key string, v any) error {
-	var raw sql.NullString
-	err := a.db.QueryRow(ctx, `select "value" from "strapi_core_store_settings" where "key" = `+a.db.Dialect.Placeholder(1), "plugin_users-permissions_"+key).Scan(&raw)
-	if errors.Is(err, sql.ErrNoRows) || !raw.Valid {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal([]byte(raw.String), v)
+	_, err := store.Store{DB: a.db}.Get(ctx, store.Scope{Type: "plugin", Name: "users-permissions"}, key, v)
+	return err
 }
 
 type upAdvanced struct {

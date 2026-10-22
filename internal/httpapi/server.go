@@ -30,16 +30,19 @@ type Config struct {
 	WithCount *bool
 	Users     UsersConfig
 	Upload    UploadConfig
+	// Middlewares defaults to a generated project's stack.
+	Middlewares *Middlewares
 }
 
 // Server serves the content API of every api:: content type.
 type Server struct {
-	cfg    Config
-	set    *schema.Set
-	docs   *document.Service
-	auth   *authenticator
-	log    *slog.Logger
-	routes []route
+	cfg     Config
+	set     *schema.Set
+	docs    *document.Service
+	auth    *authenticator
+	log     *slog.Logger
+	routes  []route
+	handler http.Handler
 }
 
 type route struct {
@@ -86,6 +89,11 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	}
 	s.addUsersRoutes()
 	s.addUploadRoutes()
+	mw := DefaultMiddlewares()
+	if cfg.Middlewares != nil {
+		mw = *cfg.Middlewares
+	}
+	s.handler = mw.wrap(http.HandlerFunc(s.route))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
 		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales})
@@ -163,8 +171,13 @@ func matchPath(pattern, path []string) (map[string]string, bool) {
 	return params, true
 }
 
-// ServeHTTP routes a request, with Strapi's 404 and 405.
+// ServeHTTP runs the global middlewares, then the router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handler.ServeHTTP(w, r)
+}
+
+// route routes a request, with Strapi's 404 and 405.
+func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/_health" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
 		w.WriteHeader(http.StatusNoContent)
 		return
