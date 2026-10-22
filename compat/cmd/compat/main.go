@@ -19,7 +19,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: compat run|diff|schema-sync|query-cases|query|query-diff [flags]")
+		fmt.Fprintln(os.Stderr, "usage: compat run|diff|snapshot|schema-sync|query-cases|query|query-diff [flags]")
 		os.Exit(2)
 	}
 	var err error
@@ -28,6 +28,8 @@ func main() {
 		err = run(os.Args[2:])
 	case "diff":
 		err = compare(os.Args[2:])
+	case "snapshot":
+		err = snapshot(os.Args[2:])
 	case "schema-sync":
 		err = schemaSync(os.Args[2:])
 	case "query-cases":

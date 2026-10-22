@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # CLI-003 : Commandes d'inspection et d'administration (`*:list`, `admin:*`, `configuration:dump|restore`)
@@ -30,6 +30,10 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - [ ] `configuration:dump` sur une base Strapi produit un fichier que `strapi configuration:restore` accepte, et inversement (banc `SETUP-002`).
 - [ ] `routes:list` affiche méthode, chemin, handler et policies pour toutes les routes, y compris celles des plugins.
 - [ ] Le mot de passe saisi en interactif n'est jamais affiché ni loggé.
+
+## Avancement
+- Fait : `permissions:list|grant|revoke <rôle> [actions]` sur les rôles users-permissions et `api-token:*` (`AUTH-008`), qui suffisent à administrer un projet sans admin. Test : `cmd/grapi/tokens_test.go` (projet neuf, permission accordée puis retirée, token custom).
+- Reste : les listes (`routes:list`...), les commandes admin, `configuration:dump|restore`, `openapi generate`, `rename:field`.
 
 ## Notes techniques
 - Ces commandes démarrent l'application sans serveur HTTP (registres et base seulement).

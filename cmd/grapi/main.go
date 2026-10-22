@@ -15,7 +15,7 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  new <name>          create a project (--db sqlite|postgres, --framework)\n  develop             serve and reload when src/ or config/ changes\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  report              versions and project facts, without secrets\n  version             print the grapi version\n\nflags of every project command: -dir, -config, -env, -log-level")
+		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  new <name>          create a project (--db sqlite|postgres, --framework)\n  develop             serve and reload when src/ or config/ changes\n  start               serve the project in the current directory\n  db:sync --dry-run   print what the schema sync would change\n  db:check            check that the database is consistent\n  health              exit 0 when the local server answers /_health (container healthcheck)\n  report              versions and project facts, without secrets\n  api-token:create    create a content API token (--name, --type, --permissions, --lifespan)\n  api-token:list      list the API tokens\n  api-token:delete    delete an API token (--id)\n  permissions:list|grant|revoke <role> [actions...]   users-permissions role permissions\n  version             print the grapi version\n\nflags of every project command: -dir, -config, -env, -log-level")
 		return 2
 	}
 	switch args[0] {
@@ -33,6 +33,19 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 0
 	case "report":
 		if err := report(args[1:], stdout, stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
+	case "api-token:create", "api-token:list", "api-token:delete":
+		cmd := map[string]func([]string, io.Writer, io.Writer) error{"api-token:create": apiTokenCreate, "api-token:list": apiTokenList, "api-token:delete": apiTokenDelete}[args[0]]
+		if err := cmd(args[1:], stdout, stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
+	case "permissions:list", "permissions:grant", "permissions:revoke":
+		if err := permissions(args[0], args[1:], stdout, stderr); err != nil {
 			fmt.Fprintln(stderr, "grapi:", err)
 			return 1
 		}

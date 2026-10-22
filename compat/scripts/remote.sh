@@ -201,7 +201,20 @@ esac
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
 if [ "$mode" = grapi ]; then
   mkdir -p "$here/report"
+  # Reverse check: Strapi restarts on the database grapi just wrote, and must
+  # read every content type the way grapi serves it.
+  mkdir -p "$work/snap"
+  "$here/bin/compat" snapshot -fixture-dir "$here/fixtures/$fx" -name "$fixture-snapshot" -out "$work/snap/snapshot.yaml"
+  "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "$b_url" -tokens "$b_tokens" -out "$work/out/snap-grapi"
+  kill "$grapi_pid" 2>/dev/null || true
+  wait "$grapi_pid" 2>/dev/null || true
   cp "$work/grapi.log" "$here/report/$(date +%F)-$fixture-grapi-$db.log"
+  docker start "$run_id-b" >/dev/null
+  wait_up b
+  "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "http://127.0.0.1:$(port_of b)" -tokens "$b_tokens" -out "$work/out/snap-strapi"
+  "$here/bin/compat" diff -a "$work/out/snap-strapi" -b "$work/out/snap-grapi" -report "$here/report/$(date +%F)-$fixture-reverse-$db.md" \
+    -title "Reverse $fixture ($db): Strapi reading grapi's writes vs grapi" || true
+  sed -n 5p "$here/report/$(date +%F)-$fixture-reverse-$db.md"
 fi
 # dump_schema <name> <dir>: the schema Strapi computed (strapi_database_schema)
 # and the physical one, as reference for grapi's metadata and DDL.
