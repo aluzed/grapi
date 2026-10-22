@@ -31,7 +31,7 @@ func (s *Server) addOpenAPI() {
 	var doc []byte
 	h := func(w http.ResponseWriter, _ *http.Request, _ *requestContext) error {
 		once.Do(func() {
-			doc, _ = openapi.JSON(openapi.Generate(s.set, openapi.Options{Info: cfg.Info, Served: s.Serves}))
+			doc, _ = openapi.JSON(openapi.Generate(s.set, openapi.Options{Info: cfg.Info, Served: s.Serves, Custom: s.customOps}))
 		})
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

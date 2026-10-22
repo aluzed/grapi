@@ -72,7 +72,7 @@ app.Route("POST", "/account/anonymize", "api::account.account.anonymize", func(c
 app.PublicRoute("GET", "/ping", ping) // config.auth: false
 ```
 
-The path is under the API prefix (`/api`). The scope is the permission a role needs, granted like any Strapi action. `grapi.Error(status, message)` answers in Strapi's error format.
+`.OpenAPI(operation)` adds the route to the OpenAPI document (an operation object: `operationId`, `parameters`, `requestBody`, `responses`). The path is under the API prefix (`/api`). The scope is the permission a role needs, granted like any Strapi action. `grapi.Error(status, message)` answers in Strapi's error format.
 
 Policies run after authentication and the permission check:
 

@@ -30,6 +30,15 @@ type Options struct {
 	Served func(method, path string) bool
 	// Now is the time datetime defaults are evaluated at.
 	Now time.Time
+	// Custom are the operations the project's routes declare.
+	Custom []Operation
+}
+
+// Operation is an OpenAPI operation of a custom route; Path is in OpenAPI
+// form, relative to the API prefix ("/accounts/{id}").
+type Operation struct {
+	Method, Path string
+	Spec         map[string]any
 }
 
 type obj = map[string]any
@@ -73,6 +82,12 @@ func Generate(set *schema.Set, opts Options) map[string]any {
 			}
 			paths[p].(obj)[m] = op
 		}
+	}
+	for _, op := range opts.Custom {
+		if paths[op.Path] == nil {
+			paths[op.Path] = obj{}
+		}
+		paths[op.Path].(obj)[strings.ToLower(op.Method)] = op.Spec
 	}
 	name, version := opts.Info.Name, opts.Info.Version
 	return obj{

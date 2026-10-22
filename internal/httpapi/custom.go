@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/aluzed/grapi/internal/openapi"
+
 	"github.com/aluzed/grapi/internal/db/query"
 )
 
@@ -34,6 +36,8 @@ type CustomRoute struct {
 	Public   bool
 	Handler  Handler
 	Policies []Policy
+	// OpenAPI is the route's operation in the OpenAPI document, if any.
+	OpenAPI map[string]any
 }
 
 // AddRoute registers r ahead of the core routes.
@@ -52,6 +56,15 @@ func (s *Server) AddRoute(cr CustomRoute) {
 		},
 	}
 	s.routes = append([]route{rt}, s.routes...)
+	if cr.OpenAPI != nil {
+		segs := strings.Split(strings.Trim(cr.Path, "/"), "/")
+		for i, seg := range segs {
+			if strings.HasPrefix(seg, ":") {
+				segs[i] = "{" + seg[1:] + "}"
+			}
+		}
+		s.customOps = append(s.customOps, openapi.Operation{Method: strings.ToUpper(cr.Method), Path: "/" + strings.Join(segs, "/"), Spec: cr.OpenAPI})
+	}
 }
 
 // AddPolicies adds policies to the generated routes of action

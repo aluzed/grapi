@@ -57,6 +57,13 @@ func (r *RouteRef) Policies(refs ...any) *RouteRef {
 	return r
 }
 
+// OpenAPI documents the route in the OpenAPI document (server.openapi):
+// an operation object, with its parameters, requestBody and responses.
+func (r *RouteRef) OpenAPI(operation map[string]any) *RouteRef {
+	r.r.openapi = operation
+	return r
+}
+
 // RoutePolicies adds policies to a generated route, named by its action
 // ("api::post.post.find", "plugin::users-permissions.user.me").
 func (a *App) RoutePolicies(action string, refs ...any) {

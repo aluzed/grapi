@@ -32,7 +32,10 @@ func TestOpenAPIRoute(t *testing.T) {
 	t.Setenv("DATABASE_CLIENT", "sqlite")
 	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
 	t.Setenv("JWT_SECRET", "test")
-	srv, err := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}}).Setup()
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	app.Route("POST", "/accounts/:id/anonymize", "api::account.account.anonymize", func(*grapi.Request) error { return nil }).
+		OpenAPI(map[string]any{"operationId": "account/post/accounts_by_id_anonymize", "tags": []any{"account"}, "responses": map[string]any{"200": map[string]any{"description": "OK"}}})
+	srv, err := app.Setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,6 +62,9 @@ func TestOpenAPIRoute(t *testing.T) {
 		if doc.Paths[p] == nil {
 			t.Errorf("missing %s", p)
 		}
+	}
+	if op, ok := doc.Paths["/accounts/{id}/anonymize"]["post"].(map[string]any); !ok || op["operationId"] != "account/post/accounts_by_id_anonymize" {
+		t.Errorf("custom route: %v", doc.Paths["/accounts/{id}/anonymize"])
 	}
 	// OAuth providers are not served by grapi yet.
 	if doc.Paths["/auth/{provider}/callback"] != nil {

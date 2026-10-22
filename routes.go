@@ -51,6 +51,7 @@ type customRoute struct {
 	public              bool
 	handler             RouteHandler
 	policies            []any
+	openapi             map[string]any
 }
 
 // Route adds a content API route under the API prefix. scope is the
@@ -83,7 +84,7 @@ func (a *App) addRoutes(api *httpapi.Server) error {
 			return err
 		}
 		api.AddRoute(httpapi.CustomRoute{
-			Method: cr.method, Path: cr.path, Scope: cr.scope, Public: cr.public, Policies: ps,
+			Method: cr.method, Path: cr.path, Scope: cr.scope, Public: cr.public, Policies: ps, OpenAPI: cr.openapi,
 			Handler: func(w http.ResponseWriter, r *http.Request, req *httpapi.Request) error {
 				c := &Request{W: w, R: r, Params: req.Params, Query: req.Query}
 				if req.User != nil {
