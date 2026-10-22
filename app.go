@@ -129,6 +129,10 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		cfg.Users.JWTExpiresIn = strconv.Itoa(n)
 	}
 	cfg.Users.JWTAlgorithm, _ = c.String(up + "jwt.algorithm")
+	cfg.Users.JWTManagement, _ = c.String(up + "jwtManagement")
+	if m := cfg.Users.JWTManagement; m != "" && m != "legacy-support" {
+		slog.Default().Warn("plugins.users-permissions.config.jwtManagement " + m + " is not supported by grapi yet: legacy-support is used")
+	}
 	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
 	switch p := c.Get("server.proxy").(type) {
 	case bool:

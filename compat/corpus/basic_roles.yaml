@@ -53,3 +53,30 @@ cases:
     token: full
   - name: roles-public-forbidden
     path: /api/users-permissions/roles
+
+  # Session routes of jwtManagement "refresh", off by default.
+  - name: auth-refresh-legacy
+    method: POST
+    path: /api/auth/refresh
+    body: { refreshToken: "x" }
+  - name: auth-logout-public
+    method: POST
+    path: /api/auth/logout
+  - name: auth-sessions-public
+    path: /api/auth/sessions
+  - name: register-for-sessions
+    method: POST
+    path: /api/auth/local/register
+    save: { sjwt: jwt }
+    body: { username: "sessions", email: "sessions@example.com", password: "Passw0rd!" }
+  - name: auth-logout-legacy
+    method: POST
+    path: /api/auth/logout
+    bearer: "{{sjwt}}"
+  - name: auth-sessions-legacy
+    path: /api/auth/sessions
+    bearer: "{{sjwt}}"
+  - name: auth-revoke-session-legacy
+    method: DELETE
+    path: /api/auth/sessions/abc
+    bearer: "{{sjwt}}"

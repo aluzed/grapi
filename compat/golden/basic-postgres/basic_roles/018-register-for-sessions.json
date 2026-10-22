@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "jwt": "\u003csecret\u003e",
+    "user": {
+      "blocked": false,
+      "confirmed": true,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "email": "sessions@example.com",
+      "id": "#id6",
+      "provider": "local",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e",
+      "username": "sessions"
+    }
+  }
+}

@@ -31,6 +31,9 @@ type UsersConfig struct {
 	// AllowedFields are register.allowedFields.
 	AllowedFields []string
 	RateLimit     RateLimit
+	// JWTManagement is jwtManagement: only legacy-support (the default) is
+	// implemented, where the session routes answer 404.
+	JWTManagement string
 }
 
 func (s *Server) addUsersRoutes() {
@@ -43,6 +46,10 @@ func (s *Server) addUsersRoutes() {
 		route{"POST", []string{base, "auth", "local"}, auth, "callback", s.authCallback, "", false, false, nil},
 		route{"POST", []string{base, "auth", "local", "register"}, auth, "register", s.authRegister, "", false, false, nil},
 		route{"POST", []string{base, "auth", "change-password"}, auth, "changePassword", s.authChangePassword, "", false, false, nil},
+		route{"POST", []string{base, "auth", "refresh"}, auth, "refresh", s.sessionsOnly, "", false, false, nil},
+		route{"POST", []string{base, "auth", "logout"}, auth, "logout", s.sessionsOnly, "", false, false, nil},
+		route{"GET", []string{base, "auth", "sessions"}, auth, "getSessions", s.sessionsOnly, "", false, false, nil},
+		route{"DELETE", []string{base, "auth", "sessions", ":sessionId"}, auth, "revokeSession", s.sessionsOnly, "", false, false, nil},
 		route{"GET", []string{base, "users", "count"}, userUID, "count", s.usersCount, "", false, false, nil},
 		route{"GET", []string{base, "users"}, userUID, "find", s.usersFind, "", false, false, nil},
 		route{"GET", []string{base, "users", "me"}, userUID, "me", s.usersMe, "", false, false, nil},
@@ -72,6 +79,12 @@ func readBody(r *http.Request) (map[string]any, []string, error) {
 
 func (s *Server) issueJWT(id any) (string, error) {
 	return users.Sign([]users.KV{{Key: "id", Value: id}}, s.cfg.Users.JWTSecret, s.cfg.Users.JWTAlgorithm, s.cfg.Users.JWTExpiresIn, time.Now())
+}
+
+// sessionsOnly answers the routes of jwtManagement "refresh" in the
+// legacy-support mode: 404, as Strapi does.
+func (s *Server) sessionsOnly(http.ResponseWriter, *http.Request, *requestContext) error {
+	return errNotFound
 }
 
 func (s *Server) sendAuth(w http.ResponseWriter, user query.Row, auth *Auth) error {

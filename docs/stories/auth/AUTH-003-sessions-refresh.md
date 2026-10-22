@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # AUTH-003 : Sessions et refresh tokens (partagé entre admin et utilisateurs finaux)
@@ -31,6 +31,10 @@ Un service de sessions unique, utilisé par `AUTH-007` (admin) et par `AUTH-002`
 - [ ] Rejouer un refresh token déjà utilisé donne 401 et révoque la session (TU + intégration).
 - [ ] L'expiration idle et l'expiration absolue sont respectées (tests avec une horloge injectable).
 - [ ] Un access token admin expiré renvoie 401 ; la SPA appelle alors `/admin/access-token` et obtient un nouveau token.
+
+## Avancement
+- Routes `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/sessions` et `DELETE /auth/sessions/:sessionId` présentes, avec leurs permissions (Public pour `refresh`, Authenticated pour les autres, seedées au bootstrap). En mode `legacy-support` (défaut de Strapi), elles répondent 404 comme Strapi : corpus `basic_roles`, SQLite et Postgres. `jwtManagement: refresh` est signalé au démarrage comme non pris en charge.
+- Reste : le gestionnaire de sessions et tout le mode `refresh` (users-permissions et admin).
 
 ## Notes techniques
 - Horloge injectable (`func() time.Time`) partout pour tester les expirations.
