@@ -8,7 +8,7 @@ make bench-compat FIXTURE=basic DB=postgres
 make bench-compat FIXTURE=basic MODE=grapi       # Strapi contre grapi (quand grapi sait servir)
 ```
 
-Le rapport arrive dans `compat/report/<date>-<fixture>-<mode>-<db>.md` (non versionné). En mode `grapi`, un contrôle inverse suit : grapi est arrêté, Strapi redémarre sur la base que grapi vient d'écrire, et un instantané de chaque content type (`compat snapshot` : brouillons et publiés, toutes les locales, `populate=*`, utilisateurs et fichiers) est comparé entre les deux moteurs (`<date>-<fixture>-reverse-<db>.md`). Le journal de grapi est copié dans `<date>-<fixture>-grapi-<db>.log`. Les sorties normalisées de la référence sont versionnées dans `compat/golden/<fixture>-<db>/` : elles servent de spécification lisible, et un diff git montre ce qui change quand on monte de version de Strapi.
+Le rapport arrive dans `compat/report/<date>-<fixture>-<mode>-<db>.md` (non versionné). En mode `grapi`, un contrôle inverse suit : grapi est arrêté, Strapi redémarre sur la base que grapi vient d'écrire, et un instantané de chaque content type (`compat snapshot` : brouillons et publiés, toutes les locales, `populate=*`, utilisateurs et fichiers) est comparé entre les deux moteurs (`<date>-<fixture>-reverse-<db>.md`). Le journal de grapi est copié dans `<date>-<fixture>-grapi-<db>.log`. `MODE=perf` monte les deux moteurs sur les mêmes données puis mesure débit, latences et mémoire sur les cas GET sans variable (`compat perf`, réglable par `PERF_C` et `PERF_D`) : `<date>-<fixture>-perf-<db>.md`. Les sorties normalisées de la référence sont versionnées dans `compat/golden/<fixture>-<db>/` : elles servent de spécification lisible, et un diff git montre ce qui change quand on monte de version de Strapi.
 
 ## Contenu
 

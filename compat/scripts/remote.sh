@@ -160,7 +160,7 @@ query)
     -title "Query compat $fixture ($db, Strapi $STRAPI_VERSION)"
   exit $?
   ;;
-grapi)
+grapi | perf)
   # b: Strapi creates the database (tokens, permissions), then grapi serves it.
   start_ref a
   start_ref b
@@ -175,7 +175,7 @@ grapi)
   else
     set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/b/data.db"
   fi
-  env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_LOG_LEVEL=debug \
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_LOG_LEVEL="$([ "$mode" = perf ] && echo info || echo debug)" \
     "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
   grapi_pid=$!
   i=0
@@ -199,6 +199,44 @@ esac
 
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a"
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
+if [ "$mode" = perf ]; then
+  # Same data on both sides (the corpus just ran on each): load the
+  # variable free GET cases, and sample the memory before, during, after.
+  mem_strapi() { docker stats --no-stream --format '{{.MemUsage}}' "$run_id-a" | awk '{print $1}'; }
+  mem_grapi() { awk '/VmRSS/ {printf "%.1fMiB\n", $2/1024}' "/proc/$grapi_pid/status"; }
+  peak() { # peak <sampler> <seconds>: highest sample, in MiB
+    end=$(( $(date +%s) + $2 )); max=0
+    while [ "$(date +%s)" -lt "$end" ]; do
+      v=$($1 | sed 's/MiB//;s/GiB/*1024/;s/KiB/\/1024/' | bc -l 2>/dev/null || echo 0)
+      max=$(echo "if ($v > $max) $v else $max" | bc -l); sleep 0.5
+    done; printf '%.1fMiB' "$max"
+  }
+  report="$here/report/$(date +%F)-$fixture-perf-$db.md"
+  {
+    echo "# Perf $fixture ($db): Strapi $STRAPI_VERSION (Node, container) vs grapi (native)"
+    echo
+    echo "Load: the variable free GET cases of the corpus, round robin, ${PERF_C:-32} workers, ${PERF_D:-30s}, after a 5 s warm-up."
+    echo
+    echo "Memory: \`docker stats\` usage for the Strapi container, VmRSS for the grapi process."
+    echo
+    echo "| Engine | req/s | p50 ms | p95 ms | p99 ms | errors | memory idle | memory peak | memory 10 s after |"
+    echo "|---|---|---|---|---|---|---|---|---|"
+  } >"$report"
+  for engine in strapi grapi; do
+    if [ $engine = strapi ]; then url="http://127.0.0.1:$(port_of a)"; sampler=mem_strapi; else url=$b_url; sampler=mem_grapi; fi
+    "$here/bin/compat" perf -corpus "$here/corpus" -fixture "$fixture" -url "$url" -c 8 -d 5s >/dev/null
+    idle=$($sampler)
+    peak $sampler 30 >"$work/peak-$engine" &
+    peak_pid=$!
+    res=$("$here/bin/compat" perf -corpus "$here/corpus" -fixture "$fixture" -url "$url" -c "${PERF_C:-32}" -d "${PERF_D:-30s}")
+    wait "$peak_pid"
+    sleep 10
+    after=$($sampler)
+    echo "$res" | python3 -c "import json,sys; r=json.load(sys.stdin); print('| $engine | %.0f | %.1f | %.1f | %.1f | %d | $idle | %s | $after |' % (r['rps'], r['p50ms'], r['p95ms'], r['p99ms'], r['errors'], open('$work/peak-$engine').read()))" >>"$report"
+  done
+  cat "$report"
+  exit 0
+fi
 if [ "$mode" = grapi ]; then
   mkdir -p "$here/report"
   # Reverse check: Strapi restarts on the database grapi just wrote, and must
