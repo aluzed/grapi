@@ -31,6 +31,9 @@ Un registre de hooks typés en Go, avec les quatre sémantiques.
 ## Référence Strapi
 - `core/utils/src/hooks.ts`, `core/core/src/registries/hooks.ts`
 
+## Repris d'autres tickets
+- `DB-003` : brancher les hooks `beforeSync` et `afterSync` de la synchro du schéma (`schemasync.Sync`), et appeler après une synchro `CHANGED` le repair `schemasync.RemoveOrphanMorphTypes` pour `component_type` puis `related_type`, comme `Strapi.ts`.
+
 ## Dépendances
 - `SCH-005`
 

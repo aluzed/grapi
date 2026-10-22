@@ -55,6 +55,9 @@ Lire, écrire et peupler toutes les relations non polymorphes, en reproduisant e
 - `core/database/src/entity-manager/regular-relations.ts`, `relations-orderer.ts`, `index.ts`
 - `core/database/src/query/helpers/populate/apply.ts`
 
+## Repris d'autres tickets
+- `DB-003` : le repair `processUnidirectionalJoinTables` avec `cleanComponentJoinTable`, exécuté une seule fois au démarrage puis marqué dans le core store (`strapi_unidirectional-join-table-repair-ran`, avec `DB-010`). Sur une base créée par grapi, poser directement la marque, comme le ferait une base Strapi neuve.
+
 ## Dépendances
 - `DB-002`, `DB-005`.
 

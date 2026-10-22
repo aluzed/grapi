@@ -153,6 +153,7 @@ func (b *builder) transform(name string, a *schema.Attribute, collectionName str
 	return &Attribute{
 		Type: a.Type, Column: col, Relation: a.Relation, Target: a.Target, InversedBy: a.InversedBy,
 		MappedBy: a.MappedBy, MorphBy: a.MorphBy, UseJoinTable: a.UseJoinTable, Virtual: a.Virtual,
+		Searchable: a.Searchable,
 	}, nil
 }
 

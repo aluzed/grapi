@@ -19,6 +19,47 @@ type Table struct {
 	Indexes     []Index      `json:"indexes"`
 	ForeignKeys []ForeignKey `json:"foreignKeys"`
 	Columns     []Column     `json:"columns"`
+
+	raw json.RawMessage
+}
+
+type tableFields Table
+
+// MarshalJSON writes a parsed table exactly as it was read.
+func (t *Table) MarshalJSON() ([]byte, error) {
+	if t.raw != nil {
+		return t.raw, nil
+	}
+	return Marshal((*tableFields)(t))
+}
+
+// ParseTable decodes a table of a stored schema (strapi_database_schema).
+func ParseTable(data []byte) (*Table, error) {
+	var head struct {
+		Name        string            `json:"name"`
+		Indexes     []json.RawMessage `json:"indexes"`
+		ForeignKeys []json.RawMessage `json:"foreignKeys"`
+		Columns     []json.RawMessage `json:"columns"`
+	}
+	if err := json.Unmarshal(data, &head); err != nil {
+		return nil, err
+	}
+	t := &Table{Name: head.Name, Columns: []Column{}, raw: compact(data)}
+	var err error
+	if t.Indexes, err = declaredIndexes(head.Indexes); err != nil {
+		return nil, err
+	}
+	if t.ForeignKeys, err = declaredForeignKeys(head.ForeignKeys); err != nil {
+		return nil, err
+	}
+	for _, raw := range head.Columns {
+		kvs, err := orderedKVs(raw)
+		if err != nil {
+			return nil, err
+		}
+		t.Columns = append(t.Columns, newColumn("", knexType{}, kvs))
+	}
+	return t, nil
 }
 
 // Column of a table. Extra holds the keys Strapi adds beyond the six it
@@ -111,8 +152,10 @@ type ForeignKey struct {
 	ReferencedTable   string
 	ReferencedColumns []string
 	OnDelete          string
-	Layout            FKLayout
-	raw               json.RawMessage
+	// OnUpdate is only read from the database: Strapi never sets it.
+	OnUpdate string
+	Layout   FKLayout
+	raw      json.RawMessage
 }
 
 // FKLayout is the key order of a foreign key object.

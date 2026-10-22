@@ -40,6 +40,8 @@ type Attribute struct {
 	// UseJoinTable is false when the relation is a column of the owner's table.
 	UseJoinTable *bool
 	Virtual      bool
+	// Searchable false excludes a column from the _q search.
+	Searchable *bool
 
 	Owner       bool
 	JoinColumn  *JoinColumn

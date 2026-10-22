@@ -1,0 +1,74 @@
+{
+  "hashes": {
+    "golden/basic-postgres/schema/database-schema.json": {
+      "full": "ee138c8a763192328c9862c2ece914f3c84bc5f56e6d50411c516dbda6bc20f8",
+      "ce": "176121f30892c1d48c2f2d2c8520fdeef05fbf02a1ed7abeba7e72d098b5fead"
+    },
+    "golden/basic-sqlite/schema/database-schema.json": {
+      "full": "ee138c8a763192328c9862c2ece914f3c84bc5f56e6d50411c516dbda6bc20f8",
+      "ce": "176121f30892c1d48c2f2d2c8520fdeef05fbf02a1ed7abeba7e72d098b5fead"
+    },
+    "golden/components-postgres/schema/database-schema.json": {
+      "full": "5ffa470859aa988ed25b2b77f0b3da1f293af77defa2e7695078911e9e43788a",
+      "ce": "8e770df39b678186b326f0083fc6c07cbbe9568ff39efa341932f831dff861ae"
+    },
+    "golden/components-sqlite/schema/database-schema.json": {
+      "full": "5ffa470859aa988ed25b2b77f0b3da1f293af77defa2e7695078911e9e43788a",
+      "ce": "8e770df39b678186b326f0083fc6c07cbbe9568ff39efa341932f831dff861ae"
+    },
+    "golden/devfreelance-postgres/schema/database-schema.json": {
+      "full": "67317be64c77cd4a2bd2e9d8766046a5b2c097211d4446c0553b9ce02ae474fc",
+      "ce": "1ac6bfd81dd5e81b8288cc041cbedf6a3f066dbb7f8e06f2520f7a8240494cd8"
+    },
+    "golden/devfreelance-sqlite/schema/database-schema.json": {
+      "full": "67317be64c77cd4a2bd2e9d8766046a5b2c097211d4446c0553b9ce02ae474fc",
+      "ce": "1ac6bfd81dd5e81b8288cc041cbedf6a3f066dbb7f8e06f2520f7a8240494cd8"
+    },
+    "golden/i18n-dp-postgres/schema/database-schema.json": {
+      "full": "7fb0fb3c8830c3881b3659781648b737b381cef505737da61a554ab28b778ad9",
+      "ce": "fd13974f2153751364b1e263815052a911dcd06f0045f231cf06c9de61363eb3"
+    },
+    "golden/i18n-dp-sqlite/schema/database-schema.json": {
+      "full": "7fb0fb3c8830c3881b3659781648b737b381cef505737da61a554ab28b778ad9",
+      "ce": "fd13974f2153751364b1e263815052a911dcd06f0045f231cf06c9de61363eb3"
+    },
+    "golden/naming-postgres/schema/database-schema.json": {
+      "full": "9d47675238994dcdd3e9980865290434d4ae0798ebadb6a52ad6bd3d1b2b5d81",
+      "ce": "dae8b3e668ae2b66f41db276b87466b9c90a6bb0c3f58fab25ee0fa5c91e297b"
+    },
+    "golden/naming-sqlite/schema/database-schema.json": {
+      "full": "9d47675238994dcdd3e9980865290434d4ae0798ebadb6a52ad6bd3d1b2b5d81",
+      "ce": "dae8b3e668ae2b66f41db276b87466b9c90a6bb0c3f58fab25ee0fa5c91e297b"
+    },
+    "golden/relations-postgres/schema/database-schema.json": {
+      "full": "2e3652081af7d394a2a5edef790c9b2e65ed90fd6d464675ca85555862b72941",
+      "ce": "d3bebc1b61100a84b51cf34f007243b30fade08cb3dd0c6b3f17ae8461a12b0e"
+    },
+    "golden/relations-sqlite/schema/database-schema.json": {
+      "full": "2e3652081af7d394a2a5edef790c9b2e65ed90fd6d464675ca85555862b72941",
+      "ce": "d3bebc1b61100a84b51cf34f007243b30fade08cb3dd0c6b3f17ae8461a12b0e"
+    }
+  },
+  "order": [
+    "a",
+    "a_",
+    "a__b",
+    "a_1",
+    "a_b",
+    "a1",
+    "ab",
+    "b",
+    "files",
+    "files_folder_lnk",
+    "files_related_mph",
+    "up_users",
+    "up_users_role_lnk",
+    "upload_folders",
+    "x_y_z",
+    "x_yz",
+    "xy_z",
+    "z_9",
+    "z09",
+    "z9"
+  ]
+}

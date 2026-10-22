@@ -120,3 +120,18 @@ func (db *DB) trace(ctx context.Context, query string, args []any, start time.Ti
 	}
 	db.log.Log(ctx, level, "sql", "query", query, "args", len(args), "duration", time.Since(start), "error", err)
 }
+
+// Conn is a connection reserved from the write pool.
+type Conn = *sql.Conn
+
+// WithConn runs fn on a connection of its own, for session state such as a
+// Postgres advisory lock. Queries made through db during fn use other
+// connections.
+func (db *DB) WithConn(ctx context.Context, fn func(ctx context.Context, conn Conn) error) error {
+	conn, err := db.write.Conn(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+	return fn(ctx, conn)
+}

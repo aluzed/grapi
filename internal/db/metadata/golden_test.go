@@ -6,57 +6,15 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 
-	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/db/metadata"
-	"github.com/aluzed/grapi/internal/db/naming"
-	"github.com/aluzed/grapi/internal/registry"
+	"github.com/aluzed/grapi/internal/fixturetest"
 )
-
-// Tables of Enterprise features (clean-room: grapi designs its own) and of
-// the AI features, which grapi does not reproduce.
-var excludedPrefixes = []string{"strapi_release", "strapi_workflows", "strapi_history_", "strapi_ai_"}
-
-func excluded(table string) bool {
-	for _, p := range excludedPrefixes {
-		if strings.HasPrefix(table, p) {
-			return true
-		}
-	}
-	return false
-}
 
 func build(t *testing.T, fixture string) *metadata.Schema {
 	t.Helper()
-	res, err := registry.Load(os.DirFS(filepath.Join("../../../compat/fixtures", fixture)), registry.Options{
-		Plugins: builtin.Plugins(),
-		Admin:   builtin.Admin(),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	raws, err := builtin.Models()
-	if err != nil {
-		t.Fatal(err)
-	}
-	var internal []*metadata.Model
-	for _, raw := range raws {
-		m, err := metadata.ParseModel(raw)
-		if err != nil {
-			t.Fatal(err)
-		}
-		internal = append(internal, m)
-	}
-	md, err := metadata.Build(res.Set, internal, naming.Default)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := md.Schema()
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, s := fixturetest.Schema(t, fixture)
 	return s
 }
 
@@ -80,7 +38,7 @@ func golden(t *testing.T, path string) map[string]string {
 		if err := json.Unmarshal(raw, &head); err != nil {
 			t.Fatal(err)
 		}
-		if excluded(head.Name) {
+		if fixturetest.Excluded(head.Name) {
 			continue
 		}
 		var buf bytes.Buffer
@@ -95,11 +53,11 @@ func golden(t *testing.T, path string) map[string]string {
 // The schema grapi computes is byte for byte the one Strapi 5.59 stored for
 // every fixture, so Strapi and grapi see no diff on each other's database.
 func TestSchemaMatchesStrapi(t *testing.T) {
-	for _, fixture := range []string{"basic", "relations", "components", "i18n-dp", "devfreelance", "naming"} {
+	for _, fixture := range fixturetest.Names {
 		t.Run(fixture, func(t *testing.T) {
 			got := build(t, fixture)
 			for _, db := range []string{"sqlite", "postgres"} {
-				want := golden(t, filepath.Join("../../../compat/golden", fixture+"-"+db, "schema/database-schema.json"))
+				want := golden(t, filepath.Join(fixturetest.Compat(), "golden", fixture+"-"+db, "schema/database-schema.json"))
 				seen := map[string]bool{}
 				for _, table := range got.Tables {
 					seen[table.Name] = true

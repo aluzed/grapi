@@ -48,6 +48,9 @@ Le squelette de la CLI et les commandes de cycle de vie d'un projet.
 - `core/strapi/src/node/develop.ts`
 - `cli/create-strapi-app/src/`
 
+## Repris d'autres tickets
+- `DB-004` : au démarrage, `migrate.WithLock` puis `migrate.Run` puis `schemasync.Sync` (avec `MigrationsRan`), comme `compat schema-sync` ; une erreur de migration arrête le processus avec un code non nul. Commandes `migration:status` (`migrate.UserStatus`) et `migration:up`.
+
 ## Dépendances
 - `EXT-001`, `SCH-004`, `API-001`
 

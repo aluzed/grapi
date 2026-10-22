@@ -20,7 +20,7 @@ Le rapport arrive dans `compat/report/<date>-<fixture>-<mode>-<db>.md` (non vers
 | `normalize/` | `id` et `documentId` remplacés par des alias stables (ordre d'apparition), horodatages par `<ts>`, secrets masqués. Un documentId déjà vu qui réapparaît dans un texte (message d'erreur) est remplacé par son alias. L'ordre des clés est ignoré, celui des tableaux non |
 | `cmd/compat/` | `compat run` (un moteur) et `compat diff` (deux sorties) |
 | `tools/` | Générateurs lancés dans l'image de référence : tables de slugify, golden de nommage, et `gen-builtin-schemas.js`, qui extrait vers `internal/builtin/schemas` les content types et modèles internes que Strapi embarque (points d'entrée Community Edition uniquement) |
-| `scripts/` | `bench.sh` (côté Mac : cross-compile, rsync, ssh) et `remote.sh` (côté homelab : instances jetables, nettoyage garanti à la sortie) |
+| `scripts/` | `bench.sh` (côté Mac : cross-compile, rsync, ssh) et `remote.sh` (côté homelab : instances jetables, nettoyage garanti à la sortie). Modes : `self` (Strapi contre Strapi, écrit les golden), `roundtrip` (la synchro de grapi doit répondre `UNCHANGED` sur une base créée par Strapi, et Strapi démarré sur une base créée par grapi doit répondre au corpus comme sur la sienne : `make bench-compat FIXTURE=basic MODE=roundtrip DB=postgres`), `grapi` (à venir) |
 
 ## Écarts connus de Strapi selon le dialecte
 

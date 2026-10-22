@@ -13,6 +13,8 @@ import (
 	"io/fs"
 	"path"
 
+	"github.com/aluzed/grapi/internal/db/metadata"
+	"github.com/aluzed/grapi/internal/db/naming"
 	"github.com/aluzed/grapi/internal/registry"
 )
 
@@ -59,4 +61,30 @@ func sub(dir string) fs.FS {
 		panic(err)
 	}
 	return f
+}
+
+// Load reads an application with the built-in content types and derives its
+// database metadata.
+func Load(app fs.FS) (*registry.Result, *metadata.Metadata, error) {
+	res, err := registry.Load(app, registry.Options{Plugins: Plugins(), Admin: Admin()})
+	if err != nil {
+		return nil, nil, err
+	}
+	raws, err := Models()
+	if err != nil {
+		return nil, nil, err
+	}
+	internal := make([]*metadata.Model, 0, len(raws))
+	for _, raw := range raws {
+		m, err := metadata.ParseModel(raw)
+		if err != nil {
+			return nil, nil, err
+		}
+		internal = append(internal, m)
+	}
+	md, err := metadata.Build(res.Set, internal, naming.Default)
+	if err != nil {
+		return nil, nil, err
+	}
+	return res, md, nil
 }

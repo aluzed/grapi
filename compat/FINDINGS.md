@@ -51,6 +51,10 @@ Constats tirés des fixtures et des golden (`compat/golden/`). Ils font partie d
   - morphToOne ne peut pas s'écrire en REST : un objet donne 400 `Invalid key`, un tableau donne 500 ;
   - écrire depuis le côté inverse morphMany donne 500, et le populate inverse vaut toujours `[]`.
 
+## Non-déterminisme de Strapi
+
+- `components / 065-post-republish-copies-components` sous Postgres : l'ordre des ids de l'article et de son composant `seo` varie d'une exécution à l'autre (1 écart sur 3 en mode Strapi contre Strapi). Un écart sur ce cas seul n'est pas une régression.
+
 ## Lecture
 
 - `populate[dz]=*` renvoie 400 : il faut des fragments `on` ou `[populate]=*`.

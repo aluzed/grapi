@@ -23,23 +23,48 @@ if ! docker image inspect "$image" >/dev/null 2>&1; then
 fi
 docker network create "$run_id" >/dev/null
 
-# start_ref <name>: one Strapi reference instance with a fresh database, on a
-# port picked by Docker so that several benches can run at once.
-start_ref() {
+# start_db <name>: the database of one instance (a data dir, plus a Postgres
+# container with a port picked by Docker when db=postgres).
+start_db() {
   name=$1
   mkdir -p "$work/$name"
   chmod 777 "$work/$name"
+  if [ "$db" = postgres ]; then
+    docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name-pg" -p 127.0.0.1::5432 \
+      -e POSTGRES_USER=strapi -e POSTGRES_PASSWORD=strapi -e POSTGRES_DB=strapi "$POSTGRES_IMAGE" >/dev/null
+    # Over TCP: during initdb the image runs a socket-only server, then restarts.
+    until docker exec "$run_id-$name-pg" pg_isready -h 127.0.0.1 -U strapi >/dev/null 2>&1; do sleep 1; done
+  fi
+}
+
+# start_strapi <name>: the Strapi reference instance on that database, on a
+# port picked by Docker so that several benches can run at once.
+start_strapi() {
+  name=$1
   set -- -e DATABASE_CLIENT=sqlite
   if [ "$db" = postgres ]; then
-    docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name-pg" \
-      -e POSTGRES_USER=strapi -e POSTGRES_PASSWORD=strapi -e POSTGRES_DB=strapi "$POSTGRES_IMAGE" >/dev/null
-    until docker exec "$run_id-$name-pg" pg_isready -U strapi >/dev/null 2>&1; do sleep 1; done
     set -- -e DATABASE_CLIENT=postgres -e DATABASE_HOST="$run_id-$name-pg" -e DATABASE_NAME=strapi \
       -e DATABASE_USERNAME=strapi -e DATABASE_PASSWORD=strapi
   fi
   docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name" \
     -p 127.0.0.1::1337 "$@" \
     -v "$here/fixtures/$fixture:/fixture:ro" -v "$work/$name:/data" "$image" >/dev/null
+}
+
+start_ref() {
+  start_db "$1"
+  start_strapi "$1"
+}
+
+# grapi_sync <name>: grapi's schema sync on that instance's database.
+grapi_sync() {
+  if [ "$db" = postgres ]; then
+    pg_port=$(docker port "$run_id-$1-pg" 5432/tcp | head -1 | sed 's/.*://')
+    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fixture" -client postgres \
+      -db "postgres://strapi:strapi@127.0.0.1:$pg_port/strapi?sslmode=disable"
+  else
+    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fixture" -client sqlite -db "$work/$1/data.db"
+  fi
 }
 
 port_of() {
@@ -65,6 +90,32 @@ case "$mode" in
 self)
   start_ref a
   start_ref b
+  wait_up a
+  wait_up b
+  b_url=http://127.0.0.1:$(port_of b)
+  b_tokens=$work/b/tokens.json
+  ;;
+roundtrip)
+  # a: Strapi creates the database, grapi's sync must find nothing to do.
+  start_ref a
+  wait_up a
+  docker stop "$run_id-a" >/dev/null
+  status=$(grapi_sync a)
+  echo "grapi sync on Strapi's database: $status"
+  if [ "$status" != UNCHANGED ]; then
+    echo "error: expected UNCHANGED" >&2
+    exit 1
+  fi
+  docker start "$run_id-a" >/dev/null
+  # b: grapi creates the database, Strapi runs on it.
+  start_db b
+  status=$(grapi_sync b)
+  echo "grapi sync on an empty database: $status"
+  if [ "$status" != CHANGED ]; then
+    echo "error: expected CHANGED" >&2
+    exit 1
+  fi
+  start_strapi b
   wait_up a
   wait_up b
   b_url=http://127.0.0.1:$(port_of b)
@@ -111,12 +162,14 @@ dump_schema() {
 }
 
 mkdir -p "$here/report"
-golden="$here/golden/$fixture-$db"
-rm -rf "$golden"
-mkdir -p "$golden"
-cp -r "$work/out/a/." "$golden/"
-rm -rf "$golden/raw"
-dump_schema a "$golden/schema"
+if [ "$mode" = self ]; then
+  golden="$here/golden/$fixture-$db"
+  rm -rf "$golden"
+  mkdir -p "$golden"
+  cp -r "$work/out/a/." "$golden/"
+  rm -rf "$golden/raw"
+  dump_schema a "$golden/schema"
+fi
 report="$here/report/$(date +%Y-%m-%d)-$fixture-$mode-$db.md"
 status=0
 "$here/bin/compat" diff -a "$work/out/a" -b "$work/out/b" -report "$report" \
