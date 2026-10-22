@@ -18,6 +18,7 @@ type Service struct {
 	E    *query.Engine
 	Set  *schema.Set
 	comp *Components
+	mw   middlewares
 }
 
 // New returns the document service of an application.
@@ -302,9 +303,9 @@ func (s *Service) readParams(ctx context.Context, uid string, p Params, single b
 	return s.toQuery(uid, p)
 }
 
-// FindMany returns the entries matching p, drafts unless status is
+// findManyCore returns the entries matching p, drafts unless status is
 // "published", in the default locale unless locale is given ("*": all).
-func (s *Service) FindMany(ctx context.Context, uid string, p Params) ([]query.Row, error) {
+func (s *Service) findManyCore(ctx context.Context, uid string, p Params) ([]query.Row, error) {
 	q, err := s.readParams(ctx, uid, p, false)
 	if err != nil {
 		return nil, err
@@ -312,8 +313,8 @@ func (s *Service) FindMany(ctx context.Context, uid string, p Params) ([]query.R
 	return s.E.FindMany(ctx, uid, q)
 }
 
-// FindFirst returns the first entry matching p.
-func (s *Service) FindFirst(ctx context.Context, uid string, p Params) (query.Row, error) {
+// findFirstCore returns the first entry matching p.
+func (s *Service) findFirstCore(ctx context.Context, uid string, p Params) (query.Row, error) {
 	q, err := s.readParams(ctx, uid, p, true)
 	if err != nil {
 		return nil, err
@@ -321,8 +322,8 @@ func (s *Service) FindFirst(ctx context.Context, uid string, p Params) (query.Ro
 	return s.E.FindOne(ctx, uid, q)
 }
 
-// FindOne returns the entry of documentID for the status and locale of p.
-func (s *Service) FindOne(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
+// findOneCore returns the entry of documentID for the status and locale of p.
+func (s *Service) findOneCore(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
 	q, err := s.readParams(ctx, uid, p, true)
 	if err != nil {
 		return nil, err
@@ -341,8 +342,8 @@ func mergeWhere(where any, extra map[string]any) any {
 	return map[string]any{"$and": []any{where, extra}}
 }
 
-// Count counts the entries matching p.
-func (s *Service) Count(ctx context.Context, uid string, p Params) (int64, error) {
+// countCore counts the entries matching p.
+func (s *Service) countCore(ctx context.Context, uid string, p Params) (int64, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return 0, err
@@ -363,10 +364,10 @@ func (s *Service) Count(ctx context.Context, uid string, p Params) (int64, error
 	return s.E.Count(ctx, uid, query.Params{Where: q.Where, Filters: q.Filters, Search: q.Search})
 }
 
-// Create creates a document, published right away when status is
+// createCore creates a document, published right away when status is
 // "published" on a draft and publish type.
 // It runs through the i18n document middleware (syncLocales).
-func (s *Service) Create(ctx context.Context, uid string, p Params) (query.Row, error) {
+func (s *Service) createCore(ctx context.Context, uid string, p Params) (query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -552,10 +553,10 @@ func (s *Service) updateEntry(ctx context.Context, ct *schema.ContentType, entry
 	return s.E.Update(ctx, uid, map[string]any{"id": entryID}, entry, q)
 }
 
-// Update updates the draft of documentID (or creates the requested locale of
+// updateCore updates the draft of documentID (or creates the requested locale of
 // an existing document), then publishes when status is "published".
 // It runs through the i18n document middleware (syncLocales).
-func (s *Service) Update(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
+func (s *Service) updateCore(ctx context.Context, uid, documentID string, p Params) (query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -642,8 +643,8 @@ type DeleteResult struct {
 	Entries    []query.Row
 }
 
-// Delete deletes every version of documentID (in the locale of p).
-func (s *Service) Delete(ctx context.Context, uid, documentID string, p Params) (*DeleteResult, error) {
+// deleteCore deletes every version of documentID (in the locale of p).
+func (s *Service) deleteCore(ctx context.Context, uid, documentID string, p Params) (*DeleteResult, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -725,10 +726,10 @@ func (s *Service) versionLookup(ctx context.Context, ct *schema.ContentType, p P
 	return lookupOf(qp), qp, nil
 }
 
-// Publish publishes the drafts of documentID: their published versions are
+// publishCore publishes the drafts of documentID: their published versions are
 // replaced by copies of the drafts.
 // It runs through the i18n document middleware (syncLocales).
-func (s *Service) Publish(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+func (s *Service) publishCore(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -830,8 +831,8 @@ func rowValue(v any) any {
 	return v
 }
 
-// Unpublish deletes the published versions of documentID.
-func (s *Service) Unpublish(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+// unpublishCore deletes the published versions of documentID.
+func (s *Service) unpublishCore(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err
@@ -867,10 +868,10 @@ func (s *Service) Unpublish(ctx context.Context, uid, documentID string, p Param
 	return out, err
 }
 
-// DiscardDraft replaces the drafts of documentID with copies of its
+// discardDraftCore replaces the drafts of documentID with copies of its
 // published versions.
 // It runs through the i18n document middleware (syncLocales).
-func (s *Service) DiscardDraft(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+func (s *Service) discardDraftCore(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
 	ct, err := s.contentType(uid)
 	if err != nil {
 		return nil, err

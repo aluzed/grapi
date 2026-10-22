@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DB-009 : Lifecycles de la base
@@ -32,12 +32,16 @@ Un bus de lifecycles par ligne, avec la même liste d'événements, la même for
 - Les middlewares du Document Service (`DOC-004`), qui interviennent au niveau document et non ligne.
 
 ## Critères d'acceptation
-- [ ] Chaque événement est émis exactement une fois par opération, avec la bonne forme (tests unitaires sur un content type de test).
-- [ ] Un `beforeCreate` qui modifie `params.data.slug` change la valeur écrite.
-- [ ] `state` posé dans `beforeUpdate` est lu dans `afterUpdate` de la même opération.
+- [x] Chaque événement est émis exactement une fois par opération, avec la bonne forme (tests unitaires sur un content type de test).
+- [x] Un `beforeCreate` qui modifie `params.data.slug` change la valeur écrite.
+- [x] `state` posé dans `beforeUpdate` est lu dans `afterUpdate` de la même opération.
 - [ ] Publication d'un document en draft & publish : `beforeCreate` est déclenché pour la ligne publiée. Scénario de caractérisation porté depuis dev-freelance : le slug publié est recalculé depuis le titre, et une publication de thème ne modifie pas le slug du brouillon.
 - [ ] Banc : les 21 cas de caractérisation de dev-freelance (slugs, hash d'abonné, thèmes) donnent les mêmes sorties qu'avec Strapi 5.59, une fois les règles portées en hooks Go.
-- [ ] Une erreur levée dans `beforeDelete` annule la suppression, et le client reçoit l'erreur au format Strapi.
+- [x] Une erreur levée dans `beforeDelete` annule la suppression, et le client reçoit l'erreur au format Strapi.
+
+## Avancement
+- Fait : `internal/db/query/lifecycles.go` : les 18 événements, `params` modifiables, `state` par abonné entre before et after, abonné timestamps exécuté en premier comme chez Strapi, `create` et `delete` déclenchant `findOne` comme l'entity manager de Strapi. La publication déclenche `beforeCreate` pour la ligne publiée (`TestPublishRunsBeforeCreate`). Exposé par `grapi.App.OnRowCreate`, `OnRowUpdate`, `OnRowWrite`, `OnRowDelete`, `OnRow`.
+- Reste : les 21 cas de caractérisation de dev-freelance portés en hooks Go (`EXT-002`, exemple).
 
 ## Notes techniques
 - Les `params` sont exposés comme des structures Go typées avec un accès dynamique (`Data map[string]any`). Les hooks Go des utilisateurs manipulent des maps, comme en JS.

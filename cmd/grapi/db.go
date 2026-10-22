@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/schemasync"
 )
@@ -22,12 +23,12 @@ func dbSync(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	if *printSchema {
-		p, err := loadProject(*dir, *configDir, stderr)
+		p, err := grapi.LoadProject(*dir, *configDir, stderr)
 		if err != nil {
 			return err
 		}
-		defer func() { _ = p.db.Close() }()
-		b, err := metadata.Marshal(p.desired)
+		defer func() { _ = p.DB.Close() }()
+		b, err := metadata.Marshal(p.Desired)
 		if err != nil {
 			return err
 		}
@@ -37,12 +38,12 @@ func dbSync(args []string, stdout, stderr io.Writer) error {
 	if !*dry {
 		return fmt.Errorf("db:sync only runs with --dry-run; grapi start applies the sync")
 	}
-	p, err := loadProject(*dir, *configDir, stderr)
+	p, err := grapi.LoadProject(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = p.db.Close() }()
-	hashMatches, changes, err := schemasync.Plan(context.Background(), p.db, p.desired, schemasync.Options{})
+	defer func() { _ = p.DB.Close() }()
+	hashMatches, changes, err := schemasync.Plan(context.Background(), p.DB, p.Desired, schemasync.Options{})
 	if err != nil {
 		return err
 	}
@@ -99,16 +100,16 @@ func dbCheck(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := loadProject(*dir, *configDir, stderr)
+	p, err := grapi.LoadProject(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = p.db.Close() }()
+	defer func() { _ = p.DB.Close() }()
 	ctx := context.Background()
 	var problems []string
 	report := func(format string, a ...any) { problems = append(problems, fmt.Sprintf(format, a...)) }
 
-	_, changes, err := schemasync.Plan(ctx, p.db, p.desired, schemasync.Options{})
+	_, changes, err := schemasync.Plan(ctx, p.DB, p.Desired, schemasync.Options{})
 	if err != nil {
 		return err
 	}
@@ -124,14 +125,14 @@ func dbCheck(args []string, stdout, stderr io.Writer) error {
 		}
 	}
 
-	q := p.db.Dialect.Quote
+	q := p.DB.Dialect.Quote
 	count := func(sql string, args ...any) (int64, error) {
 		var n int64
-		err := p.db.QueryRow(ctx, sql, args...).Scan(&n)
+		err := p.DB.QueryRow(ctx, sql, args...).Scan(&n)
 		return n, err
 	}
 	tables := map[string]*metadata.Table{}
-	for _, t := range p.desired.Tables {
+	for _, t := range p.Desired.Tables {
 		tables[t.Name] = t
 	}
 	names := make([]string, 0, len(tables))
@@ -153,7 +154,7 @@ func dbCheck(args []string, stdout, stderr io.Writer) error {
 			hasDoc = hasDoc || c.Name == "document_id"
 		}
 		if hasDoc {
-			rows, err := p.db.Query(ctx, `select `+q("document_id")+` from `+q(name))
+			rows, err := p.DB.Query(ctx, `select `+q("document_id")+` from `+q(name))
 			if err != nil {
 				return err
 			}

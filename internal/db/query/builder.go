@@ -22,6 +22,8 @@ import (
 type Engine struct {
 	DB *db.DB
 	MD *metadata.Metadata
+	// Lifecycles are the row lifecycle subscribers (nil: none).
+	Lifecycles *Lifecycles
 }
 
 // Params of a query, as Strapi's query builder init() takes them. Where,
@@ -731,8 +733,8 @@ func direction(o string) string {
 	return "asc"
 }
 
-// FindMany returns the rows matching p.
-func (e *Engine) FindMany(ctx context.Context, uid string, p Params) ([]Row, error) {
+// findManyCore returns the rows matching p.
+func (e *Engine) findManyCore(ctx context.Context, uid string, p Params) ([]Row, error) {
 	b, err := e.newBuilder(uid, "select")
 	if err != nil {
 		return nil, err
@@ -743,8 +745,8 @@ func (e *Engine) FindMany(ctx context.Context, uid string, p Params) ([]Row, err
 	return b.run(ctx)
 }
 
-// FindOne returns the first row matching p, or nil.
-func (e *Engine) FindOne(ctx context.Context, uid string, p Params) (Row, error) {
+// findOneCore returns the first row matching p, or nil.
+func (e *Engine) findOneCore(ctx context.Context, uid string, p Params) (Row, error) {
 	b, err := e.newBuilder(uid, "select")
 	if err != nil {
 		return nil, err
@@ -760,8 +762,8 @@ func (e *Engine) FindOne(ctx context.Context, uid string, p Params) (Row, error)
 	return rows[0], nil
 }
 
-// Count counts the entries matching p (distinct ids when relations are joined).
-func (e *Engine) Count(ctx context.Context, uid string, p Params) (int64, error) {
+// countCore counts the entries matching p (distinct ids when relations are joined).
+func (e *Engine) countCore(ctx context.Context, uid string, p Params) (int64, error) {
 	b, err := e.newBuilder(uid, "count")
 	if err != nil {
 		return 0, err

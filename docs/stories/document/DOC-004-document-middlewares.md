@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # DOC-004 : Middlewares du Document Service
@@ -20,10 +20,14 @@ Offrir la même chaîne de middlewares, en Go (`EXT-002`) et plus tard en JS (`E
 - Les lifecycles de ligne (`DB-009`), qui sont une couche différente.
 
 ## Critères d'acceptation
-- [ ] Un middleware qui modifie `ctx.Params.Data` avant `next` voit sa modification persistée, quel que soit le point d'entrée (REST, admin, appel Go).
-- [ ] Un middleware peut court-circuiter (`return` sans `next`).
-- [ ] Désinscription effective.
+- [x] Un middleware qui modifie `ctx.Params.Data` avant `next` voit sa modification persistée, quel que soit le point d'entrée (REST, admin, appel Go).
+- [x] Un middleware peut court-circuiter (`return` sans `next`).
+- [x] Désinscription effective.
 - [ ] Reproduction des middlewares dev-freelance (slug si vide, toggles IA remis à `false`, invalidation par content type) : comportement identique au golden master de la session de caractérisation.
+
+## Avancement
+- Fait : `internal/document/middleware.go` (`Use`, ordre Koa, `Params` et `documentId` modifiables, désinscription), exposé par `grapi.App.UseDocuments` et le paquet public `document`. Tests : `internal/document/middleware_test.go`, `hooks_test.go` (par HTTP).
+- Reste : la traduction des erreurs de base en erreurs applicatives, la reproduction des middlewares dev-freelance.
 
 ## Notes techniques
 - Pas de réflexion : la chaîne est une slice de fonctions composée une fois par appel.

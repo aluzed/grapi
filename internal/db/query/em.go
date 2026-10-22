@@ -424,8 +424,8 @@ func (e *Engine) insertRows(ctx context.Context, table string, rows []*schema.Or
 	return nil
 }
 
-// Create inserts an entry and attaches its relations, then reads it back.
-func (e *Engine) Create(ctx context.Context, uid string, data Data, p Params) (Row, error) {
+// createCore inserts an entry and attaches its relations, then reads it back.
+func (e *Engine) createCore(ctx context.Context, uid string, data Data, p Params) (Row, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, uid)
@@ -469,8 +469,8 @@ func setDefault(d Data, k string, v any) {
 	}
 }
 
-// CreateMany inserts rows without relations and returns their ids.
-func (e *Engine) CreateMany(ctx context.Context, uid string, data []Data) (int, []any, error) {
+// createManyCore inserts rows without relations and returns their ids.
+func (e *Engine) createManyCore(ctx context.Context, uid string, data []Data) (int, []any, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return 0, nil, fmt.Errorf("%w: %s", ErrNotFound, uid)
@@ -500,8 +500,8 @@ func (e *Engine) CreateMany(ctx context.Context, uid string, data []Data) (int, 
 	return len(data), ids, err
 }
 
-// Update changes the first entry matching where and its relations.
-func (e *Engine) Update(ctx context.Context, uid string, where any, data Data, p Params) (Row, error) {
+// updateCore changes the first entry matching where and its relations.
+func (e *Engine) updateCore(ctx context.Context, uid string, where any, data Data, p Params) (Row, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, uid)
@@ -512,13 +512,12 @@ func (e *Engine) Update(ctx context.Context, uid string, where any, data Data, p
 	if w, ok := where.(map[string]any); !ok || len(w) == 0 {
 		return nil, errors.New("Update requires a where parameter") //nolint:revive,staticcheck // Strapi's message
 	}
-	entity, err := e.FindOne(ctx, uid, Params{Where: where, Select: []string{"id"}})
+	entity, err := e.findOneCore(ctx, uid, Params{Where: where, Select: []string{"id"}})
 	if err != nil || entity == nil {
 		return nil, err
 	}
 	id, _ := entity.Get("id")
 	data = cloneData(data)
-	data[schema.AttrUpdatedAt] = time.Now()
 	row, err := e.processData(m, data, false)
 	if err != nil {
 		return nil, err
@@ -548,9 +547,9 @@ func (e *Engine) updateByID(ctx context.Context, table string, id any, row *sche
 	return err
 }
 
-// UpdateMany sets data on every entry matching p, without relations nor
+// updateManyCore sets data on every entry matching p, without relations nor
 // updatedAt (Strapi's timestamps subscriber skips a non array payload).
-func (e *Engine) UpdateMany(ctx context.Context, uid string, p Params, data Data) (int64, error) {
+func (e *Engine) updateManyCore(ctx context.Context, uid string, p Params, data Data) (int64, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, uid)
@@ -594,8 +593,8 @@ func (e *Engine) writeWhere(m *metadata.Model, p Params) (string, []any, error) 
 	return e.q("id") + " in (select " + e.q("id") + " from (" + sub + ") as " + e.q("subQuery") + ")", args, nil
 }
 
-// Delete removes the first entry matching where and its relation links.
-func (e *Engine) Delete(ctx context.Context, uid string, where any, p Params) (Row, error) {
+// deleteCore removes the first entry matching where and its relation links.
+func (e *Engine) deleteCore(ctx context.Context, uid string, where any, p Params) (Row, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, uid)
@@ -621,9 +620,9 @@ func (e *Engine) Delete(ctx context.Context, uid string, where any, p Params) (R
 	return entity, err
 }
 
-// DeleteMany removes every entry matching p (relation links go through the
+// deleteManyCore removes every entry matching p (relation links go through the
 // foreign keys' ON DELETE CASCADE).
-func (e *Engine) DeleteMany(ctx context.Context, uid string, p Params) (int64, error) {
+func (e *Engine) deleteManyCore(ctx context.Context, uid string, p Params) (int64, error) {
 	m, ok := e.MD.Model(uid)
 	if !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, uid)

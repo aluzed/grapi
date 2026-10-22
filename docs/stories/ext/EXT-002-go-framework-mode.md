@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # EXT-002 : Mode framework Go (grapi comme bibliothèque)
@@ -77,6 +77,10 @@ func main() {
 - [ ] Le projet d'exemple `examples/dev-freelance` reproduit les règles de slug, de hash, le middleware IA (avec un faux LLM) et l'invalidation du cache, et passe les 21 cas de caractérisation x 3 chemins (admin, REST, documents) avec le même résultat que la prod Strapi actuelle.
 - [ ] Les API publiques sont documentées (godoc) et couvertes par un test d'exemple (`Example*`).
 - [ ] Aucun type de `internal/` n'apparaît dans les signatures publiques.
+
+## Avancement
+- Fait : paquet racine `grapi` (`New`, `Setup` qui renvoie le `http.Handler`, `Start`, `UseDocuments`, `OnRow*` ... `Bind`), paquets publics `document` et `hook`. Le binaire `cmd/grapi` n'est plus qu'un `main` qui appelle `grapi.New(...).Start()`. Test de bout en bout : `hooks_test.go` (base neuve, bootstrap, inscription par HTTP, hook de ligne et middleware appliqués).
+- Reste : phases `OnRegister`/`OnBootstrap`/`OnDestroy`, contrôleurs, services et routes custom, policies, cron, accès aux services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
 
 ## Notes techniques
 - Les paquets publics (`grapi`, `schema`, `document`, `hook`, `errors`) suivent SemVer dès la v1. Avant la v1, les changements cassants sont signalés dans le CHANGELOG.
