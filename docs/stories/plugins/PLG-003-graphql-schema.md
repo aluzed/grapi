@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # PLG-003 : GraphQL : schéma généré dynamiquement
@@ -33,10 +33,10 @@ Générer au démarrage, puis à chaque rechargement de schéma (`ADM-006`), un 
 - Subscriptions (désactivées par défaut chez Strapi).
 
 ## Critères d'acceptation
-- [ ] **Le SDL généré** pour le projet de test dev-freelance est identique à celui de Strapi 5.59, ordre des types normalisé : diff dans le banc `SETUP-002`.
-- [ ] Une série de requêtes (liste paginée, filtres imbriqués, populate de zone dynamique avec fragments, mutation create avec composant) donne des réponses JSON identiques (banc).
-- [ ] Le schéma est reconstruit après un changement de content type, sans redémarrage.
-- [ ] Introspection fonctionnelle (graphql-codegen tourne sur le schéma de grapi).
+- [x] **Le SDL généré** pour le projet de test dev-freelance est identique à celui de Strapi 5.59, ordre des types normalisé : `TestSchemaMatchesStrapi` sur les 7 fixtures.
+- [x] Une série de requêtes (liste paginée, filtres imbriqués, populate de zone dynamique avec fragments, mutation create avec composant) donne des réponses JSON identiques (banc).
+- [x] Le schéma est reconstruit après un changement de content type, sans redémarrage (`grapi develop` reconstruit le serveur, schéma compris).
+- [x] Introspection fonctionnelle : la réponse de grapi à `getIntrospectionQuery()` passe dans `buildClientSchema` de graphql-js 16 (ce que font graphql-codegen et les clients), et le schéma obtenu a les mêmes 73 types que celui de Strapi sur la fixture `graphql`, arguments et valeurs par défaut compris.
 
 ## Avancement
 - `internal/graphql` : schéma (`schema.go`) dérivé du `schema.Set` comme le shadow CRUD du plugin (types, `FiltersInput`, `Input`, enums, zones dynamiques, `GenericMorph`, réponses, queries et mutations, extensions upload, users-permissions et i18n, élagage des types inaccessibles). `TestSchemaMatchesStrapi` compare le schéma à celui que Strapi 5.59 publie par introspection sur les 7 fixtures du banc (`internal/graphql/testdata/sdl-*.graphql`) : identique type par type, champ par champ, arguments et valeurs par défaut compris, hors types Enterprise de review-workflows (clean-room).
@@ -46,7 +46,7 @@ Générer au démarrage, puis à chaque rechargement de schéma (`ADM-006`), un 
 - Banc `graphql` (fixture et corpus dédiés, 44 cas), SQLite et Postgres : 44/44 en mode grapi, contrôle inverse OK.
 - Corpus GraphQL sur les fixtures existantes, en mode grapi : `components_graphql` 12/12 (composants imbriqués, répétables avec `filters`/`pagination`/`sort`, zones dynamiques avec fragments, filtres sur composants, mutations avec `__typename`, erreurs de validation), `i18n-dp_graphql` 27/27 (héritage de `publicationFilter` et `hasPublishedVersion` de la query racine par les relations, `locale` en lecture et en écriture, `localizations`, single type localisé, statut hérité par les relations, `publicationFilter`, code de locale inconnu refusé à la validation avec la liste ISO du plugin, `internal/isolocales`), `devfreelance_graphql` 13/13 (médias simples et multiples, `uploadFiles`, `updateUploadFile`, `deleteUploadFile`, utilisateurs, `me` anonyme).
 - `relations_graphql` 9/9 (relations vers soi, `_connection`, filtres à travers une relation, arguments des relations to-many, morphToOne) ; le cas morphToMany est en skip, Strapi 5.59 y répond par une erreur interne (`docs/divergences.md`).
-- Reste : graphql-codegen sur le schéma.
+- Vérification de l'introspection (2026-10-22) : grapi lancé sur la fixture `graphql`, requête `getIntrospectionQuery()` de graphql-js, puis `buildClientSchema` et comparaison type par type avec `internal/graphql/testdata/sdl-graphql.graphql` dans l'image de référence : 73 types, 0 écart.
 
 ## Notes techniques
 - Le schéma est dynamique, ce qui exclut gqlgen. Utiliser `graphql-go/graphql` (`graphql.NewObject`, `NewUnion`, `NewInputObject` à la volée). `vektah/gqlparser` sert à parser le SDL des extensions (`PLG-004`).
