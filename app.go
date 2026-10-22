@@ -125,6 +125,13 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		cfg.Users.JWTExpiresIn = strconv.Itoa(n)
 	}
 	cfg.Users.JWTAlgorithm, _ = c.String(up + "jwt.algorithm")
+	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
+	switch p := c.Get("server.proxy").(type) {
+	case bool:
+		cfg.TrustProxy = p
+	case map[string]any:
+		cfg.TrustProxy = p["koa"] == true
+	}
 	public, _ := c.String("server.dirs.public")
 	if public == "" {
 		public = "./public"
@@ -156,6 +163,36 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 	}
 	return cfg
+}
+
+// rateLimitConfig reads a koa2-ratelimit config: interval in ms or as
+// {min: 5}, users-permissions' defaults (1 minute, 10 requests).
+func rateLimitConfig(c *config.Config, key string) httpapi.RateLimit {
+	rl := httpapi.RateLimit{Interval: time.Minute, Max: 10}
+	if v, ok := c.Bool(key + ".enabled"); ok && !v {
+		rl.Disabled = true
+	}
+	if n, ok := c.Int(key + ".max"); ok {
+		rl.Max = n
+	}
+	switch v := c.Get(key + ".interval").(type) {
+	case int:
+		rl.Interval = time.Duration(v) * time.Millisecond
+	case float64:
+		rl.Interval = time.Duration(v * float64(time.Millisecond))
+	case map[string]any:
+		units := map[string]time.Duration{"ms": time.Millisecond, "sec": time.Second, "min": time.Minute, "hour": time.Hour, "day": 24 * time.Hour, "week": 7 * 24 * time.Hour}
+		var d time.Duration
+		for unit, n := range v {
+			if f, ok := n.(int); ok {
+				d += time.Duration(f) * units[unit]
+			}
+		}
+		if d > 0 {
+			rl.Interval = d
+		}
+	}
+	return rl
 }
 
 // absoluteURLs is Strapi's getAbsoluteServerUrl and getAbsoluteAdminUrl.

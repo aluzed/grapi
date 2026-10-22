@@ -37,6 +37,8 @@ type Config struct {
 	Email *email.Service
 	// ServerURL and AdminURL are server.absoluteUrl and admin.absoluteUrl.
 	ServerURL, AdminURL string
+	// TrustProxy is server.proxy: the client IP comes from X-Forwarded-For.
+	TrustProxy bool
 }
 
 // Server serves the content API of every api:: content type.
@@ -48,6 +50,7 @@ type Server struct {
 	log     *slog.Logger
 	routes  []route
 	handler http.Handler
+	limiter limiter
 }
 
 type route struct {
@@ -60,6 +63,8 @@ type route struct {
 	// (config.auth: false).
 	scope  string
 	public bool
+	// limited routes go through the users-permissions rateLimit middleware.
+	limited bool
 }
 
 type requestContext struct {
@@ -99,6 +104,15 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	s.addUsersRoutes()
 	if _, ok := set.ContentType(userUID); ok {
 		s.addUsersEmailRoutes()
+		limited := []string{"auth/local", "auth/local/register", "auth/forgot-password", "auth/reset-password", "auth/send-email-confirmation", "auth/change-password"}
+		for i := range s.routes {
+			p := strings.Join(s.routes[i].path[1:], "/")
+			for _, l := range limited {
+				if p == l {
+					s.routes[i].limited = true
+				}
+			}
+		}
 	}
 	s.addUploadRoutes()
 	mw := DefaultMiddlewares()
@@ -108,7 +122,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	s.handler = mw.wrap(http.HandlerFunc(s.route))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
-		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false})
+		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false, false})
 	}
 	return s
 }
@@ -146,20 +160,20 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	if ct.IsSingleType() {
 		p := []string{base, ct.Info.SingularName}
 		s.routes = append(s.routes,
-			route{"GET", p, uid, "find", s.singleFind, "", false},
-			route{"PUT", p, uid, "update", s.singleUpdate, "", false},
-			route{"DELETE", p, uid, "delete", s.singleDelete, "", false},
+			route{"GET", p, uid, "find", s.singleFind, "", false, false},
+			route{"PUT", p, uid, "update", s.singleUpdate, "", false, false},
+			route{"DELETE", p, uid, "delete", s.singleDelete, "", false, false},
 		)
 		return
 	}
 	list := []string{base, ct.Info.PluralName}
 	one := []string{base, ct.Info.PluralName, ":id"}
 	s.routes = append(s.routes,
-		route{"GET", list, uid, "find", s.find, "", false},
-		route{"GET", one, uid, "findOne", s.findOne, "", false},
-		route{"POST", list, uid, "create", s.create, "", false},
-		route{"PUT", one, uid, "update", s.update, "", false},
-		route{"DELETE", one, uid, "delete", s.remove, "", false},
+		route{"GET", list, uid, "find", s.find, "", false, false},
+		route{"GET", one, uid, "findOne", s.findOne, "", false, false},
+		route{"POST", list, uid, "create", s.create, "", false, false},
+		route{"PUT", one, uid, "update", s.update, "", false, false},
+		route{"DELETE", one, uid, "delete", s.remove, "", false, false},
 	)
 }
 
@@ -251,6 +265,9 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 		} else {
 			writeError(w, errForbidden, s.log)
 		}
+		return
+	}
+	if rt.limited && s.rateLimited(w, r) {
 		return
 	}
 	rc := &requestContext{auth: auth, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
