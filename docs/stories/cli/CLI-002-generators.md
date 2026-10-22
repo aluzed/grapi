@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # CLI-002 : Générateurs (`generate api|content-type|controller|policy|middleware|migration`)
@@ -22,10 +22,14 @@ Des générateurs interactifs et non interactifs qui produisent des fichiers pr�
 - `templates:generate` (templates de projet Strapi Cloud).
 
 ## Critères d'acceptation
-- [ ] Un content type généré se charge sans erreur, et ses routes CRUD répondent (intégration).
-- [ ] Un nom réservé (`locale`, `documentId`...) est refusé avec un message clair.
-- [ ] Le mode non interactif est utilisable en CI (aucune question si tous les flags sont fournis).
+- [x] Un content type généré se charge sans erreur, et ses routes CRUD répondent (intégration).
+- [x] Un nom réservé (`locale`, `documentId`...) est refusé avec un message clair.
+- [x] Le mode non interactif est utilisable en CI (aucune question si tous les flags sont fournis).
 - [ ] Les fichiers Go générés passent `gofmt` et `go vet`.
+
+## Avancement
+- `grapi generate content-type --name <n> [--plural] [--api] [--kind] [--draft-and-publish] [--i18n] [--attr nom:type[:required]]...` et `grapi generate component --name <categorie>.<nom> [--attr ...]` (`cmd/grapi/generate.go`), non interactifs. Les noms réservés du Content-Type Builder sont refusés avant écriture ; le schéma écrit est rechargé et supprimé s'il ne charge pas ; un schéma existant n'est pas écrasé. `TestGenerate` : le content type généré est servi (`GET /api/notes` 200).
+- Reste : `generate api`, le mode interactif, les squelettes Go (`controller`, `service`, `policy`, `middleware`), `generate migration`.
 
 ## Notes techniques
 - `charmbracelet/huh` pour les questions interactives, `text/template` pour les squelettes (il n'y a ici que des données internes, pas d'entrée utilisateur non maîtrisée dans les templates de code).
