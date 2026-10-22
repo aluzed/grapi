@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # AUTH-004 : Rôles et permissions du Content API (Public, Authenticated, rôles custom)

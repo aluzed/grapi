@@ -1,0 +1,12 @@
+# config/database.js picks the block by DATABASE_CLIENT; grapi reads the
+# keys that apply to the client.
+connection:
+  client: ${env:DATABASE_CLIENT:sqlite}
+  connection:
+    host: ${env:DATABASE_HOST}
+    port: ${env.int:DATABASE_PORT:5432}
+    database: ${env:DATABASE_NAME}
+    user: ${env:DATABASE_USERNAME}
+    password: ${env:DATABASE_PASSWORD}
+    filename: ${env:DATABASE_FILENAME:/data/data.db}
+  useNullAsDefault: true

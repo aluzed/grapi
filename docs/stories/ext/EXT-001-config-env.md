@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # EXT-001 : Configuration déclarative et env()
@@ -28,10 +28,14 @@ Charger la configuration du projet, avec la même structure de clés que Strapi,
 
 ## Critères d'acceptation
 - [ ] La config de dev-freelance (server, database, admin, api, middlewares, plugins) se transcrit en YAML et donne le même objet fusionné que Strapi (dump comparé sur le banc).
-- [ ] `${env.bool:X}` vaut `false` pour `X=1` (comportement Strapi conservé).
-- [ ] `${env.oneOf:DB:postgres|sqlite:mysql}` fait échouer le démarrage (défaut hors liste).
-- [ ] `${file:dkim/private.key}` injecte le contenu du fichier ; un fichier absent fait échouer le démarrage.
-- [ ] `config/env/production/server.yaml` surcharge `config/server.yaml` en production seulement.
+- [x] `${env.bool:X}` vaut `false` pour `X=1` (comportement Strapi conservé).
+- [x] `${env.oneOf:DB:postgres|sqlite:mysql}` fait échouer le démarrage (défaut hors liste).
+- [x] `${file:dkim/private.key}` injecte le contenu du fichier ; un fichier absent fait échouer le démarrage.
+- [x] `config/env/production/server.yaml` surcharge `config/server.yaml` en production seulement.
+
+## Avancement
+- Fait : `internal/config` (YAML, JSON, directives, `.env`, alias, fusion lodash, noms réservés, contrôle de type des clés lues), branché dans `grapi start` ; doc `docs/configuration.md`.
+- Reste : TOML, dump comparé à Strapi sur la config dev-freelance, accès typé complet (`app.Config().Server.Port`), valeurs par défaut des autres fichiers.
 
 ## Notes techniques
 - Garder une table de correspondance documentée « clé Strapi » vers « clé grapi » : identique sauf exception justifiée.

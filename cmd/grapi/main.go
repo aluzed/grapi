@@ -15,10 +15,16 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  version   print the grapi version")
+		fmt.Fprintln(stderr, "usage: grapi <command>\n\ncommands:\n  start     serve the project in the current directory\n  version   print the grapi version")
 		return 2
 	}
 	switch args[0] {
+	case "start":
+		if err := start(args[1:], stderr); err != nil {
+			fmt.Fprintln(stderr, "grapi:", err)
+			return 1
+		}
+		return 0
 	case "version", "--version", "-v":
 		fmt.Fprintln(stdout, version)
 		return 0

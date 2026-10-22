@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # API-006 : Core API générée (routes, controllers, services CRUD, format {data, meta}, surcharges)

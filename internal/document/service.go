@@ -446,6 +446,10 @@ func (s *Service) createEntry(ctx context.Context, ct *schema.ContentType, p Par
 			return nil, &appError{msg + fmt.Sprintf(" already exists for UID \"%s\". This combination must be unique.", uid)}
 		}
 	}
+	data, err = s.validateEntity(ctx, ct, data, true, !truthy(input[schema.AttrPublishedAt]), p["locale"], nil)
+	if err != nil {
+		return nil, err
+	}
 	componentData, err := s.comp.Create(ctx, uid, data)
 	if err != nil {
 		return nil, err
@@ -510,6 +514,10 @@ func (s *Service) updateEntry(ctx context.Context, ct *schema.ContentType, entry
 	delete(data, schema.AttrDocumentID)
 	q, err := s.toQuery(uid, selection(p))
 	if err != nil {
+		return nil, err
+	}
+	isDraft := !truthy(dataOf(p)[schema.AttrPublishedAt])
+	if data, err = s.validateEntity(ctx, ct, data, false, isDraft, p["locale"], entryID); err != nil {
 		return nil, err
 	}
 	componentData, err := s.comp.Update(ctx, uid, entryID, data)

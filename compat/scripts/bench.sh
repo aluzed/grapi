@@ -13,6 +13,7 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 
 cd "$root"
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o compat/bin/compat ./compat/cmd/compat
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o compat/bin/grapi ./cmd/grapi
 ssh "$host" 'mkdir -p ~/grapi-compat'
 rsync -a --delete --exclude report/ --exclude golden/ compat/ "$host:grapi-compat/compat/"
 status=0

@@ -1,0 +1,421 @@
+[
+ {
+  "input": "",
+  "output": {}
+ },
+ {
+  "input": "a=1",
+  "output": {
+   "a": "1"
+  }
+ },
+ {
+  "input": "a",
+  "output": {
+   "a": null
+  }
+ },
+ {
+  "input": "a=",
+  "output": {
+   "a": ""
+  }
+ },
+ {
+  "input": "a=1&a=2",
+  "output": {
+   "a": [
+    "1",
+    "2"
+   ]
+  }
+ },
+ {
+  "input": "a[]=1&a[]=2",
+  "output": {
+   "a": [
+    "1",
+    "2"
+   ]
+  }
+ },
+ {
+  "input": "a[0]=x&a[1]=y",
+  "output": {
+   "a": [
+    "x",
+    "y"
+   ]
+  }
+ },
+ {
+  "input": "a[1]=y&a[0]=x",
+  "output": {
+   "a": [
+    "x",
+    "y"
+   ]
+  }
+ },
+ {
+  "input": "a[2]=x",
+  "output": {
+   "a": [
+    "x"
+   ]
+  }
+ },
+ {
+  "input": "a[101]=x",
+  "output": {
+   "a": {
+    "101": "x"
+   }
+  }
+ },
+ {
+  "input": "a[100]=x",
+  "output": {
+   "a": {
+    "100": "x"
+   }
+  }
+ },
+ {
+  "input": "a[b]=1&a[c]=2",
+  "output": {
+   "a": {
+    "b": "1",
+    "c": "2"
+   }
+  }
+ },
+ {
+  "input": "a[b][c][d]=1",
+  "output": {
+   "a": {
+    "b": {
+     "c": {
+      "d": "1"
+     }
+    }
+   }
+  }
+ },
+ {
+  "input": "filters[title][$eq]=Hello%20World",
+  "output": {
+   "filters": {
+    "title": {
+     "$eq": "Hello World"
+    }
+   }
+  }
+ },
+ {
+  "input": "filters[$or][0][views]=1&filters[$or][1][stage]=draft",
+  "output": {
+   "filters": {
+    "$or": [
+     {
+      "views": "1"
+     },
+     {
+      "stage": "draft"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "input": "sort=title:asc,views:desc",
+  "output": {
+   "sort": "title:asc,views:desc"
+  }
+ },
+ {
+  "input": "sort[0]=title&sort[1]=views:desc",
+  "output": {
+   "sort": [
+    "title",
+    "views:desc"
+   ]
+  }
+ },
+ {
+  "input": "populate=*",
+  "output": {
+   "populate": "*"
+  }
+ },
+ {
+  "input": "populate[0]=a&populate[1]=b",
+  "output": {
+   "populate": [
+    "a",
+    "b"
+   ]
+  }
+ },
+ {
+  "input": "populate[author][populate][0]=picture",
+  "output": {
+   "populate": {
+    "author": {
+     "populate": [
+      "picture"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "input": "populate[tags][fields][0]=name&populate[tags][sort]=name",
+  "output": {
+   "populate": {
+    "tags": {
+     "fields": [
+      "name"
+     ],
+     "sort": "name"
+    }
+   }
+  }
+ },
+ {
+  "input": "pagination[page]=2&pagination[pageSize]=5",
+  "output": {
+   "pagination": {
+    "page": "2",
+    "pageSize": "5"
+   }
+  }
+ },
+ {
+  "input": "fields[0]=title&fields=slug",
+  "output": {
+   "fields": [
+    "title",
+    "slug"
+   ]
+  }
+ },
+ {
+  "input": "a[b]=1&a=2",
+  "output": {
+   "a": [
+    {
+     "b": "1"
+    },
+    "2"
+   ]
+  }
+ },
+ {
+  "input": "a=2&a[b]=1",
+  "output": {
+   "a": [
+    "2",
+    {
+     "b": "1"
+    }
+   ]
+  }
+ },
+ {
+  "input": "a[]=1&a[b]=2",
+  "output": {
+   "a": {
+    "0": "1",
+    "b": "2"
+   }
+  }
+ },
+ {
+  "input": "q=a+b%2Bc",
+  "output": {
+   "q": "a b+c"
+  }
+ },
+ {
+  "input": "x=%E9t%C3%A9",
+  "output": {
+   "x": "%E9t%C3%A9"
+  }
+ },
+ {
+  "input": "x=%ZZ",
+  "output": {
+   "x": "%ZZ"
+  }
+ },
+ {
+  "input": "a[b=1",
+  "output": {
+   "a": {
+    "[b": "1"
+   }
+  }
+ },
+ {
+  "input": "a]=1",
+  "output": {
+   "a]": "1"
+  }
+ },
+ {
+  "input": "__proto__[x]=1",
+  "output": {}
+ },
+ {
+  "input": "a[__proto__]=1",
+  "output": {}
+ },
+ {
+  "input": "filters[title][$in][0]=a&filters[title][$in][1]=b&filters[title][$in][2]=c",
+  "output": {
+   "filters": {
+    "title": {
+     "$in": [
+      "a",
+      "b",
+      "c"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "input": "a[0][b]=1&a[0][c]=2&a[1][b]=3",
+  "output": {
+   "a": [
+    {
+     "b": "1",
+     "c": "2"
+    },
+    {
+     "b": "3"
+    }
+   ]
+  }
+ },
+ {
+  "input": "a[0]=1&a[0]=2",
+  "output": {
+   "a": [
+    [
+     "1",
+     "2"
+    ]
+   ]
+  }
+ },
+ {
+  "input": "a[][b]=1&a[][b]=2",
+  "output": {
+   "a": [
+    {
+     "b": [
+      "1",
+      "2"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "input": "k=xxxxx",
+  "output": {
+   "k": "xxxxx"
+  }
+ },
+ {
+  "input": "deep[a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a][a]=1",
+  "output": {
+   "deep": {
+    "a": {
+     "a": {
+      "a": {
+       "a": {
+        "a": {
+         "a": {
+          "a": {
+           "a": {
+            "a": {
+             "a": {
+              "a": {
+               "a": {
+                "a": {
+                 "a": {
+                  "a": {
+                   "a": {
+                    "a": {
+                     "a": {
+                      "a": {
+                       "a": {
+                        "[a][a][a][a][a]": "1"
+                       }
+                      }
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ {
+  "input": "status=published&locale=fr",
+  "output": {
+   "status": "published",
+   "locale": "fr"
+  }
+ },
+ {
+  "input": "filters[author][name][$null]",
+  "output": {
+   "filters": {
+    "author": {
+     "name": {
+      "$null": null
+     }
+    }
+   }
+  }
+ },
+ {
+  "input": "a[b][]=1&a[b][]=2&a[b][5]=3",
+  "output": {
+   "a": {
+    "b": [
+     "1",
+     "2",
+     "3"
+    ]
+   }
+  }
+ },
+ {
+  "input": "=x",
+  "output": {}
+ },
+ {
+  "input": "&&a=1&&",
+  "output": {
+   "a": "1"
+  }
+ }
+]

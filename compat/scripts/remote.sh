@@ -14,6 +14,7 @@ run_id="compat-$fixture-$$"
 work=$(mktemp -d "/tmp/$run_id.XXXX")
 
 cleanup() {
+  [ -n "${grapi_pid:-}" ] && kill "$grapi_pid" 2>/dev/null || true
   docker ps -aq --filter "label=grapi-compat=$run_id" | xargs -r docker rm -f >/dev/null
   docker network rm "$run_id" >/dev/null 2>&1 || true
   rm -rf "$work"
@@ -160,8 +161,35 @@ query)
   exit $?
   ;;
 grapi)
-  echo "error: grapi mode needs the grapi image (not built yet)" >&2
-  exit 2
+  # b: Strapi creates the database (tokens, permissions), then grapi serves it.
+  start_ref a
+  start_ref b
+  wait_up a
+  wait_up b
+  docker stop "$run_id-b" >/dev/null
+  grapi_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+  if [ "$db" = postgres ]; then
+    pg_port=$(docker port "$run_id-b-pg" 5432/tcp | head -1 | sed 's/.*://')
+    set -- DATABASE_CLIENT=postgres DATABASE_HOST=127.0.0.1 DATABASE_PORT="$pg_port" DATABASE_NAME=strapi \
+      DATABASE_USERNAME=strapi DATABASE_PASSWORD=strapi
+  else
+    set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/b/data.db"
+  fi
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" \
+    "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
+  grapi_pid=$!
+  i=0
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$grapi_port/_health")" = 204 ]; do
+    i=$((i + 1))
+    if [ $i -gt 60 ] || ! kill -0 "$grapi_pid" 2>/dev/null; then
+      tail -30 "$work/grapi.log"
+      echo "error: grapi did not start" >&2
+      exit 1
+    fi
+    sleep 1
+  done
+  b_url=http://127.0.0.1:$grapi_port
+  b_tokens=$work/b/tokens.json
   ;;
 *)
   echo "error: unknown mode $mode" >&2

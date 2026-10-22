@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # API-001 : Serveur HTTP, contexte de requête, /_health, arrêt propre

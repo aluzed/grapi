@@ -8,7 +8,7 @@ The public content API stays wire-compatible with Strapi 5, so an existing front
 
 ## Status
 
-Pre-alpha: nothing usable yet. The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
+Pre-alpha. `grapi start` serves the REST content API of a Strapi project (configuration: [`docs/configuration.md`](docs/configuration.md)). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
 
 ## Development
 

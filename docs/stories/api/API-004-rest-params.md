@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # API-004 : Paramètres REST : filters, sort, fields, populate, pagination, locale, status, strictParams
