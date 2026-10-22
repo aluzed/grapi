@@ -463,6 +463,13 @@ func (p *Project) OpenAPI() ([]byte, error) {
 	return openapi.JSON(openapi.Generate(p.Res.Set, openapi.Options{Info: openapi.Info{Name: pkg.Name, Version: pkg.Version}, Served: api.Serves}))
 }
 
+// Routes is the project's route table, without starting anything.
+func (p *Project) Routes() []httpapi.RouteInfo {
+	engine := &query.Engine{DB: p.DB, MD: p.MD}
+	cfg := apiConfig(p.Conf, p.Dir)
+	return httpapi.New(cfg, p.DB, p.Res.Set, document.New(engine, p.Res.Set), p.Log).Routes()
+}
+
 // Server is a set-up App: the API handler and the address it is
 // configured to listen on.
 type Server struct {

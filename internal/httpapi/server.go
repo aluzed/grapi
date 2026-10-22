@@ -713,3 +713,19 @@ func paginationResponse(pi paginationInfo, total *int64, paged bool) map[string]
 	}
 	return out
 }
+
+// RouteInfo is one route of the table, as routes:list shows it.
+type RouteInfo struct{ Method, Path, Action string }
+
+// Routes lists the routes in matching order.
+func (s *Server) Routes() []RouteInfo {
+	out := make([]RouteInfo, 0, len(s.routes))
+	for _, rt := range s.routes {
+		action := rt.uid + "." + rt.action
+		if rt.scope != "" {
+			action = rt.scope
+		}
+		out = append(out, RouteInfo{Method: rt.method, Path: "/" + strings.Join(rt.path, "/"), Action: action})
+	}
+	return out
+}

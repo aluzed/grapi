@@ -34,7 +34,7 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 
 ## Avancement
 - Fait : routes custom en Go (`grapi.App.Route`, `PublicRoute` pour `auth: false`), placées avant les routes core, avec le scope de permission à la Strapi (`api::account.account.anonymize`) et les erreurs `ctx.badRequest`/`ctx.unauthorized` (`grapi.Error`, noms http-errors). Test : `hooks_test.go` (`TestCustomRoutes`).
-- Reste : routes déclarées dans `src/api/*/routes/*` (fichiers JS ou déclaratifs), policies et middlewares de route, `routes:list`.
+- Reste : routes déclarées dans `src/api/*/routes/*` (fichiers JS ou déclaratifs), middlewares de route. Les policies de route existent en mode framework (`API-009`), `grapi routes:list` liste la table (`CLI-003`).
 
 ## Notes techniques
 - Conflits de routes (même méthode et chemin) : erreur au démarrage, Strapi laisse gagner la première.
