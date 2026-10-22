@@ -126,7 +126,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	if cfg.Middlewares != nil {
 		mw = *cfg.Middlewares
 	}
-	s.handler = mw.wrap(http.HandlerFunc(s.route))
+	s.handler = s.logRequests(mw.wrap(http.HandlerFunc(s.route)))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
 		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false, false})

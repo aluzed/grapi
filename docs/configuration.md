@@ -42,7 +42,9 @@ Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a
 
 ## Variables
 
-`GRAPI_LOG_LEVEL` (or `STRAPI_LOG_LEVEL`): `debug`, `info` (default), `warn`, `error`. At `debug`, every rejected request is logged with its error.
+`GRAPI_LOG_LEVEL` (or `STRAPI_LOG_LEVEL`): `debug`, `http` (default, as Strapi: one line per request), `info`, `warn`, `error`. At `debug`, every rejected request is logged with its error.
+
+`GRAPI_LOG_FORMAT` (or `logger.format` in the config): `text`, or `json` (the default in production). Every request line carries its method, path, status, duration and request id: the `X-Request-Id` header when the client or a proxy sends a valid one, a generated one otherwise, sent back in the response. grapi sends no telemetry and opens no outgoing connection it was not configured for; `STRAPI_TELEMETRY_DISABLED` is accepted and has nothing to disable.
 
 
 Each `GRAPI_*` variable also accepts its Strapi name (`internal/config/aliases.go`); when both are set, `GRAPI_*` wins and a warning is logged.

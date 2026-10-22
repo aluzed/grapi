@@ -19,7 +19,8 @@ func projectFlags(name string) (*flag.FlagSet, *string, *string) {
 	dir := fs.String("dir", ".", "project directory (the one holding src/)")
 	configDir := fs.String("config", "", "configuration directory (default <dir>/config)")
 	fs.Var(envFlag("GRAPI_ENV"), "env", "environment (GRAPI_ENV, NODE_ENV)")
-	fs.Var(envFlag("GRAPI_LOG_LEVEL"), "log-level", "debug, info, warn or error")
+	fs.Var(envFlag("GRAPI_LOG_LEVEL"), "log-level", "debug, http (default), info, warn or error")
+	fs.Var(envFlag("GRAPI_LOG_FORMAT"), "log-format", "text or json (json in production)")
 	return fs, dir, configDir
 }
 

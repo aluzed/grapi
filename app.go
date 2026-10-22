@@ -32,6 +32,7 @@ import (
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/events"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/internal/logging"
 	"github.com/aluzed/grapi/internal/media/provider"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/registry"
@@ -193,7 +194,7 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 		return nil
 	}
 	base := "plugins.graphql.config."
-	g := &httpapi.GraphQLConfig{Introspection: c.Env["NODE_ENV"] != "production"}
+	g := &httpapi.GraphQLConfig{Introspection: c.Environment != "production"}
 	g.Endpoint, _ = c.String(base + "endpoint")
 	g.DefaultLimit, _ = c.Int(base + "defaultLimit")
 	g.MaxLimit, _ = c.Int(base + "maxLimit")
@@ -377,16 +378,28 @@ type Project struct {
 // database, without writing anything.
 func LoadProject(dir, configDir string, stderr io.Writer) (*Project, error) {
 	level := new(slog.LevelVar)
-	log := slog.New(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
+	level.Set(logging.DefaultLevel)
+	log := logging.New(stderr, logging.Text, level)
 	conf, err := config.Load(config.Options{Dir: dir, ConfigDir: configDir, Log: log})
 	if err != nil {
 		return nil, err
 	}
 	if l, ok := conf.Env.Lookup("GRAPI_LOG_LEVEL", log); ok && l != "" {
-		if err := level.UnmarshalText([]byte(l)); err != nil {
+		lv, err := logging.ParseLevel(l)
+		if err != nil {
 			return nil, fmt.Errorf("GRAPI_LOG_LEVEL: %w", err)
 		}
+		level.Set(lv)
 	}
+	f, _ := conf.Env.Lookup("GRAPI_LOG_FORMAT", log)
+	if f == "" {
+		f, _ = conf.String("logger.format")
+	}
+	format, err := logging.ParseFormat(f, logging.DefaultFormat(conf.Environment))
+	if err != nil {
+		return nil, fmt.Errorf("log format: %w", err)
+	}
+	log = logging.New(stderr, format, level)
 	res, md, err := builtin.Load(os.DirFS(dir))
 	if err != nil {
 		return nil, err
@@ -530,7 +543,10 @@ func (a *App) Start() error {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
-	log.Info(fmt.Sprintf("grapi %s listening on %s", a.opts.Version, s.Addr))
+	conf := s.project.Conf
+	server, admin := absoluteURLs(conf)
+	log.Info(fmt.Sprintf("grapi %s listening on %s", a.opts.Version, s.Addr),
+		"environment", conf.Environment, "server", server, "admin", admin, "database", s.project.DB.Dialect.Name())
 	select {
 	case err := <-errc:
 		if !errors.Is(err, http.ErrServerClosed) {
