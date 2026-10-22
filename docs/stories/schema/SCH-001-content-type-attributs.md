@@ -18,7 +18,7 @@ Définir les types Go qui représentent un content type et ses attributs, parser
 - Propriétés dérivées :
   - `uid` : `api::<api>.<singular>`, `plugin::<plugin>.<singular>`, `admin::<x>`, `strapi::<x>` ;
   - `modelType` (`contentType` ou `component`), `modelName`, `globalId` (PascalCase du singularName, préfixé par le plugin pour les types de plugin).
-- **Attributs** : une interface `Attribute` et un type par sorte :
+- **Attributs** : une seule struct `Attribute` (les champs sans objet pour un type restent nil), plus pratique en Go qu'une interface par sorte pour un schéma dynamique. Types couverts :
   - texte : `string`, `text`, `richtext`, `blocks`, `email`, `password`, `uid` (`targetField`, `options{separator, lowercase, decamelize, customReplacements, preserveLeadingUnderscore}`, `regex`), `enumeration` (`enum[]`, `enumName`) ;
   - nombres : `integer`, `biginteger` (exposé en chaîne), `float`, `decimal` ;
   - dates : `date`, `time`, `datetime`, `timestamp` ;
@@ -30,21 +30,25 @@ Définir les types Go qui représentent un content type et ses attributs, parser
   - `pluginOptions`, `conditions.visible` (JSON-Logic, stocké tel quel) ;
   - `column{type, defaultTo, notNullable, unsigned, unique}`.
 - **Champs ajoutés automatiquement** au chargement : `documentId`, `createdAt` et `updatedAt` (datetime), `publishedAt` (datetime, **ajouté même sans draft & publish**), `createdBy` et `updatedBy` (relation oneToOne vers `admin::user`, `useJoinTable:false`, `private` sauf si `populateCreatorFields`). `locale` et `localizations` sont ajoutés par i18n (`PLG-001`).
-- **Noms réservés** : rejet de `id`, `document_id`, `documentId`, `created_at`, `updated_at`, `published_at`, `created_by_id`, `updated_by_id`, `locale`, `localizations`, `meta`, `__component`, `__contentType`, et de tout nom commençant par `strapi`. La liste exacte vient de `RESERVED_ATTRIBUTE_NAMES`.
+- **Noms réservés**, avec le comportement exact de Strapi (vérifié dans le source 5.59) :
+  - au chargement, seuls `id` et `document_id` sont refusés (comparaison en snake_case) ; avec draft & publish, `status` donne un avertissement ;
+  - la liste complète de `RESERVED_ATTRIBUTE_NAMES` (`created_at`, `locale`, `meta`, `strapi*`, etc.) et les noms de modèle réservés ne sont appliqués que par le Content-Type Builder (`IsReservedAttributeName`, `IsReservedModelName`, utilisés par `ADM-006`). Refuser `locale` au chargement casserait l'ouverture de projets Strapi existants ;
+  - la comparaison se fait en snake_case façon lodash, qui enlève les underscores de tête : `__component` n'est donc pas refusé par ce contrôle, mais par le motif de nom du builder.
 - Sérialisation aller-retour : `parse(json)` puis `marshal()` redonne un JSON équivalent (mêmes clés, même ordre d'attributs).
 
 ## Hors périmètre
 - Le chargement depuis le disque (`SCH-004`), la validation croisée (`SCH-003`), le mapping SQL (`DB-002`).
 
 ## Critères d'acceptation
-- [ ] Tous les `schema.json` des fixtures du banc (`SETUP-002`) et de dev-freelance se parsent, puis se resérialisent à l'identique (test golden).
-- [ ] L'ordre des attributs est conservé au parse et au marshal.
-- [ ] Les champs automatiques sont présents avec les bons types et le bon caractère privé (test par cas : D&P activé ou non, `populateCreatorFields` activé ou non).
-- [ ] Un attribut nommé `locale` ou `strapiFoo` est rejeté avec une erreur qui cite le content type et l'attribut.
+- [x] Tous les `schema.json` des fixtures du banc (`SETUP-002`) et de dev-freelance se parsent, puis se resérialisent à l'identique (test golden).
+- [x] L'ordre des attributs est conservé au parse et au marshal.
+- [x] Les champs automatiques sont présents avec les bons types et le bon caractère privé (test par cas : D&P activé ou non, `populateCreatorFields` activé ou non).
+- [x] Un attribut nommé `id` ou `documentId` est rejeté au chargement, avec une erreur qui cite le modèle et l'attribut ; `locale` et `strapiFoo` se chargent, mais `IsReservedAttributeName` les refuse.
 - [ ] `uid`, `globalId` et `modelName` sont identiques à ceux de Strapi sur les fixtures (vérifié contre la sortie de `strapi content-types:list` de la référence).
 - [ ] Un type d'attribut inconnu provoque une erreur claire, sauf s'il est enregistré comme custom field.
 
 ## Notes techniques
+- `globalId` et `snakeCase` reproduisent lodash (`upperFirst(camelCase())`, `snakeCase`), découpage des mots compris : casse, chiffres, ordinaux (`2nd`), accents retirés (deburr). Les cas de test viennent de lodash exécuté dans l'image de référence.
 - Map ordonnée : décoder `attributes` avec `json.Decoder` token par token, ou avec une petite structure `OrderedMap[K,V]`. `map[string]` perdrait l'ordre.
 - `default` peut être une fonction en JS : dans un `schema.json`, c'est toujours une valeur. Les défauts calculés passent par les hooks (`EXT-002`).
 - Garder un champ `Extra map[string]json.RawMessage` sur chaque structure, pour ne jamais perdre une clé inconnue (forward compatibility avec Strapi).
