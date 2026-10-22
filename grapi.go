@@ -30,7 +30,9 @@ type App struct {
 	opts                Options
 	lifecycles          *query.Lifecycles
 	documentMiddlewares []document.Middleware
-	routes              []customRoute
+	routes              []*customRoute
+	policies            map[string]Policy
+	routePolicies       []routePolicies
 	docs                *document.Service
 	stopWebhooks        func()
 	cronTasks           []cronTask

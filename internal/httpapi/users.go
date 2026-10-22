@@ -40,16 +40,16 @@ func (s *Server) addUsersRoutes() {
 	base := strings.TrimPrefix(s.cfg.Prefix, "/")
 	auth := "plugin::users-permissions.auth"
 	s.routes = append(s.routes,
-		route{"POST", []string{base, "auth", "local"}, auth, "callback", s.authCallback, "", false, false},
-		route{"POST", []string{base, "auth", "local", "register"}, auth, "register", s.authRegister, "", false, false},
-		route{"POST", []string{base, "auth", "change-password"}, auth, "changePassword", s.authChangePassword, "", false, false},
-		route{"GET", []string{base, "users", "count"}, userUID, "count", s.usersCount, "", false, false},
-		route{"GET", []string{base, "users"}, userUID, "find", s.usersFind, "", false, false},
-		route{"GET", []string{base, "users", "me"}, userUID, "me", s.usersMe, "", false, false},
-		route{"GET", []string{base, "users", ":id"}, userUID, "findOne", s.usersFindOne, "", false, false},
-		route{"POST", []string{base, "users"}, userUID, "create", s.usersCreate, "", false, false},
-		route{"PUT", []string{base, "users", ":id"}, userUID, "update", s.usersUpdate, "", false, false},
-		route{"DELETE", []string{base, "users", ":id"}, userUID, "destroy", s.usersDestroy, "", false, false},
+		route{"POST", []string{base, "auth", "local"}, auth, "callback", s.authCallback, "", false, false, nil},
+		route{"POST", []string{base, "auth", "local", "register"}, auth, "register", s.authRegister, "", false, false, nil},
+		route{"POST", []string{base, "auth", "change-password"}, auth, "changePassword", s.authChangePassword, "", false, false, nil},
+		route{"GET", []string{base, "users", "count"}, userUID, "count", s.usersCount, "", false, false, nil},
+		route{"GET", []string{base, "users"}, userUID, "find", s.usersFind, "", false, false, nil},
+		route{"GET", []string{base, "users", "me"}, userUID, "me", s.usersMe, "", false, false, nil},
+		route{"GET", []string{base, "users", ":id"}, userUID, "findOne", s.usersFindOne, "", false, false, nil},
+		route{"POST", []string{base, "users"}, userUID, "create", s.usersCreate, "", false, false, nil},
+		route{"PUT", []string{base, "users", ":id"}, userUID, "update", s.usersUpdate, "", false, false, nil},
+		route{"DELETE", []string{base, "users", ":id"}, userUID, "destroy", s.usersDestroy, "", false, false, nil},
 	)
 }
 

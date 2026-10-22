@@ -531,7 +531,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	a.docs = docs
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
-	a.addRoutes(api)
+	if err := a.addRoutes(api); err != nil {
+		return nil, err
+	}
 	host, _ := conf.String("server.host")
 	port, _ := conf.Int("server.port")
 	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: a.stopWebhooks}, nil

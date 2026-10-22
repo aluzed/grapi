@@ -1,0 +1,91 @@
+# Framework mode
+
+grapi runs a Strapi project as is (`grapi start`). To add Go code (what a Strapi project does in `src/index.js`, lifecycles, custom controllers, policies), build your own `main` on the `github.com/aluzed/grapi` module. `grapi new <name> --framework` writes one:
+
+```go
+app := grapi.New(grapi.Options{Dir: "."})
+// register hooks, routes, policies... here, then:
+if err := app.Start(); err != nil {
+	log.Fatal(err)
+}
+```
+
+Everything below is registered before `Start` (or `Setup`, which returns the HTTP handler without listening, for tests).
+
+## Row lifecycles (`db.lifecycles.subscribe`)
+
+```go
+app.OnRowCreate("api::post.post").Bind(func(e *hook.RowEvent) error {
+	e.Data["slug"] = slugify(e.String("title"))
+	return nil
+})
+```
+
+`OnRowCreate`, `OnRowUpdate`, `OnRowWrite` (both), `OnRowDelete`, or `OnRow("afterUpdate", uids...)` for any of the 18 Strapi events. No uid means every model. An error aborts the write.
+
+## Document Service middlewares (`strapi.documents.use`)
+
+```go
+app.UseDocuments(func(c *document.Context, next document.Next) (any, error) {
+	if c.UID == "api::post.post" && c.Action == document.Create {
+		c.Params["status"] = "draft"
+	}
+	return next()
+})
+```
+
+`app.Documents()` gives the Document Service itself once set up.
+
+## Routes and policies
+
+```go
+app.Route("POST", "/account/anonymize", "api::account.account.anonymize", func(c *grapi.Request) error {
+	if c.User == nil {
+		return grapi.Error(http.StatusUnauthorized, "")
+	}
+	return c.JSON(http.StatusOK, map[string]any{"ok": true})
+}).Policies("is-owner")
+
+app.PublicRoute("GET", "/ping", ping) // config.auth: false
+```
+
+The path is under the API prefix (`/api`). The scope is the permission a role needs, granted like any Strapi action. `grapi.Error(status, message)` answers in Strapi's error format.
+
+Policies run after authentication and the permission check:
+
+```go
+app.Policy("api::account.is-owner", func(c *grapi.PolicyContext, config any) (bool, error) {
+	return c.User != nil && c.Params["id"] == fmt.Sprint(c.User["id"]), nil
+})
+app.RoutePolicies("api::post.post.update", "global::is-editor", grapi.PolicyRef{Name: "global::quota", Config: 10})
+```
+
+A name without namespace is looked up in the route's API or plugin (`is-owner` on an `api::account...` route is `api::account.is-owner`), then in `global::`. An unknown policy stops the start. `false` answers Strapi's 403 `PolicyError`.
+
+## Cron (`server.cron.tasks`)
+
+```go
+app.Cron("cleanup", "0 3 * * *", grapi.CronOptions{TZ: "Europe/Paris"}, func(ctx context.Context) error { return nil })
+app.CronAt("launch", time.Date(2026, 11, 1, 9, 0, 0, 0, time.UTC), launch)
+```
+
+Tasks run only when `server.cron.enabled` is true, as in Strapi.
+
+## GraphQL (`strapi.plugin('graphql').service('extension')`)
+
+```go
+gql := app.GraphQL()
+gql.ShadowCRUD("api::post.post").Field("internalNote").Disable()
+gql.ShadowCRUD("api::tag.tag").DisableAction("delete")
+gql.Use(grapi.GraphQLExtension{
+	TypeDefs: `extend type Query { popularPosts(limit: Int = 5): [Post!]! }`,
+	Resolvers: map[string]map[string]grapi.GraphQLResolveFunc{"Query": {
+		"popularPosts": func(ctx context.Context, fc *grapi.GraphQLFieldContext) (any, error) { return popular(ctx, fc.Args["limit"]) },
+	}},
+	ResolversConfig: map[string]grapi.GraphQLResolverConfig{
+		"Query.popularPosts": {Scope: "api::post.post.find"},
+	},
+})
+```
+
+The plugin is on when the project depends on `@strapi/plugin-graphql` or sets `plugins.graphql.enabled` (`docs/configuration.md`). Fields of `Query` and `Mutation` always go through the permission check; an `Auth` pointing to false lifts it, `Policies` add checks, on added and on generated fields alike.

@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # API-009 : Policies
@@ -21,9 +21,15 @@ Le registre de policies, la résolution des noms et les policies intégrées.
 - Le moteur de permissions (`AUTH-001`).
 
 ## Critères d'acceptation
-- [ ] Une policy relative `is-owner` déclarée dans l'API post se résout en `api::post.is-owner`.
-- [ ] Une policy inconnue fait échouer le démarrage avec le nom et la route en cause.
-- [ ] Une policy qui renvoie `false` produit le même 403 que Strapi.
+- [x] Une policy relative `is-owner` déclarée dans l'API post se résout en `api::post.is-owner`.
+- [x] Une policy inconnue fait échouer le démarrage avec le nom et la route en cause.
+- [x] Une policy qui renvoie `false` produit le même 403 que Strapi.
+
+## Avancement
+- Mode framework (`policies.go`) : `app.Policy(uid, fn)` (`global::`, `api::<api>.`, `plugin::<plugin>.`), policies sur les routes custom (`app.Route(...).Policies("is-owner", grapi.PolicyRef{Name, Config})`) et sur les routes générées par action (`app.RoutePolicies("api::post.post.find", ...)`). Un nom relatif se résout sur l'API ou le plugin du scope de la route, puis en `global::`. Une policy inconnue arrête le démarrage avec la route et les noms cherchés.
+- `internal/httpapi` : les policies passent après l'authentification et le contrôle de permission, routes publiques comprises, comme le pipeline de Strapi. `false` donne la `PolicyError` 403 de Strapi (`Policy Failed`, `details: {}`) ; une erreur renvoyée (`grapi.Error`) est répondue telle quelle. Tests `TestPolicies` et `TestPolicyResolution`.
+- Côté GraphQL, les policies des `resolversConfig` existent depuis `PLG-004`.
+- Reste : policies déclarées dans les fichiers de routes JS (`EXT-003`), `validator` de config au démarrage, policies admin (avec l'admin).
 
 ## Notes techniques
 - Les policies sont résolues au démarrage, pas à chaque requête.

@@ -68,7 +68,8 @@ type route struct {
 	scope  string
 	public bool
 	// limited routes go through the users-permissions rateLimit middleware.
-	limited bool
+	limited  bool
+	policies []Policy
 }
 
 type requestContext struct {
@@ -129,7 +130,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	s.handler = s.logRequests(mw.wrap(http.HandlerFunc(s.route)))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
-		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false, false})
+		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false, false, nil})
 	}
 	return s
 }
@@ -167,20 +168,20 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	if ct.IsSingleType() {
 		p := []string{base, ct.Info.SingularName}
 		s.routes = append(s.routes,
-			route{"GET", p, uid, "find", s.singleFind, "", false, false},
-			route{"PUT", p, uid, "update", s.singleUpdate, "", false, false},
-			route{"DELETE", p, uid, "delete", s.singleDelete, "", false, false},
+			route{"GET", p, uid, "find", s.singleFind, "", false, false, nil},
+			route{"PUT", p, uid, "update", s.singleUpdate, "", false, false, nil},
+			route{"DELETE", p, uid, "delete", s.singleDelete, "", false, false, nil},
 		)
 		return
 	}
 	list := []string{base, ct.Info.PluralName}
 	one := []string{base, ct.Info.PluralName, ":id"}
 	s.routes = append(s.routes,
-		route{"GET", list, uid, "find", s.find, "", false, false},
-		route{"GET", one, uid, "findOne", s.findOne, "", false, false},
-		route{"POST", list, uid, "create", s.create, "", false, false},
-		route{"PUT", one, uid, "update", s.update, "", false, false},
-		route{"DELETE", one, uid, "delete", s.remove, "", false, false},
+		route{"GET", list, uid, "find", s.find, "", false, false, nil},
+		route{"GET", one, uid, "findOne", s.findOne, "", false, false, nil},
+		route{"POST", list, uid, "create", s.create, "", false, false, nil},
+		route{"PUT", one, uid, "update", s.update, "", false, false, nil},
+		route{"DELETE", one, uid, "delete", s.remove, "", false, false, nil},
 	)
 }
 
@@ -252,6 +253,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 	ctx := r.Context()
 	if rt.public {
 		rc := &requestContext{auth: &Auth{scopes: map[string]bool{}}, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
+		if err := s.runPolicies(r, rt, rc); err != nil {
+			writeError(w, err, s.log)
+			return
+		}
 		if err := rt.handler(w, r, rc); err != nil {
 			writeError(w, err, s.log)
 		}
@@ -278,6 +283,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 		return
 	}
 	rc := &requestContext{auth: auth, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
+	if err := s.runPolicies(r, rt, rc); err != nil {
+		writeError(w, err, s.log)
+		return
+	}
 	if err := rt.handler(w, r, rc); err != nil {
 		writeError(w, err, s.log)
 	}

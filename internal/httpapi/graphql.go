@@ -54,7 +54,7 @@ func (s *Server) addGraphQL() error {
 	}
 	path := splitPath(s.cfg.GraphQL.Endpoint)
 	for _, m := range []string{"GET", "POST"} {
-		s.routes = append(s.routes, route{m, path, "plugin::graphql", "graphql", s.graphqlHandler, "", true, false})
+		s.routes = append(s.routes, route{m, path, "plugin::graphql", "graphql", s.graphqlHandler, "", true, false, nil})
 	}
 	return nil
 }

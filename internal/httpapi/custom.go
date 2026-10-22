@@ -18,16 +18,22 @@ type Request struct {
 // Handler is a custom route handler.
 type Handler func(w http.ResponseWriter, r *http.Request, req *Request) error
 
+// Policy runs before a route handler: false answers Strapi's PolicyError.
+type Policy func(r *http.Request, req *Request) (bool, error)
+
+var errPolicyFailed = newError(http.StatusForbidden, "PolicyError", "Policy Failed")
+
 // CustomRoute is a route added by the project (config/routes or Go). Path
 // is relative to the API prefix ("/account/anonymize"); Scope is the
 // permission it needs ("api::account.account.anonymize"), Public disables
 // authentication like config.auth: false.
 type CustomRoute struct {
-	Method  string
-	Path    string
-	Scope   string
-	Public  bool
-	Handler Handler
+	Method   string
+	Path     string
+	Scope    string
+	Public   bool
+	Handler  Handler
+	Policies []Policy
 }
 
 // AddRoute registers r ahead of the core routes.
@@ -40,12 +46,43 @@ func (s *Server) AddRoute(cr CustomRoute) {
 	}
 	h := cr.Handler
 	rt := route{
-		method: strings.ToUpper(cr.Method), path: path, scope: cr.Scope, public: cr.Public,
+		method: strings.ToUpper(cr.Method), path: path, scope: cr.Scope, public: cr.Public, policies: cr.Policies,
 		handler: func(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 			return h(w, r, &Request{Params: rc.params, Query: rc.query, User: rc.auth.User})
 		},
 	}
 	s.routes = append([]route{rt}, s.routes...)
+}
+
+// AddPolicies adds policies to the generated routes of action
+// ("api::post.post.find"); it reports whether a route matched.
+func (s *Server) AddPolicies(action string, ps ...Policy) bool {
+	found := false
+	for i := range s.routes {
+		rt := &s.routes[i]
+		scope := rt.uid + "." + rt.action
+		if rt.scope != "" {
+			scope = rt.scope
+		}
+		if scope == action {
+			rt.policies = append(rt.policies, ps...)
+			found = true
+		}
+	}
+	return found
+}
+
+func (s *Server) runPolicies(r *http.Request, rt *route, rc *requestContext) error {
+	for _, p := range rt.policies {
+		ok, err := p(r, &Request{Params: rc.params, Query: rc.query, User: rc.auth.User})
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errPolicyFailed
+		}
+	}
+	return nil
 }
 
 // HTTPError is Strapi's ctx.badRequest, ctx.unauthorized... : the
