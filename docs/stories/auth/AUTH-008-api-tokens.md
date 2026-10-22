@@ -1,0 +1,48 @@
+# AUTH-008 : API tokens et admin tokens
+
+## Contexte
+Les API tokens donnent un accès serveur à serveur au Content API. Strapi stocke un HMAC du token, et non le token lui-même, ainsi qu'une copie chiffrée qui permet de le réafficher dans l'admin. Strapi 5 a ajouté les *admin tokens* (`kind: admin`), qui appellent l'API admin avec les permissions de leur propriétaire.
+
+## Objectif
+Les mêmes tokens, avec le même format de stockage, pour qu'un token créé par Strapi fonctionne sur grapi (D3).
+
+## Périmètre
+- Modèle `admin::api-token` : name, description, type (`read-only`, `full-access`, `custom`), accessKey (HMAC), encryptedKey, lastUsedAt, expiresAt, lifespan, kind (`content-api` ou `admin`), permissions (`admin::api-token-permission`, action par token custom).
+- Génération : 128 octets aléatoires en hexadécimal.
+- Stockage :
+  - `accessKey = HMAC-SHA512(token, admin.apiToken.salt)` en hexadécimal ;
+  - `encryptedKey` = AES-256-GCM avec `admin.secrets.encryptionKey`. Il n'est disponible que si la clé est configurée, sinon on ne peut plus jamais réafficher le token.
+- Durées de vie : illimitée, 7, 30 ou 90 jours (`lifespan` en ms, `expiresAt` calculé).
+- Endpoints admin : CRUD `/admin/api-tokens`, `POST /admin/api-tokens/:id/regenerate`, et la même chose pour `/admin/admin-tokens`, plus `/:id/owner-permissions`.
+- Stratégie `api-token` sur le Content API :
+  - token `read-only` : uniquement les actions `find` et `findOne` ;
+  - token `full-access` : tout ;
+  - token `custom` : uniquement ses permissions ;
+  - `lastUsedAt` est mis à jour au plus une fois par heure.
+- Stratégie `admin-token` : l'appelant prend les permissions de son propriétaire, réduites à celles du token.
+- Un token expiré donne 401.
+
+## Hors périmètre
+- Transfer tokens (`AUTH-009`).
+
+## Critères d'acceptation
+- [ ] **Compat DB (D3)** : avec le même `API_TOKEN_SALT`, un token créé par Strapi 5.59 authentifie sur grapi. Ce cas est dans le banc `SETUP-002` : c'est le token full-access utilisé pour les tests dev-freelance.
+- [ ] Avec `ENCRYPTION_KEY`, un token créé par Strapi est réaffiché en clair par grapi (déchiffrement AES-256-GCM, même format IV et tag que Strapi).
+- [ ] Un token read-only reçoit 403 sur `POST /api/posts` (banc).
+- [ ] La régénération invalide l'ancien token (intégration).
+- [ ] Les comparaisons de tokens sont à temps constant (`crypto/subtle`).
+
+## Notes techniques
+- Vérifier dans `encryption.ts` le format exact de la copie chiffrée (concaténation IV, tag et ciphertext, encodage) et le reproduire. Prévoir un TU sur une valeur générée par Strapi.
+- Ne jamais logger un token, ni en entier ni en partie.
+
+## Référence Strapi
+- `core/admin/server/src/services/api-token.ts`, `core/admin/server/src/services/encryption.ts`
+- `core/admin/server/src/strategies/api-token.ts`, `.../admin-token.ts`
+- `core/admin/server/src/routes/api-tokens.ts`, `core/admin/server/src/services/constants.ts`
+
+## Dépendances
+- `AUTH-001`, `AUTH-007`, `API-002`, `EXT-001`
+
+## Fichiers
+- `internal/auth/apitoken/{model.go,service.go,crypto.go,strategy.go,routes.go,crypto_test.go}`

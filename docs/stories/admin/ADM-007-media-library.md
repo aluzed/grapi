@@ -1,0 +1,58 @@
+# ADM-007 : Media Library
+
+> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+
+## Contexte
+La Media Library de Strapi gère les fichiers et les dossiers. Elle permet l'upload multiple en glisser-déposer ou depuis une URL, l'édition des métadonnées (nom, texte alternatif, légende, point focal), le recadrage, le remplacement de fichier, le déplacement et la suppression groupés, la recherche, les filtres et le tri. Elle sert aussi de sélecteur pour les champs média de la vue édition.
+
+## Objectif
+Offrir la gestion complète des médias dans l'admin, à la fois comme page à part entière et comme modale de sélection réutilisable.
+
+## Périmètre
+- **Vue grille et vue liste** des fichiers et des dossiers, avec un fil d'Ariane des dossiers.
+- **Recherche**, filtres (type : image, vidéo, audio, fichier ; date de création ; date de modification) et tri (nom, date).
+- **Upload** :
+  - glisser-déposer multiple, sélection de fichiers, upload depuis des URLs ;
+  - barre de progression par fichier, annulation ;
+  - rejet affiché si la taille limite est dépassée.
+- **Détail d'un fichier** :
+  - aperçu, nom, texte alternatif, légende ;
+  - point focal (`focalPoint`) et recadrage d'image (crée un nouveau fichier ou remplace l'existant, au choix) ;
+  - téléchargement, copie de l'URL, remplacement du fichier en gardant le même id ;
+  - formats générés (`thumbnail`, `small`, `medium`, `large`) ;
+  - documents qui utilisent le fichier.
+- **Dossiers** : création, renommage, déplacement, suppression (avec la liste du contenu impacté dans la modale de confirmation).
+- **Actions groupées** : déplacer, supprimer.
+- **Modale de sélection** pour les champs média (`ADM-004`) : mêmes fonctions, avec le filtre `allowedTypes` du champ et une sélection simple ou multiple.
+- **Réglages** (Settings > Media Library) : optimisation de taille, formats responsive, orientation automatique.
+- **Permissions** : access, create (upload), read, update, download, copy link, et la condition `is-creator`.
+
+## Hors périmètre
+- Le traitement d'image côté serveur (`MEDIA-002`) et les providers (`MEDIA-003` à `MEDIA-005`).
+- Les métadonnées générées par IA (fonction EE chez Strapi, non prévue).
+
+## Critères d'acceptation
+- [ ] Uploader 20 images en une fois crée 20 fichiers, avec leurs formats générés selon les réglages.
+- [ ] Remplacer un fichier conserve son id, et tous les documents qui l'utilisent pointent sur le nouveau contenu.
+- [ ] Supprimer un dossier non vide passe par une modale qui annonce le nombre de fichiers et sous-dossiers impactés.
+- [ ] Le point focal enregistré est renvoyé par l'API (`focalPoint`).
+- [ ] Le sélecteur depuis un champ `allowedTypes: ["images"]` ne propose que des images.
+- [ ] Un utilisateur sans `update` voit les détails en lecture seule.
+- [ ] À 375 px, la grille passe sur une ou deux colonnes et toutes les actions sont en pleine largeur.
+
+## Notes techniques
+- Upload en multipart vers l'API admin d'upload (`MEDIA-001`), en parallèle limité (3 fichiers à la fois).
+- Le recadrage se fait côté client (canvas) puis part en upload ou en remplacement, comme dans Strapi.
+- **Si l'option A est retenue** : reproduire les routes admin `/upload/*` (`files`, `folders`, `folder-structure`, `actions/bulk-*`, `settings`, `configuration`) selon `upload/shared/contracts/`.
+
+## Référence Strapi
+- `core/upload/server/src/routes/admin.ts`, `core/upload/server/src/controllers/`
+- `core/upload/admin/src/`
+- `core/upload/shared/contracts/`
+
+## Dépendances
+- `ADM-002`, `MEDIA-001`, `MEDIA-002`, `MEDIA-006`, `AUTH-001`
+
+## Fichiers
+- `admin/src/pages/media-library/`, `admin/src/features/media-picker/`
+- `internal/media/admin_handlers.go`

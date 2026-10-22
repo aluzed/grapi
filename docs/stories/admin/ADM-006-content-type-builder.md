@@ -1,0 +1,65 @@
+# ADM-006 : Content-Type Builder (écriture des schémas, rechargement à chaud, migrations de renommage)
+
+> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+
+## Contexte
+Le Content-Type Builder (CTB) de Strapi crée, modifie et supprime des content types, des composants, des catégories de composants et des champs. Côté serveur, il écrit les fichiers `schema.json` dans `src/` et génère des migrations de renommage. Il redémarre ensuite le process, et il n'est actif qu'en mode develop. Strapi 5 enregistre par lot (`POST /update-schema`) et l'admin interroge ensuite `update-schema-status`. Un binaire Go ne redémarre pas comme un process Node : grapi recharge le schéma dans le process.
+
+## Objectif
+Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au format Strapi, synchro de la base et rechargement à chaud, sans redémarrer le binaire.
+
+## Périmètre
+- **Écrans** :
+  - liste des content types (collection et single), des composants par catégorie ;
+  - création d'un type (nom d'affichage, singularName et pluralName dérivés et modifiables, kind, draft & publish, i18n) ;
+  - ajout et édition de champs par type d'attribut, avec réglages de base (nom, options du type) et avancés (required, unique, private, default, min, max, minLength, maxLength, regex, `allowedTypes` pour les médias, `targetField` pour les UID, enum pour les énumérations) ;
+  - relations avec le schéma visuel des 10 types (oneWay, oneToOne, oneToMany, manyToOne, manyToMany, manyWay, et morph en lecture seule) et le choix du champ inverse ;
+  - composants (création, catégorie, icône) ;
+  - zones dynamiques (liste des composants autorisés) ;
+  - custom fields enregistrés (`SCH-006`).
+- **Enregistrement par lot** :
+  - toutes les modifications en attente partent ensemble ;
+  - le serveur valide (`SCH-003`, noms réservés), écrit les fichiers, puis recharge les registres, synchronise la base (`DB-003`) et reconstruit les routes ;
+  - pendant ce temps, l'admin affiche l'état via un endpoint de statut.
+- **Renommage de champ ou de type** : génération d'une migration qui renomme les colonnes et tables au lieu de supprimer puis recréer (pas de perte de données), et mise à jour de la configuration de vue (`ADM-005`).
+- **Suppression** d'un type, d'un champ ou d'un composant :
+  - modale de confirmation qui liste les impacts (relations inverses, usages du composant) ;
+  - suppression effective des tables seulement si `forceMigration` l'autorise, sinon conservation des données orphelines (même règle que Strapi).
+- **Disponibilité** : actif uniquement en mode develop (`grapi develop`). En production, les endpoints d'écriture renvoient 403, et le menu est masqué ou passe en lecture seule.
+- **Endpoint des noms réservés** pour la validation côté client.
+
+## Hors périmètre
+- Édition des schémas des plugins hors extensions (`src/extensions`).
+- Le rechargement de code Go utilisateur : en mode framework, un changement de code Go demande toujours une recompilation.
+
+## Critères d'acceptation
+- [ ] Créer un content type avec 1 champ de chaque type, des relations et un composant :
+  - les `schema.json` écrits sont valides au format Strapi, et Strapi 5.59 les charge sans erreur (vérifié par le banc `SETUP-002`) ;
+  - grapi expose les routes REST sans redémarrage.
+- [ ] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
+- [ ] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
+- [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
+- [ ] En mode production, `POST` d'écriture du CTB renvoie 403.
+- [ ] Toute suppression passe par la modale de confirmation qui liste les impacts.
+
+## Notes techniques
+- Le rechargement à chaud est la vraie difficulté. Il faut :
+  - construire un nouveau « monde » (registres, métadonnées DB, routeur) à côté de l'ancien ;
+  - synchroniser la base dans une transaction quand le dialecte le permet (Postgres : DDL transactionnel ; SQLite : oui ; MySQL : non) ;
+  - basculer un pointeur atomique.
+- Les fichiers sont écrits de façon atomique (fichier temporaire puis rename). L'ordre des clés JSON est stable, pour des diffs git propres.
+- **Si l'option A est retenue** : reproduire `/content-type-builder/update-schema`, `/update-schema-status`, `/schema`, `/reserved-names` et les CRUD content types, components et categories selon `content-type-builder/shared/contracts/`.
+
+## Référence Strapi
+- `core/content-type-builder/server/src/routes/admin.ts`
+- `core/content-type-builder/server/src/services/schema-builder/`, `core/content-type-builder/server/src/services/migration-builder/`, `core/content-type-builder/server/src/services/schema.ts`
+- `core/content-type-builder/server/src/middlewares/` (is-development-mode)
+- `core/content-type-builder/admin/src/`
+
+## Dépendances
+- `ADM-002`, `ADM-005`, `SCH-001` à `SCH-006`, `DB-003`, `DB-004`, `API-002`, `CLI-001` (mode develop)
+
+## Fichiers
+- `admin/src/pages/content-type-builder/`
+- `internal/plugins/ctb/{handlers,writer,validate,rename}.go`
+- `internal/app/reload.go`
