@@ -111,6 +111,8 @@ type Attribute struct {
 	// Auto marks the attributes grapi adds itself (timestamps, publishedAt,
 	// creator fields): they are not part of the user's schema.json.
 	Auto bool `json:"-"`
+
+	resolvedCustomField bool
 }
 
 type attributeFields Attribute
@@ -163,6 +165,9 @@ func (a *Attribute) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON writes the known keys then Extra.
 func (a Attribute) MarshalJSON() ([]byte, error) {
+	if a.resolvedCustomField {
+		a.Type = TypeCustomField
+	}
 	b, err := json.Marshal(attributeFields(a))
 	if err != nil || len(a.Extra) == 0 {
 		return b, err
@@ -228,3 +233,6 @@ func IsRelationKind(kind string) bool { return relationKinds[kind] }
 
 // IsScalarType reports whether t is a scalar attribute type.
 func IsScalarType(t string) bool { return scalarTypes[t] }
+
+// IsCustomField reports whether the attribute was declared as a custom field.
+func (a *Attribute) IsCustomField() bool { return a.resolvedCustomField || a.Type == TypeCustomField }

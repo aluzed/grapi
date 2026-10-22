@@ -23,7 +23,8 @@ type PluginSchemas struct {
 
 // Options of Load.
 type Options struct {
-	Plugins []PluginSchemas
+	Plugins      []PluginSchemas
+	CustomFields *schema.CustomFields
 }
 
 // Result of Load.
@@ -44,6 +45,9 @@ func Load(app fs.FS, opts Options) (*Result, error) {
 	l.userCode()
 	if err := errors.Join(l.errs...); err != nil {
 		return nil, err
+	}
+	if opts.CustomFields != nil {
+		l.res.Set.ResolveCustomFields(opts.CustomFields)
 	}
 	report := schema.Validate(l.res.Set)
 	for _, w := range report.Warnings() {
