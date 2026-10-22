@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createPage": null
+    },
+    "errors": [
+      {
+        "extensions": {
+          "code": "BAD_USER_INPUT",
+          "error": {
+            "details": {
+              "errors": [
+                {
+                  "message": "links[0].label must be defined.",
+                  "name": "ValidationError",
+                  "path": [
+                    "links",
+                    "0",
+                    "label"
+                  ]
+                }
+              ]
+            },
+            "message": "links[0].label must be defined.",
+            "name": "ValidationError"
+          }
+        },
+        "message": "links[0].label must be defined.",
+        "path": [
+          "createPage"
+        ]
+      }
+    ]
+  }
+}

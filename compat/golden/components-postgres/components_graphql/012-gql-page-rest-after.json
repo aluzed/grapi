@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": [
+        {
+          "__component": "blocks.hero",
+          "headline": "replaced",
+          "id": "#id6"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc13",
+      "id": "#id7",
+      "layout": null,
+      "links": [
+        {
+          "id": "#id12",
+          "label": "L",
+          "url": null
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "seo": {
+        "id": "#id13",
+        "metaDescription": null,
+        "metaTitle": "Made",
+        "noIndex": false
+      },
+      "title": "GQL Created",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

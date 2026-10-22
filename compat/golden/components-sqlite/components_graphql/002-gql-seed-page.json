@@ -1,0 +1,15 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc12",
+      "id": "#id6",
+      "publishedAt": "\u003cts\u003e",
+      "title": "GQL Home",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "updateCategory": {
+        "locale": "de",
+        "localizations": [
+          {
+            "locale": "fr"
+          },
+          {
+            "locale": "fr"
+          },
+          {
+            "locale": "de"
+          }
+        ],
+        "name": "GQL Neu"
+      }
+    }
+  }
+}

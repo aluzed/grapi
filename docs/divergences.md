@@ -47,7 +47,6 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 
 - **Permissions des actions inconnues** : Strapi supprime au démarrage les permissions dont l'action ne correspond à aucun contrôleur. grapi ne supprime rien : il ne voit pas encore les contrôleurs JS custom, et la purge détruirait leurs permissions sur une base Strapi.
 - **Réglage `grant`** : Strapi le réécrit à chaque démarrage dès qu'il diffère des valeurs par défaut ; grapi seulement quand la fusion change la valeur stockée.
-- **Locale initiale** : avec `STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE` autre que `en`, grapi nomme la locale par son code (Strapi prend le nom dans sa liste ISO).
 
 ## Médias (`internal/media`, `internal/httpapi/upload.go`)
 

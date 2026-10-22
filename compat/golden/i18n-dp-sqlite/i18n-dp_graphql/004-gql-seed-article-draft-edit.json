@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": null,
+      "code": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc18",
+      "featured": false,
+      "id": "#id19",
+      "locale": "en",
+      "publishedAt": "\u003cts\u003e",
+      "slug": null,
+      "title": "GQL article (draft edit)",
+      "updatedAt": "\u003cts\u003e",
+      "views": 5
+    },
+    "meta": {}
+  }
+}

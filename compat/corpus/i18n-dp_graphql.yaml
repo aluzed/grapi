@@ -1,0 +1,105 @@
+fixture: i18n-dp
+# GraphQL with i18n and draft & publish. Runs after i18n-dp.yaml on the
+# same database: the cases select their own documents.
+cases:
+  - name: gql-seed-category
+    method: POST
+    path: /api/categories
+    token: full
+    save: { gc: data.documentId }
+    body: { data: { name: "GQL Cat", color: "green" } }
+  - name: gql-seed-category-fr
+    method: PUT
+    path: /api/categories/{{gc}}
+    query: "locale=fr"
+    token: full
+    body: { data: { name: "GQL Chat" } }
+  - name: gql-seed-article
+    method: POST
+    path: /api/articles
+    query: "status=published"
+    token: full
+    save: { gart: data.documentId }
+    body: { data: { title: "GQL article", views: 5, category: "{{gc}}" } }
+  - name: gql-seed-article-draft-edit
+    method: PUT
+    path: /api/articles/{{gart}}
+    token: full
+    body: { data: { title: "GQL article (draft edit)" } }
+
+  - name: gql-locales
+    method: POST
+    path: /graphql
+    token: read
+    body: { query: "{ i18NLocales(sort: \"code\") { code name } }" }
+  - name: gql-category-locales
+    method: POST
+    path: /graphql
+    token: read
+    body: { query: "query($id: ID!) { en: category(documentId: $id) { name locale localizations { name locale } } fr: category(documentId: $id, locale: \"fr\") { name locale } de: category(documentId: $id, locale: \"de\") { name } }", variables: { id: "{{gc}}" } }
+  - name: gql-categories-locale-filter
+    method: POST
+    path: /graphql
+    token: read
+    body: { query: "{ categories(locale: \"fr\", filters: { name: { startsWith: \"GQL\" } }) { name locale } }" }
+  - name: gql-unknown-locale
+    method: POST
+    path: /graphql
+    token: read
+    body: { query: "{ categories(locale: \"xx\") { name } }" }
+  - name: gql-article-published-vs-draft
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "query($id: ID!) { published: article(documentId: $id) { title category { name } } draft: article(documentId: $id, status: DRAFT) { title category { name } } }", variables: { id: "{{gart}}" } }
+  - name: gql-articles-publication-filter
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ articles(status: DRAFT, publicationFilter: MODIFIED, filters: { title: { startsWith: \"GQL\" } }) { title } }" }
+  - name: gql-category-articles-status
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "query($id: ID!) { published: category(documentId: $id) { articles { title } } draft: category(documentId: $id, status: DRAFT) { articles { title } } }", variables: { id: "{{gc}}" } }
+  - name: gql-create-category-fr
+    method: POST
+    path: /graphql
+    token: full
+    save: { gc2: data.createCategory.documentId }
+    body: { query: "mutation { createCategory(locale: \"fr\", data: { name: \"GQL Nouvelle\" }) { documentId name locale } }" }
+  - name: gql-update-category-de
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!) { updateCategory(documentId: $id, locale: \"de\", data: { name: \"GQL Neu\" }) { name locale localizations { locale } } }", variables: { id: "{{gc2}}" } }
+  - name: gql-create-article-draft
+    method: POST
+    path: /graphql
+    token: full
+    save: { gart2: data.createArticle.documentId }
+    body: { query: "mutation { createArticle(status: DRAFT, data: { title: \"GQL draft only\" }) { documentId title publishedAt } }" }
+  - name: gql-draft-not-published
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "query($id: ID!) { article(documentId: $id) { title } }", variables: { id: "{{gart2}}" } }
+  - name: gql-homepage-update-fr
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { updateHomepage(locale: \"fr\", data: { headline: \"GQL accueil\" }) { headline locale } }" }
+  - name: gql-homepage-fr
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ fr: homepage(locale: \"fr\") { headline locale localizations { locale } } fd: homepage(locale: \"fr\", status: DRAFT) { headline } }" }
+  - name: gql-delete-category
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!) { deleteCategory(documentId: $id) { documentId } }", variables: { id: "{{gc2}}" } }
+  - name: gql-after-delete
+    path: /api/categories/{{gc2}}
+    query: "locale=de"
+    token: full

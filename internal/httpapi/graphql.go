@@ -191,7 +191,7 @@ func (g *gqlResolver) authorize(fc *graphql.FieldContext) error {
 		return nil
 	}
 	if f.Scope == "" {
-		if g.auth.Strategy == "" {
+		if g.auth.User == nil && g.auth.TokenType == "" {
 			return errGQLForbidden
 		}
 		return nil
@@ -836,6 +836,13 @@ func (g *gqlResolver) custom(ctx context.Context, fc *graphql.FieldContext) (any
 			return nil, err
 		}
 		return map[string]any{"data": user}, nil
+	case "updateUploadFile":
+		info, _ := a["info"].(map[string]any)
+		row, err := g.s.applyFileInfo(ctx, id, info)
+		if errors.Is(err, errNotFound) {
+			return nil, newError(http.StatusNotFound, "NotFoundError", "Entity not found")
+		}
+		return nilRow(row, err)
 	case "deleteUploadFile":
 		return g.rest(g.s.uploadDestroy, "DELETE", nil, map[string]string{"id": id}, nil, fileUID)
 	}

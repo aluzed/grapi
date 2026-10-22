@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createPost": null
+    },
+    "errors": [
+      {
+        "extensions": {
+          "code": "BAD_USER_INPUT",
+          "error": {
+            "details": {
+              "errors": [
+                {
+                  "message": "seo must be a `object` type, but the final value was: `null`.",
+                  "name": "ValidationError",
+                  "path": [
+                    "seo"
+                  ],
+                  "value": null
+                }
+              ]
+            },
+            "message": "seo must be a `object` type, but the final value was: `null`.",
+            "name": "ValidationError"
+          }
+        },
+        "message": "seo must be a `object` type, but the final value was: `null`.",
+        "path": [
+          "createPost"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "updatePage": {
+        "body": [
+          {
+            "__typename": "ComponentBlocksHero",
+            "cta": null,
+            "headline": "replaced"
+          }
+        ],
+        "title": "GQL Created"
+      }
+    }
+  }
+}

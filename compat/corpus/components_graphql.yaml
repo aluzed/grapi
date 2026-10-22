@@ -1,0 +1,78 @@
+fixture: components
+# GraphQL on components and dynamic zones. Runs after components.yaml on
+# the same database: the cases select their own documents.
+cases:
+  - name: gql-seed-author
+    method: POST
+    path: /api/authors
+    token: full
+    save: { ga: data.documentId }
+    body: { data: { name: "Grace" } }
+  - name: gql-seed-page
+    method: POST
+    path: /api/pages
+    token: full
+    save: { gp: data.documentId }
+    body:
+      data:
+        title: "GQL Home"
+        seo: { metaTitle: "GQL SEO", noIndex: true }
+        links:
+          - { label: "One", url: "/1", author: "{{ga}}" }
+          - { label: "Two", url: "/2" }
+          - { label: "Three" }
+        layout:
+          heading: "GQL columns"
+          columns:
+            - { width: 6, cell: { text: "left", authors: ["{{ga}}"] } }
+            - { width: 6, cell: { text: "right" } }
+        body:
+          - { __component: "blocks.hero", headline: "GQL hero", cta: { label: "Go", author: "{{ga}}" } }
+          - { __component: "blocks.rich-text", body: "GQL text" }
+          - { __component: "blocks.gallery", caption: "GQL shots", slides: 2 }
+
+  - name: gql-page-components
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { page(documentId: $id) { title seo { metaTitle metaDescription noIndex } links { label url author { name } } layout { heading columns { width cell { text authors { name } authors_connection { nodes { name } } } } } } }", variables: { id: "{{gp}}" } }
+  - name: gql-page-dynamic-zone
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { page(documentId: $id) { body { __typename ... on ComponentBlocksHero { headline cta { label author { name } } } ... on ComponentBlocksRichText { body } ... on ComponentBlocksGallery { caption slides } } } }", variables: { id: "{{gp}}" } }
+  - name: gql-repeatable-args
+    method: POST
+    path: /graphql
+    body: { query: "query($id: ID!) { page(documentId: $id) { first: links(pagination: { limit: 2 }) { label } sorted: links(sort: \"label:desc\") { label } filtered: links(filters: { url: { notNull: true } }) { label } } }", variables: { id: "{{gp}}" } }
+  - name: gql-filter-on-component
+    method: POST
+    path: /graphql
+    body: { query: "{ pages(filters: { seo: { metaTitle: { eq: \"GQL SEO\" } } }) { title } }" }
+  - name: gql-filter-on-nested-component
+    method: POST
+    path: /graphql
+    body: { query: "{ pages(filters: { layout: { columns: { cell: { text: { eq: \"right\" } } } }, title: { startsWith: \"GQL\" } }) { title } }" }
+
+  - name: gql-create-page
+    method: POST
+    path: /graphql
+    token: full
+    save: { gp2: data.createPage.documentId }
+    body: { query: "mutation($a: ID!) { createPage(data: { title: \"GQL Created\", seo: { metaTitle: \"Made\" }, links: [{ label: \"L\", author: $a }], body: [{ __typename: \"ComponentBlocksRichText\", body: \"made by gql\" }, { __typename: \"ComponentBlocksGallery\", caption: \"c\", slides: 1 }] }) { documentId title seo { metaTitle } links { label author { name } } body { __typename ... on ComponentBlocksRichText { body } ... on ComponentBlocksGallery { caption slides } } } }", variables: { a: "{{ga}}" } }
+  - name: gql-update-page-dz
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation($id: ID!) { updatePage(documentId: $id, data: { body: [{ __typename: \"ComponentBlocksHero\", headline: \"replaced\" }] }) { title body { __typename ... on ComponentBlocksHero { headline cta { label } } } } }", variables: { id: "{{gp2}}" } }
+  - name: gql-create-invalid-component
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { createPage(data: { title: \"GQL bad\", links: [{ url: \"/no-label\" }] }) { title } }" }
+  - name: gql-create-post-required-component
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "mutation { createPost(data: { title: \"GQL post\" }) { title } }" }
+  - name: gql-page-rest-after
+    path: /api/pages/{{gp2}}
+    query: "populate=*"

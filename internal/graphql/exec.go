@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aluzed/grapi/internal/isolocales"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vektah/gqlparser/v2/parser"
@@ -152,7 +153,11 @@ func (s *Schema) Execute(ctx context.Context, req Request, res Resolver) *Result
 		}
 		return rejected("GRAPHQL_PARSE_FAILED", gqlerror.List{gqlerror.Errorf("Syntax Error: %s", perr)})
 	}
-	if errs := validator.ValidateWithRules(s.AST, doc, nil); len(errs) > 0 {
+	errs := validator.ValidateWithRules(s.AST, doc, nil)
+	if len(errs) == 0 {
+		errs = localeLiterals(doc)
+	}
+	if len(errs) > 0 {
 		fixStringLocations(doc, errs)
 		return rejected("GRAPHQL_VALIDATION_FAILED", errs)
 	}
@@ -239,6 +244,59 @@ func fixStringLocations(doc *ast.QueryDocument, errs gqlerror.List) {
 			}
 		}
 	}
+}
+
+// localeLiterals is the I18NLocaleCode scalar's parseLiteral: a string
+// naming an ISO locale, or "*".
+func localeLiterals(doc *ast.QueryDocument) gqlerror.List {
+	var errs gqlerror.List
+	check := func(v *ast.Value) {
+		if v == nil || v.Kind == ast.Variable || v.Kind == ast.NullValue {
+			return
+		}
+		reason := ""
+		switch {
+		case v.Kind != ast.StringValue:
+			reason = "Locale cannot represent non string type"
+		case v.Raw == "*":
+			return
+		default:
+			if _, ok := isolocales.Name(v.Raw); ok {
+				return
+			}
+			reason = "Unknown locale supplied"
+		}
+		errs = append(errs, &gqlerror.Error{
+			Message:   fmt.Sprintf("Expected value of type \"I18NLocaleCode\", found %s; %s", v.String(), reason),
+			Locations: []gqlerror.Location{{Line: v.Position.Line, Column: v.Position.Column}},
+		})
+	}
+	var walk func(set ast.SelectionSet)
+	walk = func(set ast.SelectionSet) {
+		for _, sel := range set {
+			switch x := sel.(type) {
+			case *ast.Field:
+				for _, a := range x.Arguments {
+					if x.Definition == nil {
+						continue
+					}
+					if d := x.Definition.Arguments.ForName(a.Name); d != nil && d.Type.Name() == "I18NLocaleCode" {
+						check(a.Value)
+					}
+				}
+				walk(x.SelectionSet)
+			case *ast.InlineFragment:
+				walk(x.SelectionSet)
+			}
+		}
+	}
+	for _, op := range doc.Operations {
+		walk(op.SelectionSet)
+	}
+	for _, f := range doc.Fragments {
+		walk(f.SelectionSet)
+	}
+	return errs
 }
 
 // missingVariables gives graphql-js' messages for absent or null non-null
@@ -512,6 +570,16 @@ func (e *executor) input(v any, t *ast.Type) any {
 	}
 	d := e.s.defs[t.NamedType]
 	if d == nil {
+		if t.NamedType == "ID" {
+			switch x := v.(type) {
+			case json.Number:
+				return x.String()
+			case int64:
+				return strconv.FormatInt(x, 10)
+			case float64:
+				return strconv.FormatFloat(x, 'f', -1, 64)
+			}
+		}
 		if t.NamedType == "Int" {
 			if f, ok := v.(float64); ok {
 				return int64(f)

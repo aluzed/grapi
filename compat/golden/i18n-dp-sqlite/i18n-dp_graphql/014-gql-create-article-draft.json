@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createArticle": {
+        "documentId": "#doc20",
+        "publishedAt": null,
+        "title": "GQL draft only"
+      }
+    }
+  }
+}

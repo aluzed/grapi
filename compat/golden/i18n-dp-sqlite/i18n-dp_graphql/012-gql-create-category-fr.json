@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createCategory": {
+        "documentId": "#doc19",
+        "locale": "fr",
+        "name": "GQL Nouvelle"
+      }
+    }
+  }
+}

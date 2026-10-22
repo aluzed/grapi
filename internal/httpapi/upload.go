@@ -260,12 +260,23 @@ func (s *Server) updateFileInfo(w http.ResponseWriter, r *http.Request, rc *requ
 	if err != nil {
 		return err
 	}
-	file, err := s.fileByParam(ctx, id)
+	row, err := s.applyFileInfo(ctx, id, info)
 	if err != nil {
 		return err
 	}
+	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
+	return nil
+}
+
+// applyFileInfo is the upload service's updateFileInfo: the infos left
+// out keep their value.
+func (s *Server) applyFileInfo(ctx context.Context, id string, info map[string]any) (query.Row, error) {
+	file, err := s.fileByParam(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 	if file == nil {
-		return errNotFound
+		return nil, errNotFound
 	}
 	keep := func(k string) any {
 		if v := info[k]; v != nil {
@@ -278,12 +289,11 @@ func (s *Server) updateFileInfo(w http.ResponseWriter, r *http.Request, rc *requ
 	fid, _ := file.Get("id")
 	row, err := s.docs.E.Update(ctx, fileUID, map[string]any{"id": fid}, data, query.Params{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	s.emitMedia("media.update", row)
 	s.signFile(ctx, row)
-	writeJSON(w, http.StatusOK, s.sanitizeOutput(row, s.schemaOf(fileUID), rc.auth))
-	return nil
+	return row, nil
 }
 
 func (s *Server) replaceFile(w http.ResponseWriter, r *http.Request, rc *requestContext, req *multipartRequest, dir, id string) error {

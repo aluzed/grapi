@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "page": {
+        "body": [
+          {
+            "__typename": "ComponentBlocksHero",
+            "cta": {
+              "author": {
+                "name": "Grace"
+              },
+              "label": "Go"
+            },
+            "headline": "GQL hero"
+          },
+          {
+            "__typename": "ComponentBlocksRichText",
+            "body": "GQL text"
+          },
+          {
+            "__typename": "ComponentBlocksGallery",
+            "caption": "GQL shots",
+            "slides": 2
+          }
+        ]
+      }
+    }
+  }
+}

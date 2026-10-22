@@ -1,0 +1,20 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "errors": [
+      {
+        "extensions": {
+          "code": "GRAPHQL_VALIDATION_FAILED"
+        },
+        "locations": [
+          {
+            "column": 22,
+            "line": 1
+          }
+        ],
+        "message": "Expected value of type \"I18NLocaleCode\", found \"xx\"; Unknown locale supplied"
+      }
+    ]
+  }
+}

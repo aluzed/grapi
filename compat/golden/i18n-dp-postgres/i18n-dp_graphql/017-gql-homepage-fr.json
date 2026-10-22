@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "fd": {
+        "headline": "GQL accueil"
+      },
+      "fr": {
+        "headline": "GQL accueil",
+        "locale": "fr",
+        "localizations": [
+          {
+            "locale": "en"
+          }
+        ]
+      }
+    }
+  }
+}

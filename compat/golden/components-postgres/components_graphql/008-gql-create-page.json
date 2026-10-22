@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createPage": {
+        "body": [
+          {
+            "__typename": "ComponentBlocksRichText",
+            "body": "made by gql"
+          },
+          {
+            "__typename": "ComponentBlocksGallery",
+            "caption": "c",
+            "slides": 1
+          }
+        ],
+        "documentId": "#doc13",
+        "links": [
+          {
+            "author": {
+              "name": "Grace"
+            },
+            "label": "L"
+          }
+        ],
+        "seo": {
+          "metaTitle": "Made"
+        },
+        "title": "GQL Created"
+      }
+    }
+  }
+}

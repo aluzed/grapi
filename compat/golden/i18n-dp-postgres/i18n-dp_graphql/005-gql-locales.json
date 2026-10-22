@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "errors": [
+      {
+        "extensions": {
+          "code": "FORBIDDEN",
+          "error": {
+            "details": {},
+            "message": "Forbidden access",
+            "name": "ForbiddenError"
+          }
+        },
+        "message": "Forbidden access",
+        "path": [
+          "i18NLocales"
+        ]
+      }
+    ]
+  }
+}

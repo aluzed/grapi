@@ -1,0 +1,68 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "page": {
+        "layout": {
+          "columns": [
+            {
+              "cell": {
+                "authors": [
+                  {
+                    "name": "Grace"
+                  }
+                ],
+                "authors_connection": {
+                  "nodes": [
+                    {
+                      "name": "Grace"
+                    }
+                  ]
+                },
+                "text": "left"
+              },
+              "width": 6
+            },
+            {
+              "cell": {
+                "authors": [],
+                "authors_connection": {
+                  "nodes": []
+                },
+                "text": "right"
+              },
+              "width": 6
+            }
+          ],
+          "heading": "GQL columns"
+        },
+        "links": [
+          {
+            "author": {
+              "name": "Grace"
+            },
+            "label": "One",
+            "url": "/1"
+          },
+          {
+            "author": null,
+            "label": "Two",
+            "url": "/2"
+          },
+          {
+            "author": null,
+            "label": "Three",
+            "url": null
+          }
+        ],
+        "seo": {
+          "metaDescription": null,
+          "metaTitle": "GQL SEO",
+          "noIndex": true
+        },
+        "title": "GQL Home"
+      }
+    }
+  }
+}

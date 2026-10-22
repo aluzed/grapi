@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "de": null,
+      "en": {
+        "locale": "en",
+        "localizations": [
+          {
+            "locale": "fr",
+            "name": "GQL Chat"
+          }
+        ],
+        "name": "GQL Cat"
+      },
+      "fr": {
+        "locale": "fr",
+        "name": "GQL Chat"
+      }
+    }
+  }
+}

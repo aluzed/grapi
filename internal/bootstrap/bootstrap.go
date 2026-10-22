@@ -9,11 +9,13 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"reflect"
 
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/store"
+	"github.com/aluzed/grapi/internal/isolocales"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -214,9 +216,9 @@ func defaultLocale(ctx context.Context, e *query.Engine, st store.Store, code st
 	if err != nil || n > 0 {
 		return err
 	}
-	name := code
-	if code == "en" {
-		name = "English (en)"
+	name, ok := isolocales.Name(code)
+	if !ok {
+		return fmt.Errorf("unknown locale code provided in the environment variable STRAPI_PLUGIN_I18N_INIT_LOCALE_CODE: %q", code)
 	}
 	if _, err := e.Create(ctx, localeUID, query.Data{"name": name, "code": code}, query.Params{}); err != nil {
 		return err

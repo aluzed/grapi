@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "draft": {
+        "articles": [
+          {
+            "title": "GQL article (draft edit)"
+          }
+        ]
+      },
+      "published": {
+        "articles": [
+          {
+            "title": "GQL article (draft edit)"
+          }
+        ]
+      }
+    }
+  }
+}
