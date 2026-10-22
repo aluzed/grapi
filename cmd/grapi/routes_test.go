@@ -22,3 +22,17 @@ func TestRoutesList(t *testing.T) {
 		}
 	}
 }
+
+func TestListCommands(t *testing.T) {
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(t.TempDir(), "data.db"))
+	var out bytes.Buffer
+	dir := filepath.Join("..", "..", "compat", "fixtures", "components")
+	if err := listCommand("content-types", []string{"-dir", dir}, &out, io.Discard); err != nil || !strings.Contains(out.String(), "│ api::page.page ") {
+		t.Fatalf("content-types: %v %s", err, out.String())
+	}
+	out.Reset()
+	if err := listCommand("components", []string{"-dir", dir}, &out, io.Discard); err != nil || !strings.Contains(out.String(), "│ shared.seo ") || !strings.Contains(out.String(), "│ Name ") {
+		t.Fatalf("components: %v %s", err, out.String())
+	}
+}

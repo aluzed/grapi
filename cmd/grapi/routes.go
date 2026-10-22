@@ -29,14 +29,25 @@ func routesList(args []string, stdout, stderr io.Writer) error {
 		}
 		rows = append(rows, [2]string{m, r.Path})
 	}
-	w := [2]int{}
+	_, err = fmt.Fprint(stdout, table(rows))
+	return err
+}
+
+// table draws Strapi's cli-table3 boxes, a separator between every row.
+func table[R ~[2]string | ~[1]string](rows []R) string {
+	cols := len(rows[0])
+	w := make([]int, cols)
 	for _, r := range rows {
-		for i, c := range r {
-			w[i] = max(w[i], utf8.RuneCountInString(c)+2)
+		for i := 0; i < cols; i++ {
+			w[i] = max(w[i], utf8.RuneCountInString(r[i])+2)
 		}
 	}
 	line := func(l, m, r string) string {
-		return l + strings.Repeat("─", w[0]) + m + strings.Repeat("─", w[1]) + r + "\n"
+		parts := make([]string, cols)
+		for i := range parts {
+			parts[i] = strings.Repeat("─", w[i])
+		}
+		return l + strings.Join(parts, m) + r + "\n"
 	}
 	cell := func(s string, n int) string { return " " + s + strings.Repeat(" ", n-1-utf8.RuneCountInString(s)) }
 	var b strings.Builder
@@ -45,9 +56,37 @@ func routesList(args []string, stdout, stderr io.Writer) error {
 		if i > 0 {
 			b.WriteString(line("├", "┼", "┤"))
 		}
-		b.WriteString("│" + cell(r[0], w[0]) + "│" + cell(r[1], w[1]) + "│\n")
+		b.WriteString("│")
+		for c := 0; c < cols; c++ {
+			b.WriteString(cell(r[c], w[c]) + "│")
+		}
+		b.WriteString("\n")
 	}
 	b.WriteString(line("└", "┴", "┘"))
-	_, err = fmt.Fprint(stdout, b.String())
+	return b.String()
+}
+
+// listCommand is `grapi content-types:list` and `components:list`.
+func listCommand(kind string, args []string, stdout, stderr io.Writer) error {
+	fs, dir, configDir := projectFlags(kind + ":list")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = p.DB.Close() }()
+	rows := [][1]string{{"Name"}}
+	if kind == "content-types" {
+		for uid := range p.Res.Set.ContentTypes.All() {
+			rows = append(rows, [1]string{uid})
+		}
+	} else {
+		for uid := range p.Res.Set.Components.All() {
+			rows = append(rows, [1]string{uid})
+		}
+	}
+	_, err = fmt.Fprint(stdout, table(rows))
 	return err
 }
