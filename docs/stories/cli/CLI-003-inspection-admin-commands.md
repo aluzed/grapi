@@ -35,7 +35,8 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - Fait : `permissions:list|grant|revoke <rôle> [actions]` sur les rôles users-permissions et `api-token:*` (`AUTH-008`), qui suffisent à administrer un projet sans admin. Test : `cmd/grapi/tokens_test.go` (projet neuf, permission accordée puis retirée, token custom).
 - `grapi openapi [-o fichier]` écrit le document OpenAPI du content API sans démarrer le serveur (`PLG-005`).
 - `grapi routes:list` : la table des routes au format de Strapi (`HEAD|GET` pour les GET, comme koa), test `TestRoutesList`. Strapi y liste aussi les couches de son routeur (fichiers publics, admin), que grapi sert hors table.
-- Reste : les autres listes (`policies:list`, `middlewares:list`...), les commandes admin, `configuration:dump|restore`, `rename:field`.
+- `grapi configuration:dump [-f fichier] [-p]` et `configuration:restore [-f fichier] [-s replace|merge|keep]` : les entrées `plugin_*` du core store, triées par clé, valeurs brutes, et les trois importeurs de Strapi avec leurs statistiques (`TestConfigurationDumpRestore`).
+- Reste : les autres listes (`policies:list`, `middlewares:list`...), les commandes admin, `rename:field`.
 
 ## Notes techniques
 - Ces commandes démarrent l'application sans serveur HTTP (registres et base seulement).
