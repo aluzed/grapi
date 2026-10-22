@@ -70,6 +70,7 @@ func (s *Server) addUploadRoutes() {
 	s.routes = append(s.routes,
 		route{"POST", []string{base, "upload"}, uid, "upload", s.upload, "", false, false, nil},
 		route{"GET", []string{base, "upload", "files"}, uid, "find", s.uploadFind, "", false, false, nil},
+		route{"GET", []string{base, "upload", "files", "page"}, uid, "findPage", s.uploadFindPage, "", false, false, nil},
 		route{"GET", []string{base, "upload", "files", ":id"}, uid, "findOne", s.uploadFindOne, "", false, false, nil},
 		route{"DELETE", []string{base, "upload", "files", ":id"}, uid, "destroy", s.uploadDestroy, "", false, false, nil},
 	)
@@ -735,6 +736,70 @@ func (s *Server) resolveFileID(ctx context.Context, id string) (any, error) {
 	}
 	v, _ := row.Get("id")
 	return v, nil
+}
+
+// uploadFindPage is findAndCountPage: the REST pagination (api.rest
+// defaultLimit, maxLimit, withCount) on the files.
+func (s *Server) uploadFindPage(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
+	ctx := r.Context()
+	rc.model = s.schemaOf(fileUID)
+	q, err := s.sanitizedQuery(rc)
+	if err != nil {
+		return err
+	}
+	pag, _ := q["pagination"].(map[string]any)
+	info, err := s.paginationInfo(pag)
+	if err != nil {
+		return err
+	}
+	_, hasStart := pag["start"]
+	_, hasLimit := pag["limit"]
+	uq := userQuery(q)
+	delete(uq, "pagination")
+	uq["start"], uq["limit"] = info.start, info.limit
+	qp, err := s.docs.TransformQuery(fileUID, uq)
+	if err != nil {
+		return err
+	}
+	rows, err := s.docs.E.FindMany(ctx, fileUID, qp)
+	if err != nil {
+		return err
+	}
+	out := make([]any, 0, len(rows))
+	for _, row := range rows {
+		s.signFile(ctx, row)
+		out = append(out, s.sanitizeOutput(row, rc.model, rc.auth))
+	}
+	count, err := s.shouldCount(pag)
+	if err != nil {
+		return err
+	}
+	var total *int64
+	if count {
+		n, err := s.docs.E.Count(ctx, fileUID, query.Params{Where: qp.Where, Filters: qp.Filters})
+		if err != nil {
+			return err
+		}
+		total = &n
+	}
+	meta := map[string]any{}
+	if hasStart || hasLimit {
+		meta["start"], meta["limit"] = info.start, info.limit
+		if total != nil {
+			meta["total"] = *total
+		}
+	} else {
+		meta["page"], meta["pageSize"] = math.Floor(info.start/info.limit)+1, info.limit
+		if total != nil {
+			pc := float64(0)
+			if info.limit > 0 {
+				pc = math.Ceil(float64(*total) / info.limit)
+			}
+			meta["pageCount"], meta["total"] = pc, *total
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": out, "meta": map[string]any{"pagination": meta}})
+	return nil
 }
 
 func (s *Server) uploadFindOne(w http.ResponseWriter, r *http.Request, rc *requestContext) error {

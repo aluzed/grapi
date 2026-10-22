@@ -40,6 +40,7 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - Fait : `POST /api/upload` (multipart `files`, `fileInfo`, `ref`/`refId`/`field`), dossier « API Uploads », provider local, `GET /api/upload/files[/:id]`, `DELETE /api/upload/files/:id`, fichiers servis depuis `public/`. Banc dev-freelance en mode grapi : 116/116 (8 uploads PNG).
 - Fait aussi : remplacement (`?id=`, même hash et même URL, formats régénérés, formats obsolètes supprimés), mise à jour des infos (`?id=` sans fichier), événements `media.create`, `media.update`, `media.delete`. Test : `upload_test.go`.
 - Correction du périmètre : l'upload à la création d'une entrée (`files.<champ>`) n'existe plus dans Strapi 5 (changement cassant de la v5). Un corps multipart y donne `Missing "data" payload in the request body`, comme dans grapi.
+- `GET /api/upload/files/page` (`findAndCountPage` : pagination REST, `defaultLimit`, `maxLimit`, `withCount`, `{data, meta.pagination}`), corpus `devfreelance_upload` (7 cas, SQLite et Postgres) identique à Strapi.
 - Reste : allow/deny lists de `security`, routes admin.
 
 ## Notes techniques
