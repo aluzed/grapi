@@ -35,6 +35,7 @@ func TestOpenAPIRoute(t *testing.T) {
 	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
 	app.Route("POST", "/accounts/:id/anonymize", "api::account.account.anonymize", func(*grapi.Request) error { return nil }).
 		OpenAPI(map[string]any{"operationId": "account/post/accounts_by_id_anonymize", "tags": []any{"account"}, "responses": map[string]any{"200": map[string]any{"description": "OK"}}})
+	app.MutateOpenAPI(func(doc map[string]any) { doc["info"].(map[string]any)["title"] = "Mutated" })
 	srv, err := app.Setup()
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +56,7 @@ func TestOpenAPIRoute(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&doc); err != nil || res.StatusCode != 200 {
 		t.Fatalf("%d %v", res.StatusCode, err)
 	}
-	if doc.OpenAPI != "3.1.0" || doc.Info["title"] != "my-app" || doc.Info["version"] != "1.2.3" {
+	if doc.OpenAPI != "3.1.0" || doc.Info["title"] != "Mutated" || doc.Info["version"] != "1.2.3" {
 		t.Errorf("head: %v %v", doc.OpenAPI, doc.Info)
 	}
 	for _, p := range []string{"/articles", "/articles/{id}", "/auth/local", "/users/{id}", "/upload/files", "/content-type-builder/content-types"} {

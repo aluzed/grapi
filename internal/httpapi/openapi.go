@@ -13,6 +13,8 @@ type OpenAPIConfig struct {
 	// Path is relative to the API prefix, "/openapi.json" by default.
 	Path string
 	Info openapi.Info
+	// Mutate are the project's changes to the document.
+	Mutate []func(doc map[string]any)
 }
 
 func (s *Server) addOpenAPI() {
@@ -31,7 +33,7 @@ func (s *Server) addOpenAPI() {
 	var doc []byte
 	h := func(w http.ResponseWriter, _ *http.Request, _ *requestContext) error {
 		once.Do(func() {
-			doc, _ = openapi.JSON(openapi.Generate(s.set, openapi.Options{Info: cfg.Info, Served: s.Serves, Custom: s.customOps}))
+			doc, _ = openapi.JSON(openapi.Generate(s.set, openapi.Options{Info: cfg.Info, Served: s.Serves, Custom: s.customOps, Mutate: cfg.Mutate}))
 		})
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

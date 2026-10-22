@@ -589,6 +589,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	if oas != nil {
+		oas.Mutate = a.openapiMutate
+	}
 	apiCfg.OpenAPI = oas
 	if apiCfg.GraphQL != nil {
 		fromConfig := apiCfg.GraphQL.Options

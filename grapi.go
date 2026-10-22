@@ -41,6 +41,7 @@ type App struct {
 	cronTasks           []cronTask
 	graphql             graphql.Options
 	hooks               *hook.Registry
+	openapiMutate       []func(map[string]any)
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error

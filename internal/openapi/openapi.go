@@ -32,6 +32,8 @@ type Options struct {
 	Now time.Time
 	// Custom are the operations the project's routes declare.
 	Custom []Operation
+	// Mutate change the generated document, in order.
+	Mutate []func(doc map[string]any)
 }
 
 // Operation is an OpenAPI operation of a custom route; Path is in OpenAPI
@@ -90,7 +92,7 @@ func Generate(set *schema.Set, opts Options) map[string]any {
 		paths[op.Path].(obj)[strings.ToLower(op.Method)] = op.Spec
 	}
 	name, version := opts.Info.Name, opts.Info.Version
-	return obj{
+	doc := obj{
 		"openapi": "3.1.0",
 		"info":    obj{"title": name, "description": "API documentation for " + name + " v" + version, "version": version},
 		"servers": []any{obj{"url": "", "description": "Default server"}},
@@ -101,6 +103,10 @@ func Generate(set *schema.Set, opts Options) map[string]any {
 		"security": []any{obj{"bearerAuth": []any{}}},
 		"paths":    paths,
 	}
+	for _, fn := range opts.Mutate {
+		fn(doc)
+	}
+	return doc
 }
 
 // refName is transformUidToValidOpenApiName.

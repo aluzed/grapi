@@ -64,6 +64,12 @@ func (r *RouteRef) OpenAPI(operation map[string]any) *RouteRef {
 	return r
 }
 
+// MutateOpenAPI changes the generated OpenAPI document before it is
+// served (the documentation plugin's mutateDocumentation).
+func (a *App) MutateOpenAPI(fn func(doc map[string]any)) {
+	a.openapiMutate = append(a.openapiMutate, fn)
+}
+
 // RoutePolicies adds policies to a generated route, named by its action
 // ("api::post.post.find", "plugin::users-permissions.user.me").
 func (a *App) RoutePolicies(action string, refs ...any) {
