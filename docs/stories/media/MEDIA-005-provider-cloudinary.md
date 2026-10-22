@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # MEDIA-005 : Provider Cloudinary
@@ -22,6 +22,11 @@ Un provider Cloudinary avec les mêmes options et les mêmes métadonnées.
 ## Critères d'acceptation
 - [ ] Upload, remplacement et suppression testés sur un compte Cloudinary de test, contre un sandbox ou un mock HTTP enregistré.
 - [ ] **Compat DB (D3)** : un fichier envoyé par Strapi sur Cloudinary peut être supprimé depuis grapi grâce à son `provider_metadata`.
+
+## Avancement
+- `internal/media/provider/cloudinary.go` : upload signé (`auto/upload`, `public_id` = hash, `actionOptions.upload` signées avec), `secure_url` comme URL, `provider_metadata` = `{public_id, resource_type}` ; suppression par `<resource_type>/destroy` avec `invalidate`, un fichier absent (`not found`) n'est pas une erreur. Test sur un serveur `httptest` qui vérifie chemins, champs et signature.
+- `provider_metadata` circule désormais dans l'upload : enregistré sur le fichier et sur chaque format, rendu au provider à la suppression (y compris les formats remplacés), ce qui permet de supprimer un fichier envoyé par Strapi.
+- Reste : essai sur un compte Cloudinary de test, envoi en flux (`uploadStream`) pour les gros fichiers.
 
 ## Notes techniques
 - `cloudinary/cloudinary-go/v2`.

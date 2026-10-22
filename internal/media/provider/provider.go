@@ -10,11 +10,13 @@ import (
 )
 
 // File is what a provider stores: Hash and Ext make the name, Path is the
-// optional folder prefix. Upload sets URL.
+// optional folder prefix. Upload sets URL, and Metadata when the provider
+// keeps some (provider_metadata, given back on delete).
 type File struct {
 	Hash, Ext, Mime, Path string
 	Size                  int64
 	URL                   string
+	Metadata              map[string]any
 }
 
 // Provider stores and removes files.

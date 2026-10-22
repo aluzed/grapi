@@ -531,11 +531,14 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			file["height"] = img.PageHeight
 		}
 	}
-	url, err := s.store(ctx, src, hash, ext, mimeType, metas["path"])
+	url, meta, err := s.store(ctx, src, hash, ext, mimeType, metas["path"])
 	if err != nil {
 		return nil, err
 	}
 	file["url"] = url
+	if meta != nil {
+		file["provider_metadata"] = meta
+	}
 	if isImage && media.CanResize(img.Format) {
 		formats := map[string]any{}
 		pageH := img.Height
@@ -549,14 +552,18 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			if err != nil {
 				return err
 			}
-			u, err := s.store(ctx, dst, fh, ext, mimeType, metas["path"])
+			u, meta, err := s.store(ctx, dst, fh, ext, mimeType, metas["path"])
 			if err != nil {
 				return err
 			}
-			formats[key] = map[string]any{
+			format := map[string]any{
 				"name": key + "_" + usedName, "hash": fh, "ext": ext, "mime": mimeType, "path": nilIfEmpty(metas["path"]),
 				"width": res.Width, "height": res.Height, "size": media.BytesToKbytes(res.Size), "sizeInBytes": res.Size, "url": u,
 			}
+			if meta != nil {
+				format["provider_metadata"] = meta
+			}
+			formats[key] = format
 			return nil
 		}
 		if img.Width > 245 || pageH > 156 {
@@ -597,7 +604,7 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 					continue
 				}
 				if fm, ok := f.(map[string]any); ok {
-					s.removeStored(ctx, fm["hash"], fm["ext"], fm["path"])
+					s.removeStored(ctx, fm["hash"], fm["ext"], fm["path"], fm["provider_metadata"])
 				}
 			}
 		}
@@ -640,23 +647,24 @@ func (s *Server) provider() (provider.Provider, string) {
 	return &provider.Local{PublicDir: s.cfg.Upload.PublicDir}, "local"
 }
 
-// store hands the file to the provider and returns its URL.
-func (s *Server) store(ctx context.Context, src, hash, ext, mimeType, path string) (string, error) {
+// store hands the file to the provider and returns its URL and
+// provider_metadata.
+func (s *Server) store(ctx context.Context, src, hash, ext, mimeType, path string) (string, map[string]any, error) {
 	in, err := os.Open(src) //nolint:gosec // a temporary upload file
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	defer func() { _ = in.Close() }()
 	st, err := in.Stat()
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	p, _ := s.provider()
 	f := &provider.File{Hash: hash, Ext: ext, Mime: mimeType, Path: path, Size: st.Size()}
 	if err := p.Upload(ctx, f, in); err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return f.URL, nil
+	return f.URL, f.Metadata, nil
 }
 
 // signFile is signFileUrls: private providers get signed URLs, for the
@@ -856,7 +864,7 @@ func (s *Server) uploadDestroy(w http.ResponseWriter, r *http.Request, rc *reque
 	return nil
 }
 
-func (s *Server) removeStored(ctx context.Context, hash, ext, path any) {
+func (s *Server) removeStored(ctx context.Context, hash, ext, path, meta any) {
 	h, _ := hash.(string)
 	e, _ := ext.(string)
 	pa, _ := path.(string)
@@ -864,7 +872,8 @@ func (s *Server) removeStored(ctx context.Context, hash, ext, path any) {
 		return
 	}
 	p, _ := s.provider()
-	if err := p.Delete(ctx, &provider.File{Hash: h, Ext: e, Path: pa}); err != nil {
+	m, _ := meta.(map[string]any)
+	if err := p.Delete(ctx, &provider.File{Hash: h, Ext: e, Path: pa, Metadata: m}); err != nil {
 		s.log.Error("upload: could not delete a file from the provider", "hash", h, "error", err)
 	}
 }
@@ -878,7 +887,8 @@ func (s *Server) removeFromProvider(ctx context.Context, row query.Row) {
 	}
 	hash, _ := row.Get("hash")
 	ext, _ := row.Get("ext")
-	s.removeStored(ctx, hash, ext, nil)
+	meta, _ := row.Get("provider_metadata")
+	s.removeStored(ctx, hash, ext, nil, meta)
 	formats, _ := row.Get("formats")
 	if fm, ok := formats.(map[string]any); ok {
 		keys := make([]string, 0, len(fm))
@@ -888,7 +898,7 @@ func (s *Server) removeFromProvider(ctx context.Context, row query.Row) {
 		sort.Strings(keys)
 		for _, k := range keys {
 			if f, ok := fm[k].(map[string]any); ok {
-				s.removeStored(ctx, f["hash"], f["ext"], f["path"])
+				s.removeStored(ctx, f["hash"], f["ext"], f["path"], f["provider_metadata"])
 			}
 		}
 	}

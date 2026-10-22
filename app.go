@@ -243,6 +243,18 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 // uploadProvider builds the provider of plugins.upload.config: aws-s3
 // takes @strapi/provider-upload-aws-s3's providerOptions.
 func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
+	if name == "cloudinary" {
+		base := "plugins.upload.config."
+		opts := func(k string) map[string]any {
+			m, _ := c.Get(base + "actionOptions." + k).(map[string]any)
+			return m
+		}
+		p := &provider.Cloudinary{UploadOptions: opts("upload"), DeleteOptions: opts("delete")}
+		p.CloudName, _ = c.String(base + "providerOptions.cloud_name")
+		p.APIKey, _ = c.String(base + "providerOptions.api_key")
+		p.APISecret, _ = c.String(base + "providerOptions.api_secret")
+		return p, nil
+	}
 	if name != "aws-s3" {
 		return nil, fmt.Errorf("upload provider %q is not supported yet", name)
 	}
