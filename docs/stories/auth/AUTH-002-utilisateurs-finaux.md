@@ -30,11 +30,15 @@ Reproduire l'authentification locale des utilisateurs finaux, avec les mêmes ro
 
 ## Critères d'acceptation
 - [ ] **Compat DB (D3)** : un utilisateur créé par Strapi 5.59, dont le hash bcryptjs est en `$2a$10$...`, se connecte avec son mot de passe sur grapi, sans migration.
-- [ ] Un JWT émis par Strapi avec le même `JWT_SECRET` est accepté par grapi, et inversement.
+- [x] Un JWT émis par Strapi avec le même `JWT_SECRET` est accepté par grapi, et inversement.
 - [ ] Banc `SETUP-002` : register, login, me, forgot, reset, change-password et email-confirmation donnent un JSON identique (champs privés absents), avec les mêmes codes HTTP et les mêmes messages d'erreur (`ValidationError` « Invalid identifier or password », etc.).
 - [ ] `allow_register: false` donne 403 sur register. `unique_email` est respecté.
 - [ ] Le lien de reset et de confirmation reçu par e-mail (Mailpit sur le homelab) fonctionne de bout en bout.
 - [ ] `password` n'apparaît jamais dans une réponse, y compris en populate depuis un autre type.
+
+## Avancement
+- Fait : JWT HS256 identique à jsonwebtoken 9 (`internal/auth/users`), stratégies api-token puis users-permissions dans l'ordre de Strapi, `POST /auth/local`, `/auth/local/register`, `/auth/change-password`, `GET /users/me`, CRUD `/users`, génération de `JWT_SECRET` dans `.env`. Les routes HTTP sont dans `internal/httpapi/users.go`.
+- Reste : forgot/reset password et confirmation d'e-mail (fournisseur e-mail), `validatePassword` de la config (JS), banc complet (bloqué par l'upload).
 
 ## Notes techniques
 - `golang.org/x/crypto/bcrypt` lit les préfixes `$2a$`, `$2b$` et `$2y$`. Garder le coût 10 à l'écriture pour rester interopérable.

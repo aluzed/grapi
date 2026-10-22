@@ -4,17 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"log/slog"
 	"math"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
+	"github.com/aluzed/grapi/internal/jsnum"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -29,6 +28,7 @@ type Config struct {
 	MaxLimit     int
 	// WithCount is api.rest.withCount (true by default).
 	WithCount *bool
+	Users     UsersConfig
 }
 
 // Server serves the content API of every api:: content type.
@@ -67,13 +67,17 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	if log == nil {
 		log = slog.Default()
 	}
-	s := &Server{cfg: cfg, set: set, docs: docs, auth: &authenticator{db: d, salt: cfg.APITokenSalt}, log: log}
+	if cfg.Users.JWTExpiresIn == "" {
+		cfg.Users.JWTExpiresIn = "30d"
+	}
+	s := &Server{cfg: cfg, set: set, docs: docs, auth: &authenticator{db: d, engine: docs.E, salt: cfg.APITokenSalt, users: cfg.Users}, log: log}
 	for uid, ct := range set.ContentTypes.All() {
 		if !strings.HasPrefix(uid, "api::") {
 			continue
 		}
 		s.addContentType(uid, ct)
 	}
+	s.addUsersRoutes()
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")
 		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales})
@@ -171,6 +175,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		s.serve(w, r, rt, params)
 		return
+	}
+	// Strapi serves public files on GET /*, so any other method on an
+	// unknown path is a 405.
+	if len(allowed) == 0 && r.Method != http.MethodGet && r.Method != http.MethodHead {
+		allowed = []string{"HEAD", "GET"}
 	}
 	if len(allowed) > 0 {
 		w.Header().Set("Allow", strings.Join(allowed, ", "))
@@ -472,49 +481,6 @@ func isPagedPagination(p map[string]any) bool {
 	return hasPage || hasPageSize || !hasStart && !hasLimit
 }
 
-// jsNumber is JavaScript's Number() for the values qs produces.
-func jsNumber(v any) float64 {
-	switch x := v.(type) {
-	case float64:
-		return x
-	case bool:
-		if x {
-			return 1
-		}
-		return 0
-	case nil:
-		return 0
-	case string:
-		t := strings.TrimSpace(x)
-		switch t {
-		case "":
-			return 0
-		case "Infinity", "+Infinity":
-			return math.Inf(1)
-		case "-Infinity":
-			return math.Inf(-1)
-		}
-		if len(t) > 2 && t[0] == '0' {
-			base := map[byte]int{'x': 16, 'X': 16, 'o': 8, 'O': 8, 'b': 2, 'B': 2}[t[1]]
-			if base != 0 {
-				if n, err := strconv.ParseUint(t[2:], base, 64); err == nil && !strings.Contains(t, "_") {
-					return float64(n)
-				}
-				return math.NaN()
-			}
-		}
-		for _, c := range t {
-			if !strings.ContainsRune("0123456789+-.eE", c) {
-				return math.NaN()
-			}
-		}
-		if f, err := strconv.ParseFloat(t, 64); err == nil || errors.Is(err, strconv.ErrRange) {
-			return f
-		}
-	}
-	return math.NaN()
-}
-
 // jsMax is Math.max: NaN wins.
 func jsMax(a, b float64) float64 {
 	if math.IsNaN(a) || math.IsNaN(b) {
@@ -538,12 +504,12 @@ func (s *Server) paginationInfo(p map[string]any) (paginationInfo, error) {
 		maxLimit = float64(s.cfg.MaxLimit)
 	}
 	ensure := func(start, limit any) (float64, float64) {
-		st := jsMax(jsNumber(start), 0)
+		st := jsMax(jsnum.Number(start), 0)
 		var l float64
 		if isMinusOne(limit) {
 			l = -1
 		} else {
-			l = jsMax(jsNumber(limit), 1)
+			l = jsMax(jsnum.Number(limit), 1)
 		}
 		if maxLimit != -1 && !(l < maxLimit) {
 			l = maxLimit
@@ -577,11 +543,11 @@ func (s *Server) paginationInfo(p map[string]any) (paginationInfo, error) {
 		}
 		var ps any = def
 		if given("pageSize") {
-			ps = jsMax(1, jsNumber(p["pageSize"]))
+			ps = jsMax(1, jsnum.Number(p["pageSize"]))
 		}
 		_, pl := ensure(float64(0), ps)
-		start, limit = (jsNumber(page)-1)*pl, pl
-		pg := jsNumber(page)
+		start, limit = (jsnum.Number(page)-1)*pl, pl
+		pg := jsnum.Number(page)
 		info.page, info.pageSize = &pg, &pl
 	}
 	if isMinusOne(limit) {

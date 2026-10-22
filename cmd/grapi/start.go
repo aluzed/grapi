@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"flag"
 	"fmt"
@@ -105,7 +107,50 @@ func apiConfig(c *config.Config) httpapi.Config {
 	if cfg.APITokenSalt == "" {
 		cfg.APITokenSalt = c.Env["API_TOKEN_SALT"]
 	}
+	up := "plugins.users-permissions.config."
+	cfg.Users.JWTSecret, _ = c.String(up + "jwtSecret")
+	if cfg.Users.JWTSecret == "" {
+		cfg.Users.JWTSecret = c.Env["JWT_SECRET"]
+	}
+	cfg.Users.JWTExpiresIn, _ = c.String(up + "jwt.expiresIn")
+	if n, ok := c.Int(up + "jwt.expiresIn"); ok {
+		cfg.Users.JWTExpiresIn = strconv.Itoa(n)
+	}
+	cfg.Users.JWTAlgorithm, _ = c.String(up + "jwt.algorithm")
+	if fields, ok := c.Get(up + "register.allowedFields").([]any); ok {
+		for _, f := range fields {
+			if s, ok := f.(string); ok {
+				cfg.Users.AllowedFields = append(cfg.Users.AllowedFields, s)
+			}
+		}
+	}
 	return cfg
+}
+
+// ensureJWTSecret is the users-permissions bootstrap: without a secret, one
+// is generated and appended to .env so the tokens survive a restart.
+func ensureJWTSecret(cfg *httpapi.Config, c *config.Config, dir string, log *slog.Logger) error {
+	if cfg.Users.JWTSecret != "" {
+		return nil
+	}
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return err
+	}
+	cfg.Users.JWTSecret = base64.StdEncoding.EncodeToString(b)
+	if _, set := c.Env["JWT_SECRET"]; set {
+		return nil
+	}
+	f, err := os.OpenFile(filepath.Join(dir, ".env"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // the project's own .env
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := fmt.Fprintf(f, "JWT_SECRET=%s\n", cfg.Users.JWTSecret); err != nil {
+		return err
+	}
+	log.Info("the users-permissions JWT secret has been generated in the .env file under JWT_SECRET")
+	return nil
 }
 
 func start(args []string, stderr io.Writer) error {
@@ -165,7 +210,11 @@ func start(args []string, stderr io.Writer) error {
 		return err
 	}
 	engine := &query.Engine{DB: d, MD: md}
-	api := httpapi.New(apiConfig(conf), d, res.Set, document.New(engine, res.Set), log)
+	apiCfg := apiConfig(conf)
+	if err := ensureJWTSecret(&apiCfg, conf, *dir, log); err != nil {
+		return err
+	}
+	api := httpapi.New(apiCfg, d, res.Set, document.New(engine, res.Set), log)
 	host, _ := conf.String("server.host")
 	port, _ := conf.Int("server.port")
 	addr := net.JoinHostPort(host, strconv.Itoa(port))

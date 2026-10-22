@@ -30,11 +30,14 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 ## Keys grapi reads today
 
-`server.host`, `server.port`, `api.rest.prefix`, `api.rest.defaultLimit`, `api.rest.maxLimit`, `api.rest.withCount`, `admin.apiToken.salt`, `database.connection` (`client`, `connection.{host,port,database,user,password,schema,filename,connectionString,ssl}`, `pool.{min,max}`, `acquireConnectionTimeout`, `debug`). Their types are checked at start: a wrong type stops with the file and the key.
+`server.host`, `server.port`, `api.rest.prefix`, `api.rest.defaultLimit`, `api.rest.maxLimit`, `api.rest.withCount`, `admin.apiToken.salt`, `database.connection` (`client`, `connection.{host,port,database,user,password,schema,filename,connectionString,ssl}`, `pool.{min,max}`, `acquireConnectionTimeout`, `debug`). `plugins.users-permissions.config.{jwtSecret,jwt.expiresIn,jwt.algorithm,register.allowedFields}` (the secret falls back to `JWT_SECRET`; without either, one is generated and appended to `.env`, as Strapi does). Their types are checked at start: a wrong type stops with the file and the key.
 
 Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a generated Strapi project.
 
 ## Variables
+
+`GRAPI_LOG_LEVEL` (or `STRAPI_LOG_LEVEL`): `debug`, `info` (default), `warn`, `error`. At `debug`, every rejected request is logged with its error.
+
 
 Each `GRAPI_*` variable also accepts its Strapi name (`internal/config/aliases.go`); when both are set, `GRAPI_*` wins and a warning is logged.
 
