@@ -9,7 +9,7 @@ grapi doit rester intégralement MIT (D6). Le dépôt Strapi est MIT, sauf les d
 ## Périmètre
 - **`docs/clean-room.md`** :
   - Le code MIT de Strapi peut être lu comme spécification. On reproduit les comportements, pas la structure : pas de traduction ligne à ligne, ni de copie de commentaires ou de noms internes non exposés.
-  - Interdiction absolue de lire les dossiers `ee/`, et tout dossier contenant un `LICENSE` qui n'est pas MIT. Les fonctions concernées (`XTR-*`) se spécifient uniquement à partir de la documentation publique de Strapi et du comportement observé dans une instance sous licence d'essai.
+  - Interdiction absolue de lire les dossiers `ee/`, et tout dossier contenant un `LICENSE` qui n'est pas MIT. Les fonctions concernées (`XTR-*`) se spécifient uniquement à partir de la documentation publique de Strapi. On n'utilise pas d'instance sous licence d'essai, dont les conditions s'appliqueraient à nous.
   - Les identifiants exposés (noms de tables, de routes, de champs JSON, codes d'erreur) font partie du contrat de compatibilité et peuvent être repris tels quels.
   - Les données publiques (liste des locales ISO, par exemple) se prennent de leur source d'origine (CLDR, ISO), pas du fichier JSON de Strapi.
 - **Script `scripts/list-forbidden-paths.sh`** : liste les chemins non MIT du clone Strapi de référence, en cherchant les `LICENSE` autres que MIT et les dossiers `ee/`. Il est utilisé pour configurer les exclusions de recherche des outils et des agents.
