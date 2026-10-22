@@ -1,0 +1,2450 @@
+[
+ {
+  "input": "Hello World",
+  "options": {},
+  "output": "hello-world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {},
+  "output": "ca-va-tres-bien"
+ },
+ {
+  "input": "Straße",
+  "options": {},
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {},
+  "output": "a-eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {},
+  "output": "foo-and-bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {},
+  "output": "foo-bar-baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {},
+  "output": "xml-http-request2"
+ },
+ {
+  "input": "__private",
+  "options": {},
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {},
+  "output": "leading-and-trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {},
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {},
+  "output": "emoji-unicorn-unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {},
+  "output": "love-love"
+ },
+ {
+  "input": "a\\b",
+  "options": {},
+  "output": "a-b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {},
+  "output": "dong-hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {},
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {},
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {},
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {},
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {},
+  "output": "version2-beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {},
+  "output": "abc-def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {},
+  "output": "multiple-under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {},
+  "output": "x-y-z"
+ },
+ {
+  "input": "100% sure",
+  "options": {},
+  "output": "100-sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {},
+  "output": "c-est-l-ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {},
+  "output": "uenicoede-chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {},
+  "output": "oe-uvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {},
+  "output": "my-api-v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {},
+  "output": "theme-page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {},
+  "output": "react-js-and-node-js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {},
+  "output": "already-a-slug"
+ },
+ {
+  "input": "",
+  "options": {},
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {},
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {},
+  "output": "a1-b2-c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {},
+  "output": "i-phone-15-pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "separator": "_"
+  },
+  "output": "hello_world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "separator": "_"
+  },
+  "output": "ca_va_tres_bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "separator": "_"
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "separator": "_"
+  },
+  "output": "a_eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "separator": "_"
+  },
+  "output": "foo_and_bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "separator": "_"
+  },
+  "output": "foo_bar_baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "separator": "_"
+  },
+  "output": "xml_http_request2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "separator": "_"
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "separator": "_"
+  },
+  "output": "leading_and_trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "separator": "_"
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "separator": "_"
+  },
+  "output": "emoji_unicorn_unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "separator": "_"
+  },
+  "output": "love_love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "separator": "_"
+  },
+  "output": "a_b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "separator": "_"
+  },
+  "output": "dong_hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "separator": "_"
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "separator": "_"
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "separator": "_"
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "separator": "_"
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "separator": "_"
+  },
+  "output": "version2_beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "separator": "_"
+  },
+  "output": "abc_def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "separator": "_"
+  },
+  "output": "multiple_under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "separator": "_"
+  },
+  "output": "x_y_z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "separator": "_"
+  },
+  "output": "100_sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "separator": "_"
+  },
+  "output": "c_est_l_ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "separator": "_"
+  },
+  "output": "uenicoede_chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "separator": "_"
+  },
+  "output": "oe_uvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "separator": "_"
+  },
+  "output": "my_api_v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "separator": "_"
+  },
+  "output": "theme_page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "separator": "_"
+  },
+  "output": "react_js_and_node_js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "separator": "_"
+  },
+  "output": "already_a_slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "separator": "_"
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "separator": "_"
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "separator": "_"
+  },
+  "output": "a1_b2_c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "separator": "_"
+  },
+  "output": "i_phone_15_pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Hello_World"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Ca_va_tres_bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "AEroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "foo_and_bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "fooBarBaz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "XMLHttpRequest2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "leading_and_trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "emoji_unicorn_unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "love_love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "a_b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Dong_Hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Version2Beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "ABCDef"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "multiple_under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "x_y_z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "100_sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "C_est_l_ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Uenicoede_Chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "OeUVRE"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "my_api_v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "Theme_Page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "React_js_and_Node_js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "already_a_slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "A1B2C3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "separator": "_",
+   "lowercase": false,
+   "decamelize": false
+  },
+  "output": "iPhone_15_Pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Hello-World"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Ca-va-tres-bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "lowercase": false
+  },
+  "output": "A-Eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "lowercase": false
+  },
+  "output": "foo-and-bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "lowercase": false
+  },
+  "output": "foo-Bar-Baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "lowercase": false
+  },
+  "output": "XML-Http-Request2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "lowercase": false
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "lowercase": false
+  },
+  "output": "leading-and-trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "lowercase": false
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "lowercase": false
+  },
+  "output": "emoji-unicorn-unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "lowercase": false
+  },
+  "output": "love-love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "lowercase": false
+  },
+  "output": "a-b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Dong-Hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "lowercase": false
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "lowercase": false
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Version2-Beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "lowercase": false
+  },
+  "output": "ABC-Def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "lowercase": false
+  },
+  "output": "multiple-under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "lowercase": false
+  },
+  "output": "x-y-z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "lowercase": false
+  },
+  "output": "100-sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "lowercase": false
+  },
+  "output": "C-est-l-ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Uenicoede-Chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Oe-UVRE"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "lowercase": false
+  },
+  "output": "my-api-v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "lowercase": false
+  },
+  "output": "Theme-Page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "lowercase": false
+  },
+  "output": "React-js-and-Node-js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "lowercase": false
+  },
+  "output": "already-a-slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "lowercase": false
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "lowercase": false
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "lowercase": false
+  },
+  "output": "A1-B2-C3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "lowercase": false
+  },
+  "output": "i-Phone-15-Pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "decamelize": false
+  },
+  "output": "hello-world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "decamelize": false
+  },
+  "output": "ca-va-tres-bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "decamelize": false
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "decamelize": false
+  },
+  "output": "aeroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "decamelize": false
+  },
+  "output": "foo-and-bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "decamelize": false
+  },
+  "output": "foobarbaz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "decamelize": false
+  },
+  "output": "xmlhttprequest2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "decamelize": false
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "decamelize": false
+  },
+  "output": "leading-and-trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "decamelize": false
+  },
+  "output": "emoji-unicorn-unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "decamelize": false
+  },
+  "output": "love-love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "decamelize": false
+  },
+  "output": "a-b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "decamelize": false
+  },
+  "output": "dong-hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "decamelize": false
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "decamelize": false
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "decamelize": false
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "decamelize": false
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "decamelize": false
+  },
+  "output": "version2beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "decamelize": false
+  },
+  "output": "abcdef"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "decamelize": false
+  },
+  "output": "multiple-under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "decamelize": false
+  },
+  "output": "x-y-z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "decamelize": false
+  },
+  "output": "100-sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "decamelize": false
+  },
+  "output": "c-est-l-ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "decamelize": false
+  },
+  "output": "uenicoede-chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "decamelize": false
+  },
+  "output": "oeuvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "decamelize": false
+  },
+  "output": "my-api-v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "decamelize": false
+  },
+  "output": "theme-page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "decamelize": false
+  },
+  "output": "react-js-and-node-js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "decamelize": false
+  },
+  "output": "already-a-slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "decamelize": false
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "decamelize": false
+  },
+  "output": "a1b2c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "decamelize": false
+  },
+  "output": "iphone-15-pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "hello-world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "ca-va-tres-bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "a-eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "foo-et-bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "foo-bar-baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "xml-http-request2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "leading-and-trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "emoji-unicorn-unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "love-love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "a-b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "dong-hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "version2-beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "abc-def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "multiple-under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "x-y-z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "100-pct-sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "c-est-l-ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "uenicoede-chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "oe-uvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "my-api-v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "theme-page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "react-js-et-node-js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "already-a-slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "a1-b2-c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "customReplacements": [
+    [
+     "&",
+     " et "
+    ],
+    [
+     "%",
+     " pct "
+    ]
+   ]
+  },
+  "output": "i-phone-15-pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "hello-world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "ca-va-tres-bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "a-eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "foo-and-bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "foo-bar-baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "xml-http-request2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "_private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "leading-and-trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "emoji-unicorn-unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "love-love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "a-b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "dong-hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "version2-beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "abc-def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "multiple-under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "x-y-z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "100-sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "c-est-l-ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "uenicoede-chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "oe-uvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "my-api-v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "theme-page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "react-js-and-node-js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "already-a-slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "a1-b2-c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "preserveLeadingUnderscore": true
+  },
+  "output": "i-phone-15-pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "separator": "--"
+  },
+  "output": "hello--world"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "separator": "--"
+  },
+  "output": "ca--va--tres--bien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "separator": "--"
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "separator": "--"
+  },
+  "output": "a--eroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "separator": "--"
+  },
+  "output": "foo--and--bar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "separator": "--"
+  },
+  "output": "foo--bar--baz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "separator": "--"
+  },
+  "output": "xml--http--request2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "separator": "--"
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "separator": "--"
+  },
+  "output": "leading--and--trailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "separator": "--"
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "separator": "--"
+  },
+  "output": "emoji--unicorn--unicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "separator": "--"
+  },
+  "output": "love--love"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "separator": "--"
+  },
+  "output": "a--b"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "separator": "--"
+  },
+  "output": "dong--hoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "separator": "--"
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "separator": "--"
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "separator": "--"
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "separator": "--"
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "separator": "--"
+  },
+  "output": "version2--beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "separator": "--"
+  },
+  "output": "abc--def"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "separator": "--"
+  },
+  "output": "multiple--under"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "separator": "--"
+  },
+  "output": "x--y--z"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "separator": "--"
+  },
+  "output": "100--sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "separator": "--"
+  },
+  "output": "c--est--l--ete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "separator": "--"
+  },
+  "output": "uenicoede--chars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "separator": "--"
+  },
+  "output": "oe--uvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "separator": "--"
+  },
+  "output": "my--api--v2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "separator": "--"
+  },
+  "output": "theme--page"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "separator": "--"
+  },
+  "output": "react--js--and--node--js"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "separator": "--"
+  },
+  "output": "already--a--slug"
+ },
+ {
+  "input": "",
+  "options": {
+   "separator": "--"
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "separator": "--"
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "separator": "--"
+  },
+  "output": "a1--b2--c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "separator": "--"
+  },
+  "output": "i--phone--15--pro"
+ },
+ {
+  "input": "Hello World",
+  "options": {
+   "separator": ""
+  },
+  "output": "helloworld"
+ },
+ {
+  "input": "Ça va très bien",
+  "options": {
+   "separator": ""
+  },
+  "output": "cavatresbien"
+ },
+ {
+  "input": "Straße",
+  "options": {
+   "separator": ""
+  },
+  "output": "strasse"
+ },
+ {
+  "input": "Ærøskøbing",
+  "options": {
+   "separator": ""
+  },
+  "output": "aeroskobing"
+ },
+ {
+  "input": "foo&bar",
+  "options": {
+   "separator": ""
+  },
+  "output": "fooandbar"
+ },
+ {
+  "input": "fooBarBaz",
+  "options": {
+   "separator": ""
+  },
+  "output": "foobarbaz"
+ },
+ {
+  "input": "XMLHttpRequest2",
+  "options": {
+   "separator": ""
+  },
+  "output": "xmlhttprequest2"
+ },
+ {
+  "input": "__private",
+  "options": {
+   "separator": ""
+  },
+  "output": "private"
+ },
+ {
+  "input": "  leading--and--trailing  ",
+  "options": {
+   "separator": ""
+  },
+  "output": "leadingandtrailing"
+ },
+ {
+  "input": "日本語",
+  "options": {
+   "separator": ""
+  },
+  "output": ""
+ },
+ {
+  "input": "emoji 🦄 unicorn",
+  "options": {
+   "separator": ""
+  },
+  "output": "emojiunicornunicorn"
+ },
+ {
+  "input": "♥ love",
+  "options": {
+   "separator": ""
+  },
+  "output": "lovelove"
+ },
+ {
+  "input": "a\\b",
+  "options": {
+   "separator": ""
+  },
+  "output": "ab"
+ },
+ {
+  "input": "Đồng Hới",
+  "options": {
+   "separator": ""
+  },
+  "output": "donghoi"
+ },
+ {
+  "input": "Łódź",
+  "options": {
+   "separator": ""
+  },
+  "output": "lodz"
+ },
+ {
+  "input": "İstanbul",
+  "options": {
+   "separator": ""
+  },
+  "output": "istanbul"
+ },
+ {
+  "input": "ﬁancé",
+  "options": {
+   "separator": ""
+  },
+  "output": "ance"
+ },
+ {
+  "input": "é",
+  "options": {
+   "separator": ""
+  },
+  "output": "e"
+ },
+ {
+  "input": "Version2Beta",
+  "options": {
+   "separator": ""
+  },
+  "output": "version2beta"
+ },
+ {
+  "input": "ABCDef",
+  "options": {
+   "separator": ""
+  },
+  "output": "abcdef"
+ },
+ {
+  "input": "multiple___under",
+  "options": {
+   "separator": ""
+  },
+  "output": "multipleunder"
+ },
+ {
+  "input": "x.y.z",
+  "options": {
+   "separator": ""
+  },
+  "output": "xyz"
+ },
+ {
+  "input": "100% sure",
+  "options": {
+   "separator": ""
+  },
+  "output": "100sure"
+ },
+ {
+  "input": "C'est l'été",
+  "options": {
+   "separator": ""
+  },
+  "output": "cestlete"
+ },
+ {
+  "input": "Ünïcödé Çhàrs",
+  "options": {
+   "separator": ""
+  },
+  "output": "uenicoedechars"
+ },
+ {
+  "input": "ŒUVRE",
+  "options": {
+   "separator": ""
+  },
+  "output": "oeuvre"
+ },
+ {
+  "input": "my-api-v2",
+  "options": {
+   "separator": ""
+  },
+  "output": "myapiv2"
+ },
+ {
+  "input": "Theme Page",
+  "options": {
+   "separator": ""
+  },
+  "output": "themepage"
+ },
+ {
+  "input": "React.js & Node.js",
+  "options": {
+   "separator": ""
+  },
+  "output": "reactjsandnodejs"
+ },
+ {
+  "input": "already-a-slug",
+  "options": {
+   "separator": ""
+  },
+  "output": "alreadyaslug"
+ },
+ {
+  "input": "",
+  "options": {
+   "separator": ""
+  },
+  "output": ""
+ },
+ {
+  "input": "---",
+  "options": {
+   "separator": ""
+  },
+  "output": ""
+ },
+ {
+  "input": "A1B2C3",
+  "options": {
+   "separator": ""
+  },
+  "output": "a1b2c3"
+ },
+ {
+  "input": "iPhone 15 Pro",
+  "options": {
+   "separator": ""
+  },
+  "output": "iphone15pro"
+ }
+]
