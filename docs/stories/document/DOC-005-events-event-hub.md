@@ -27,7 +27,8 @@ Un event hub interne et l'émission des événements de documents avec le même 
 ## Avancement
 - Fait : `internal/events` (On, Once, Subscribe, Destroy, paniques isolées) et l'émission des six événements `entry.*` aux mêmes endroits que le dépôt Strapi, après commit (`db.OnCommit`), avec l'entrée relue en deep populate et assainie. Tests : `internal/events/hub_test.go`, `internal/webhooks/webhooks_test.go`.
 - `media.create`, `media.update` et `media.delete` sont émis par l'upload (création, remplacement, mise à jour des infos, suppression ; `upload_test.go`).
-- Reste : comparaison du payload sur le banc.
+- Forme du payload relue contre `services/document-service/events.js` et `webhook-runner.js` de Strapi 5.59 (2026-10-22) : `{event, createdAt, model, uid, entry}`, `model` étant le `modelName`, entrée relue en populate profond sauf pour `entry.delete` et `entry.unpublish`, puis assainie ; émission après le commit.
+- Reste : comparaison du payload sur le banc (récepteur d'échos, avec `EXT-006`).
 
 ## Notes techniques
 - Les hooks `onCommit` de la transaction (`DB-001`) déclenchent l'émission.
