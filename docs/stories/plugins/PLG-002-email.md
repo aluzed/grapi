@@ -28,11 +28,17 @@ Un service e-mail avec une interface provider, cinq providers et des templates s
 - Files d'attente et retries d'envoi (Strapi n'en a pas). C'est une amélioration possible plus tard.
 
 ## Critères d'acceptation
-- [ ] **Compat config** : la configuration nodemailer et DKIM de dev-freelance (sélecteur `sel2026`, clé lue depuis un fichier monté) se transpose en provider `smtp`. Un e-mail envoyé vers Mailpit sur le homelab est signé et vérifié (`d=dev-freelance.com`, `s=sel2026`).
-- [ ] Un template contenant `<% process.exit() %>` est rendu littéralement et n'exécute rien (TU).
-- [ ] `<%= USER.email %>` est remplacé, et une variable inconnue est rendue vide sans erreur, comme Strapi.
-- [ ] `POST /api/email` sans permission donne 403.
-- [ ] Les templates reset et confirmation de `AUTH-002` passent par ce service.
+- [x] **Compat config** : la configuration nodemailer et DKIM de dev-freelance (sélecteur `sel2026`, clé lue depuis un fichier monté) se transpose en provider `smtp`. Un e-mail envoyé vers Mailpit sur le homelab est signé et vérifié (`d=dev-freelance.com`, `s=sel2026`).
+- [x] Un template contenant `<% process.exit() %>` est rendu littéralement et n'exécute rien (TU).
+- [x] `<%= USER.email %>` est remplacé, et une variable inconnue est rendue vide sans erreur, comme Strapi.
+- [x] `POST /api/email` sans permission donne 403.
+- [x] Les templates reset et confirmation de `AUTH-002` passent par ce service.
+
+## Avancement
+- Fait : `internal/plugins/email` (SMTP façon nodemailer avec STARTTLS et DKIM via go-msgauth, sendmail, `Template` de users-permissions), config `plugins.email.config` (`nodemailer` ou `sendmail`), `POST /api/email`.
+- 2026-10-22, homelab : forgot-password servi par grapi vers Mailpit, signature DKIM vérifiée (`d=dev-freelance.com`, `s=sel2026`, clé lue par `${file:}`).
+- Correction du critère 3 : chez Strapi, une variable inconnue n'est pas rendue vide, elle reste telle quelle (`template()` de users-permissions désactive `evaluate` et `escape`, seule l'interpolation stricte s'applique). grapi fait de même.
+- Reste : amazon-ses, mailgun, sendgrid, routes admin (`/email/test`, `/email/settings`).
 
 ## Notes techniques
 - `wneessen/go-mail` (SMTP, sendmail) et `emersion/go-msgauth/dkim` pour signer.

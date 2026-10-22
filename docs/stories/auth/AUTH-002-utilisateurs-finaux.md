@@ -38,7 +38,8 @@ Reproduire l'authentification locale des utilisateurs finaux, avec les mêmes ro
 
 ## Avancement
 - Fait : JWT HS256 identique à jsonwebtoken 9 (`internal/auth/users`), stratégies api-token puis users-permissions dans l'ordre de Strapi, `POST /auth/local`, `/auth/local/register`, `/auth/change-password`, `GET /users/me`, CRUD `/users`, génération de `JWT_SECRET` dans `.env`. Les routes HTTP sont dans `internal/httpapi/users.go`.
-- Reste : forgot/reset password et confirmation d'e-mail (fournisseur e-mail), `validatePassword` de la config (JS), banc complet (bloqué par l'upload).
+- Fait aussi : forgot-password, reset-password, email-confirmation, send-email-confirmation, et la confirmation à l'inscription (`internal/httpapi/users_email.go`) ; forgot-password vérifié de bout en bout vers Mailpit. Banc dev-freelance : 116/116.
+- Reste : `validatePassword` de la config (JS), le lien de confirmation suivi de bout en bout, `allow_register: false` et `unique_email` sur le banc.
 
 ## Notes techniques
 - `golang.org/x/crypto/bcrypt` lit les préfixes `$2a$`, `$2b$` et `$2y$`. Garder le coût 10 à l'écriture pour rester interopérable.

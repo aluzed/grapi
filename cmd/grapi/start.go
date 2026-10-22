@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/aluzed/grapi/internal/db/schemasync"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/registry"
 )
 
@@ -139,6 +141,10 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 		sort.Slice(cfg.Upload.Breakpoints, func(i, j int) bool { return cfg.Upload.Breakpoints[i].Size > cfg.Upload.Breakpoints[j].Size })
 	}
+	cfg.ServerURL, cfg.AdminURL = absoluteURLs(c)
+	if e, err := emailService(c); err == nil {
+		cfg.Email = e
+	}
 	if fields, ok := c.Get(up + "register.allowedFields").([]any); ok {
 		for _, f := range fields {
 			if s, ok := f.(string); ok {
@@ -147,6 +153,65 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 	}
 	return cfg
+}
+
+// absoluteURLs is Strapi's getAbsoluteServerUrl and getAbsoluteAdminUrl.
+func absoluteURLs(c *config.Config) (string, string) {
+	serverURL, _ := c.String("server.url")
+	adminURL, ok := c.String("admin.url")
+	if !ok {
+		adminURL = "/admin"
+	}
+	host, _ := c.String("server.host")
+	port, _ := c.Int("server.port")
+	if c.Environment == "development" && (host == "127.0.0.1" || host == "0.0.0.0") {
+		host = "localhost"
+	}
+	abs := func(u string) string {
+		if strings.HasPrefix(u, "http") {
+			return u
+		}
+		return "http://" + host + ":" + strconv.Itoa(port) + u
+	}
+	server := abs(serverURL)
+	if strings.HasPrefix(adminURL, "http") {
+		return server, adminURL
+	}
+	return server, strings.TrimRight(server, "/") + "/" + strings.TrimLeft(adminURL, "/")
+}
+
+// emailService reads plugins.email.config: nodemailer (smtp) or sendmail,
+// Strapi's default.
+func emailService(c *config.Config) (*email.Service, error) {
+	base := "plugins.email.config."
+	provider, _ := c.String(base + "provider")
+	opt := func(k string) string {
+		switch v := c.Get(base + "providerOptions." + k).(type) {
+		case string:
+			return v
+		case nil:
+			return ""
+		default:
+			return fmt.Sprint(v)
+		}
+	}
+	svc := &email.Service{}
+	svc.Settings.DefaultFrom, _ = c.String(base + "settings.defaultFrom")
+	svc.Settings.DefaultReplyTo, _ = c.String(base + "settings.defaultReplyTo")
+	switch provider {
+	case "nodemailer", "smtp":
+		port, _ := strconv.Atoi(opt("port"))
+		p := &email.SMTP{Host: opt("host"), Port: port, Secure: opt("secure") == "true", User: opt("auth.user"), Pass: opt("auth.pass")}
+		if key := opt("dkim.privateKey"); key != "" {
+			p.DKIM = &email.DKIM{DomainName: opt("dkim.domainName"), KeySelector: opt("dkim.keySelector"), PrivateKey: key}
+		}
+		svc.Provider = p
+	case "", "sendmail":
+		svc.Provider = &email.Sendmail{}
+	default:
+		return nil, fmt.Errorf("email provider %q is not supported yet", provider)
+	}
+	return svc, nil
 }
 
 // ensureJWTSecret is the users-permissions bootstrap: without a secret, one

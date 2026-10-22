@@ -225,8 +225,12 @@ func (s *Server) authRegister(w http.ResponseWriter, r *http.Request, rc *reques
 		return err
 	}
 	if advanced.EmailConfirmation {
-		s.log.Error("cannot send the confirmation email: no email provider")
-		return appError("Error sending confirmation email")
+		if err := s.sendConfirmationEmail(ctx, user); err != nil {
+			s.log.Error("sending the confirmation email failed", "error", err)
+			return appError("Error sending confirmation email")
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"user": s.sanitizeOutput(user, s.schemaOf(userUID), rc.auth)})
+		return nil
 	}
 	return s.sendAuth(w, user, rc.auth)
 }

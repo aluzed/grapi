@@ -14,6 +14,7 @@ import (
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/jsnum"
+	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -32,6 +33,10 @@ type Config struct {
 	Upload    UploadConfig
 	// Middlewares defaults to a generated project's stack.
 	Middlewares *Middlewares
+	// Email is the email plugin; nil when no provider is configured.
+	Email *email.Service
+	// ServerURL and AdminURL are server.absoluteUrl and admin.absoluteUrl.
+	ServerURL, AdminURL string
 }
 
 // Server serves the content API of every api:: content type.
@@ -88,6 +93,9 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		s.cfg.Upload.SizeLimit = 1000000000
 	}
 	s.addUsersRoutes()
+	if _, ok := set.ContentType(userUID); ok {
+		s.addUsersEmailRoutes()
+	}
 	s.addUploadRoutes()
 	mw := DefaultMiddlewares()
 	if cfg.Middlewares != nil {
