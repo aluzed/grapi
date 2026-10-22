@@ -74,10 +74,10 @@ func (b *builder) contentType(uid, modelName, collectionName string, attrs *sche
 	m := &Model{UID: uid, SingularName: modelName, TableName: collectionName}
 	m.Attributes.Set(idColumn, &Attribute{Type: "increments"})
 	if isContentType {
-		m.Attributes.Set(schema.AttrDocumentID, &Attribute{Type: schema.TypeString})
+		m.Attributes.Set(schema.AttrDocumentID, &Attribute{Type: schema.TypeString, DefaultFunc: "documentId"})
 	}
 	for name, a := range attrs.All() {
-		attr, err := b.transform(name, a, collectionName)
+		attr, err := b.transform(name, a, collectionName, isContentType)
 		if err != nil {
 			return fmt.Errorf("%s.%s: %w", uid, name, err)
 		}
@@ -120,7 +120,16 @@ func hasComponents(attrs *schema.OrderedMap[*schema.Attribute]) bool {
 	return false
 }
 
-func (b *builder) transform(name string, a *schema.Attribute, collectionName string) (*Attribute, error) {
+// defaultFunc: Strapi gives publishedAt a default of "now" on every content
+// type (draft and publish or not).
+func defaultFunc(name string, a *schema.Attribute, isContentType bool) string {
+	if isContentType && a.Auto && name == schema.AttrPublishedAt {
+		return "now"
+	}
+	return ""
+}
+
+func (b *builder) transform(name string, a *schema.Attribute, collectionName string, isContentType bool) (*Attribute, error) {
 	switch a.Type {
 	case schema.TypeMedia:
 		relation := schema.MorphOne
@@ -135,9 +144,11 @@ func (b *builder) transform(name string, a *schema.Attribute, collectionName str
 		}
 		jt := b.componentJoinTable(name, collectionName)
 		jt.OrderColumnName = orderColumn
+		jt.OrderBy = orderColumn
 		return &Attribute{Type: schema.TypeRelation, Relation: relation, Target: a.Component, JoinTable: jt}, nil
 	case schema.TypeDynamicZone:
 		jt := b.componentJoinTable(name, collectionName)
+		jt.OrderBy = orderColumn
 		jt.MorphColumn = &MorphColumn{
 			IDColumn:   jt.InverseJoinColumn,
 			TypeColumn: b.componentTypeColumn(),
@@ -153,7 +164,7 @@ func (b *builder) transform(name string, a *schema.Attribute, collectionName str
 	return &Attribute{
 		Type: a.Type, Column: col, Relation: a.Relation, Target: a.Target, InversedBy: a.InversedBy,
 		MappedBy: a.MappedBy, MorphBy: a.MorphBy, UseJoinTable: a.UseJoinTable, Virtual: a.Virtual,
-		Searchable: a.Searchable,
+		Searchable: a.Searchable, Default: a.Default, DefaultFunc: defaultFunc(name, a, isContentType),
 	}, nil
 }
 
@@ -232,6 +243,10 @@ func (b *builder) load() (*Metadata, error) {
 		meta, _ := md.models.Get(md.models.Keys()[i])
 		for name, a := range meta.Attributes.All() {
 			if a.Virtual {
+				// i18n links the locales of a document through document_id.
+				if name == schema.AttrLocalizations {
+					a.JoinColumn = &JoinColumn{Name: "document_id", ReferencedColumn: "document_id", ReferencedTable: meta.TableName}
+				}
 				continue
 			}
 			if a.isRelation() {
@@ -404,6 +419,7 @@ func (md *Metadata) createJoinTable(name string, a *Attribute, meta *Model) erro
 		link.Attributes.Set(orderCol, &Attribute{Type: schema.TypeFloat, Column: unsignedNullDefault(), ColumnName: orderCol})
 		link.Indexes = append(link.Indexes, Index{Name: must(n.OrderFkIndex(tableName)), Columns: []string{orderCol}})
 		jt.OrderColumnName = orderCol
+		jt.OrderBy = orderCol
 	}
 	if a.bidirectional() && a.manyToAny() {
 		link.Attributes.Set(invOrderCol, &Attribute{Type: schema.TypeFloat, Column: unsignedNullDefault(), ColumnName: invOrderCol})
@@ -427,6 +443,7 @@ func (md *Metadata) createJoinTable(name string, a *Attribute, meta *Model) erro
 		}
 		if a.manyToAny() {
 			inv.JoinTable.OrderColumnName = invOrderCol
+			inv.JoinTable.OrderBy = invOrderCol
 		}
 		if a.anyToMany() {
 			inv.JoinTable.InverseOrderColumnName = orderCol
@@ -468,6 +485,7 @@ func (md *Metadata) createMorphToMany(name string, a *Attribute, meta *Model) er
 		JoinColumn:   JoinColumn{Name: joinCol, ReferencedColumn: idColumn},
 		MorphColumn:  &MorphColumn{TypeColumn: typeCol, IDColumn: JoinColumn{Name: idCol, ReferencedColumn: idColumn}},
 		PivotColumns: []string{joinCol, typeCol, idCol},
+		OrderBy:      orderColumn,
 		Generated:    true,
 	}
 	return nil

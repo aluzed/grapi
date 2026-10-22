@@ -34,6 +34,9 @@ type Params struct {
 	Limit   *int
 	Offset  *int
 	Search  string
+	// Populate is Strapi's populate: true, a list of paths, or an object
+	// mapping relations to true or to their own params.
+	Populate any
 }
 
 // Row is a row read back, keyed by attribute name in column order.
@@ -42,6 +45,8 @@ type Row = *schema.OrderedMap[any]
 type join struct {
 	alias, table, column, rootAlias, rootColumn string
 	on                                          []entry
+	// orderBy is the link table's order column (populate keeps link order).
+	orderBy []orderTerm
 }
 
 type orderTerm struct {
@@ -53,19 +58,24 @@ type orderTerm struct {
 }
 
 type builder struct {
-	e       *Engine
-	model   *metadata.Model
-	alias   string
-	counter int
-	joins   []join
-	orderBy []orderTerm
-	where   filter
-	search  string
-	selects []string
-	limit   *int
-	offset  *int
-	first   bool
-	kind    string
+	e        *Engine
+	model    *metadata.Model
+	alias    string
+	counter  int
+	joins    []join
+	orderBy  []orderTerm
+	where    filter
+	search   string
+	selects  []string
+	limit    *int
+	offset   *int
+	first    bool
+	kind     string
+	groupBy  []string
+	populate map[string]any
+	popOrder []string
+	// filters are given to every populated relation, like Strapi's state.filters.
+	filters any
 }
 
 // ErrNotFound is returned for an unknown model.
@@ -334,19 +344,6 @@ func numberType(t string) bool {
 }
 
 func (b *builder) init(p Params) error {
-	if p.Select != nil {
-		b.selects = slices.Compact(append([]string(nil), p.Select...))
-	} else {
-		b.selects = []string{"*"}
-	}
-	b.limit, b.offset = p.Limit, p.Offset
-	b.search = p.Search
-	// Strapi processes the sort before the filters: the join aliases follow.
-	terms, err := b.processOrderBy(p.OrderBy, b.model, "")
-	if err != nil {
-		return err
-	}
-	b.orderBy = terms
 	var wheres []any
 	if p.Where != nil {
 		if _, ok := p.Where.(map[string]any); !ok {
@@ -354,6 +351,25 @@ func (b *builder) init(p Params) error {
 		}
 		wheres = append(wheres, p.Where)
 	}
+	return b.initWith(p, wheres)
+}
+
+// initWith is Strapi's init then processState: the sort, then the filters
+// (wheres, then p.Filters), then the populate.
+func (b *builder) initWith(p Params, wheres []any) error {
+	if p.Select != nil {
+		b.selects = slices.Compact(append([]string(nil), p.Select...))
+	} else {
+		b.selects = []string{"*"}
+	}
+	b.limit, b.offset = p.Limit, p.Offset
+	b.search = p.Search
+	b.filters = p.Filters
+	terms, err := b.processOrderBy(p.OrderBy, b.model, "")
+	if err != nil {
+		return err
+	}
+	b.orderBy = terms
 	if p.Filters != nil {
 		wheres = append(wheres, p.Filters)
 	}
@@ -363,6 +379,9 @@ func (b *builder) init(p Params) error {
 			return err
 		}
 		b.where = f
+	}
+	if err := b.processPopulate(p.Populate); err != nil {
+		return err
 	}
 	b.ensurePaginationOrderStability()
 	return nil
@@ -407,7 +426,27 @@ func (b *builder) ensurePaginationOrderStability() {
 	b.orderBy = append(b.orderBy, orderTerm{column: id, order: "asc"})
 }
 
-func (b *builder) distinct() bool { return len(b.joins) > 0 }
+func (b *builder) distinct() bool { return len(b.joins) > 0 && len(b.groupBy) == 0 }
+
+// rawSelect marks a select item written as SQL.
+const rawSelect = "\x00raw:"
+
+func (b *builder) selectColumn(s string) string {
+	if strings.HasPrefix(s, rawSelect) || strings.Contains(s, " as ") {
+		return s
+	}
+	return b.aliasColumn(columnName(b.model, s), "")
+}
+
+func renderSelect(d dialect, c string) string {
+	if raw, ok := strings.CutPrefix(c, rawSelect); ok {
+		return raw
+	}
+	if col, alias, ok := strings.Cut(c, " as "); ok {
+		return d.QuoteRef(col) + " as " + d.Quote(alias)
+	}
+	return d.QuoteRef(c)
+}
 
 // sqlWriter collects SQL with "?" placeholders and their arguments.
 type sqlWriter struct {
@@ -516,6 +555,11 @@ func (b *builder) selectSQL() (string, []any, error) {
 	d := w.d
 	var cols []string
 	if b.distinct() {
+		for _, j := range b.joins {
+			for _, t := range j.orderBy {
+				cols = append(cols, t.column)
+			}
+		}
 		for _, t := range b.orderBy {
 			if !t.status {
 				cols = append(cols, t.column)
@@ -523,12 +567,12 @@ func (b *builder) selectSQL() (string, []any, error) {
 		}
 	}
 	for _, s := range b.selects {
-		cols = append(cols, b.aliasColumn(columnName(b.model, s), ""))
+		cols = append(cols, b.selectColumn(s))
 	}
 	cols = dedupe(cols)
 	rendered := make([]string, len(cols))
 	for i, c := range cols {
-		rendered[i] = d.QuoteRef(c)
+		rendered[i] = renderSelect(d, c)
 	}
 	if b.distinct() {
 		for _, t := range b.orderBy {
@@ -547,14 +591,27 @@ func (b *builder) selectSQL() (string, []any, error) {
 	if err := b.renderWhere(w); err != nil {
 		return "", nil, err
 	}
+	if len(b.groupBy) > 0 {
+		g := make([]string, len(b.groupBy))
+		for i, c := range b.groupBy {
+			g[i] = d.QuoteRef(c)
+		}
+		w.sql.WriteString(" group by " + strings.Join(g, ", "))
+	}
 	if b.deepSort() {
 		return b.wrapDeepSort(w, cols)
 	}
-	if len(b.orderBy) > 0 {
-		terms := make([]string, len(b.orderBy))
-		for i, t := range b.orderBy {
-			terms[i] = b.orderSQL(t, d, b.alias)
+	var terms []string
+	// Join orders (link tables' order columns) come before the root sort.
+	for _, j := range b.joins {
+		for _, t := range j.orderBy {
+			terms = append(terms, b.orderSQL(t, d, b.alias))
 		}
+	}
+	for _, t := range b.orderBy {
+		terms = append(terms, b.orderSQL(t, d, b.alias))
+	}
+	if len(terms) > 0 {
 		w.sql.WriteString(" order by " + strings.Join(terms, ", "))
 	}
 	b.renderPagination(w)
@@ -738,6 +795,20 @@ func (e *Engine) placeholders(s string) string {
 }
 
 func (b *builder) run(ctx context.Context) ([]Row, error) {
+	raws, err := b.runRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Row, len(raws))
+	for i, r := range raws {
+		out[i] = fromRow(b.model, r)
+	}
+	return out, nil
+}
+
+// runRaw returns rows keyed by column, populated relations included under
+// their attribute name: Strapi's execute with mapResults false.
+func (b *builder) runRaw(ctx context.Context) ([]Row, error) {
 	query, args, err := b.selectSQL()
 	if err != nil {
 		return nil, err
@@ -746,11 +817,20 @@ func (b *builder) run(ctx context.Context) ([]Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = rows.Close() }()
-	return scanRows(rows, b.model)
+	raws, err := scanRaw(rows)
+	_ = rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	if len(b.populate) > 0 && len(raws) > 0 {
+		if err := b.applyPopulate(ctx, raws); err != nil {
+			return nil, err
+		}
+	}
+	return raws, nil
 }
 
-func scanRows(rows *sql.Rows, m *metadata.Model) ([]Row, error) {
+func scanRaw(rows *sql.Rows) ([]Row, error) {
 	cols, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -765,30 +845,42 @@ func scanRows(rows *sql.Rows, m *metadata.Model) ([]Row, error) {
 		if err := rows.Scan(ptrs...); err != nil {
 			return nil, err
 		}
-		out = append(out, fromRow(m, cols, vals))
+		r := &schema.OrderedMap[any]{}
+		for i, c := range cols {
+			v := vals[i]
+			if b, isBytes := v.([]byte); isBytes {
+				v = string(b)
+			}
+			r.Set(c, normalizeInt(v))
+		}
+		out = append(out, r)
 	}
 	return out, rows.Err()
 }
 
 // fromRow keeps the columns that map to an attribute, converted like
-// Strapi's fromRow: scalars through their field, relation columns as is.
-func fromRow(m *metadata.Model, cols []string, vals []any) Row {
+// Strapi's fromRow: scalars through their field, relation values (join
+// columns or populated relations) as they are.
+func fromRow(m *metadata.Model, raw Row) Row {
+	if raw == nil {
+		return nil
+	}
 	row := &schema.OrderedMap[any]{}
-	for i, col := range cols {
+	for col, v := range raw.All() {
 		name, ok := m.ColumnToAttribute[col]
 		if !ok {
 			continue
 		}
 		attr, _ := m.Attributes.Get(name)
-		v := vals[i]
-		if b, isBytes := v.([]byte); isBytes {
-			v = string(b)
-		}
 		switch {
 		case scalarType(attr.Type):
-			row.Set(name, fromDB(attr.Type, v))
+			if v == nil {
+				row.Set(name, nil)
+			} else {
+				row.Set(name, fromDB(attr.Type, v))
+			}
 		case attr.Type == "relation":
-			row.Set(name, normalizeInt(v))
+			row.Set(name, v)
 		}
 	}
 	return row

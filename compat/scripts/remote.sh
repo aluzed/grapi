@@ -3,6 +3,8 @@
 # is removed on exit, whatever happens.
 set -eu
 fixture=$1
+# "relations--write" runs querycases/relations--write.yaml on fixtures/relations.
+fx=${fixture%%--*}
 mode=$2
 db=$3
 here=$(cd "$(dirname "$0")/.." && pwd)
@@ -48,7 +50,7 @@ start_strapi() {
   fi
   docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name" \
     -p 127.0.0.1::1337 "$@" \
-    -v "$here/fixtures/$fixture:/fixture:ro" -v "$work/$name:/data" "$image" >/dev/null
+    -v "$here/fixtures/$fx:/fixture:ro" -v "$work/$name:/data" "$image" >/dev/null
 }
 
 start_ref() {
@@ -60,10 +62,10 @@ start_ref() {
 grapi_sync() {
   if [ "$db" = postgres ]; then
     pg_port=$(docker port "$run_id-$1-pg" 5432/tcp | head -1 | sed 's/.*://')
-    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fixture" -client postgres \
+    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fx" -client postgres \
       -db "postgres://strapi:strapi@127.0.0.1:$pg_port/strapi?sslmode=disable"
   else
-    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fixture" -client sqlite -db "$work/$1/data.db"
+    "$here/bin/compat" schema-sync -fixture "$here/fixtures/$fx" -client sqlite -db "$work/$1/data.db"
   fi
 }
 
@@ -136,12 +138,24 @@ query)
   fi
   cp "$cases" "$work/a/cases.json"
   docker run --rm --label "grapi-compat=$run_id" --network "$run_id" "$@" \
-    -v "$here/fixtures/$fixture:/fixture:ro" -v "$work/a:/data" -v "$here/tools:/tools:ro" \
+    -v "$here/fixtures/$fx:/fixture:ro" -v "$work/a:/data" -v "$here/tools:/tools:ro" \
     --entrypoint sh "$image" -c 'rm -rf /app/src && cp -r /fixture/src /app/src && cp /app/bootstrap/index.js /app/src/index.js && node /app/bootstrap/scaffold.js && node /tools/run-queries.js /data/cases.json /data/strapi.json'
-  "$here/bin/compat" query -fixture "$here/fixtures/$fixture" -client "$db" -db "$grapi_db" -cases "$cases" -out "$work/grapi.json"
+  set --
+  if grep -q '"isolated": true' "$cases"; then
+    # grapi writes: it gets a database of its own and plays the seed itself.
+    start_db b
+    grapi_sync b >/dev/null
+    grapi_db="$work/b/data.db"
+    if [ "$db" = postgres ]; then
+      grapi_db="postgres://strapi:strapi@127.0.0.1:$(docker port "$run_id-b-pg" 5432/tcp | head -1 | sed 's/.*://')/strapi?sslmode=disable"
+    fi
+    set -- -seed
+    volatile=-volatile
+  fi
+  "$here/bin/compat" query -fixture "$here/fixtures/$fx" -client "$db" -db "$grapi_db" -cases "$cases" -out "$work/grapi.json" "$@"
   mkdir -p "$here/report"
   report="$here/report/$(date +%Y-%m-%d)-$fixture-query-$db.md"
-  "$here/bin/compat" query-diff -a "$work/a/strapi.json" -b "$work/grapi.json" -report "$report" \
+  "$here/bin/compat" query-diff ${volatile:-} -a "$work/a/strapi.json" -b "$work/grapi.json" -report "$report" \
     -title "Query compat $fixture ($db, Strapi $STRAPI_VERSION)"
   exit $?
   ;;

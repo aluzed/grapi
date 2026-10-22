@@ -1,0 +1,76 @@
+fixture: relations
+isolated: true
+seed:
+  - { uid: api::profile.profile, data: { bio: "p1" } }
+  - { uid: api::profile.profile, data: { bio: "p2" } }
+  - { uid: api::writer.writer, data: { name: "w1", profile: 1 } }
+  - { uid: api::writer.writer, data: { name: "w2" } }
+  - { uid: api::writer.writer, data: { name: "w3" } }
+  - { uid: api::category.category, data: { name: "c1" } }
+  - { uid: api::category.category, data: { name: "c2" } }
+  - { uid: api::tag.tag, data: { name: "t1" } }
+  - { uid: api::tag.tag, data: { name: "t2" } }
+  - { uid: api::tag.tag, data: { name: "t3" } }
+  - { uid: api::tag.tag, data: { name: "t4" } }
+  - { uid: api::tag.tag, data: { name: "t5" } }
+  - { uid: api::tag.tag, data: { name: "t6" } }
+  - { uid: api::tag.tag, data: { name: "t7" } }
+  - { uid: api::tag.tag, data: { name: "t8" } }
+  - { uid: api::tag.tag, data: { name: "t9" } }
+  - { uid: api::tag.tag, data: { name: "t10" } }
+  - { uid: api::post.post, data: { title: "seed1", rank: 1, writer: 1, tags: [1] } }
+  - { uid: api::post.post, data: { title: "seed2", writer: 1, tags: [1, 2] } }
+cases:
+  - { name: create-a, uid: api::post.post, op: create, params: { data: { title: "A", rank: 5, writer: 1, category: 1, tags: [1, 2, 3] } } }
+  - { name: create-b-connect, uid: api::post.post, op: create, params: { data: { title: "B", tags: { connect: [{ id: 4 }, { id: 5, position: { start: true } }] } } } }
+  - { name: tags-after-create, uid: posts_tags_lnk, op: table }
+  - { name: writer-after-create, uid: posts_writer_lnk, op: table }
+  - { name: connect-positions, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { tags: { connect: [{ id: 6, position: { before: 2 } }, { id: 7, position: { after: 6 } }, { id: 8, position: { end: true } }, { id: 9, position: { start: true } }] } } } }
+  - { name: tags-after-positions, uid: posts_tags_lnk, op: table }
+  - { name: move-existing, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { tags: { connect: [{ id: 1, position: { after: 8 } }] } } } }
+  - { name: tags-after-move, uid: posts_tags_lnk, op: table }
+  - { name: disconnect-anchor, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { tags: { disconnect: [2], connect: [{ id: 10, position: { after: 2 } }] } } } }
+  - { name: tags-after-anchor, uid: posts_tags_lnk, op: table }
+  - { name: set-tags, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { tags: [3, 1] } } }
+  - { name: tags-after-set, uid: posts_tags_lnk, op: table }
+  - { name: error-cycle, exactError: true, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { tags: { connect: [{ id: 6, position: { before: 7 } }, { id: 7, position: { before: 6 } }] } } } }
+  - { name: error-duplicate, exactError: true, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { tags: { connect: [{ id: 6 }, { id: 6, position: { start: true } }] } } } }
+  - { name: error-missing-anchor-strict, exactError: true, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { tags: { connect: [{ id: 6, position: { before: 99 } }] } } } }
+  - { name: missing-anchor-non-strict, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { tags: { options: { strict: false }, connect: [{ id: 6, position: { before: 99 } }] } } } }
+  - { name: tags-after-errors, uid: posts_tags_lnk, op: table }
+  - { name: writer-set, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { writer: 2 } } }
+  - { name: writer-connect, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { writer: { connect: [2] } } } }
+  - { name: writer-links, uid: posts_writer_lnk, op: table }
+  - { name: writer-inverse-set, uid: api::writer.writer, op: update, params: { where: { name: "w3" }, data: { posts: [3, 4] } } }
+  - { name: writer-links-after-inverse, uid: posts_writer_lnk, op: table }
+  - { name: category-null, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { category: null } } }
+  - { name: category-inverse-connect, uid: api::category.category, op: update, params: { where: { name: "c2" }, data: { posts: { connect: [1, 3] } } } }
+  - { name: category-links, uid: posts_category_lnk, op: table }
+  - { name: featured-a, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { featuredTag: 5 } } }
+  - { name: featured-b-same, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { featuredTag: 5 } } }
+  - { name: featured-links, uid: posts_featured_tag_lnk, op: table }
+  - { name: profile-steal, uid: api::writer.writer, op: update, params: { where: { name: "w2" }, data: { profile: 1 } } }
+  - { name: profile-links, uid: writers_profile_lnk, op: table }
+  - { name: parent-set, uid: api::post.post, op: update, params: { where: { title: "B" }, data: { parent: 3 } } }
+  - { name: children-connect, uid: api::post.post, op: update, params: { where: { title: "seed1" }, data: { children: { connect: [3] } } } }
+  - { name: parent-links, uid: posts_parent_lnk, op: table }
+  - { name: related-set, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { related: [4, 1] } } }
+  - { name: related-links, uid: posts_related_lnk, op: table }
+  - { name: comment-morph-to-one, uid: api::comment.comment, op: create, params: { data: { body: "hi", subject: { id: 1, __type: "api::writer.writer" } } } }
+  - { name: comment-two, uid: api::comment.comment, op: create, params: { data: { body: "yo" } } }
+  - { name: pinned-morph-one, uid: api::writer.writer, op: update, params: { where: { name: "w2" }, data: { pinnedComment: 2 } } }
+  - { name: comments-table, uid: comments, op: table }
+  - { name: mentions-set, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { mentions: [{ id: 1, __type: "api::tag.tag" }, { id: 2, __type: "api::writer.writer" }] } } }
+  - { name: mentions-connect, uid: api::post.post, op: update, params: { where: { title: "A" }, data: { mentions: { connect: [{ id: 3, __type: "api::tag.tag", position: { before: 1, __type: "api::tag.tag" } }] } } } }
+  - { name: mentioned-in-set, uid: api::tag.tag, op: update, params: { where: { name: "t4" }, data: { mentionedIn: [4] } } }
+  - { name: mentions-table, uid: posts_mentions_mph, op: table }
+  - { name: delete-b, uid: api::post.post, op: delete, params: { where: { title: "B" } } }
+  - { name: tags-after-delete, uid: posts_tags_lnk, op: table }
+  - { name: writer-after-delete, uid: posts_writer_lnk, op: table }
+  - { name: mentions-after-delete, uid: posts_mentions_mph, op: table }
+  - { name: create-many, uid: api::tag.tag, op: createMany, params: { data: [{ name: "tmp1" }, { name: "tmp2" }] } }
+  - { name: update-many, uid: api::post.post, op: updateMany, params: { where: { rank: { $null: true } }, data: { rank: 0 } } }
+  - { name: delete-many, uid: api::tag.tag, op: deleteMany, params: { where: { name: { $startsWith: "tmp" } } } }
+  - { name: update-missing, uid: api::post.post, op: update, params: { where: { title: "nope" }, data: { rank: 1 } } }
+  - { name: posts-final, uid: api::post.post, params: { orderBy: [{ id: asc }] } }
+  - { name: tags-final, uid: api::tag.tag, params: { orderBy: [{ id: asc }] } }

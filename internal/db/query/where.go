@@ -110,7 +110,8 @@ func (b *builder) processObject(where map[string]any, model *metadata.Model, ali
 		if !ok {
 			// Strapi lets internal callers filter on raw columns; grapi only
 			// accepts the columns the table has.
-			if _, isColumn := model.ColumnToAttribute[key]; !isColumn {
+			// Keys qualified by an alias come from the engine itself (populate).
+			if !hasColumn(model, key) && !strings.Contains(key, ".") {
 				return nil, fmt.Errorf("undefined attribute %s on %s", key, model.UID)
 			}
 			v, err := b.processAttributeWhere("", value, "$eq")
@@ -179,6 +180,23 @@ func (b *builder) processRelationWhere(where any, target *metadata.Model, alias 
 		return filter{{idAlias, opMap{{op, nested}}}}, nil
 	}
 	return b.processObject(m, target, alias)
+}
+
+// hasColumn reports whether the model's table has the column: an attribute's
+// column, a join column or a morph column.
+func hasColumn(m *metadata.Model, col string) bool {
+	if _, ok := m.ColumnToAttribute[col]; ok {
+		return true
+	}
+	for _, a := range m.Attributes.All() {
+		if a.JoinColumn != nil && a.Owner && a.JoinColumn.Name == col {
+			return true
+		}
+		if a.MorphColumn != nil && a.Owner && (a.MorphColumn.IDColumn.Name == col || a.MorphColumn.TypeColumn == col) {
+			return true
+		}
+	}
+	return false
 }
 
 // processAttributeWhere converts the values of one column's filter.

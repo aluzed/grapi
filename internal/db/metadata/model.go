@@ -42,6 +42,10 @@ type Attribute struct {
 	Virtual      bool
 	// Searchable false excludes a column from the _q search.
 	Searchable *bool
+	// Default is the schema's default value; DefaultFunc names a computed
+	// one ("documentId": a new document id, "now": the current time).
+	Default     json.RawMessage
+	DefaultFunc string
 
 	Owner       bool
 	JoinColumn  *JoinColumn
@@ -64,6 +68,8 @@ type JoinTable struct {
 	MorphColumn            *MorphColumn
 	OrderColumnName        string
 	InverseOrderColumnName string
+	// OrderBy is the column the links are read in (ascending), when any.
+	OrderBy string
 	// On restricts the rows to one attribute (component link tables).
 	On           map[string]string
 	PivotColumns []string

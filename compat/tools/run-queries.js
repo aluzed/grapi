@@ -17,14 +17,23 @@ const { createStrapi, compileStrapi } = require(require.resolve('@strapi/strapi'
   const out = [];
   for (const c of cases) {
     try {
-      const q = app.db.query(c.uid);
+      const p = c.params || {};
       let result;
-      if (c.op === 'count') {
-        result = await q.count(c.params || {});
-      } else if (c.op === 'findOne') {
-        result = await q.findOne(c.params || {});
+      if (c.op === 'table') {
+        result = await app.db.connection(c.uid).select('*').orderBy('id');
       } else {
-        result = await q.findMany(c.params || {});
+        const q = app.db.query(c.uid);
+        switch (c.op) {
+          case 'count': result = await q.count(p); break;
+          case 'findOne': result = await q.findOne(p); break;
+          case 'create': result = await q.create(p); break;
+          case 'createMany': result = await q.createMany(p); break;
+          case 'update': result = await q.update(p); break;
+          case 'updateMany': result = await q.updateMany(p); break;
+          case 'delete': result = await q.delete(p); break;
+          case 'deleteMany': result = await q.deleteMany(p); break;
+          default: result = await q.findMany(p);
+        }
       }
       out.push({ name: c.name, result });
     } catch (e) {

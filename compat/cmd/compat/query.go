@@ -19,9 +19,12 @@ import (
 // queryCases is a compat/querycases file: rows inserted through Strapi's
 // db.query(uid).create, then queries run by both engines on that database.
 type queryCases struct {
-	Fixture string      `json:"fixture" yaml:"fixture"`
-	Seed    []seedRow   `json:"seed" yaml:"seed"`
-	Cases   []queryCase `json:"cases" yaml:"cases"`
+	Fixture string `json:"fixture" yaml:"fixture"`
+	// Isolated cases write: grapi plays the seed and the cases on a
+	// database of its own instead of reading Strapi's.
+	Isolated bool        `json:"isolated,omitempty" yaml:"isolated"`
+	Seed     []seedRow   `json:"seed" yaml:"seed"`
+	Cases    []queryCase `json:"cases" yaml:"cases"`
 }
 
 type seedRow struct {
@@ -34,12 +37,15 @@ type queryCase struct {
 	UID    string         `json:"uid" yaml:"uid"`
 	Op     string         `json:"op,omitempty" yaml:"op"`
 	Params map[string]any `json:"params,omitempty" yaml:"params"`
+	// ExactError requires the same error message as Strapi.
+	ExactError bool `json:"exactError,omitempty" yaml:"exactError"`
 }
 
 type queryResult struct {
-	Name   string `json:"name"`
-	Result any    `json:"result,omitempty"`
-	Error  string `json:"error,omitempty"`
+	Name       string `json:"name"`
+	ExactError bool   `json:"exactError,omitempty"`
+	Result     any    `json:"result,omitempty"`
+	Error      string `json:"error,omitempty"`
 }
 
 // queryCasesCmd converts a YAML cases file to the JSON the Node side reads.
@@ -78,6 +84,7 @@ func queryCmd(args []string) error {
 	dsn := fs.String("db", "", "SQLite file or Postgres connection string")
 	casesFile := fs.String("cases", "", "JSON cases (query-cases output)")
 	out := fs.String("out", "", "results file")
+	seed := fs.Bool("seed", false, "insert the seed rows first (isolated cases)")
 	_ = fs.Parse(args)
 	raw, err := os.ReadFile(*casesFile)
 	if err != nil {
@@ -102,10 +109,17 @@ func queryCmd(args []string) error {
 	}
 	defer func() { _ = d.Close() }()
 	e := &query.Engine{DB: d, MD: md}
+	if *seed {
+		for _, s := range c.Seed {
+			if _, err := e.Create(ctx, s.UID, s.Data, query.Params{}); err != nil {
+				return fmt.Errorf("seed %s: %w", s.UID, err)
+			}
+		}
+	}
 	results := make([]queryResult, 0, len(c.Cases))
 	for _, qc := range c.Cases {
 		p, err := toParams(qc.Params)
-		r := queryResult{Name: qc.Name}
+		r := queryResult{Name: qc.Name, ExactError: qc.ExactError}
 		if err == nil {
 			r.Result, err = runCase(ctx, e, qc, p)
 		}
@@ -123,7 +137,39 @@ func queryCmd(args []string) error {
 }
 
 func runCase(ctx context.Context, e *query.Engine, qc queryCase, p query.Params) (any, error) {
+	data, _ := qc.Params["data"].(map[string]any)
 	switch qc.Op {
+	case "table":
+		return e.Table(ctx, qc.UID)
+	case "create":
+		return e.Create(ctx, qc.UID, data, p)
+	case "update":
+		row, err := e.Update(ctx, qc.UID, qc.Params["where"], data, p)
+		if row == nil {
+			return nil, err
+		}
+		return row, err
+	case "delete":
+		row, err := e.Delete(ctx, qc.UID, qc.Params["where"], p)
+		if row == nil {
+			return nil, err
+		}
+		return row, err
+	case "createMany":
+		list, _ := qc.Params["data"].([]any)
+		var rows []query.Data
+		for _, d := range list {
+			m, _ := d.(map[string]any)
+			rows = append(rows, m)
+		}
+		n, ids, err := e.CreateMany(ctx, qc.UID, rows)
+		return map[string]any{"count": n, "ids": ids}, err
+	case "updateMany":
+		n, err := e.UpdateMany(ctx, qc.UID, p, data)
+		return map[string]any{"count": n}, err
+	case "deleteMany":
+		n, err := e.DeleteMany(ctx, qc.UID, p)
+		return map[string]any{"count": n}, err
 	case "count":
 		return e.Count(ctx, qc.UID, p)
 	case "findOne":
@@ -165,6 +211,9 @@ func toParams(m map[string]any) (query.Params, error) {
 			} else {
 				p.Offset = &n
 			}
+		case "populate":
+			p.Populate = v
+		case "data":
 		case "select":
 			list, _ := v.([]any)
 			for _, s := range list {
@@ -185,6 +234,7 @@ func queryDiffCmd(args []string) error {
 	b := fs.String("b", "", "grapi results")
 	report := fs.String("report", "", "Markdown report")
 	title := fs.String("title", "Query compat", "report title")
+	volatile := fs.Bool("volatile", false, "ignore document ids and timestamps (runs on two databases)")
 	_ = fs.Parse(args)
 	load := func(p string) (map[string]queryResult, []string, error) {
 		raw, err := os.ReadFile(p) //nolint:gosec // paths come from the bench command line
@@ -222,9 +272,13 @@ func queryDiffCmd(args []string) error {
 		same := false
 		switch {
 		case x.Error != "" || y.Error != "":
-			same = x.Error != "" && y.Error != ""
+			same = x.Error != "" && y.Error != "" && (!y.ExactError || x.Error == y.Error)
 		default:
-			same = reflect.DeepEqual(normalizeJSON(x.Result), normalizeJSON(y.Result))
+			xa, ya := normalizeJSON(x.Result), normalizeJSON(y.Result)
+			if *volatile {
+				xa, ya = maskVolatile(xa), maskVolatile(ya)
+			}
+			same = reflect.DeepEqual(xa, ya)
 		}
 		if same {
 			ok++
@@ -248,6 +302,33 @@ func queryDiffCmd(args []string) error {
 		return fmt.Errorf("%d cases differ", diff)
 	}
 	return nil
+}
+
+var volatileKeys = map[string]bool{
+	"documentId": true, "document_id": true, "createdAt": true, "updatedAt": true, "publishedAt": true,
+	"created_at": true, "updated_at": true, "published_at": true,
+}
+
+// maskVolatile hides the values two runs cannot share: generated document
+// ids and timestamps (only whether they are set is compared).
+func maskVolatile(v any) any {
+	switch x := v.(type) {
+	case map[string]any:
+		for k, val := range x {
+			if volatileKeys[k] {
+				if val != nil {
+					x[k] = "<set>"
+				}
+				continue
+			}
+			x[k] = maskVolatile(val)
+		}
+	case []any:
+		for i := range x {
+			x[i] = maskVolatile(x[i])
+		}
+	}
+	return v
 }
 
 func isEmptyResult(v any) bool {

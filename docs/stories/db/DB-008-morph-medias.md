@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # DB-008 : Relations polymorphes (morph) et champs média
@@ -31,11 +31,11 @@ Supporter `morphOne`, `morphMany`, `morphToOne` et `morphToMany`, ainsi que les 
 - Le modèle File et l'upload (`MEDIA-001`).
 
 ## Critères d'acceptation
-- [ ] Fixture `relations` : un scénario par type morph. Le contenu des tables `_mph` et des colonnes `_id` et `_type` est identique à Strapi.
-- [ ] Champ média simple et multiple : création, réordonnancement, vidage. Le banc donne des réponses identiques à Strapi, `populate` compris.
-- [ ] Un fichier rattaché à deux entrées de types différents est listé dans les deux.
-- [ ] Après suppression d'un content type, le repair supprime ses lignes morph orphelines.
-- [ ] Sur la copie de la base dev-freelance : les couvertures des posts (`cover`) se lisent à l'identique (4 536 uploads).
+- [x] Fixture `relations` : morphToOne (`comment.subject`), morphOne (`writer.pinnedComment`), morphToMany (`post.mentions`, `set` puis `connect` positionné) et morphMany (`tag.mentionedIn`). Le contenu de la table `_mph` et des colonnes `target_id` et `target_type` est identique à Strapi (`relations--write.yaml`).
+- [x] Champ média simple (`post.cover`) et multiple (`project.pictures`) : création, réordonnancement, `connect`, `disconnect`, vidage, suppression de l'entrée, et écriture depuis le fichier avec `__pivot`. Réponses (populate compris) et table `files_related_mph` identiques à Strapi (`devfreelance--media.yaml`, SQLite et Postgres).
+- [x] Un fichier rattaché à deux entrées de types différents est listé dans les deux (`file-in-two-types`).
+- [x] Après suppression d'un content type, le repair supprime ses lignes morph orphelines (`TestRemoveOrphanMorphTypes`).
+- [ ] Lecture des couvertures sur une copie de la base dev-freelance : reporté à `DB-011`, qui ouvre la copie de la prod.
 
 ## Notes techniques
 - La colonne `field` est indispensable : une même entrée peut avoir plusieurs champs média vers la même table `_mph`.

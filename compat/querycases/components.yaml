@@ -34,3 +34,7 @@ cases:
   - { name: links-by-author, uid: shared.link, params: { where: { author: { name: { $eqi: "ANA" } } } } }
   - { name: error-filter-dynamic-zone, uid: api::page.page, params: { where: { body: { id: 1 } } } }
   - { name: error-sort-dynamic-zone, uid: api::page.page, params: { orderBy: [{ body: asc }] } }
+  - { name: populate-components, uid: api::page.page, params: { populate: ["seo", "links", "layout"], orderBy: [{ id: asc }] } }
+  - { name: populate-components-deep, uid: api::page.page, params: { populate: { layout: { populate: { columns: { populate: { cell: { populate: ["authors"] } } } } }, links: { populate: ["author"] } }, orderBy: [{ id: asc }] } }
+  - { name: populate-components-count, uid: api::page.page, params: { populate: { links: { count: true } }, orderBy: [{ id: asc }] } }
+  - { name: populate-dz-empty, uid: api::page.page, params: { populate: ["body"], orderBy: [{ id: asc }] } }

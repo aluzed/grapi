@@ -62,3 +62,17 @@ cases:
   - { name: error-two-operators, uid: api::post.post, params: { where: { writer: { $eq: 1, $ne: 2 } } } }
   - { name: error-not-object-on-relation, uid: api::post.post, params: { where: { writer: { $not: { name: "Ana" } } } } }
   - { name: not-scalar-on-relation, uid: api::post.post, params: { where: { writer: { $not: 1 } }, orderBy: [{ id: asc }] } }
+  - { name: populate-true, uid: api::post.post, params: { populate: true, orderBy: [{ id: asc }] } }
+  - { name: populate-list-nested, uid: api::post.post, params: { populate: ["writer.profile", "tags", "category"], orderBy: [{ id: asc }] } }
+  - { name: populate-tags-sorted, uid: api::post.post, params: { populate: { tags: { orderBy: [{ name: desc }] } }, orderBy: [{ id: asc }] } }
+  - { name: populate-tags-filtered-limited, uid: api::post.post, params: { populate: { tags: { where: { name: { $ne: "rust" } }, limit: 1 } }, orderBy: [{ id: asc }] } }
+  - { name: populate-tags-count, uid: api::post.post, params: { populate: { tags: { count: true } }, orderBy: [{ id: asc }] } }
+  - { name: populate-children-count, uid: api::post.post, params: { populate: { children: { count: true }, writer: { count: true } }, orderBy: [{ id: asc }] } }
+  - { name: populate-inverse-many, uid: api::tag.tag, params: { populate: { posts: { select: ["title"] } }, orderBy: [{ id: asc }] } }
+  - { name: populate-inverse-one-to-many, uid: api::writer.writer, params: { populate: { posts: { populate: ["tags"] }, profile: true }, orderBy: [{ id: asc }] } }
+  - { name: populate-self, uid: api::post.post, params: { populate: ["parent", "children", "related"], orderBy: [{ id: asc }] } }
+  - { name: populate-ordering-desc, uid: api::post.post, params: { populate: { tags: { ordering: "desc" } }, orderBy: [{ id: asc }] } }
+  - { name: populate-with-select, uid: api::post.post, params: { select: ["title"], populate: ["writer"], orderBy: [{ id: asc }] } }
+  - { name: populate-morph-many-empty, uid: api::writer.writer, params: { populate: ["mentionedIn", "pinnedComment"], orderBy: [{ id: asc }] } }
+  - { name: findone-populate, uid: api::post.post, op: findOne, params: { where: { title: "Alpha" }, populate: { tags: true, writer: { populate: { profile: true } } } } }
+  - { name: populate-created-by, uid: api::post.post, params: { populate: ["createdBy"], limit: 2, orderBy: [{ id: asc }] } }

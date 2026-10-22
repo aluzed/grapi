@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # DB-006 : Relations : stockage, populate, connect/disconnect/set, positions, ordre fractionnaire
@@ -40,11 +40,17 @@ Lire, écrire et peupler toutes les relations non polymorphes, en reproduisant e
 - La résolution documentId vers id selon la locale et le status (`DOC-006`), et le recâblage à la publication (`DOC-002`).
 
 ## Critères d'acceptation
-- [ ] Pour chaque type de relation, sur la fixture `relations` : création, lecture des deux côtés, `set`, `connect` et `disconnect`, puis suppression. Le contenu des tables `_lnk`, colonnes d'ordre comprises, est identique à Strapi après le même scénario (comparaison SQL).
-- [ ] Banc : scénario de positions (`connect` avec `before`, `after`, `start` et `end` sur 10 éléments, puis relecture). L'ordre est identique à Strapi.
-- [ ] `connect` avec un cycle (`A before B`, `B before A`) renvoie une 400 avec le même message que Strapi.
-- [ ] Le populate de 3 niveaux sur 100 entrées s'exécute en au plus 3 requêtes par relation (compteur SQL).
-- [ ] `populate[tags][count]=true` renvoie `{count: n}` comme Strapi.
+- [x] Pour chaque type de relation, sur la fixture `relations` : création, lecture des deux côtés, `set`, `connect` et `disconnect`, puis suppression. Le contenu des tables `_lnk`, colonnes d'ordre comprises, est identique à Strapi après le même scénario (`compat/querycases/relations--write.yaml`, 53 étapes, SQLite et Postgres : `make bench-compat FIXTURE=relations--write MODE=query`).
+- [x] Banc : scénario de positions (`connect` avec `before`, `after`, `start` et `end`, déplacement d'une relation existante, ancre déconnectée dans le même payload). L'ordre et les valeurs d'ordre fractionnaires sont identiques à Strapi.
+- [x] `connect` avec un cycle, un doublon ou une ancre absente en mode strict : même erreur, même message que Strapi (`exactError`). Le mode non strict place la relation en fin de liste.
+- [x] Le populate de 3 niveaux sur 100 entrées s'exécute en une requête par relation et par niveau (`TestPopulateQueriesDoNotGrowWithEntries` : 5 requêtes).
+- [x] `populate: {tags: {count: true}}` renvoie `{count: n}` comme Strapi, pour toutes les cardinalités.
+
+## Réalisation
+- `internal/db/query` : `em.go` (entity manager : `processData`, `Create`, `CreateMany`, `Update`, `UpdateMany`, `Delete`, `DeleteMany`, relations), `em_morph.go`, `orderer.go` (`relations-orderer` et ses tests portés), `populate.go`.
+- Le populate s'exécute sur les lignes brutes, puis la conversion des champs a lieu une fois, comme chez Strapi : l'ordre des tables de liens passe avant le tri racine, et le DISTINCT inclut les colonnes d'ordre.
+- Une écriture et ses relations s'exécutent dans une seule transaction (Strapi en utilise deux et annule à la main en cas d'échec) : voir `docs/divergences.md`.
+- Banc : le mode `query` accepte des fichiers `isolated: true`, où grapi rejoue seed et scénario sur sa propre base ; documentId et horodatages sont alors masqués dans la comparaison.
 
 ## Notes techniques
 - Porter les tests de `relations-orderer` de Strapi en tests de table : c'est la spécification la plus fiable de l'ordre.

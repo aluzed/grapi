@@ -45,6 +45,9 @@ Démarrer grapi sur une base créée et utilisée par Strapi 5.59, sans aucune m
 - `core/database/src/schema/storage.ts`, `core/database/src/migrations/internal-migrations/`
 - `core/core/src/Strapi.ts` (séquence de démarrage de la base)
 
+## Repris d'autres tickets
+- `DB-008` : sur la copie de la base dev-freelance, les couvertures des posts (`cover`, populate) se lisent à l'identique entre Strapi et grapi.
+
 ## Dépendances
 - `DB-001` à `DB-010`.
 

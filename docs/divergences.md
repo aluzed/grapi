@@ -34,6 +34,10 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 - **`biginteger` au-delà de 2^53 sous SQLite** : Strapi relit la valeur via un nombre JavaScript et la tronque (`9007199254740993` revient en `9007199254740992`). grapi relit la valeur exacte stockée en base.
 - **Filtre sur une colonne brute** : Strapi accepte en interne un nom de colonne qui n'est pas un attribut. grapi n'accepte que les colonnes qui existent dans la table du modèle ; tout autre nom est refusé.
 
+## Base de données : écritures (`internal/db/query/em.go`)
+
+- **Transaction** : une écriture et ses relations sont dans une seule transaction. Strapi insère la ligne, puis rattache les relations dans une seconde transaction et supprime la ligne à la main si cela échoue.
+
 ## API et serveur
 
 - Aucun en-tête `X-Powered-By`, et `/_health` n'envoie pas l'en-tête `strapi` : le serveur ne se signale pas (`API-008`, `API-001`).
