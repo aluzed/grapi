@@ -103,3 +103,50 @@ cases:
     path: /api/categories/{{gc2}}
     query: "locale=de"
     token: full
+  - name: gql-relations-inherit-publication-filter
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ modified: categories(status: DRAFT, publicationFilter: MODIFIED, filters: { name: { startsWith: \"GQL\" } }) { name articles { title } } never: categories(status: DRAFT, hasPublishedVersion: false) { name articles { title } } published: categories(publicationFilter: HAS_PUBLISHED_VERSION, filters: { name: { startsWith: \"GQL\" } }) { name articles { title } } }" }
+  - name: gql-writer-articles-unmodified
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ writers(status: DRAFT, publicationFilter: UNMODIFIED, sort: \"name\") { name articles(sort: \"title\") { title } } }" }
+  - name: gql-seed-mod-category
+    method: POST
+    path: /api/categories
+    query: "status=published"
+    token: full
+    save: { mc: data.documentId }
+    body: { data: { name: "GQL Mod", color: "black" } }
+  - name: gql-seed-mod-article-1
+    method: POST
+    path: /api/articles
+    query: "status=published"
+    token: full
+    save: { m1: data.documentId }
+    body: { data: { title: "GQL M1", category: "{{mc}}" } }
+  - name: gql-seed-mod-article-2
+    method: POST
+    path: /api/articles
+    query: "status=published"
+    token: full
+    body: { data: { title: "GQL M2", category: "{{mc}}" } }
+  - name: gql-seed-modify-article-1
+    method: PUT
+    path: /api/articles/{{m1}}
+    query: "status=draft"
+    token: full
+    body: { data: { title: "GQL M1 edited" } }
+  - name: gql-seed-modify-category
+    method: PUT
+    path: /api/categories/{{mc}}
+    query: "status=draft"
+    token: full
+    body: { data: { color: "white" } }
+  - name: gql-modified-relations-inherit
+    method: POST
+    path: /graphql
+    token: full
+    body: { query: "{ categories(status: DRAFT, publicationFilter: MODIFIED, filters: { name: { eq: \"GQL Mod\" } }) { name color articles(sort: \"title\") { title } } all: categories(status: DRAFT, filters: { name: { eq: \"GQL Mod\" } }) { articles(sort: \"title\") { title } } }" }

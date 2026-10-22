@@ -161,6 +161,17 @@ func (s *Service) publicationCondition(m *metadata.Model, mode, status string) (
 	return map[string]any{"id": map[string]any{"$in": q}}, nil
 }
 
+// PublicationWhere is the where condition of a publicationFilter mode on
+// uid's rows of status ("draft" or "published"); nil without draft and
+// publish.
+func (s *Service) PublicationWhere(uid, mode, status string) (any, error) {
+	m, ok := s.E.MD.Model(uid)
+	if !ok {
+		return nil, nil
+	}
+	return s.publicationCondition(m, mode, status)
+}
+
 // withPublicationFilter wraps the query filters with the publication
 // cohort of every queried model, populated ones included.
 func (s *Service) withPublicationFilter(q *query.Params, p Params) error {

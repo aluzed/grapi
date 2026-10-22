@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "all": [
+        {
+          "articles": [
+            {
+              "title": "GQL M1 edited"
+            },
+            {
+              "title": "GQL M2"
+            }
+          ]
+        }
+      ],
+      "categories": [
+        {
+          "articles": [
+            {
+              "title": "GQL M1 edited"
+            }
+          ],
+          "color": "white",
+          "name": "GQL Mod"
+        }
+      ]
+    }
+  }
+}

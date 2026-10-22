@@ -665,6 +665,11 @@ func (g *gqlResolver) association(ctx context.Context, fc *graphql.FieldContext)
 			status = "published"
 		}
 	}
+	if ct, ok := g.s.set.ContentType(target); ok && ct.DraftAndPublish() {
+		if err := g.inheritPublicationFilter(fc, string(target), status, params); err != nil {
+			return nil, err
+		}
+	}
 	if ct, ok := g.s.set.ContentType(target); ok && ct.DraftAndPublish() && status != "" {
 		cond := map[string]any{"$notNull": true}
 		if status != "published" {
@@ -691,6 +696,46 @@ func (g *gqlResolver) association(ctx context.Context, fc *graphql.FieldContext)
 		return nonNilList(v), nil
 	}
 	return v, nil
+}
+
+// inheritPublicationFilter is the association resolver's: the
+// publicationFilter (or hasPublishedVersion) of a built-in root query
+// applies to its relations.
+func (g *gqlResolver) inheritPublicationFilter(fc *graphql.FieldContext, target, status string, params map[string]any) error {
+	if !isRootQuery(fc.Root) {
+		return nil
+	}
+	mode, _ := fc.RootArgs["publicationFilter"].(string)
+	if mode == "" {
+		if v, ok := fc.RootArgs["hasPublishedVersion"].(bool); ok {
+			mode = map[bool]string{true: "has-published-version-document", false: "never-published-document"}[v]
+		}
+	}
+	if mode == "" {
+		return nil
+	}
+	if status != "published" {
+		status = "draft"
+	}
+	cond, err := g.s.docs.PublicationWhere(target, mode, status)
+	if err != nil || cond == nil {
+		return err
+	}
+	if w, ok := params["where"].(map[string]any); ok {
+		merged := map[string]any{}
+		for k, v := range cond.(map[string]any) {
+			merged[k] = v
+		}
+		for k, v := range w {
+			merged[k] = v
+		}
+		params["where"] = merged
+	} else if params["where"] != nil {
+		params["where"] = map[string]any{"$and": []any{cond, params["where"]}}
+	} else {
+		params["where"] = cond
+	}
+	return nil
 }
 
 func nonNilList(v any) any {
