@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc22",
+      "id": "#id30",
+      "publishedAt": "\u003cts\u003e",
+      "rank": null,
+      "tags": [
+        {
+          "documentId": "#doc20",
+          "id": "#id12",
+          "name": "pos-c"
+        }
+      ],
+      "title": "Positions",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "The relation with id 8 is already connected. You cannot connect the same relation twice.",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

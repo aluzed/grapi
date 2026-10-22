@@ -1,0 +1,95 @@
+fixture: relations
+# Duplicates, cycles and mixed shapes in relation payloads, on documents of
+# its own (runs after relations.yaml on the same database).
+cases:
+  - name: seed-tag-pos-a
+    method: POST
+    path: /api/tags
+    token: full
+    save: { q0: data.documentId, q0id: data.id }
+    body: { data: { name: "pos-a" } }
+  - name: seed-tag-pos-b
+    method: POST
+    path: /api/tags
+    token: full
+    save: { q1: data.documentId, q1id: data.id }
+    body: { data: { name: "pos-b" } }
+  - name: seed-tag-pos-c
+    method: POST
+    path: /api/tags
+    token: full
+    save: { q2: data.documentId, q2id: data.id }
+    body: { data: { name: "pos-c" } }
+  - name: seed-tag-pos-d
+    method: POST
+    path: /api/tags
+    token: full
+    save: { q3: data.documentId, q3id: data.id }
+    body: { data: { name: "pos-d" } }
+  - name: seed-post
+    method: POST
+    path: /api/posts
+    token: full
+    save: { pp: data.documentId }
+    body: { data: { title: "Positions", tags: ["{{q0}}", "{{q1}}"] } }
+
+  - name: connect-duplicate
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: ["{{q2}}", "{{q2}}"] } } }
+  - name: connect-duplicate-positions
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{q3}}", position: { start: true } }, { documentId: "{{q3}}", position: { end: true } }] } } }
+  - name: connect-cycle
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{q2}}", position: { before: "{{q3}}" } }, { documentId: "{{q3}}", position: { before: "{{q2}}" } }] } } }
+  - name: connect-after-itself
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{q1}}", position: { after: "{{q1}}" } }] } } }
+  - name: connect-chain
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ documentId: "{{q3}}", position: { after: "{{q2}}" } }, { documentId: "{{q2}}", position: { start: true } }] } } }
+  - name: connect-and-disconnect-same
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: ["{{q0}}"], disconnect: ["{{q0}}"] } } }
+  - name: set-duplicate
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { set: ["{{q1}}", "{{q1}}", "{{q0}}"] } } }
+  - name: shorthand-duplicate
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: ["{{q2}}", "{{q2}}"] } }
+  - name: connect-by-id
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { connect: [{ id: "{{q3id}}" }] } } }
+  - name: set-mixed-id-documentid
+    method: PUT
+    path: /api/posts/{{pp}}
+    token: full
+    query: "populate[tags][fields][0]=name"
+    body: { data: { tags: { set: [{ id: "{{q0id}}" }, "{{q1}}", { documentId: "{{q2}}" }] } } }

@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc22",
+      "id": "#id27",
+      "publishedAt": "\u003cts\u003e",
+      "rank": null,
+      "tags": [
+        {
+          "documentId": "#doc20",
+          "id": "#id12",
+          "name": "pos-c"
+        },
+        {
+          "documentId": "#doc18",
+          "id": "#id21",
+          "name": "pos-a"
+        },
+        {
+          "documentId": "#doc19",
+          "id": "#id5",
+          "name": "pos-b"
+        },
+        {
+          "documentId": "#doc21",
+          "id": "#id6",
+          "name": "pos-d"
+        }
+      ],
+      "title": "Positions",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

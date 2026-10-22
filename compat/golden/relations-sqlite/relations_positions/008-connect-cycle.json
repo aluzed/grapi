@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "A circular reference was found in the connect array. One relation is trying to connect before/after another one that is trying to connect before/after it",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}
