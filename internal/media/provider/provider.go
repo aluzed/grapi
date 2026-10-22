@@ -28,6 +28,12 @@ type Provider interface {
 	SignedURL(ctx context.Context, f *File) (string, error)
 }
 
+// SizeChecker is the optional checkFileSize of a provider: it replaces
+// the sizeLimit check of the upload plugin.
+type SizeChecker interface {
+	CheckFileSize(f *File, sizeLimit int64) error
+}
+
 // Local writes to <public>/uploads, served at /uploads.
 type Local struct {
 	PublicDir string

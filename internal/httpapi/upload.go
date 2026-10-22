@@ -520,8 +520,14 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			file["size"] = media.BytesToKbytes(res.Size)
 		}
 	}
-	if s.cfg.Upload.SizeLimit > 0 {
-		if kb, _ := file["size"].(float64); kb*1000 > float64(s.cfg.Upload.SizeLimit) {
+	// A provider's checkFileSize replaces the sizeLimit check.
+	kb, _ := file["size"].(float64)
+	if p, _ := s.provider(); p != nil {
+		if sc, ok := p.(provider.SizeChecker); ok {
+			if err := sc.CheckFileSize(&provider.File{Hash: hash, Ext: ext, Mime: mimeType, Size: int64(kb * 1000)}, s.cfg.Upload.SizeLimit); err != nil {
+				return nil, err
+			}
+		} else if s.cfg.Upload.SizeLimit > 0 && kb*1000 > float64(s.cfg.Upload.SizeLimit) {
 			return nil, newError(http.StatusRequestEntityTooLarge, "PayloadTooLargeError", fmt.Sprintf("%s exceeds size limit of %s.", usedName, bytesToHumanReadable(s.cfg.Upload.SizeLimit)))
 		}
 	}
