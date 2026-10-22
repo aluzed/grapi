@@ -17,9 +17,17 @@ Measured on the homelab with `make bench-compat FIXTURE=devfreelance MODE=perf D
 
 About 17 times the throughput, a tenth of the latency, a tenth to a twentieth of the memory.
 
+### Copy of the dev-freelance production database
+
+Same method on a copy of the production database (718 posts, 864 files; homelab, deleted after the run), with the 32 variable free GET cases of `compat/corpus/devfreelance-prod.yaml`; Strapi is the reference image with dev-freelance's schemas (default controllers on both sides).
+
+| Engine | req/s | p50 ms | p95 ms | p99 ms | errors | memory idle | memory peak | memory 10 s after |
+|---|---|---|---|---|---|---|---|---|
+| Strapi 5.59 (Node) | 242 | 138.4 | 159.5 | 172.4 | 0 | 416 MiB | 744 MiB | 193 MiB |
+| grapi | 5211 | 5.1 | 15.3 | 19.6 | 0 | 28 MiB | 47 MiB | 45 MiB |
+
 ## Limits
 
 - Strapi runs in a container and grapi natively, on the same machine: no CPU limit on either.
 - Strapi keeps its default middlewares (request logger included); grapi logs at `info`.
 - Strapi under Bun is not measured here (see `docs/stories/migration/MIG-002-recette-dev-freelance.md`).
-- Small data set (the corpus seed): the gap on the production copy, with 718 posts, is still to measure.

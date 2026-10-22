@@ -48,7 +48,8 @@ Démontrer que le front Go de dev-freelance fonctionne à l'identique contre gra
 - 2026-10-22 : sur une copie de la base de prod (homelab, supprimée ensuite), les 41 appels GET du front (`compat/corpus/devfreelance-prod.yaml`, slugs tirés des données) donnent 44/44 réponses identiques entre Strapi 5.59 (image de référence du banc avec les schémas réels de dev-freelance) et grapi. Les contrôleurs custom de dev-freelance (JS) ne sont pas dans la comparaison : ils attendent `EXT-003`.
 - Banc `devfreelance` en mode grapi : 116/116 sous SQLite et Postgres.
 - Rapport de perf (2026-10-22, `docs/perf.md`, mode `perf` du banc) : sur les appels du front, grapi tient environ 5 570 req/s contre 326 pour Strapi 5.59 sous Node, p99 13 ms contre 125 ms, 32 à 43 Mio de mémoire contre 260 à 780 Mio.
-- Reste : le front `apps/web` contre les deux moteurs, la mesure sur la copie de prod et sous Bun, les 21 cas de caractérisation.
+- Sur la copie de prod (même jour, supprimée ensuite) : grapi 5 211 req/s, p99 19,6 ms, 28 à 47 Mio ; Strapi 242 req/s, p99 172 ms, 416 à 744 Mio.
+- Reste : le front `apps/web` contre les deux moteurs, la mesure sous Bun, les 21 cas de caractérisation.
 
 ## Notes techniques
 - La génération IA appelle un vrai LLM : utiliser un faux endpoint en test (même forme de réponse), et ne faire qu'un seul essai réel, comme pour la vérification des middlewares de la 5.59.
