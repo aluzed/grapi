@@ -43,7 +43,8 @@ Les mêmes mécanismes de personnalisation et de sécurité, exposés en Go (mod
 - Limites : `depthLimit` (message de graphql-depth-limit, 400 `GRAPHQL_VALIDATION_FAILED`), `defaultLimit`, `maxLimit`, avertissement au démarrage avec le message de Strapi quand elles ne sont pas bornées.
 - Extensions users-permissions (`me`, `login`, `register`, `forgotPassword`, `resetPassword`, `changePassword`, CRUD users) et upload (`updateUploadFile`, `deleteUploadFile`) branchées sur les contrôleurs REST, rate limit compris (le `createRateLimitRunner` du plugin partage le compteur des routes REST).
 - Test d'intégration `TestGraphQLExtensions` (extension SDL, scope, `auth: false`, policy, `depthLimit`, shadow CRUD vu par introspection).
-- Reste : middlewares de résolveur, `shadowCRUD: false` global, `emailConfirmation` et CRUD des rôles, limite de complexité, cas banc `login` et `me` (le rate limit du corpus devfreelance les épuise : corpus dédié à prévoir).
+- Banc `graphql` étendu (40 cas, SQLite et Postgres) : `register` (dont compte déjà pris), `login` (dont mauvais mot de passe), `me` avec JWT, `changePassword` invalide, `forgotPassword`, tous identiques à Strapi.
+- Reste : middlewares de résolveur, `shadowCRUD: false` global, `emailConfirmation` et CRUD des rôles, limite de complexité.
 
 ## Notes techniques
 - Pour la fusion du SDL : parser avec `gqlparser`, puis convertir les définitions en objets `graphql-go`. C'est à écrire, il n'y a pas de pont existant mûr.

@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "register": {
+        "jwt": "\u003csecret\u003e",
+        "user": {
+          "blocked": false,
+          "confirmed": true,
+          "email": "gql@example.com",
+          "role": null,
+          "username": "gqluser"
+        }
+      }
+    }
+  }
+}

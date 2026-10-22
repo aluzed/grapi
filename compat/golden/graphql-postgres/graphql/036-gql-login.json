@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "login": {
+        "jwt": "\u003csecret\u003e",
+        "user": {
+          "username": "gqluser"
+        }
+      }
+    }
+  }
+}

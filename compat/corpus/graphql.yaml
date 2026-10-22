@@ -156,3 +156,36 @@ cases:
     method: POST
     path: /graphql
     body: { query: "{ tags(sort: \"name\") { name weight } }" }
+
+  # users-permissions mutations.
+  - name: gql-register
+    method: POST
+    path: /graphql
+    save: { gjwt: data.register.jwt }
+    body: { query: "mutation { register(input: { username: \"gqluser\", email: \"gql@example.com\", password: \"Passw0rd!\" }) { jwt user { username email confirmed blocked role { name type } } } }" }
+  - name: gql-register-taken
+    method: POST
+    path: /graphql
+    body: { query: "mutation { register(input: { username: \"gqluser\", email: \"gql@example.com\", password: \"Passw0rd!\" }) { jwt } }" }
+  - name: gql-login
+    method: POST
+    path: /graphql
+    body: { query: "mutation { login(input: { identifier: \"gql@example.com\", password: \"Passw0rd!\" }) { jwt user { username } } }" }
+  - name: gql-login-wrong-password
+    method: POST
+    path: /graphql
+    body: { query: "mutation { login(input: { identifier: \"gql@example.com\", password: \"nope\" }) { jwt } }" }
+  - name: gql-me
+    method: POST
+    path: /graphql
+    bearer: "{{gjwt}}"
+    body: { query: "{ me { username email confirmed blocked role { name description type } } }" }
+  - name: gql-change-password-mismatch
+    method: POST
+    path: /graphql
+    bearer: "{{gjwt}}"
+    body: { query: "mutation { changePassword(currentPassword: \"Passw0rd!\", password: \"N3wPassw0rd!\", passwordConfirmation: \"other\") { jwt } }" }
+  - name: gql-forgot-password-unknown
+    method: POST
+    path: /graphql
+    body: { query: "mutation { forgotPassword(email: \"nobody@example.com\") { ok } }" }

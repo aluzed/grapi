@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "me": {
+        "blocked": false,
+        "confirmed": true,
+        "email": "gql@example.com",
+        "role": {
+          "description": "Default role given to authenticated user.",
+          "name": "Authenticated",
+          "type": "authenticated"
+        },
+        "username": "gqluser"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "errors": [
+      {
+        "extensions": {
+          "code": "STRAPI_APPLICATION_ERROR",
+          "error": {
+            "details": {},
+            "message": "Email or Username are already taken",
+            "name": "ApplicationError"
+          }
+        },
+        "message": "Email or Username are already taken",
+        "path": [
+          "register"
+        ]
+      }
+    ]
+  }
+}
