@@ -28,7 +28,8 @@ Le même planificateur, avec les mêmes formats de règle.
 
 ## Avancement
 - Fait : `internal/cron` (robfig/cron v3, secondes optionnelles, descripteurs `@daily`, fuseau par tâche, bornes start et end, pas de chevauchement sauf `AllowOverlap`, journalisation début, fin, durée et erreurs, paniques isolées), `grapi.App.Cron` et `CronAt`, actifs seulement avec `server.cron.enabled: true` comme chez Strapi. Tests : `internal/cron/cron_test.go`.
-- Reste : objets de récurrence de node-schedule, `config/cron-tasks` (JS, `EXT-003`), vérification du changement d'heure.
+- Changement d'heure mesuré et figé (`TestDaylightSavingTime`, Europe/Paris) : une heure qui n'existe pas est sautée (02:30 le 29 mars 2026), une heure qui existe deux fois déclenche deux exécutions (02:30 le 25 octobre 2026). Documenté dans `docs/framework.md`.
+- Reste : comparaison avec node-schedule sur les mêmes dates, objets de récurrence de node-schedule, `config/cron-tasks` (JS, `EXT-003`).
 
 ## Notes techniques
 - `robfig/cron/v3` avec `cron.WithSeconds()` et un parseur pour les objets de récurrence.
