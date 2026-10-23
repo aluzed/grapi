@@ -457,6 +457,7 @@ func (s *Server) cmDelete(w http.ResponseWriter, r *http.Request, u *User) error
 type BulkError struct {
 	DocumentID string `json:"documentId"`
 	Message    string `json:"message"`
+	Details    any    `json:"details,omitempty"`
 }
 
 // cmBulk runs op on each document in its own call: a failure is reported,
@@ -508,7 +509,7 @@ func (s *Server) cmBulk(op string) authedHandler {
 				if !errors.As(err, &ve) {
 					return err
 				}
-				failed = append(failed, BulkError{DocumentID: id, Message: ve.Error()})
+				failed = append(failed, BulkError{DocumentID: id, Message: ve.Error(), Details: ve.Details})
 				continue
 			}
 			switch op {

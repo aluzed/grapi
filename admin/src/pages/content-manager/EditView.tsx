@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, type FieldError } from '@/lib/api'
 import { showError } from '@/lib/form'
 import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
 import { useConfirm } from '@/providers/ConfirmProvider'
@@ -135,11 +135,11 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   }
 
   const refreshAll = () => queryClient.invalidateQueries({ queryKey: ['cm'] })
+  const showFieldErrors = (list: FieldError[]) => {
+    if (list.length > 0) setErrors(Object.fromEntries(list.filter((e) => e.path.length === 1).map((e) => [e.path[0] ?? '', e.message])))
+  }
   const fail = (err: unknown) => {
-    if (err instanceof ApiError) {
-      const list = err.fieldErrors()
-      if (list.length > 0) setErrors(Object.fromEntries(list.filter((e) => e.path.length === 1).map((e) => [e.path[0] ?? '', e.message])))
-    }
+    if (err instanceof ApiError) showFieldErrors(err.fieldErrors())
     showError(err, undefined, t('common.error'))
   }
 
@@ -167,6 +167,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     },
     onSuccess: ({ r, op }) => {
       if (r.errors.length > 0) {
+        showFieldErrors(r.errors.flatMap((e) => e.details?.errors ?? []))
         toast.error(r.errors.map((e) => e.message).join(', '))
         return
       }

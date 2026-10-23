@@ -1,3 +1,6 @@
+import type { FieldError } from './api'
+
+
 export type Role = { id: number; name: string; code: string; description: string }
 
 export type AdminUser = {
@@ -82,7 +85,7 @@ export type Pagination = { page: number; pageSize: number; pageCount: number; to
 
 export type Locale = { id: number; code: string; name: string; isDefault: boolean }
 
-export type BulkResult = { count: number; documentIds: string[]; errors: { documentId: string; message: string }[] }
+export type BulkResult = { count: number; documentIds: string[]; errors: { documentId: string; message: string; details?: { errors?: FieldError[] } }[] }
 
 export type RoleWithCount = Role & { usersCount: number }
 

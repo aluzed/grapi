@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -186,5 +187,66 @@ func TestAdminListPermissions(t *testing.T) {
 	raw, _ := json.Marshal(b)
 	if !strings.Contains(string(raw), `"Visible"`) || strings.Contains(string(raw), `"views"`) || strings.Contains(string(raw), `"summary"`) {
 		t.Fatalf("only readable values: %s", raw)
+	}
+}
+
+func TestAdminIncompleteDraft(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	const base = "/content-manager/collection-types/api::article.article"
+	s, b, _ := c.do("POST", base, `{"data":{"summary":"no title yet"}}`)
+	if s != 201 {
+		t.Fatalf("a draft saves without its required title: %d %v", s, b)
+	}
+	id := dataOf(b)["documentId"].(string)
+	s, b, _ = c.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+id+`"]}`)
+	raw, _ := json.Marshal(b)
+	if s != 200 || !strings.Contains(string(raw), `"path":["title"]`) {
+		t.Fatalf("publishing names the title: %d %s", s, raw)
+	}
+}
+
+// The edit view sends a relation's order as a set; the new order is what the
+// content API returns.
+func TestAdminRelationReorder(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "relations")
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	var tags []string
+	for _, name := range []string{"a", "b", "c"} {
+		_, b, _ := c.do("POST", "/content-manager/collection-types/api::tag.tag", `{"data":{"name":"`+name+`"}}`)
+		tags = append(tags, dataOf(b)["documentId"].(string))
+	}
+	set := func(order ...int) string {
+		var parts []string
+		for _, i := range order {
+			parts = append(parts, `{"documentId":"`+tags[i]+`"}`)
+		}
+		return `{"set":[` + strings.Join(parts, ",") + `]}`
+	}
+	const base = "/content-manager/collection-types/api::post.post"
+	_, b, _ := c.do("POST", base, `{"data":{"title":"Order","tags":`+set(0, 1, 2)+`}}`)
+	post := dataOf(b)["documentId"].(string)
+	if s, b, _ := c.do("PUT", base+"/"+post, `{"data":{"tags":`+set(2, 0, 1)+`}}`); s != 200 {
+		t.Fatalf("reorder: %d %v", s, b)
+	}
+	_, b, _ = c.do("POST", "/api-tokens", `{"name":"Read","type":"read-only","lifespan":null}`)
+	key := dataOf(b)["accessKey"].(string)
+	req, _ := http.NewRequest("GET", ts.URL+"/api/posts/"+post+"?status=draft&populate=tags", nil)
+	req.Header.Set("Authorization", "Bearer "+key)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = res.Body.Close() }()
+	var out map[string]any
+	_ = json.NewDecoder(res.Body).Decode(&out)
+	var names []string
+	for _, tag := range dataOf(out)["tags"].([]any) {
+		names = append(names, tag.(map[string]any)["name"].(string))
+	}
+	if strings.Join(names, ",") != "c,a,b" {
+		t.Fatalf("the content API returns the new order: %v", names)
 	}
 }

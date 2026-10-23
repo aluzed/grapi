@@ -53,6 +53,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Locales : sélecteur dans l'en-tête, création de la version d'une autre locale avec les champs non localisés repris de la locale par défaut (sinon l'enregistrement écraserait ces champs partagés). Testé (`TestAdminLocales`) et vérifié dans Chrome sur `i18n-dp`.
 - Blocks : éditeur par blocs (paragraphe, titres 1 à 6, listes, citation, code avec langage, image de la médiathèque), réordonnables, mise en forme en ligne en Markdown léger (gras, italique, souligné, barré, code, lien) convertie vers et depuis les nœuds Strapi, avec échappement des caractères spéciaux (`admin/src/lib/blocks.ts`, tests aller-retour). Vérifié dans Chrome : le JSON enregistré est au format Strapi. Ce n'est pas un éditeur WYSIWYG.
 - Permissions par champ : `/content-manager/models` donne `createFields` et `updateFields` (`null` sans restriction), l'EditView désactive les champs absents de la liste et le serveur ignore leurs valeurs (`TestAdminFieldLevelUpdate`). Vérifié dans Chrome sur le binaire : champs grisés et non modifiables.
+- Brouillon incomplet : il s'enregistre, et l'échec de publication porte `details.errors`, que l'EditView affiche sous le champ fautif (`TestAdminIncompleteDraft`, vérifié dans Chrome). Ordre des relations : envoyé en `set`, relu dans le nouvel ordre par l'API REST (`TestAdminRelationReorder`). UID pris : `check-availability` (`TestAdminUID`), appelé par le champ avant l'enregistrement.
 - Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
@@ -60,10 +61,10 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 
 ## Critères d'acceptation
 - [ ] Chaque type d'attribut a un test d'aller-retour : saisie, enregistrement, rechargement, valeur identique (y compris biginteger, decimal et blocks).
-- [ ] Un brouillon incomplet (champ requis vide) s'enregistre. La publication échoue avec l'erreur sur le bon champ.
-- [ ] Réordonner trois relations envoie des positions correctes, et l'ordre persiste (vérifié via l'API REST).
+- [x] Un brouillon incomplet (champ requis vide) s'enregistre. La publication échoue avec l'erreur sur le bon champ.
+- [x] Réordonner trois relations envoie des positions correctes, et l'ordre persiste (vérifié via l'API REST).
 - [ ] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
-- [ ] Un UID déjà pris est signalé avant l'enregistrement.
+- [x] Un UID déjà pris est signalé avant l'enregistrement.
 - [ ] « Remplir depuis une autre locale » copie uniquement les champs localisés.
 - [x] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
 - [ ] À 375 px, tous les champs, composants et actions sont empilés, avec des boutons en pleine largeur.
