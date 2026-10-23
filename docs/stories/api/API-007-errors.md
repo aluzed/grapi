@@ -23,6 +23,10 @@ Les mêmes classes d'erreur et la même sérialisation.
 - [ ] Les corps d'erreur des 10 classes sont identiques à Strapi (banc de compatibilité).
 - [x] Une panique dans un handler donne un 500 propre, sans pile dans la réponse.
 
+## Avancement
+- Banc : 8 des 10 classes sortent déjà à l'identique de Strapi dans les goldens (`ValidationError`, `ForbiddenError`, `UnauthorizedError`, `NotFoundError`, `ApplicationError`, `PayloadTooLargeError`, `RateLimitError`, `PaginationError`). Strapi ne lève jamais `PolicyError` ni `NotImplementedError` sur ses propres routes : seul le code d'un projet le fait.
+- Erreurs publiques pour le code Go (`errors.go`) : un constructeur par classe, messages par défaut de `@strapi/utils`, détails optionnels, trouvées par `errors.As` même enveloppées. `TestStrapiErrorClasses` : 501 d'un handler, 403 `PolicyError` d'une policy qui refuse ou qui renvoie sa propre erreur, 400 d'un hook de ligne. Une erreur applicative garde `details` même en 5xx (501 `{}`), comme le `formatApplicationError` de Strapi ; une erreur interne n'en a pas.
+
 ## Notes techniques
 - Type `*grapi.Error{Status, Name, Message, Details}` qui implémente `error` ; constructeurs par classe.
 

@@ -76,11 +76,13 @@ func writeError(w http.ResponseWriter, err error, log *slog.Logger) {
 		log.Debug("request rejected", "status", api.Status, "name", api.Name, "message", api.Message)
 	}
 	body := map[string]any{"status": api.Status, "name": api.Name, "message": api.Message}
-	if api.Status < http.StatusInternalServerError {
+	// An application error keeps its details whatever its status (a 501
+	// NotImplementedError has {}); an internal or http-errors 5xx has none.
+	switch {
+	case api.Details != nil:
 		body["details"] = api.Details
-		if api.Details == nil {
-			body["details"] = map[string]any{}
-		}
+	case api.Status < http.StatusInternalServerError:
+		body["details"] = map[string]any{}
 	}
 	writeJSON(w, api.Status, map[string]any{"data": nil, "error": body})
 }

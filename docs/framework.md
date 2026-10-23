@@ -94,6 +94,18 @@ app.RoutePolicies("api::post.post.update", "global::is-editor", grapi.PolicyRef{
 
 A name without namespace is looked up in the route's API or plugin (`is-owner` on an `api::account...` route is `api::account.is-owner`), then in `global::`. An unknown policy stops the start. `false` answers Strapi's 403 `PolicyError`.
 
+## Errors (`@strapi/utils` errors)
+
+A route handler, a policy or a hook returns Strapi's error classes, wrapped or not: `grapi.ApplicationError`, `ValidationError`, `PaginationError`, `NotFoundError`, `ForbiddenError`, `PolicyError`, `UnauthorizedError`, `PayloadTooLargeError`, `RateLimitError`, `NotImplementedError`. An empty message is Strapi's default; an optional argument sets the details. The answer is Strapi's `{data: null, error: {status, name, message, details}}`.
+
+```go
+app.OnRowCreate("api::tag.tag").Bind(func(*hook.RowEvent) error {
+	return grapi.ValidationError("Tags are closed")
+})
+```
+
+`grapi.Error(status, message)` is the `ctx.badRequest` family: the http-errors name of the status.
+
 ## Sanitizers (`strapi.sanitizers.add`)
 
 ```go
