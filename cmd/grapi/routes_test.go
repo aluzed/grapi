@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -34,6 +35,15 @@ func TestListCommands(t *testing.T) {
 	out.Reset()
 	if err := listCommand("components", []string{"-dir", dir}, &out, io.Discard); err != nil || !strings.Contains(out.String(), "│ shared.seo ") || !strings.Contains(out.String(), "│ Name ") {
 		t.Fatalf("components: %v %s", err, out.String())
+	}
+	var names []string
+	for _, line := range strings.Split(out.String(), "\n") {
+		if f := strings.Fields(strings.Trim(line, "│ ")); len(f) == 1 && strings.Contains(f[0], ".") {
+			names = append(names, f[0])
+		}
+	}
+	if !sort.StringsAreSorted(names) || len(names) < 2 {
+		t.Fatalf("sorted: %v", names)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -78,15 +79,20 @@ func listCommand(kind string, args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	defer func() { _ = p.DB.Close() }()
-	rows := [][1]string{{"Name"}}
+	var names []string
 	if kind == "content-types" {
 		for uid := range p.Res.Set.ContentTypes.All() {
-			rows = append(rows, [1]string{uid})
+			names = append(names, string(uid))
 		}
 	} else {
 		for uid := range p.Res.Set.Components.All() {
-			rows = append(rows, [1]string{uid})
+			names = append(names, string(uid))
 		}
+	}
+	sort.Strings(names)
+	rows := [][1]string{{"Name"}}
+	for _, n := range names {
+		rows = append(rows, [1]string{n})
 	}
 	_, err = fmt.Fprint(stdout, table(rows))
 	return err
