@@ -75,6 +75,12 @@ type Config struct {
 	HistoryMaxVersions int
 	// AuditExportMaxRows caps a CSV export (1 000 000 by default).
 	AuditExportMaxRows int
+	// UploadFromURLMaxSize, UploadFromURLTimeout bound a download of
+	// upload-from-urls (200 MB, 60 s by default); UploadFromURLPrivate
+	// lets it reach private addresses.
+	UploadFromURLMaxSize int64
+	UploadFromURLTimeout time.Duration
+	UploadFromURLPrivate bool
 	// HistoryOrigins are the origins whose writes record a version
 	// (admin-panel only when empty).
 	HistoryOrigins []string
@@ -118,6 +124,12 @@ func New(cfg Config, docs *document.Service, log *slog.Logger) *Server {
 	}
 	if cfg.AuditExportMaxRows <= 0 {
 		cfg.AuditExportMaxRows = 1_000_000
+	}
+	if cfg.UploadFromURLMaxSize <= 0 {
+		cfg.UploadFromURLMaxSize = 200 << 20
+	}
+	if cfg.UploadFromURLTimeout <= 0 {
+		cfg.UploadFromURLTimeout = time.Minute
 	}
 	if log == nil {
 		log = slog.Default()
@@ -194,6 +206,7 @@ func (s *Server) routes() {
 	s.historyRoutes()
 	s.auditRoutes()
 	s.releaseRoutes()
+	s.mediaSettingsRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

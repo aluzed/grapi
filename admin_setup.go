@@ -63,6 +63,12 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy b
 	if n, ok := c.Int("admin.auditLogs.exportMaxRows"); ok {
 		cfg.AuditExportMaxRows = n
 	}
+	if b, ok := c.Bool("plugins.upload.config.uploadFromUrls.allowPrivateNetworks"); ok {
+		cfg.UploadFromURLPrivate = b
+	}
+	if n, ok := c.Int("plugins.upload.config.uploadFromUrls.maxSize"); ok {
+		cfg.UploadFromURLMaxSize = int64(n)
+	}
 	if b, ok := c.Bool("admin.history.enabled"); ok {
 		cfg.HistoryEnabled = b
 	}

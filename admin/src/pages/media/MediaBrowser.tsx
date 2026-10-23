@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, CheckSquare, ChevronRight, File, Folder, FolderInput, FolderPlus, Pencil, Trash2, Upload, X } from 'lucide-react'
+import { Check, CheckSquare, ChevronRight, File, Folder, FolderInput, FolderPlus, Link2, Pencil, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -64,6 +64,63 @@ function NewFolder({ parent, folder, onClose }: { parent: number | null; folder?
       }
     >
       <TextField label={t('media.folderName')} value={name} error={error} autoFocus onChange={(e) => setName(e.target.value)} />
+    </Dialog>
+  )
+}
+
+function UrlDialog({ folder, onClose }: { folder: number | null; onClose: () => void }) {
+  const { t } = useI18n()
+  const queryClient = useQueryClient()
+  const [urls, setUrls] = useState('')
+  const [error, setError] = useState<string>()
+  const send = useMutation({
+    mutationFn: () =>
+      api.post<unknown[]>('/upload/actions/upload-from-urls', {
+        urls: urls
+          .split('\n')
+          .map((u) => u.trim())
+          .filter(Boolean),
+        folder,
+      }),
+    onSuccess: () => {
+      toast.success(t('media.imported'))
+      void queryClient.invalidateQueries({ queryKey: ['media'] })
+      onClose()
+    },
+    onError: (e) => {
+      if (e instanceof ApiError) setError(e.fieldErrors().map((f) => f.message).join(' ; ') || e.message)
+      showError(e)
+    },
+  })
+  return (
+    <Dialog
+      open
+      title={t('media.fromUrl')}
+      onClose={onClose}
+      closeLabel={t('common.cancel')}
+      footer={
+        <>
+          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
+            {t('common.cancel')}
+          </Button>
+          <Button title={t('media.import')} icon={<Link2 className="h-4 w-4" />} loading={send.isPending} disabled={!urls.trim()} onClick={() => send.mutate()} className="w-full md:w-auto">
+            {t('media.import')}
+          </Button>
+        </>
+      }
+    >
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-medium">{t('media.urls')}</span>
+        <textarea
+          value={urls}
+          rows={4}
+          placeholder="https://"
+          onChange={(e) => setUrls(e.target.value)}
+          className="rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        />
+        <span className="text-xs text-muted">{t('media.urlsHelp')}</span>
+        {error && <span className="text-xs text-destructive">{error}</span>}
+      </label>
     </Dialog>
   )
 }
@@ -136,6 +193,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const [chosen, setChosen] = useState<number[]>([])
   const [moving, setMoving] = useState(false)
   const [movingFolder, setMovingFolder] = useState<MediaFolder | null>(null)
+  const [importing, setImporting] = useState(false)
   const confirm = useConfirm()
   const canUpdate = can(permissions, 'plugin::upload.assets.update')
   const input = useRef<HTMLInputElement>(null)
@@ -224,7 +282,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
           </span>
         ))}
       </nav>
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:items-end">
           <input
             type="search"
@@ -247,7 +305,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
           </SelectField>
         </div>
         {(canUpload || (!pick && canUpdate)) && (
-          <div className="flex flex-col gap-2 md:flex-row">
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap *:whitespace-nowrap">
             {!pick && canUpdate && (
               <Button
                 variant="outline"
@@ -271,6 +329,11 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             <Button title={t('media.upload')} icon={<Upload className="h-4 w-4" />} loading={send.isPending} onClick={() => input.current?.click()} className="w-full md:w-auto">
               {send.isPending ? t('media.uploading') : t('media.upload')}
             </Button>
+            )}
+            {canUpload && (
+              <Button variant="outline" title={t('media.fromUrl')} icon={<Link2 className="h-4 w-4" />} onClick={() => setImporting(true)} className="w-full md:w-auto">
+                {t('media.fromUrl')}
+              </Button>
             )}
             {canUpload && <input ref={input} type="file" multiple hidden onChange={(e) => onFiles(e.target.files)} />}
           </div>
@@ -383,6 +446,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
       )}
       {creating && <NewFolder parent={folder} onClose={() => setCreating(false)} />}
       {renaming && <NewFolder parent={folder} folder={renaming} onClose={() => setRenaming(null)} />}
+      {importing && <UrlDialog folder={folder} onClose={() => setImporting(false)} />}
       {movingFolder && <MoveDialog ids={[]} folder={movingFolder} onClose={() => setMovingFolder(null)} />}
       {moving && (
         <MoveDialog

@@ -608,5 +608,19 @@
   "audit.origin": "Origin",
   "media.folderMoved": "Folder {name} moved",
   "media.moveFolder": "Move the folder {name}",
-  "media.moveFolderAction": "Move the folder"
+  "media.moveFolderAction": "Move the folder",
+  "media.fromUrl": "Import from URLs",
+  "media.import": "Import",
+  "media.urls": "URLs",
+  "media.urlsHelp": "One URL per line (http or https). The server downloads each file; private network addresses are refused.",
+  "media.imported": "Files imported",
+  "settings.media": "Media Library",
+  "mediaSettings.saved": "Media Library settings saved",
+  "mediaSettings.help": "They apply to the next uploads.",
+  "mediaSettings.responsiveDimensions": "Responsive friendly upload",
+  "mediaSettings.responsiveDimensionsHelp": "Creates the large, medium and small formats of each image (the thumbnail is always made).",
+  "mediaSettings.sizeOptimization": "Size optimization",
+  "mediaSettings.sizeOptimizationHelp": "Re-encodes images to reduce their size, without visible quality loss.",
+  "mediaSettings.autoOrientation": "Auto orientation",
+  "mediaSettings.autoOrientationHelp": "Rotates images according to their EXIF orientation."
 }

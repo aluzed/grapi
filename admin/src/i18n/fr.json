@@ -608,5 +608,19 @@
   "audit.origin": "Origine",
   "media.folderMoved": "Dossier {name} déplacé",
   "media.moveFolder": "Déplacer le dossier {name}",
-  "media.moveFolderAction": "Déplacer le dossier"
+  "media.moveFolderAction": "Déplacer le dossier",
+  "media.fromUrl": "Importer depuis des URL",
+  "media.import": "Importer",
+  "media.urls": "URL",
+  "media.urlsHelp": "Une URL par ligne (http ou https). Le serveur télécharge chaque fichier ; les adresses du réseau privé sont refusées.",
+  "media.imported": "Fichiers importés",
+  "settings.media": "Médiathèque",
+  "mediaSettings.saved": "Réglages de la médiathèque enregistrés",
+  "mediaSettings.help": "Ils s'appliquent aux prochains envois.",
+  "mediaSettings.responsiveDimensions": "Formats responsives",
+  "mediaSettings.responsiveDimensionsHelp": "Crée les formats large, moyen et petit de chaque image (la vignette est toujours créée).",
+  "mediaSettings.sizeOptimization": "Optimisation du poids",
+  "mediaSettings.sizeOptimizationHelp": "Réencode les images pour réduire leur poids, sans perte visible.",
+  "mediaSettings.autoOrientation": "Orientation automatique",
+  "mediaSettings.autoOrientationHelp": "Pivote les images selon leur orientation EXIF."
 }

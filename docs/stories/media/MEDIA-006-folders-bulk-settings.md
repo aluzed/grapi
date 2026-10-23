@@ -31,13 +31,16 @@ Les endpoints admin du Media Library, au-delà de l'upload de base (`MEDIA-001`)
 ## Avancement
 - Côté API admin (`/admin/api/v1/upload/*`, `docs/admin-api.md`) : dossiers (liste par parent ou complète, création numérotée comme Strapi, renommage, suppression récursive), `bulk-delete` (fichiers et dossiers), `bulk-move` de fichiers avec recalcul de `folderPath`, remplacement d'un fichier en gardant son id. Testé (`TestAdminMedia`, `TestAdminMediaBulk`).
 - Déplacement de dossiers par `bulk-move` (`folderIds`) dans une transaction : `path` des sous-dossiers et `folderPath` des fichiers réécrits, refus vers lui-même, un descendant ou à côté d'un dossier du même nom ; action « Déplacer le dossier » dans l'écran. `GET /upload/folder-structure` (arbre). Testé (`TestAdminMediaMoveFolders`).
-- Reste : upload depuis une URL, réglages et configuration d'affichage du core store.
+- Upload depuis des URL (`POST /upload/actions/upload-from-urls`, 20 URL au plus) : téléchargement sur fichier temporaire, taille (`plugins.upload.config.uploadFromUrls.maxSize`, 200 Mo) et durée (60 s) bornées, http et https seulement, 3 redirections, pages HTML refusées ; adresses privées, loopback, link-local, CGNAT et non spécifiées refusées à la connexion (redirections et rebinding DNS compris) sauf `uploadFromUrls.allowPrivateNetworks`. Les fichiers passent ensuite par l'upload normal. Bouton « Importer depuis des URL » dans la médiathèque.
+- Réglages `GET|PUT /upload/settings` (core store `plugin_upload_settings`, lus à chaque upload) et page Paramètres > Médiathèque ; configuration `GET|PUT /upload/configuration` (`plugin_upload_view_configuration`, pageSize 10/20/50/100, tri validé).
+- Testé : `TestAdminUploadFromURLs`, `TestAdminUploadFromPrivateURLs`, `TestPublicOnly`.
+- Reste : l'écran de la médiathèque n'utilise pas encore la configuration d'affichage ; le critère de compatibilité D3 (arborescence d'une base Strapi) à vérifier au banc.
 
 ## Critères d'acceptation
 - [x] Déplacer un dossier qui contient 3 niveaux recalcule `path` et `folderPath` partout (intégration).
 - [x] Déplacer un dossier dans son propre descendant est refusé (TU).
-- [ ] `upload-from-urls` vers `http://169.254.169.254/` est refusé (TU anti-SSRF).
-- [ ] Les réglages modifiés s'appliquent immédiatement aux uploads suivants.
+- [x] `upload-from-urls` vers `http://169.254.169.254/` est refusé (TU anti-SSRF).
+- [x] Les réglages modifiés s'appliquent immédiatement aux uploads suivants.
 - [ ] **Compat DB (D3)** : l'arborescence de dossiers d'une base Strapi s'affiche à l'identique.
 
 ## Notes techniques

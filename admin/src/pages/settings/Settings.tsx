@@ -23,6 +23,7 @@ export const sections: Section[] = [
   { to: '/settings/audit-logs', label: 'settings.audit', allowed: (p) => can(p, 'admin::audit-logs.read') },
   { to: '/settings/locales', label: 'settings.locales', allowed: (p) => can(p, 'plugin::i18n.locale.read') },
   { to: '/settings/releases', label: 'settings.releases', allowed: (p) => can(p, 'admin::releases.settings.read') },
+  { to: '/settings/media-library', label: 'settings.media', allowed: (p) => can(p, 'plugin::upload.settings.read') },
 ]
 
 export function Settings() {

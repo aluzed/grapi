@@ -2422,3 +2422,99 @@ func TestAdminMediaMoveFolders(t *testing.T) {
 		}
 	}
 }
+
+func bigPNG(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 1200, 800))
+	for x := 0; x < 1200; x++ {
+		img.Set(x, x%800, color.RGBA{G: 200, A: 255})
+	}
+	var b bytes.Buffer
+	if err := png.Encode(&b, img); err != nil {
+		t.Fatal(err)
+	}
+	return b.Bytes()
+}
+
+func TestAdminUploadFromURLs(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	local := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(pngBytes(t)) }))
+	defer local.Close()
+	for _, u := range []string{"http://169.254.169.254/latest/meta-data/", local.URL + "/a.png", "ftp://example.com/a.png"} {
+		s, b, _ := c.do("POST", "/upload/actions/upload-from-urls", `{"urls":["`+u+`"]}`)
+		if s != 400 {
+			t.Fatalf("%s is refused: %d %v", u, s, b)
+		}
+	}
+	_, b, _ = c.do("GET", "/upload/files", "")
+	if n := len(b["data"].([]any)); n != 0 {
+		t.Fatalf("nothing uploaded: %d", n)
+	}
+}
+
+func TestAdminUploadFromPrivateURLs(t *testing.T) {
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(_ *grapi.App, dir string) {
+		conf := "email:\n  config:\n    provider: capture\nupload:\n  config:\n    uploadFromUrls:\n      allowPrivateNetworks: true\n"
+		if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte(conf), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	})
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	big := bigPNG(t)
+	local := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/page" {
+			_, _ = io.WriteString(w, "<!doctype html><html><body>hi</body></html>")
+			return
+		}
+		_, _ = w.Write(big)
+	}))
+	defer local.Close()
+	if s, _, _ := c.do("POST", "/upload/actions/upload-from-urls", `{"urls":["`+local.URL+`/page"]}`); s != 400 {
+		t.Fatalf("a web page is refused: %d", s)
+	}
+	formats := func(name string) int {
+		req, _ := http.NewRequest("POST", ts.URL+"/admin/api/v1/upload/actions/upload-from-urls", strings.NewReader(`{"urls":["`+local.URL+`/`+name+`"]}`))
+		req.Header.Set("Authorization", "Bearer "+c.token)
+		req.Header.Set("Content-Type", "application/json")
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var list []map[string]any
+		_ = json.NewDecoder(res.Body).Decode(&list)
+		_ = res.Body.Close()
+		if res.StatusCode != 201 || len(list) != 1 {
+			t.Fatalf("upload from a URL: %d %v", res.StatusCode, list)
+		}
+		f := list[0]
+		if f["name"] != name || f["mime"] != "image/png" {
+			t.Fatalf("file: %v", f)
+		}
+		m, _ := f["formats"].(map[string]any)
+		return len(m)
+	}
+	if n := formats("first.png"); n < 2 {
+		t.Fatalf("thumbnail and responsive formats by default: %d", n)
+	}
+	if s, b, _ := c.do("PUT", "/upload/settings", `{"sizeOptimization":true,"responsiveDimensions":false,"autoOrientation":false}`); s != 200 {
+		t.Fatalf("settings: %d %v", s, b)
+	}
+	// The thumbnail stays, as in Strapi.
+	if n := formats("second.png"); n != 1 {
+		t.Fatalf("the settings apply to the next upload: %d formats", n)
+	}
+	if s, _, _ := c.do("PUT", "/upload/configuration", `{"pageSize":7,"sort":"createdAt:DESC"}`); s != 400 {
+		t.Fatalf("configuration validation: %d", s)
+	}
+	c.do("PUT", "/upload/configuration", `{"pageSize":50,"sort":"name:ASC"}`)
+	if _, b, _ := c.do("GET", "/upload/configuration", ""); dataOf(b)["pageSize"].(float64) != 50 {
+		t.Fatalf("configuration: %v", b)
+	}
+}
