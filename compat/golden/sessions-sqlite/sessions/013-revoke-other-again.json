@@ -1,0 +1,13 @@
+{
+  "status": 404,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Session not found",
+      "name": "NotFoundError",
+      "status": 404
+    }
+  }
+}

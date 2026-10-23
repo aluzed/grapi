@@ -10,9 +10,11 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/aluzed/grapi/internal/auth/session"
 	"github.com/aluzed/grapi/internal/auth/users"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
@@ -25,8 +27,10 @@ type Auth struct {
 	Strategy  string
 	TokenType string
 	// User is the authenticated end user (users-permissions), with its role.
-	User   query.Row
-	scopes map[string]bool
+	User query.Row
+	// SessionID is the session of a refresh-mode access token.
+	SessionID string
+	scopes    map[string]bool
 }
 
 // Allowed reports whether the request may run the action scope
@@ -54,6 +58,8 @@ type authenticator struct {
 	engine *query.Engine
 	salt   string
 	users  UsersConfig
+	// up verifies the access tokens in jwtManagement "refresh".
+	up *session.Manager
 }
 
 func (a *authenticator) hash(key string) string {
@@ -106,13 +112,27 @@ func (a *authenticator) authenticate(ctx context.Context, r *http.Request) (*Aut
 }
 
 func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error) {
-	payload, err := users.Verify(token, a.users.JWTSecret, a.users.JWTAlgorithm, time.Now())
-	if err != nil {
-		return nil, errUnauthorized
-	}
-	id, ok := payload["id"]
-	if !ok {
-		return nil, errUnauthorized
+	var id any
+	sessionID := ""
+	if a.up != nil {
+		// Refresh mode takes only the access tokens of a live session.
+		userID, sid, err := a.up.ValidateAccess(ctx, token)
+		if err != nil {
+			return nil, errUnauthorized
+		}
+		id, sessionID = userID, sid
+		if n, err := strconv.ParseInt(userID, 10, 64); err == nil {
+			id = n
+		}
+	} else {
+		payload, err := users.Verify(token, a.users.JWTSecret, a.users.JWTAlgorithm, time.Now())
+		if err != nil {
+			return nil, errUnauthorized
+		}
+		var ok bool
+		if id, ok = payload["id"]; !ok {
+			return nil, errUnauthorized
+		}
 	}
 	invalid := newError(http.StatusUnauthorized, "UnauthorizedError", "Invalid credentials")
 	user, err := a.engine.FindOne(ctx, userUID, query.Params{Where: map[string]any{"id": id}, Populate: []any{"role"}})
@@ -143,6 +163,7 @@ func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error
 		return nil, err
 	}
 	auth.User = user
+	auth.SessionID = sessionID
 	return auth, nil
 }
 

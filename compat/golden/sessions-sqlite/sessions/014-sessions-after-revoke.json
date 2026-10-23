@@ -1,0 +1,15 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "current": true,
+        "deviceId": "laptop",
+        "id": "#id4",
+        "lastActiveAt": "\u003cts\u003e",
+        "loginAt": "\u003cts\u003e"
+      }
+    ]
+  }
+}

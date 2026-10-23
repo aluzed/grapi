@@ -47,3 +47,12 @@ func TestValueRewritesKnownDocumentIdsInText(t *testing.T) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
+
+func TestGeneratedDeviceIDs(t *testing.T) {
+	n := New()
+	got := n.Value(decode(t, `[{"deviceId":"980338f0-4ea6-4c2f-8c73-9f8f0520f996"},{"deviceId":"laptop"},{"deviceId":"980338f0-4ea6-4c2f-8c73-9f8f0520f996"}]`))
+	want := decode(t, `[{"deviceId":"#device1"},{"deviceId":"laptop"},{"deviceId":"#device1"}]`)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("%v", got)
+	}
+}

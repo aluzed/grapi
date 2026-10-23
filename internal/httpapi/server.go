@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/aluzed/grapi/internal/auth/session"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
@@ -49,15 +50,17 @@ type Config struct {
 
 // Server serves the content API of every api:: content type.
 type Server struct {
-	cfg     Config
-	set     *schema.Set
-	docs    *document.Service
-	auth    *authenticator
-	log     *slog.Logger
-	routes  []route
-	handler http.Handler
-	limiter limiter
-	gql     *graphql.Schema
+	cfg  Config
+	set  *schema.Set
+	docs *document.Service
+	auth *authenticator
+	log  *slog.Logger
+	// upSessions is set in jwtManagement "refresh".
+	upSessions *session.Manager
+	routes     []route
+	handler    http.Handler
+	limiter    limiter
+	gql        *graphql.Schema
 	// customOps are the OpenAPI operations of the custom routes.
 	customOps []openapi.Operation
 }
@@ -99,6 +102,10 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		cfg.Users.JWTExpiresIn = "30d"
 	}
 	s := &Server{cfg: cfg, set: set, docs: docs, auth: &authenticator{db: d, engine: docs.E, salt: cfg.APITokenSalt, users: cfg.Users}, log: log}
+	if cfg.Users.JWTManagement == "refresh" {
+		s.upSessions = newUPSessions(docs.E, cfg.Users)
+		s.auth.up = s.upSessions
+	}
 	for uid, ct := range set.ContentTypes.All() {
 		if !strings.HasPrefix(uid, "api::") {
 			continue

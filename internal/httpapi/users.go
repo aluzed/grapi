@@ -31,9 +31,12 @@ type UsersConfig struct {
 	// AllowedFields are register.allowedFields.
 	AllowedFields []string
 	RateLimit     RateLimit
-	// JWTManagement is jwtManagement: only legacy-support (the default) is
-	// implemented, where the session routes answer 404.
+	// JWTManagement is jwtManagement: legacy-support (the default, plain
+	// JWTs and 404 on the session routes) or refresh (sessions).
 	JWTManagement string
+	Sessions      UPSessions
+	// Production is NODE_ENV=production: the refresh cookie's default Secure.
+	Production bool
 }
 
 func (s *Server) addUsersRoutes() {
@@ -46,10 +49,10 @@ func (s *Server) addUsersRoutes() {
 		route{"POST", []string{base, "auth", "local"}, auth, "callback", s.authCallback, "", false, false, nil},
 		route{"POST", []string{base, "auth", "local", "register"}, auth, "register", s.authRegister, "", false, false, nil},
 		route{"POST", []string{base, "auth", "change-password"}, auth, "changePassword", s.authChangePassword, "", false, false, nil},
-		route{"POST", []string{base, "auth", "refresh"}, auth, "refresh", s.sessionsOnly, "", false, false, nil},
-		route{"POST", []string{base, "auth", "logout"}, auth, "logout", s.sessionsOnly, "", false, false, nil},
-		route{"GET", []string{base, "auth", "sessions"}, auth, "getSessions", s.sessionsOnly, "", false, false, nil},
-		route{"DELETE", []string{base, "auth", "sessions", ":sessionId"}, auth, "revokeSession", s.sessionsOnly, "", false, false, nil},
+		route{"POST", []string{base, "auth", "refresh"}, auth, "refresh", s.authRefresh, "", false, false, nil},
+		route{"POST", []string{base, "auth", "logout"}, auth, "logout", s.authLogout, "", false, false, nil},
+		route{"GET", []string{base, "auth", "sessions"}, auth, "getSessions", s.authSessions, "", false, false, nil},
+		route{"DELETE", []string{base, "auth", "sessions", ":sessionId"}, auth, "revokeSession", s.authRevokeSession, "", false, false, nil},
 		route{"GET", []string{base, "users", "count"}, userUID, "count", s.usersCount, "", false, false, nil},
 		route{"GET", []string{base, "users"}, userUID, "find", s.usersFind, "", false, false, nil},
 		route{"GET", []string{base, "users", "me"}, userUID, "me", s.usersMe, "", false, false, nil},
@@ -81,13 +84,12 @@ func (s *Server) issueJWT(id any) (string, error) {
 	return users.Sign([]users.KV{{Key: "id", Value: id}}, s.cfg.Users.JWTSecret, s.cfg.Users.JWTAlgorithm, s.cfg.Users.JWTExpiresIn, time.Now())
 }
 
-// sessionsOnly answers the routes of jwtManagement "refresh" in the
-// legacy-support mode: 404, as Strapi does.
-func (s *Server) sessionsOnly(http.ResponseWriter, *http.Request, *requestContext) error {
-	return errNotFound
-}
-
-func (s *Server) sendAuth(w http.ResponseWriter, user query.Row, auth *Auth) error {
+// sendAuth answers {jwt, user}; in refresh mode the jwt is a session's
+// access token, with its refresh token as how says.
+func (s *Server) sendAuth(w http.ResponseWriter, r *http.Request, user query.Row, auth *Auth, body map[string]any, how authIssue) error {
+	if s.upSessions != nil {
+		return s.sendRefreshAuth(w, r, user, auth, body, how)
+	}
 	id, _ := user.Get("id")
 	jwt, err := s.issueJWT(id)
 	if err != nil {
@@ -153,7 +155,7 @@ func (s *Server) authCallback(w http.ResponseWriter, r *http.Request, rc *reques
 	if blocked, _ := user.Get("blocked"); blocked == true {
 		return appError("Your account has been blocked by an administrator")
 	}
-	return s.sendAuth(w, user, rc.auth)
+	return s.sendAuth(w, r, user, rc.auth, body, issueLogin)
 }
 
 func (s *Server) authRegister(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
@@ -246,7 +248,7 @@ func (s *Server) authRegister(w http.ResponseWriter, r *http.Request, rc *reques
 		writeJSON(w, http.StatusOK, map[string]any{"user": s.sanitizeOutput(user, s.schemaOf(userUID), rc.auth)})
 		return nil
 	}
-	return s.sendAuth(w, user, rc.auth)
+	return s.sendAuth(w, r, user, rc.auth, body, issueRegister)
 }
 
 func (s *Server) authChangePassword(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
@@ -283,7 +285,7 @@ func (s *Server) authChangePassword(w http.ResponseWriter, r *http.Request, rc *
 	if _, err := s.editUser(ctx, user, map[string]any{"password": body["password"]}); err != nil {
 		return err
 	}
-	return s.sendAuth(w, user, rc.auth)
+	return s.sendAuth(w, r, user, rc.auth, body, issueReissue)
 }
 
 // editUser is the user service's edit: a document update by documentId.

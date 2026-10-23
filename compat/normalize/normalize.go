@@ -13,8 +13,12 @@ import (
 // such as error messages naming the document they could not find.
 var documentIDPattern = regexp.MustCompile(`\b[a-z0-9]{24}\b`)
 
+// uuidPattern matches the device ids generated when a client sends none.
+var uuidPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
 var timestampKeys = map[string]bool{
 	"createdAt": true, "updatedAt": true, "publishedAt": true, "firstPublishedAt": true,
+	"loginAt": true, "lastActiveAt": true,
 }
 
 var secretKeys = map[string]bool{
@@ -24,13 +28,14 @@ var secretKeys = map[string]bool{
 // Normalizer keeps alias tables across a whole run, so the same id gets the
 // same alias in every response of that run.
 type Normalizer struct {
-	ids  map[string]string
-	docs map[string]string
+	ids     map[string]string
+	docs    map[string]string
+	devices map[string]string
 }
 
 // New returns a Normalizer with empty alias tables.
 func New() *Normalizer {
-	return &Normalizer{ids: map[string]string{}, docs: map[string]string{}}
+	return &Normalizer{ids: map[string]string{}, docs: map[string]string{}, devices: map[string]string{}}
 }
 
 // Value returns a normalized copy of a decoded JSON value.
@@ -78,6 +83,8 @@ func (n *Normalizer) walk(key string, v any) any {
 		return alias(n.docs, "#doc", fmt.Sprint(v))
 	case key == "id":
 		return alias(n.ids, "#id", fmt.Sprint(v))
+	case key == "deviceId" && uuidPattern.MatchString(fmt.Sprint(v)):
+		return alias(n.devices, "#device", fmt.Sprint(v))
 	case key == "url":
 		if s, ok := v.(string); ok && strings.Contains(s, "/uploads/") {
 			return "<upload-url>"

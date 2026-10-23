@@ -119,6 +119,16 @@ func newID() string {
 	return hex.EncodeToString(b)
 }
 
+// newDeviceID is a version 4 UUID, as crypto.randomUUID gives in Strapi.
+func newDeviceID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	b[6] = b[6]&0x0f | 0x40
+	b[8] = b[8]&0x3f | 0x80
+	h := hex.EncodeToString(b)
+	return h[:8] + "-" + h[8:12] + "-" + h[12:16] + "-" + h[16:20] + "-" + h[20:]
+}
+
 func (m *Manager) lifespans(typ string) (idle, maxLife time.Duration) {
 	if typ == TypeSession {
 		return m.cfg.IdleSessionLifespan, m.cfg.MaxSessionLifespan
@@ -154,7 +164,7 @@ func (m *Manager) Login(ctx context.Context, userID, deviceID, typ string, metad
 		typ = TypeRefresh
 	}
 	if deviceID == "" {
-		deviceID = newID()
+		deviceID = newDeviceID()
 	}
 	now := m.Now()
 	idle, maxLife := m.lifespans(typ)

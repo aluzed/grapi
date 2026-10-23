@@ -1,5 +1,7 @@
 users-permissions:
   config:
     jwtSecret: compat-users-jwt-secret
+    # remote.sh sets it from the fixture's compat.json (upConfig.jwtManagement).
+    jwtManagement: ${env:UP_JWT_MANAGEMENT:legacy-support}
 graphql:
   enabled: true

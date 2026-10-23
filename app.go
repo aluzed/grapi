@@ -133,9 +133,32 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	}
 	cfg.Users.JWTAlgorithm, _ = c.String(up + "jwt.algorithm")
 	cfg.Users.JWTManagement, _ = c.String(up + "jwtManagement")
-	if m := cfg.Users.JWTManagement; m != "" && m != "legacy-support" {
-		slog.Default().Warn("plugins.users-permissions.config.jwtManagement " + m + " is not supported by grapi yet: legacy-support is used")
+	if m := cfg.Users.JWTManagement; m != "" && m != "legacy-support" && m != "refresh" {
+		slog.Default().Warn("plugins.users-permissions.config.jwtManagement " + m + " is unknown: legacy-support is used")
 	}
+	seconds := func(key string) time.Duration {
+		n, _ := c.Int(up + "sessions." + key)
+		return time.Duration(n) * time.Second
+	}
+	cfg.Users.Sessions = httpapi.UPSessions{
+		AccessTokenLifespan: seconds("accessTokenLifespan"), MaxRefreshTokenLifespan: seconds("maxRefreshTokenLifespan"),
+		IdleRefreshTokenLifespan: seconds("idleRefreshTokenLifespan"), MaxSessionLifespan: seconds("maxSessionLifespan"),
+		IdleSessionLifespan: seconds("idleSessionLifespan"),
+	}
+	cfg.Users.Sessions.HTTPOnly, _ = c.Bool(up + "sessions.httpOnly")
+	cookie := up + "sessions.cookie."
+	cfg.Users.Sessions.Cookie.Name, _ = c.String(cookie + "name")
+	cfg.Users.Sessions.Cookie.SameSite, _ = c.String(cookie + "sameSite")
+	cfg.Users.Sessions.Cookie.Path, _ = c.String(cookie + "path")
+	cfg.Users.Sessions.Cookie.Domain, _ = c.String(cookie + "domain")
+	if b, ok := c.Bool(cookie + "secure"); ok {
+		cfg.Users.Sessions.Cookie.Secure = &b
+	}
+	// koa's maxAge is in milliseconds.
+	if n, ok := c.Int(cookie + "maxAge"); ok {
+		cfg.Users.Sessions.Cookie.MaxAge = time.Duration(n) * time.Millisecond
+	}
+	cfg.Users.Production = c.Environment == "production"
 	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
 	switch p := c.Get("server.proxy").(type) {
 	case bool:

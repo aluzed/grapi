@@ -27,17 +27,23 @@ Un service de sessions unique, utilisé par `AUTH-007` (admin) et par `AUTH-002`
 - SSO (`XTR-001`).
 
 ## Critères d'acceptation
-- [ ] Banc `SETUP-002` en mode refresh : login, refresh, logout et sessions ont les mêmes formes de réponse et les mêmes cookies (nom, `HttpOnly`, `SameSite`, `Secure` derrière HTTPS) que Strapi 5.59.
+- [x] Banc `SETUP-002` en mode refresh : login, refresh, logout et sessions ont les mêmes formes de réponse et les mêmes cookies (nom, `HttpOnly`, `SameSite`, `Secure` derrière HTTPS) que Strapi 5.59.
 - [ ] Rejouer un refresh token déjà utilisé donne 401 et révoque la session (TU + intégration).
 - [ ] L'expiration idle et l'expiration absolue sont respectées (tests avec une horloge injectable).
 - [ ] Un access token admin expiré renvoie 401 ; la SPA appelle alors `/admin/access-token` et obtient un nouveau token.
 
 ## Avancement
-- Routes `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/sessions` et `DELETE /auth/sessions/:sessionId` présentes, avec leurs permissions (Public pour `refresh`, Authenticated pour les autres, seedées au bootstrap). En mode `legacy-support` (défaut de Strapi), elles répondent 404 comme Strapi : corpus `basic_roles`, SQLite et Postgres. `jwtManagement: refresh` est signalé au démarrage comme non pris en charge.
+- Routes `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/sessions` et `DELETE /auth/sessions/:sessionId` présentes, avec leurs permissions (Public pour `refresh`, Authenticated pour les autres, seedées au bootstrap). En mode `legacy-support` (défaut de Strapi), elles répondent 404 comme Strapi : corpus `basic_roles`, SQLite et Postgres.
 - Gestionnaire de sessions `internal/auth/session` sur `strapi_sessions` : rotation, rejeu détecté (révocation de l'appareil), expirations idle et absolue, horloge injectable (tests unitaires sur un store mémoire).
 - Côté admin, branché dans l'API `/admin/api/v1` (option B) : login, `access-token`, `logout`, sessions du profil, cookie httpOnly. Testé de bout en bout (`admin_test.go`). Le contrat est celui de grapi (`docs/admin-api.md`), pas les routes `/admin/*` de Strapi.
 - Purge des sessions expirées par le planificateur du serveur (au démarrage puis au plus une fois par heure), en plus de celle déclenchée toutes les 50 connexions (compteur désormais atomique) ; `TestAdminPurgesExpiredSessions`.
-- Reste : le mode `refresh` de users-permissions.
+- Mode `refresh` de users-permissions (`internal/httpapi/users_sessions.go`), repris du plugin MIT de Strapi 5.59 :
+  - connexion : `{jwt, refreshToken, user}`, ou le refresh token dans le cookie `strapi_up_refresh` (nom, `sameSite`, `path`, `domain`, `secure`, `maxAge` de `sessions.cookie`) avec `sessions.httpOnly` ou l'en-tête `x-strapi-refresh-cookie: httpOnly` ; `deviceId` du corps, métadonnées `loginAt` et `deviceName` (« Chrome on macOS », heuristique de `@strapi/utils`) ;
+  - inscription : refresh token toujours dans le corps ; changement et réinitialisation du mot de passe : toutes les sessions fermées puis une nouvelle ;
+  - `POST /auth/refresh` (400 sans token, 401 s'il est invalide, rotation), `POST /auth/logout` (`scope: all`, `deviceId`, ou la session courante ; cookie effacé), `GET /auth/sessions` (session courante d'abord, puis la plus récente), `DELETE /auth/sessions/:id` (404 « Session not found ») ;
+  - seuls les access tokens d'une session vivante sont acceptés ; durées par défaut de Strapi pour cette origine (access 10 min) ; `sessions.*` en secondes.
+  - Testé : `TestUsersPermissionsRefreshMode`, `TestUsersPermissionsRefreshCookie`, `TestUsersPermissionsLegacyModeHidesSessions`, et le corpus de banc `sessions` (fixture `sessions`, `upConfig.jwtManagement` dans `compat.json`) : 18 cas identiques à Strapi 5.59 sous SQLite et Postgres (identifiants d'appareil générés en UUID v4 comme Strapi). Les cookies ne sont pas comparés par le banc (le runner ne lit que le statut et le corps) ; ils sont testés dans `TestUsersPermissionsRefreshCookie`.
+  - Divergences assumées (`docs/divergences.md`) : access token refusé dès la révocation de sa session ; vrai token à la confirmation d'e-mail.
 
 ## Notes techniques
 - Horloge injectable (`func() time.Time`) partout pour tester les expirations.

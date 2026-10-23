@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "blocked": false,
+    "confirmed": true,
+    "createdAt": "\u003cts\u003e",
+    "documentId": "#doc1",
+    "email": "ada@example.com",
+    "id": "#id1",
+    "provider": "local",
+    "publishedAt": "\u003cts\u003e",
+    "updatedAt": "\u003cts\u003e",
+    "username": "ada"
+  }
+}

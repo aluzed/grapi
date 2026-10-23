@@ -1,0 +1,74 @@
+fixture: sessions
+# users-permissions with jwtManagement "refresh": session tokens.
+cases:
+  - name: register
+    method: POST
+    path: /api/auth/local/register
+    save: { rjwt: jwt, rrefresh: refreshToken }
+    body: { username: "ada", email: "ada@example.com", password: "Passw0rd!" }
+  - name: login
+    method: POST
+    path: /api/auth/local
+    save: { jwt: jwt, refresh: refreshToken }
+    body: { identifier: "ada@example.com", password: "Passw0rd!", deviceId: "laptop" }
+  - name: login-bad-password
+    method: POST
+    path: /api/auth/local
+    body: { identifier: "ada@example.com", password: "nope" }
+  - name: me
+    path: /api/users/me
+    bearer: "{{jwt}}"
+  - name: me-with-refresh-token
+    path: /api/users/me
+    bearer: "{{refresh}}"
+  - name: sessions
+    path: /api/auth/sessions
+    bearer: "{{jwt}}"
+    save: { other: data.1.id }
+  - name: sessions-anonymous
+    path: /api/auth/sessions
+  - name: refresh-missing
+    method: POST
+    path: /api/auth/refresh
+    body: {}
+  - name: refresh-invalid
+    method: POST
+    path: /api/auth/refresh
+    body: { refreshToken: "not-a-token" }
+  - name: refresh
+    method: POST
+    path: /api/auth/refresh
+    save: { jwt2: jwt }
+    body: { refreshToken: "{{refresh}}" }
+  - name: me-after-refresh
+    path: /api/users/me
+    bearer: "{{jwt2}}"
+  - name: revoke-other
+    method: DELETE
+    path: /api/auth/sessions/{{other}}
+    bearer: "{{jwt2}}"
+  - name: revoke-other-again
+    method: DELETE
+    path: /api/auth/sessions/{{other}}
+    bearer: "{{jwt2}}"
+  - name: sessions-after-revoke
+    path: /api/auth/sessions
+    bearer: "{{jwt2}}"
+  - name: change-password
+    method: POST
+    path: /api/auth/change-password
+    bearer: "{{jwt2}}"
+    save: { jwt3: jwt }
+    body: { currentPassword: "Passw0rd!", password: "N3wPassw0rd!", passwordConfirmation: "N3wPassw0rd!" }
+  - name: sessions-after-password-change
+    path: /api/auth/sessions
+    bearer: "{{jwt3}}"
+  - name: logout
+    method: POST
+    path: /api/auth/logout
+    bearer: "{{jwt3}}"
+    body: {}
+  - name: logout-anonymous
+    method: POST
+    path: /api/auth/logout
+    body: {}

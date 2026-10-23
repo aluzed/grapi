@@ -150,7 +150,7 @@ func (s *Server) authResetPassword(w http.ResponseWriter, r *http.Request, rc *r
 	if _, err := s.editUser(ctx, user, map[string]any{"resetPasswordToken": nil, "password": body["password"]}); err != nil {
 		return err
 	}
-	return s.sendAuth(w, user, rc.auth)
+	return s.sendAuth(w, r, user, rc.auth, body, issueReissue)
 }
 
 func (s *Server) authEmailConfirmation(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
@@ -179,7 +179,7 @@ func (s *Server) emailConfirmation(w http.ResponseWriter, r *http.Request, rc *r
 		return err
 	}
 	if returnUser {
-		return s.sendAuth(w, users[0], rc.auth)
+		return s.sendAuth(w, r, users[0], rc.auth, nil, issueToken)
 	}
 	var advanced upAdvancedFull
 	if err := s.auth.store(ctx, "advanced", &advanced); err != nil {
