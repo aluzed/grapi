@@ -77,7 +77,8 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 - Vérifié dans Chrome sur le binaire (`make build`) : premier admin, reprise de session au rechargement, deux onglets qui renouvellent en même temps, 375 px sans scroll horizontal avec boutons pleine largeur.
 - Vérifié en navigateur avec un Editor invité : menu sans Content-Type Builder, Paramètres réduits à la vue d'ensemble, page 403 sur `/settings/users`.
 - Écrit mais pas encore vérifié en navigateur : le renouvellement sur 401 avec rejeu de la requête (il faut attendre l'expiration de l'access token, 30 minutes par défaut).
-- Reste : widgets de l'accueil (nombre de documents, derniers modifiés et publiés, qui attendent l'API du Content Manager `ADM-003`), e-mails de bout en bout sur Mailpit, client TS généré depuis l'OpenAPI admin.
+- Accueil : nombre de documents par type, cinq derniers modifiés et cinq derniers publiés, sur les types lisibles (`GET /homepage`, `TestAdminHomepage`).
+- Reste : e-mails de bout en bout sur Mailpit, client TS généré depuis l'OpenAPI admin.
 
 ## Notes techniques
 - Endpoints admin grapi versionnés sous `/admin/api/v1`. Schéma OpenAPI généré (voir `PLG-005`) et client TS généré pour la SPA.

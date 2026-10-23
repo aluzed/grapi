@@ -663,8 +663,16 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		return err
 	}
 	field := r.PathValue("field")
-	attr, ok := ct.Attributes.Get(field)
-	if !ok || attr.Type != schema.TypeRelation || attr.IsMorph() || attr.Target == "" || !a.Can(actionRead, string(ct.UID), field) {
+	attrs, readable := &ct.Attributes, a.Can(actionRead, string(ct.UID), field)
+	if cu := r.URL.Query().Get("component"); cu != "" {
+		comp, ok := s.set.Component(schema.UID(cu))
+		if !ok {
+			return errNotFound
+		}
+		attrs, readable = &comp.Attributes, true
+	}
+	attr, ok := attrs.Get(field)
+	if !ok || attr.Type != schema.TypeRelation || attr.IsMorph() || attr.Target == "" || !readable {
 		return errNotFound
 	}
 	target, ok := s.set.ContentType(schema.UID(attr.Target))

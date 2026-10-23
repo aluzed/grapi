@@ -586,7 +586,19 @@ func TestAdminComponents(t *testing.T) {
 	if s, b, _ := c.do("PUT", base+"/"+id, string(body)); s != 200 {
 		t.Fatalf("update: %d %v", s, b)
 	}
+	_, b, _ = c.do("POST", "/content-manager/collection-types/api::author.author", `{"data":{"name":"Le Guin"}}`)
+	author := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("GET", "/content-manager/relations/api::page.page/author?component=shared.link", "")
+	if list := b["data"].([]any); len(list) != 1 || list[0].(map[string]any)["label"] != "Le Guin" {
+		t.Fatalf("relation targets in a component: %v", b)
+	}
+	if s, b, _ := c.do("PUT", base+"/"+id, `{"data":{"links":[{"label":"Author","url":"/a","author":{"set":[{"documentId":"`+author+`"}]}}]}}`); s != 200 {
+		t.Fatalf("relation in a component: %d %v", s, b)
+	}
 	got = read()
+	if l := got["links"].([]any); len(l) != 1 || l[0].(map[string]any)["author"].(map[string]any)["name"] != "Le Guin" {
+		t.Fatalf("component relation: %v", got["links"])
+	}
 	cols = got["layout"].(map[string]any)["columns"].([]any)
 	if got["seo"].(map[string]any)["metaTitle"] != "Welcome" || len(cols) != 2 || cols[0].(map[string]any)["cell"].(map[string]any)["text"] != "left" || len(got["body"].([]any)) != 2 {
 		t.Fatalf("after update: %v", got)
@@ -710,5 +722,65 @@ func TestAdminMedia(t *testing.T) {
 	}
 	if s, _, _ := c.do("GET", "/upload/files/"+id, ""); s != 404 {
 		t.Fatalf("deleted file: %d", s)
+	}
+}
+
+func TestAdminUID(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	gen := func(title string) string {
+		t.Helper()
+		_, b, _ := c.do("POST", "/content-manager/uid/generate", `{"contentTypeUID":"api::article.article","field":"slug","data":{"title":"`+title+`"}}`)
+		s, _ := b["data"].(string)
+		return s
+	}
+	if got := gen("Hello Wörld, ça va?"); got != "hello-woerld-ca-va" {
+		t.Fatalf("generate: %q", got)
+	}
+	if _, b, _ := c.do("POST", "/content-manager/collection-types/api::article.article", `{"data":{"title":"A","slug":"hello-woerld-ca-va"}}`); b["error"] != nil {
+		t.Fatal(b)
+	}
+	if got := gen("Hello Wörld, ça va?"); got != "hello-woerld-ca-va-1" {
+		t.Fatalf("generate a taken uid: %q", got)
+	}
+	if got := gen(""); got != "article" {
+		t.Fatalf("without the target field: %q", got)
+	}
+	_, b, _ = c.do("POST", "/content-manager/uid/check-availability", `{"contentTypeUID":"api::article.article","field":"slug","value":"hello-woerld-ca-va"}`)
+	if d := dataOf(b); d["isAvailable"] != false || d["suggestion"] != "hello-woerld-ca-va-1" {
+		t.Fatalf("check: %v", b)
+	}
+	if s, _, _ := c.do("POST", "/content-manager/uid/generate", `{"contentTypeUID":"api::article.article","field":"title"}`); s != 400 {
+		t.Fatalf("not a uid field: %d", s)
+	}
+}
+
+func TestAdminHomepage(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	var ids []string
+	for _, title := range []string{"One", "Two"} {
+		_, b, _ := c.do("POST", "/content-manager/collection-types/api::article.article", `{"data":{"title":"`+title+`"}}`)
+		ids = append(ids, dataOf(b)["documentId"].(string))
+	}
+	c.do("POST", "/content-manager/collection-types/api::article.article/actions/bulk-publish", `{"documentIds":["`+ids[0]+`"]}`)
+	_, b, _ = c.do("GET", "/homepage", "")
+	d := dataOf(b)
+	var articles float64
+	for _, x := range d["counts"].([]any) {
+		if m := x.(map[string]any); m["uid"] == "api::article.article" {
+			articles = m["total"].(float64)
+		}
+	}
+	edited := d["lastEdited"].([]any)
+	pub := d["lastPublished"].([]any)
+	if articles != 2 || len(edited) < 2 || len(pub) != 1 || pub[0].(map[string]any)["title"] != "One" {
+		t.Fatalf("homepage: %v", d)
 	}
 }

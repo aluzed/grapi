@@ -235,5 +235,12 @@
   "media.add": "Ajouter un média",
   "media.open": "Ouvrir {name}",
   "media.download": "Télécharger",
-  "media.uploading": "Import en cours…"
+  "media.uploading": "Import en cours…",
+  "uid.generate": "Générer",
+  "uid.available": "Disponible",
+  "uid.taken": "Déjà utilisé, suggestion : {s}",
+  "home.counts": "Entrées",
+  "home.lastEdited": "Dernières modifications",
+  "home.lastPublished": "Dernières publications",
+  "home.nothing": "Rien pour l'instant."
 }

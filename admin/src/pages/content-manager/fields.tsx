@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowDown, ArrowUp, Plus, Sparkles, X } from 'lucide-react'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
@@ -20,11 +21,9 @@ export type FieldContext = {
 
 const scalarTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
 
-// isEditable: relations only at the root of a content type (their target
-// search is keyed by the content type's field).
-export function isEditable(attr: Attribute, root: boolean): boolean {
+export function isEditable(attr: Attribute): boolean {
   if (scalarTypes.has(attr.type)) return true
-  if (attr.type === 'relation') return root && isEditableRelation(attr)
+  if (attr.type === 'relation') return isEditableRelation(attr)
   return attr.type === 'component' || attr.type === 'dynamiczone' || attr.type === 'media'
 }
 
@@ -58,7 +57,7 @@ export function toObject(c: ComponentModel, src: Values | null, ctx: FieldContex
   if (src?.id !== undefined) out.id = src.id
   for (const name of c.fields) {
     const attr = c.attributes[name]
-    if (attr && isEditable(attr, false)) out[name] = toInput(attr, src ? src[name] : (attr.default ?? null), ctx)
+    if (attr && isEditable(attr)) out[name] = toInput(attr, src ? src[name] : (attr.default ?? null), ctx)
   }
   return out
 }
@@ -114,7 +113,7 @@ function fromObject(c: ComponentModel, item: Values, ctx: FieldContext): Values 
   if (item.id !== undefined) out.id = item.id
   for (const name of c.fields) {
     const attr = c.attributes[name]
-    if (!attr || !isEditable(attr, false)) continue
+    if (!attr || !isEditable(attr)) continue
     const v = fromInput(attr, item[name], ctx)
     if (v !== undefined) out[name] = v
   }
@@ -229,7 +228,7 @@ function ComponentField({ attr, text, value, onChange, ctx }: { attr: Attribute;
         <legend className="mb-1.5 text-sm font-medium">{text}</legend>
         {v ? (
           <Group title={c.info.displayName} tools={<ItemTools index={0} count={1} onRemove={() => onChange(null)} />}>
-            <FieldsGrid attrs={c.attributes} fields={c.fields} values={v} onChange={(name, x) => onChange({ ...v, [name]: x })} ctx={ctx} root={false} />
+            <FieldsGrid attrs={c.attributes} fields={c.fields} values={v} onChange={(name, x) => onChange({ ...v, [name]: x })} ctx={ctx} root={false} component={c.uid} />
           </Group>
         ) : (
           <Button variant="outline" title={`${t('comp.add')} : ${c.info.displayName}`} icon={<Plus className="h-4 w-4" />} onClick={() => onChange(empty())} className="w-full md:w-auto">
@@ -249,7 +248,7 @@ function ComponentField({ attr, text, value, onChange, ctx }: { attr: Attribute;
           title={`${c.info.displayName} · ${t('comp.entry', { n: String(i + 1) })}`}
           tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
         >
-          <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} />
+          <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} component={c.uid} />
         </Group>
       ))}
       <Button variant="outline" title={t('comp.addEntry')} icon={<Plus className="h-4 w-4" />} onClick={() => onChange([...list, empty()])} className="w-full md:w-auto">
@@ -280,7 +279,7 @@ function DynamicZoneField({ attr, text, value, onChange, ctx }: { attr: Attribut
             title={c.info.displayName}
             tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
           >
-            <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} />
+            <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} component={c.uid} />
           </Group>
         )
       })}
@@ -311,6 +310,49 @@ function DynamicZoneField({ attr, text, value, onChange, ctx }: { attr: Attribut
   )
 }
 
+function UIDField({ name, attr, text, value, values, error, onChange, ctx }: { name: string; attr: Attribute; text: string; value: unknown; values: Values; error?: string; onChange: (v: unknown) => void; ctx: FieldContext }) {
+  const { t } = useI18n()
+  const [check, setCheck] = useState<{ isAvailable: boolean; suggestion: string | null } | null>(null)
+  const current = String(value ?? '')
+  const body = { contentTypeUID: ctx.model.uid, field: name, locale: ctx.locale }
+  // The first value is the document's own: it is taken, by itself.
+  const initial = useRef<string | null>(null)
+  if (initial.current === null && current) initial.current = current
+  useEffect(() => {
+    if (!current || current === initial.current) {
+      setCheck(null)
+      return
+    }
+    const h = setTimeout(() => {
+      api
+        .post<{ isAvailable: boolean; suggestion: string | null }>('/content-manager/uid/check-availability', { ...body, value: current })
+        .then(setCheck)
+        .catch(() => setCheck(null))
+    }, 400)
+    return () => clearTimeout(h)
+    // body derives from the field identity, stable for this component.
+  }, [current])
+  const generate = async () => {
+    const data: Values = {}
+    if (attr.targetField) data[attr.targetField] = values[attr.targetField]
+    if (initial.current === null) initial.current = ''
+    onChange(await api.post<string>('/content-manager/uid/generate', { ...body, data }))
+  }
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <TextField label={text} name={name} value={current} error={error} autoComplete="off" onChange={(e) => onChange(e.target.value)} className="flex-1" />
+        <Button variant="outline" title={t('uid.generate')} icon={<Sparkles className="h-4 w-4" />} onClick={() => void generate()} className="w-full sm:w-auto">
+          {t('uid.generate')}
+        </Button>
+      </div>
+      {check && current && (
+        <p className={`text-xs ${check.isAvailable ? 'text-success' : 'text-destructive'}`}>{check.isAvailable ? t('uid.available') : t('uid.taken', { s: check.suggestion ?? '' })}</p>
+      )}
+    </div>
+  )
+}
+
 export function FieldsGrid({
   attrs,
   fields,
@@ -318,6 +360,7 @@ export function FieldsGrid({
   onChange,
   ctx,
   root,
+  component,
   errors = {},
 }: {
   attrs: Record<string, Attribute>
@@ -326,6 +369,8 @@ export function FieldsGrid({
   onChange: (name: string, v: unknown) => void
   ctx: FieldContext
   root: boolean
+  // component is the uid of the component these fields belong to.
+  component?: string
   errors?: Record<string, string>
 }) {
   const { t } = useI18n()
@@ -335,7 +380,7 @@ export function FieldsGrid({
         const attr = attrs[name]
         if (!attr) return null
         const text = (root ? (ctx.labels[name] ?? name) : name) + (attr.required ? ' *' : '')
-        if (!isEditable(attr, root)) {
+        if (!isEditable(attr)) {
           return (
             <div key={name} className="flex flex-col gap-1.5">
               <span className="text-sm font-medium">{text}</span>
@@ -349,6 +394,7 @@ export function FieldsGrid({
               <RelationField
                 key={name}
                 uid={ctx.model.uid}
+                component={component}
                 name={name}
                 attr={attr}
                 label={text}
@@ -357,6 +403,9 @@ export function FieldsGrid({
                 onChange={(v) => onChange(name, v)}
               />
             )
+          case 'uid':
+            if (root) return <UIDField key={name} name={name} attr={attr} text={text} value={values[name]} values={values} error={errors[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
+            break
           case 'media':
             return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
           case 'component':

@@ -38,7 +38,8 @@ Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert l
 | `GET /users/me/sessions` | oui | Sessions actives, `isCurrent` pour celle de la requête |
 | `DELETE /users/me/sessions/{id}` | oui | Révoque une session (et son appareil) |
 | `DELETE /users/me/sessions` | oui | Révoque toutes les sessions des autres appareils |
-| `GET /information` | oui | `{apiVersion, develop, languages}` |
+| `GET /information` | oui | `{apiVersion, develop, languages, version, goVersion, database, environment, contentTypes, edition}` |
+| `GET /homepage` | oui | Widgets de l'accueil sur les types lisibles : `counts` (documents par type), `lastEdited` et `lastPublished` (5 derniers) |
 
 ### Admins et rôles
 
@@ -91,6 +92,11 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | `PUT /content-manager/single-types/{uid}` | `{data, locale}` : crée le document (action `create`) ou le met à jour (`update`) |
 | `DELETE /content-manager/single-types/{uid}?locale=` | Supprime le document |
 | `POST /content-manager/single-types/{uid}/actions/publish` et `unpublish` | `{locale}` |
+
+| `POST /content-manager/uid/generate` | `{contentTypeUID, field, data, locale}` : slug du champ cible (`targetField`) de `data`, ou du nom du modèle, rendu unique par un suffixe `-1`, `-2`… (options slugify de l'attribut respectées) |
+| `POST /content-manager/uid/check-availability` | `{contentTypeUID, field, value, locale}` : `{isAvailable, suggestion}` |
+
+`GET /content-manager/relations/{uid}/{field}` accepte `?component=<uid>` pour une relation définie dans un composant.
 
 Une erreur de validation du document porte `details.errors: [{path, message}]` avec le chemin complet (`links.0.label`).
 

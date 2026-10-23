@@ -235,5 +235,12 @@
   "media.add": "Add media",
   "media.open": "Open {name}",
   "media.download": "Download",
-  "media.uploading": "Uploading…"
+  "media.uploading": "Uploading…",
+  "uid.generate": "Generate",
+  "uid.available": "Available",
+  "uid.taken": "Already used, suggestion: {s}",
+  "home.counts": "Entries",
+  "home.lastEdited": "Last edited",
+  "home.lastPublished": "Last published",
+  "home.nothing": "Nothing yet."
 }

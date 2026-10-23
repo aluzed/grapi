@@ -24,7 +24,7 @@ export function relationItems(value: unknown, attr: Attribute, models: Model[]):
 const small =
   'inline-flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs font-medium disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500'
 
-export function RelationField({ uid, name, attr, label, value, onChange, locale }: { uid: string; name: string; attr: Attribute; label: string; value: RelationItem[]; onChange: (v: RelationItem[]) => void; locale?: string }) {
+export function RelationField({ uid, component, name, attr, label, value, onChange, locale }: { uid: string; component?: string; name: string; attr: Attribute; label: string; value: RelationItem[]; onChange: (v: RelationItem[]) => void; locale?: string }) {
   const { t } = useI18n()
   const id = useId()
   const multiple = isMultiple(attr)
@@ -38,8 +38,9 @@ export function RelationField({ uid, name, attr, label, value, onChange, locale 
   const params = new URLSearchParams({ pageSize: '10' })
   if (debounced) params.set('_q', debounced)
   if (locale) params.set('locale', locale)
+  if (component) params.set('component', component)
   const targets = useQuery({
-    queryKey: ['cm', 'relations', uid, name, params.toString()],
+    queryKey: ['cm', 'relations', uid, component, name, params.toString()],
     queryFn: () => requestWithMeta<RelationItem[], unknown>(`/content-manager/relations/${encodeURIComponent(uid)}/${encodeURIComponent(name)}?${params}`),
     enabled: open,
   })

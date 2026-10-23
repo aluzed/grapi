@@ -68,7 +68,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     const next: Values = {}
     for (const name of fields) {
       const attr = model.attributes[name]
-      if (!attr || !isEditable(attr, true)) continue
+      if (!attr || !isEditable(attr)) continue
       next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
     setValues(next)
@@ -80,7 +80,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     const errs: Record<string, string> = {}
     for (const name of fields) {
       const attr = model.attributes[name]
-      if (!attr || !isEditable(attr, true)) continue
+      if (!attr || !isEditable(attr)) continue
       try {
         const v = fromInput(attr, values[name], ctx)
         if (v !== undefined) out[name] = v
