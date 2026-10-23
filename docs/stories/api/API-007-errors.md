@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # API-007 : Classes d'erreur et format d'erreur
@@ -20,11 +20,11 @@ Les mêmes classes d'erreur et la même sérialisation.
 - Le middleware `responses` qui personnalise les réponses par code (`API-008`).
 
 ## Critères d'acceptation
-- [ ] Les corps d'erreur des 10 classes sont identiques à Strapi (banc de compatibilité).
+- [x] Les corps d'erreur des 10 classes sont identiques à Strapi (banc de compatibilité).
 - [x] Une panique dans un handler donne un 500 propre, sans pile dans la réponse.
 
 ## Avancement
-- Banc : 8 des 10 classes sortent déjà à l'identique de Strapi dans les goldens (`ValidationError`, `ForbiddenError`, `UnauthorizedError`, `NotFoundError`, `ApplicationError`, `PayloadTooLargeError`, `RateLimitError`, `PaginationError`). Strapi ne lève jamais `PolicyError` ni `NotImplementedError` sur ses propres routes : seul le code d'un projet le fait.
+- Banc : 8 des 10 classes sortent déjà à l'identique de Strapi dans les goldens (`ValidationError`, `ForbiddenError`, `UnauthorizedError`, `NotFoundError`, `ApplicationError`, `PayloadTooLargeError`, `RateLimitError`, `PaginationError`). Strapi ne lève jamais `PolicyError` ni `NotImplementedError` sur ses propres routes : seul le code d'un projet le fait. Le banc `devfreelance_errors` les déclare des deux côtés (`rules.js` : policies nommées dans le registre de Strapi et routes `strapi.server.routes` ; `framework/main.go` : `app.Policy` et `PublicRoute`) : policy qui refuse (403 « Policy Failed »), policy qui lève une `PolicyError` avec détails, handler qui lève `NotImplementedError` (501, `details: {}`), identiques à Strapi.
 - Erreurs publiques pour le code Go (`errors.go`) : un constructeur par classe, messages par défaut de `@strapi/utils`, détails optionnels, trouvées par `errors.As` même enveloppées. `TestStrapiErrorClasses` : 501 d'un handler, 403 `PolicyError` d'une policy qui refuse ou qui renvoie sa propre erreur, 400 d'un hook de ligne. Une erreur applicative garde `details` même en 5xx (501 `{}`), comme le `formatApplicationError` de Strapi ; une erreur interne n'en a pas.
 
 ## Notes techniques
