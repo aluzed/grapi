@@ -54,7 +54,8 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Blocks : éditeur par blocs (paragraphe, titres 1 à 6, listes, citation, code avec langage, image de la médiathèque), réordonnables, mise en forme en ligne en Markdown léger (gras, italique, souligné, barré, code, lien) convertie vers et depuis les nœuds Strapi, avec échappement des caractères spéciaux (`admin/src/lib/blocks.ts`, tests aller-retour). Vérifié dans Chrome : le JSON enregistré est au format Strapi. Ce n'est pas un éditeur WYSIWYG.
 - Permissions par champ : `/content-manager/models` donne `createFields` et `updateFields` (`null` sans restriction), l'EditView désactive les champs absents de la liste et le serveur ignore leurs valeurs (`TestAdminFieldLevelUpdate`). Vérifié dans Chrome sur le binaire : champs grisés et non modifiables.
 - Brouillon incomplet : il s'enregistre, et l'échec de publication porte `details.errors`, que l'EditView affiche sous le champ fautif (`TestAdminIncompleteDraft`, vérifié dans Chrome). Ordre des relations : envoyé en `set`, relu dans le nouvel ordre par l'API REST (`TestAdminRelationReorder`). UID pris : `check-availability` (`TestAdminUID`), appelé par le champ avant l'enregistrement.
-- Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
+- « Remplir depuis une autre locale » : modale avec la locale source, copie des seuls champs localisés et modifiables, rien n'est enregistré avant « Enregistrer » (`admin/src/pages/content-manager/fill.ts`, testé, vérifié dans Chrome). La règle « localisé » est celle du serveur (option, relation ou uid) : un champ sans option est partagé, et la création d'une nouvelle locale le reprend au lieu de l'envoyer vide.
+- Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.
@@ -65,7 +66,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - [x] Réordonner trois relations envoie des positions correctes, et l'ordre persiste (vérifié via l'API REST).
 - [ ] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
 - [x] Un UID déjà pris est signalé avant l'enregistrement.
-- [ ] « Remplir depuis une autre locale » copie uniquement les champs localisés.
+- [x] « Remplir depuis une autre locale » copie uniquement les champs localisés.
 - [x] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
 - [ ] À 375 px, tous les champs, composants et actions sont empilés, avec des boutons en pleine largeur.
 

@@ -14,6 +14,8 @@ import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
 import { fromInput, isEditable, JSONError, LayoutGrid, toInput, withoutIDs, type FieldContext, type Values } from './fields'
+import { fillableFields, isLocalizedAttribute } from './fill'
+import { FillFromLocale } from './FillFromLocale'
 import { HistoryButton } from './HistoryDialog'
 import { ReleaseButton } from './ReleaseButton'
 import { entryPath, useLocales, useModels } from './hooks'
@@ -109,7 +111,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     for (const name of fields) {
       const attr = model.attributes[name]
       if (!attr || !isEditable(attr)) continue
-      if (missingLocale && attr.pluginOptions?.i18n?.localized === false && name in shared) next[name] = toInput(attr, shared[name], ctx)
+      if (missingLocale && !isLocalizedAttribute(attr) && name in shared) next[name] = toInput(attr, shared[name], ctx)
       else next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
     setValues(next)
@@ -195,6 +197,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const canSave = creating ? model.permissions.create : model.permissions.update
   const writableFields = creating ? model.permissions.createFields : model.permissions.updateFields
   // null allows every field; a field is writable when it or one of its sub-fields is allowed.
+  const otherLocales = (locales.data ?? []).filter((l) => l.code !== locale)
   const writable = (name: string) => writableFields == null || writableFields.some((f) => f === name || f.startsWith(name + '.'))
 
   return (
@@ -232,6 +235,19 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
                   </option>
                 ))}
               </SelectField>
+            )}
+            {model.localized && canSave && (single || documentId !== undefined) && otherLocales.length > 0 && (
+              <FillFromLocale
+                locales={otherLocales}
+                load={(code) => api.get<Entry>(single ? `${singlePath(model.uid)}?locale=${code}` : `${entryPath(model.uid, documentId)}?locale=${code}`)}
+                onFill={(src) =>
+                  setValues((current) => {
+                    const next = { ...current }
+                    for (const name of fillableFields(model.attributes, fields, writable)) next[name] = withoutIDs(toInput(model.attributes[name]!, src[name], ctx))
+                    return next
+                  })
+                }
+              />
             )}
             {single && model.canConfigure && (
               <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full md:w-auto">
