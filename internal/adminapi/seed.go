@@ -86,6 +86,8 @@ func (s *Server) registerActions() {
 		setting("admin", "api-tokens.access", "Access the API tokens settings page", "api tokens"),
 		setting("admin", "api-tokens.regenerate", "Regenerate", "api tokens"),
 		setting("admin", "project-settings.read", "Read the project level settings", "project"),
+		setting("admin", "audit-logs.read", "Read", "audit logs"),
+		setting("admin", "audit-logs.export", "Export", "audit logs"),
 		setting("admin", "project-settings.update", "Update the project level settings", "project"),
 		setting("upload", "settings.read", "Access the Media Library settings page", "media library"),
 		setting("email", "settings.read", "Access the Email Settings page", "email"),

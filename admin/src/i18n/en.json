@@ -519,5 +519,18 @@
   "history.unknown": "Unknown fields (removed or renamed since)",
   "history.missing": "Absent from this version: {fields}",
   "history.by": "by {name}",
-  "history.select": "Choose a version"
+  "history.select": "Choose a version",
+  "settings.audit": "Audit logs",
+  "audit.action": "Action",
+  "audit.date": "Date",
+  "audit.user": "User",
+  "audit.details": "Details",
+  "audit.allActions": "All actions",
+  "audit.from": "From",
+  "audit.to": "To",
+  "audit.export": "Export as CSV",
+  "audit.empty": "No entry.",
+  "audit.detail": "Audit log entry",
+  "audit.system": "System",
+  "audit.view": "View the details"
 }

@@ -122,7 +122,7 @@ func roleCode(name string, now time.Time) string {
 	return prefix + suffix
 }
 
-func (s *Server) createRole(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) createRole(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	var b roleBody
 	if err := decode(r, &b); err != nil {
 		return err
@@ -147,11 +147,12 @@ func (s *Server) createRole(w http.ResponseWriter, r *http.Request, _ *User, _ *
 	if err != nil {
 		return err
 	}
+	s.audit(r, me, "role.create", map[string]any{"id": ro.ID, "name": ro.Name})
 	writeJSON(w, http.StatusCreated, map[string]any{"data": ro})
 	return nil
 }
 
-func (s *Server) updateRole(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) updateRole(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	row, err := s.roleByPath(r)
 	if err != nil {
 		return err
@@ -176,6 +177,7 @@ func (s *Server) updateRole(w http.ResponseWriter, r *http.Request, _ *User, _ *
 		if row, err = s.e.Update(ctx, roleUID, map[string]any{"id": id}, set, query.Params{}); err != nil {
 			return err
 		}
+		s.audit(r, me, "role.update", map[string]any{"id": id, "fields": changedFields(set)})
 	}
 	ro, err := s.roleOut(ctx, row)
 	if err != nil {
@@ -184,7 +186,7 @@ func (s *Server) updateRole(w http.ResponseWriter, r *http.Request, _ *User, _ *
 	return data(w, ro)
 }
 
-func (s *Server) deleteRole(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteRole(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	row, err := s.roleByPath(r)
 	if err != nil {
 		return err
@@ -206,6 +208,7 @@ func (s *Server) deleteRole(w http.ResponseWriter, r *http.Request, _ *User, _ *
 	if _, err := s.e.Delete(ctx, roleUID, map[string]any{"id": ro.ID}, query.Params{}); err != nil {
 		return err
 	}
+	s.audit(r, me, "role.delete", map[string]any{"id": ro.ID, "name": ro.Name})
 	return data(w, ro)
 }
 
@@ -257,7 +260,7 @@ func (s *Server) checkPermission(i int, p Permission) []FieldError {
 }
 
 // setRolePermissions replaces the permissions of a role.
-func (s *Server) setRolePermissions(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) setRolePermissions(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	row, err := s.roleByPath(r)
 	if err != nil {
 		return err
@@ -303,6 +306,7 @@ func (s *Server) setRolePermissions(w http.ResponseWriter, r *http.Request, _ *U
 			return err
 		}
 	}
+	s.audit(r, me, "permission.update", map[string]any{"role": id, "count": len(b.Permissions)})
 	perms, err := s.rolePermissions(ctx, []any{id})
 	if err != nil {
 		return err

@@ -97,6 +97,12 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request, u *User) error
 			return err
 		}
 	}
+	if b.Password != "" {
+		s.audit(r, u, "user.password.update", map[string]any{"id": u.ID})
+	}
+	if fields := changedFields(withoutPassword(set)); len(fields) > 0 {
+		s.audit(r, u, "user.update", map[string]any{"id": u.ID, "fields": fields})
+	}
 	nu, err := s.findUser(ctx, map[string]any{"id": u.ID})
 	if err != nil {
 		return err
@@ -191,4 +197,14 @@ func (s *Server) information(w http.ResponseWriter, _ *http.Request, _ *User) er
 		"version": s.cfg.Version, "goVersion": runtime.Version(), "database": s.e.DB.Dialect.Name(), "environment": s.cfg.Environment,
 		"contentTypes": len(s.ContentManagerTypes()), "edition": "Community",
 	})
+}
+
+func withoutPassword(set map[string]any) map[string]any {
+	out := map[string]any{}
+	for k, v := range set {
+		if k != "password" {
+			out[k] = v
+		}
+	}
+	return out
 }

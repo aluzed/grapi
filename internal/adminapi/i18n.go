@@ -35,7 +35,7 @@ func (s *Server) setDefaultLocale(ctx context.Context, code string) error {
 	return s.store.Set(ctx, i18nScope, "default_locale", code)
 }
 
-func (s *Server) createLocale(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) createLocale(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	var b struct {
 		Code      string `json:"code"`
 		Name      string `json:"name"`
@@ -67,6 +67,7 @@ func (s *Server) createLocale(w http.ResponseWriter, r *http.Request, _ *User, _
 			return err
 		}
 	}
+	s.audit(r, u, "locale.create", map[string]any{"code": b.Code})
 	out := toMap(row)
 	out["isDefault"] = b.IsDefault
 	writeJSON(w, http.StatusCreated, map[string]any{"data": out})
@@ -88,7 +89,7 @@ func (s *Server) localeByPath(r *http.Request) (query.Row, error) {
 	return row, nil
 }
 
-func (s *Server) updateLocale(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) updateLocale(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	row, err := s.localeByPath(r)
 	if err != nil {
 		return err
@@ -107,10 +108,12 @@ func (s *Server) updateLocale(w http.ResponseWriter, r *http.Request, _ *User, _
 		}
 	}
 	code := getString(row, "code")
+	s.audit(r, u, "locale.update", map[string]any{"code": code})
 	if b.IsDefault {
 		if err := s.setDefaultLocale(ctx, code); err != nil {
 			return err
 		}
+		s.audit(r, u, "locale.default.update", map[string]any{"code": code})
 	}
 	out := toMap(row)
 	out["isDefault"] = s.docs.DefaultLocale(ctx) == code
@@ -119,7 +122,7 @@ func (s *Server) updateLocale(w http.ResponseWriter, r *http.Request, _ *User, _
 
 // deleteLocale removes a locale and, as Strapi does, every entry written in
 // it. The default locale cannot be deleted.
-func (s *Server) deleteLocale(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteLocale(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	row, err := s.localeByPath(r)
 	if err != nil {
 		return err
@@ -147,5 +150,6 @@ func (s *Server) deleteLocale(w http.ResponseWriter, r *http.Request, _ *User, _
 	if _, err := s.e.Delete(ctx, localeUID, map[string]any{"id": get(row, "id")}, query.Params{}); err != nil {
 		return err
 	}
+	s.audit(r, u, "locale.delete", map[string]any{"code": code})
 	return data(w, toMap(row))
 }

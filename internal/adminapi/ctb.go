@@ -579,7 +579,7 @@ func (s *Server) apply(p *plan, root string) error {
 	return nil
 }
 
-func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	if !s.cfg.Develop {
 		return &Error{Status: http.StatusForbidden, Name: "ForbiddenError", Message: "The Content-Type Builder writes schemas under grapi develop only"}
 	}
@@ -626,6 +626,12 @@ func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, _ *User, _ *p
 		if err := s.renameInViewConfig(r.Context(), rn); err != nil {
 			return err
 		}
+	}
+	for _, c := range b.ContentTypes {
+		s.audit(r, u, "content-type."+c.Action, map[string]any{"uid": c.UID, "singularName": c.Data.Info["singularName"]})
+	}
+	for _, c := range b.Components {
+		s.audit(r, u, "component."+c.Action, map[string]any{"uid": c.UID, "category": c.Data.Category})
 	}
 	return data(w, map[string]any{"schemaHash": s.schemaHash()})
 }

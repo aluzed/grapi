@@ -221,3 +221,15 @@ Conception propre à grapi (la fonction est Enterprise chez Strapi). Une version
 | `POST /content-manager/history/versions/{id}/restore` | Remplace le brouillon de la locale par la version, sans toucher la version publiée, et enregistre une nouvelle version |
 
 Réglages : `admin.history.enabled` (vrai par défaut), `admin.history.retentionDays` (90 par défaut, 0 pour tout garder).
+
+### Journaux d'audit
+
+Conception propre à grapi (la fonction est Enterprise chez Strapi). Une ligne immuable par écriture faite depuis l'admin, dans `grapi_audit_logs` (hors schéma Strapi) ; jamais de mot de passe, hash, jeton ou clé, URL de webhook réduite au schéma et à l'hôte.
+
+| Méthode et chemin | Action | Rôle |
+|---|---|---|
+| `GET /audit-logs?page=&pageSize=&action=&user=&from=&to=` | `admin::audit-logs.read` | Entrées, de la plus récente à la plus ancienne (`action` répétable, dates ISO) |
+| `GET /audit-logs/{id}` | `admin::audit-logs.read` | Une entrée avec son `payload` |
+| `GET /audit-logs/export.csv` | `admin::audit-logs.export` | Export CSV en flux des entrées filtrées ; l'export est lui-même journalisé |
+
+Réglages : `admin.auditLogs.enabled` (vrai par défaut), `admin.auditLogs.retentionDays` (90 par défaut, 0 pour tout garder).

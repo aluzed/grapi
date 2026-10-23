@@ -192,7 +192,12 @@ func (s *Server) setTokenPermissions(r *http.Request, id any, typ string, action
 	return nil
 }
 
-func (s *Server) createToken(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) createToken(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) (err error) {
+	defer func() {
+		if err == nil {
+			s.audit(r, u, "token.create", map[string]any{"id": r.PathValue("id")})
+		}
+	}()
 	if s.cfg.APITokenSalt == "" {
 		return appError("admin.apiToken.salt (API_TOKEN_SALT) is not set")
 	}
@@ -235,7 +240,12 @@ func (s *Server) createToken(w http.ResponseWriter, r *http.Request, _ *User, _ 
 	return nil
 }
 
-func (s *Server) updateToken(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) updateToken(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) (err error) {
+	defer func() {
+		if err == nil {
+			s.audit(r, u, "token.update", map[string]any{"id": r.PathValue("id")})
+		}
+	}()
 	row, err := s.tokenByPath(r)
 	if err != nil {
 		return err
@@ -284,7 +294,12 @@ func (s *Server) updateToken(w http.ResponseWriter, r *http.Request, _ *User, _ 
 	return data(w, t)
 }
 
-func (s *Server) regenerateToken(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) regenerateToken(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) (err error) {
+	defer func() {
+		if err == nil {
+			s.audit(r, u, "token.regenerate", map[string]any{"id": r.PathValue("id")})
+		}
+	}()
 	row, err := s.tokenByPath(r)
 	if err != nil {
 		return err
@@ -299,7 +314,12 @@ func (s *Server) regenerateToken(w http.ResponseWriter, r *http.Request, _ *User
 	return data(w, map[string]any{"accessKey": key})
 }
 
-func (s *Server) deleteToken(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteToken(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) (err error) {
+	defer func() {
+		if err == nil {
+			s.audit(r, u, "token.delete", map[string]any{"id": r.PathValue("id")})
+		}
+	}()
 	row, err := s.tokenByPath(r)
 	if err != nil {
 		return err

@@ -1380,3 +1380,79 @@ func TestAdminHistory(t *testing.T) {
 		t.Fatalf("versions go with the document: %d", n)
 	}
 }
+
+func TestAdminAuditLogs(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	anon := newAdminClient(t, ts.URL)
+	anon.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Wr0ngPass"}`)
+	_, b, _ = c.do("POST", "/content-manager/collection-types/api::article.article", `{"data":{"title":"Audited"}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", "/content-manager/collection-types/api::article.article/"+id, `{"data":{"title":"Audited 2","views":3}}`)
+	c.do("GET", "/content-manager/collection-types/api::article.article", "")
+	c.do("POST", "/webhooks", `{"name":"Hook","url":"https://hooks.example.com/secret/path?token=abc","headers":{"Authorization":"Bearer s3cr3t"},"events":["entry.create"]}`)
+	c.do("PUT", "/users/me", `{"currentPassword":"Passw0rd","password":"N3wSecretPass"}`)
+
+	_, b, _ = c.do("GET", "/audit-logs?pageSize=50", "")
+	var actions []string
+	byAction := map[string]map[string]any{}
+	for _, e := range b["data"].([]any) {
+		m := e.(map[string]any)
+		actions = append(actions, m["action"].(string))
+		byAction[m["action"].(string)] = m
+	}
+	for _, want := range []string{"user.create", "admin.auth.error", "entry.create", "entry.update", "webhook.create", "user.password.update"} {
+		if byAction[want] == nil {
+			t.Errorf("missing %s in %v", want, actions)
+		}
+	}
+	for _, a := range actions {
+		if strings.HasPrefix(a, "entry.read") || a == "entry.find" {
+			t.Errorf("a read is audited: %s", a)
+		}
+	}
+	if byAction["entry.create"]["user"].(map[string]any)["email"] != "ada@example.com" || byAction["admin.auth.error"]["user"] != nil {
+		t.Fatalf("users: %v %v", byAction["entry.create"], byAction["admin.auth.error"])
+	}
+	hook := strconv.Itoa(int(byAction["webhook.create"]["id"].(float64)))
+	_, b, _ = c.do("GET", "/audit-logs/"+hook, "")
+	payload, _ := json.Marshal(dataOf(b)["payload"])
+	if strings.Contains(string(payload), "s3cr3t") || strings.Contains(string(payload), "secret/path") || !strings.Contains(string(payload), "https://hooks.example.com") {
+		t.Fatalf("webhook payload: %s", payload)
+	}
+	upd := strconv.Itoa(int(byAction["entry.update"]["id"].(float64)))
+	_, b, _ = c.do("GET", "/audit-logs/"+upd, "")
+	if f := dataOf(b)["payload"].(map[string]any)["fields"].([]any); len(f) != 2 {
+		t.Fatalf("changed fields: %v", f)
+	}
+	// No password, plain or hashed, anywhere in the log.
+	req, _ := http.NewRequest("GET", ts.URL+"/admin/api/v1/audit-logs/export.csv?action=entry.create", nil)
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	csvBody, _ := io.ReadAll(res.Body)
+	_ = res.Body.Close()
+	lines := strings.Split(strings.TrimSpace(string(csvBody)), "\n")
+	if res.Header.Get("Content-Type") != "text/csv; charset=utf-8" || len(lines) != 2 || !strings.HasPrefix(lines[0], "date,action,origin") {
+		t.Fatalf("csv export: %s", csvBody)
+	}
+	all := ""
+	_, b, _ = c.do("GET", "/audit-logs?pageSize=100", "")
+	for _, e := range b["data"].([]any) {
+		id := strconv.Itoa(int(e.(map[string]any)["id"].(float64)))
+		_, d, _ := c.do("GET", "/audit-logs/"+id, "")
+		raw, _ := json.Marshal(d)
+		all += string(raw)
+	}
+	if strings.Contains(all, "N3wSecretPass") || strings.Contains(all, "Passw0rd") || strings.Contains(all, "$2a$") {
+		t.Fatal("a password is in the audit log")
+	}
+	if !strings.Contains(all, "audit-log.export") {
+		t.Fatal("the export is audited")
+	}
+}

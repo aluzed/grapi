@@ -62,6 +62,10 @@ type Config struct {
 	Media MediaService
 	// UI is the built SPA; nil serves the API only.
 	UI fs.FS
+	// AuditEnabled records the audit log (admin.auditLogs.enabled, true by
+	// default); AuditRetentionDays purges older rows (0: keep).
+	AuditEnabled       bool
+	AuditRetentionDays int
 	// HistoryEnabled records the content history (admin.history.enabled,
 	// true by default); HistoryRetentionDays purges older versions (0: keep).
 	HistoryEnabled       bool
@@ -173,6 +177,7 @@ func (s *Server) routes() {
 	s.ctbRoutes()
 	s.viewConfigRoutes()
 	s.historyRoutes()
+	s.auditRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})
@@ -184,6 +189,9 @@ func (s *Server) routes() {
 // history table.
 func (s *Server) Bootstrap(ctx context.Context) error {
 	if err := s.ensureHistoryTable(ctx); err != nil {
+		return err
+	}
+	if err := s.ensureAuditTable(ctx); err != nil {
 		return err
 	}
 	return s.seedRoles(ctx)

@@ -193,6 +193,7 @@ func (s *Server) registerAdmin(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "user.create", map[string]any{"id": u.ID, "email": u.Email, "role": SuperAdminCode})
 	return s.startSession(w, r, u, false, "")
 }
 
@@ -217,11 +218,14 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) error {
 	}
 	invalid := &Error{Status: http.StatusBadRequest, Name: "ApplicationError", Message: "Invalid credentials"}
 	if u == nil || !passwordMatches(b.Password, u.password) {
+		s.audit(r, nil, "admin.auth.error", map[string]any{"email": normalizeEmail(b.Email)})
 		return invalid
 	}
 	if !u.IsActive || u.Blocked {
+		s.audit(r, u, "admin.auth.error", map[string]any{"email": u.Email, "reason": "inactive"})
 		return appError("User not active")
 	}
+	s.audit(r, u, "admin.auth.success", nil)
 	return s.startSession(w, r, u, b.RememberMe, b.DeviceID)
 }
 
@@ -271,6 +275,9 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) error {
 			if err := s.sessions.Logout(r.Context(), sess.UserID, sess.DeviceID); err != nil {
 				return err
 			}
+			if u, err := s.findUser(r.Context(), map[string]any{"id": sess.UserID}); err == nil && u != nil {
+				s.audit(r, u, "admin.logout", nil)
+			}
 		}
 	}
 	s.clearRefresh(w, r)
@@ -311,6 +318,7 @@ func (s *Server) forgotPassword(w http.ResponseWriter, r *http.Request) error {
 		if _, err := s.e.Update(ctx, userUID, map[string]any{"id": u.ID}, query.Data{"resetPasswordToken": tok, "resetPasswordTokenExpiresAt": s.now().Add(s.cfg.ResetPasswordTTL).UTC()}, query.Params{}); err != nil {
 			return err
 		}
+		s.audit(r, u, "user.password-reset.create", map[string]any{"id": u.ID})
 		link := strings.TrimRight(s.cfg.AdminURL, "/") + "/auth/reset-password?code=" + tok
 		s.mail(ctx, u.Email, "Reset password", "We heard that you lost your password. Sorry about that!\n\nBut don't worry! You can use the following link to reset your password:\n"+link+"\n\nThanks.")
 	}
@@ -371,6 +379,7 @@ func (s *Server) resetPassword(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "user.password-reset.confirm", map[string]any{"id": u.ID})
 	return s.startSession(w, r, u, false, "")
 }
 
@@ -430,5 +439,6 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) error {
 	if u, err = s.findUser(ctx, map[string]any{"id": u.ID}); err != nil {
 		return err
 	}
+	s.audit(r, u, "user.invite.accept", map[string]any{"id": u.ID})
 	return s.startSession(w, r, u, false, "")
 }

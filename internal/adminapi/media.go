@@ -160,7 +160,12 @@ func (s *Server) writableFile(ctx context.Context, a *permissions.Ability, id in
 	return nil
 }
 
-func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
+func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) (err error) {
+	defer func() {
+		if err == nil {
+			s.audit(r, u, "media.update", map[string]any{"id": r.PathValue("id")})
+		}
+	}()
 	id, err := fileID(r)
 	if err != nil {
 		return err
@@ -216,7 +221,7 @@ func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *
 	return data(w, toMap(row))
 }
 
-func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request, _ *User, a *permissions.Ability) error {
+func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
 	id, err := fileID(r)
 	if err != nil {
 		return err
@@ -231,6 +236,7 @@ func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request, _ *User, a *
 	if row == nil {
 		return errNotFound
 	}
+	s.audit(r, u, "media.delete", map[string]any{"id": id, "name": getString(row, "name")})
 	return data(w, toMap(row))
 }
 
@@ -263,6 +269,11 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, u *User, a 
 			return validation([]FieldError{{Path: []string{"folder"}, Message: "Folder does not exist"}})
 		}
 	}
+	event := "media.create"
+	if r.URL.Query().Get("id") != "" {
+		event = "media.update"
+	}
+	s.audit(r, u, event, map[string]any{"folder": r.URL.Query().Get("folder"), "id": r.URL.Query().Get("id")})
 	s.cfg.Media.AdminUpload(w, r.WithContext(httpapi.WithUploader(ctx, u.ID, folder)))
 	return nil
 }
@@ -357,6 +368,7 @@ func (s *Server) createFolder(w http.ResponseWriter, r *http.Request, u *User, _
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "media-folder.create", map[string]any{"id": get(row, "id"), "name": name})
 	writeJSON(w, http.StatusCreated, map[string]any{"data": toMap(row)})
 	return nil
 }
@@ -419,6 +431,7 @@ func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request, u *User, _
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "media-folder.update", map[string]any{"id": get(row, "id"), "name": name})
 	return data(w, toMap(out))
 }
 
@@ -456,7 +469,7 @@ func (s *Server) removeFolders(ctx context.Context, ids []int64) (files, folders
 	return files, folders, nil
 }
 
-func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	row, err := s.folderByPath(r)
 	if err != nil {
 		return err
@@ -465,6 +478,7 @@ func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request, _ *User, _
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "media-folder.delete", map[string]any{"id": get(row, "id"), "name": getString(row, "name"), "files": files, "folders": folders})
 	return data(w, map[string]any{"files": files, "folders": folders})
 }
 
@@ -475,7 +489,7 @@ type mediaSelection struct {
 	Destination *int64 `json:"destination"`
 }
 
-func (s *Server) bulkDeleteMedia(w http.ResponseWriter, r *http.Request, _ *User, a *permissions.Ability) error {
+func (s *Server) bulkDeleteMedia(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
 	var b mediaSelection
 	if err := decode(r, &b); err != nil {
 		return err
@@ -499,6 +513,7 @@ func (s *Server) bulkDeleteMedia(w http.ResponseWriter, r *http.Request, _ *User
 	if err != nil {
 		return err
 	}
+	s.audit(r, u, "media.delete", map[string]any{"fileIds": b.FileIDs, "folderIds": b.FolderIDs})
 	return data(w, map[string]any{"files": deleted + files, "folders": folders, "skipped": skipped})
 }
 
@@ -529,5 +544,6 @@ func (s *Server) bulkMoveFiles(w http.ResponseWriter, r *http.Request, u *User, 
 		}
 		moved++
 	}
+	s.audit(r, u, "media.update", map[string]any{"fileIds": b.FileIDs, "destination": b.Destination})
 	return data(w, map[string]any{"files": moved})
 }

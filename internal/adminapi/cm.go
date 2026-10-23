@@ -435,6 +435,7 @@ func (s *Server) cmDelete(w http.ResponseWriter, r *http.Request, u *User) error
 		return asValidation(err)
 	}
 	s.forgetDocument(r.Context(), string(ct.UID), id, p["locale"])
+	s.audit(r, u, "entry.delete", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"]})
 	return data(w, map[string]any{"documentId": id})
 }
 
@@ -502,6 +503,7 @@ func (s *Server) cmBulk(op string) authedHandler {
 			case "publish":
 				s.recordVersion(ctx, ct, id, p["locale"], "published", u.ID)
 			}
+			s.audit(r, u, "entry."+op, map[string]any{"uid": uid, "documentId": id, "locale": p["locale"]})
 			done = append(done, id)
 		}
 		return data(w, map[string]any{"count": len(done), "documentIds": done, "errors": failed})
@@ -590,6 +592,7 @@ func (s *Server) cmCreate(w http.ResponseWriter, r *http.Request, u *User) error
 	out := toMap(row)
 	if id, _ := out[schema.AttrDocumentID].(string); id != "" {
 		s.recordVersion(r.Context(), ct, id, p["locale"], "", u.ID)
+		s.audit(r, u, "entry.create", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"]})
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"data": visible(out, ct, string(ct.UID), a)})
 	return nil
@@ -637,6 +640,11 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 		return asValidation(err)
 	}
 	s.recordVersion(ctx, ct, id, p["locale"], "", u.ID)
+	event := "entry.update"
+	if action == actionCreate {
+		event = "entry.create"
+	}
+	s.audit(r, u, event, map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"], "fields": changedFields(b.Data)})
 	return data(w, visible(toMap(row), ct, string(ct.UID), a))
 }
 
@@ -830,6 +838,11 @@ func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
 	out := toMap(row)
 	if docID, _ := out[schema.AttrDocumentID].(string); docID != "" {
 		s.recordVersion(r.Context(), ct, docID, p["locale"], "", u.ID)
+		event := "entry.update"
+		if action == actionCreate {
+			event = "entry.create"
+		}
+		s.audit(r, u, event, map[string]any{"uid": string(ct.UID), "documentId": docID, "locale": p["locale"], "fields": changedFields(b.Data)})
 	}
 	return data(w, visible(out, ct, string(ct.UID), a))
 }
@@ -847,6 +860,7 @@ func (s *Server) stDelete(w http.ResponseWriter, r *http.Request, u *User) error
 		return asValidation(err)
 	}
 	s.forgetDocument(r.Context(), string(ct.UID), id, locale)
+	s.audit(r, u, "entry.delete", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": locale})
 	return data(w, map[string]any{"documentId": id})
 }
 
@@ -879,6 +893,7 @@ func (s *Server) stAction(op string) authedHandler {
 		if err != nil {
 			return asValidation(err)
 		}
+		s.audit(r, u, "entry."+op, map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"]})
 		return data(w, map[string]any{"documentId": id})
 	}
 }

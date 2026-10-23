@@ -106,7 +106,7 @@ func (b *webhookBody) webhook() (webhooks.Webhook, error) {
 	return webhooks.Webhook{Name: b.Name, URL: b.URL, Headers: b.Headers, Events: events, Enabled: enabled}, nil
 }
 
-func (s *Server) createWebhook(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) createWebhook(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	var b webhookBody
 	if err := decode(r, &b); err != nil {
 		return err
@@ -118,11 +118,12 @@ func (s *Server) createWebhook(w http.ResponseWriter, r *http.Request, _ *User, 
 	if wh, err = s.cfg.Webhooks.Create(r.Context(), wh); err != nil {
 		return err
 	}
+	s.audit(r, u, "webhook.create", map[string]any{"id": wh.ID, "name": wh.Name, "url": urlHost(wh.URL), "events": wh.Events})
 	writeJSON(w, http.StatusCreated, map[string]any{"data": wh})
 	return nil
 }
 
-func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	id, err := webhookID(r)
 	if err != nil {
 		return err
@@ -139,10 +140,11 @@ func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request, _ *User, 
 	if wh, err = s.cfg.Webhooks.Update(r.Context(), wh); err != nil {
 		return webhookErr(err)
 	}
+	s.audit(r, u, "webhook.update", map[string]any{"id": wh.ID, "name": wh.Name, "url": urlHost(wh.URL), "events": wh.Events, "isEnabled": wh.Enabled})
 	return data(w, wh)
 }
 
-func (s *Server) deleteWebhook(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteWebhook(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	id, err := webhookID(r)
 	if err != nil {
 		return err
@@ -150,6 +152,7 @@ func (s *Server) deleteWebhook(w http.ResponseWriter, r *http.Request, _ *User, 
 	if err := s.cfg.Webhooks.Delete(r.Context(), id); err != nil {
 		return webhookErr(err)
 	}
+	s.audit(r, u, "webhook.delete", map[string]any{"id": id})
 	return data(w, map[string]any{"id": id})
 }
 

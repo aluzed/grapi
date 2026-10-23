@@ -395,5 +395,6 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request, u *User)
 		return asValidation(err)
 	}
 	s.recordVersion(ctx, ct, v.DocumentID, p["locale"], "", u.ID)
+	s.audit(r, u, "entry.update", map[string]any{"uid": v.UID, "documentId": v.DocumentID, "locale": p["locale"], "restoredVersion": v.ID})
 	return data(w, map[string]any{"documentId": v.DocumentID})
 }

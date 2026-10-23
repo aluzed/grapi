@@ -119,6 +119,19 @@ export async function upload<T>(path: string, form: FormData): Promise<T> {
   return json as T
 }
 
+// download saves an authenticated GET as a file.
+export async function download(path: string, filename: string) {
+  let res = await send('GET', path)
+  if (res.status === 401 && accessToken !== null && (await refresh())) res = await send('GET', path)
+  if (!res.ok) throw new ApiError(res.status, 'Error', res.statusText, {})
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function publicRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   return parse<T>(await send(method, path, body, false))
 }

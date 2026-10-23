@@ -519,5 +519,18 @@
   "history.unknown": "Champs inconnus (supprimés ou renommés depuis)",
   "history.missing": "Absents de cette version : {fields}",
   "history.by": "par {name}",
-  "history.select": "Choisissez une version"
+  "history.select": "Choisissez une version",
+  "settings.audit": "Journaux d'audit",
+  "audit.action": "Action",
+  "audit.date": "Date",
+  "audit.user": "Utilisateur",
+  "audit.details": "Détails",
+  "audit.allActions": "Toutes les actions",
+  "audit.from": "Du",
+  "audit.to": "Au",
+  "audit.export": "Exporter en CSV",
+  "audit.empty": "Aucune entrée.",
+  "audit.detail": "Entrée du journal",
+  "audit.system": "Système",
+  "audit.view": "Voir le détail"
 }

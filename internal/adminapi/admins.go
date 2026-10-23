@@ -120,7 +120,7 @@ func (s *Server) roleIDs(ctx context.Context, field string, ids []int64) ([]any,
 	return out, nil
 }
 
-func (s *Server) createUser(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) createUser(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	var b struct {
 		Firstname string  `json:"firstname"`
 		Lastname  string  `json:"lastname"`
@@ -164,6 +164,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request, _ *User, _ *
 	if err != nil {
 		return err
 	}
+	s.audit(r, me, "user.create", map[string]any{"id": u.ID, "email": u.Email, "roles": b.Roles})
 	link := strings.TrimRight(s.cfg.AdminURL, "/") + "/auth/register?registrationToken=" + tok
 	s.mail(ctx, u.Email, "You have been invited to an admin panel", "You have been invited to join an administration panel.\n\nFollow this link to create your account:\n"+link)
 	writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]any{"user": u, "registrationToken": tok, "registrationUrl": link}})
@@ -193,7 +194,7 @@ func (s *Server) activeSuperAdmins(ctx context.Context, except any) (int64, erro
 
 var errLastSuperAdmin = appError("You must have at least one active super admin")
 
-func (s *Server) updateUser(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) updateUser(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	target, err := s.userByPath(r)
 	if err != nil {
 		return err
@@ -303,6 +304,12 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request, _ *User, _ *
 			return err
 		}
 	}
+	if b.Password != "" {
+		s.audit(r, me, "user.password.update", map[string]any{"id": target.ID})
+	}
+	if fields := changedFields(withoutPassword(set)); len(fields) > 0 {
+		s.audit(r, me, "user.update", map[string]any{"id": target.ID, "fields": fields})
+	}
 	u, err := s.findUser(ctx, map[string]any{"id": target.ID})
 	if err != nil {
 		return err
@@ -355,7 +362,7 @@ func (s *Server) deleteUsers(ctx context.Context, ids []int64) ([]*User, error) 
 	return targets, nil
 }
 
-func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	target, err := s.userByPath(r)
 	if err != nil {
 		return err
@@ -363,10 +370,11 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request, _ *User, _ *
 	if _, err := s.deleteUsers(r.Context(), []int64{toInt64(target.ID)}); err != nil {
 		return err
 	}
+	s.audit(r, me, "user.delete", map[string]any{"id": target.ID, "email": target.Email})
 	return data(w, target)
 }
 
-func (s *Server) batchDeleteUsers(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) batchDeleteUsers(w http.ResponseWriter, r *http.Request, me *User, _ *permissions.Ability) error {
 	var b struct {
 		IDs []int64 `json:"ids"`
 	}
@@ -382,6 +390,9 @@ func (s *Server) batchDeleteUsers(w http.ResponseWriter, r *http.Request, _ *Use
 	}
 	if deleted == nil {
 		deleted = []*User{}
+	}
+	for _, d := range deleted {
+		s.audit(r, me, "user.delete", map[string]any{"id": d.ID, "email": d.Email})
 	}
 	return data(w, deleted)
 }

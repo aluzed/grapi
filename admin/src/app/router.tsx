@@ -13,6 +13,7 @@ import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManag
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
 import { ApiTokens } from '@/pages/settings/ApiTokens'
+import { AuditLogs } from '@/pages/settings/AuditLogs'
 import { Email } from '@/pages/settings/Email'
 import { Locales } from '@/pages/settings/Locales'
 import { Overview } from '@/pages/settings/Overview'
@@ -79,6 +80,7 @@ export const router = createBrowserRouter(
             { path: 'users-permissions/email-templates', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/email-templates')}><UPEmails /></RequirePermission> },
             { path: 'users-permissions/providers', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/providers')}><UPProviders /></RequirePermission> },
             { path: 'email', element: <RequirePermission allowed={settingsAllowed('/settings/email')}><Email /></RequirePermission> },
+            { path: 'audit-logs', element: <RequirePermission allowed={settingsAllowed('/settings/audit-logs')}><AuditLogs /></RequirePermission> },
             { path: 'locales', element: <RequirePermission allowed={settingsAllowed('/settings/locales')}><Locales /></RequirePermission> },
           ],
         },
