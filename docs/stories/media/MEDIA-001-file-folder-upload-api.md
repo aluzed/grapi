@@ -30,8 +30,8 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - Images (`MEDIA-002`), providers distants (`MEDIA-004`, `MEDIA-005`), dossiers et actions groupées (`MEDIA-006`), UI (`ADM-007`).
 
 ## Critères d'acceptation
-- [ ] Banc `SETUP-002` : `POST /api/upload` d'un JPEG renvoie un tableau dont chaque objet a les mêmes clés et types que Strapi 5.59. Seuls `hash`, les dates et les id diffèrent (normalisés par le banc).
-- [ ] Un populate d'un champ media simple renvoie un objet, et un champ media multiple renvoie un tableau ordonné (banc).
+- [x] Banc `SETUP-002` : `POST /api/upload` d'un JPEG renvoie un tableau dont chaque objet a les mêmes clés et types que Strapi 5.59. Seuls `hash`, les dates et les id diffèrent (normalisés par le banc).
+- [x] Un populate d'un champ media simple renvoie un objet, et un champ media multiple renvoie un tableau ordonné (banc).
 - [ ] **Compat DB (D3)** : les 4 536 fichiers de la copie de base dev-freelance sont servis avec la même URL.
 - [x] Un upload au-delà de `sizeLimit` renvoie 413 avec le format d'erreur `API-007`.
 - [x] Aucun fichier temporaire ne reste après une erreur (TU).
@@ -43,6 +43,7 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - `GET /api/upload/files/page` (`findAndCountPage` : pagination REST, `defaultLimit`, `maxLimit`, `withCount`, `{data, meta.pagination}`), corpus `devfreelance_upload` (7 cas, SQLite et Postgres) identique à Strapi.
 - Reste : allow/deny lists de `security`, routes admin.
 
+- Banc `devfreelance_media` (SQLite et Postgres, identique à Strapi) : envoi d'un JPEG de 800 x 600 (le runner génère un JPEG pour un nom en `.jpg`), formats compris ; `cover` (média simple) peuplé en objet, puis `null` ; `pictures` (multiple) en tableau dans l'ordre donné, puis réordonné par une mise à jour.
 - `TestUploadSizeLimitLeavesNoTempFile` : au-delà de `sizeLimit`, 413 `PayloadTooLargeError` « noise.png exceeds size limit of 2 KB », et aucun dossier `grapi-upload-*` ne reste.
 
 ## Notes techniques

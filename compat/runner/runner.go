@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"image/png"
 	"io"
 	"mime/multipart"
@@ -264,12 +265,23 @@ func multipartBody(files []corpus.Upload) ([]byte, string, error) {
 		}
 		h := textproto.MIMEHeader{}
 		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, field, f.Name))
-		h.Set("Content-Type", "image/png")
+		// A .jpg or .jpeg name gets a JPEG, anything else a PNG.
+		isJPEG := strings.HasSuffix(f.Name, ".jpg") || strings.HasSuffix(f.Name, ".jpeg")
+		if isJPEG {
+			h.Set("Content-Type", "image/jpeg")
+		} else {
+			h.Set("Content-Type", "image/png")
+		}
 		part, err := w.CreatePart(h)
 		if err != nil {
 			return nil, "", err
 		}
-		if err := png.Encode(part, gradient(f.Width, f.Height)); err != nil {
+		if isJPEG {
+			err = jpeg.Encode(part, gradient(f.Width, f.Height), &jpeg.Options{Quality: 90})
+		} else {
+			err = png.Encode(part, gradient(f.Width, f.Height))
+		}
+		if err != nil {
 			return nil, "", err
 		}
 	}
