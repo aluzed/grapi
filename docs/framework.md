@@ -119,6 +119,16 @@ app.AddSanitizer("content-api.output", func(uid string, entry map[string]any) ma
 
 `content-api.input` gets the data of a write, `content-api.output` each top-level entry of a response, after the built-in rules (private fields, permissions), in registration order.
 
+Route middlewares (`config.middlewares`) run after the authentication and the policies, in declaration order, around the handler:
+
+```go
+app.Route("GET", "/posts/popular", "api::post.post.popular", popular).
+	Middlewares(func(c *grapi.Request, next func() error) error {
+		c.W.Header().Set("Cache-Control", "max-age=60")
+		return next()
+	})
+```
+
 ## Upload and email providers
 
 ```go

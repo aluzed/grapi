@@ -51,8 +51,13 @@ type customRoute struct {
 	public              bool
 	handler             RouteHandler
 	policies            []any
+	middlewares         []RouteMiddleware
 	openapi             map[string]any
 }
+
+// RouteMiddleware is a route's config.middlewares entry: it runs after the
+// authentication and the policies, in declaration order, around the handler.
+type RouteMiddleware func(c *Request, next func() error) error
 
 // Route adds a content API route under the API prefix. scope is the
 // permission a role needs, by Strapi's naming ("api::account.account.anonymize").
@@ -93,9 +98,16 @@ func (a *App) addRoutes(api *httpapi.Server) error {
 						c.User[k] = v
 					}
 				}
-				return h(c)
+				return runRoute(c, cr.middlewares, h)
 			},
 		})
 	}
 	return nil
+}
+
+func runRoute(c *Request, mws []RouteMiddleware, h RouteHandler) error {
+	if len(mws) == 0 {
+		return h(c)
+	}
+	return mws[0](c, func() error { return runRoute(c, mws[1:], h) })
 }

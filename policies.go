@@ -57,6 +57,13 @@ func (r *RouteRef) Policies(refs ...any) *RouteRef {
 	return r
 }
 
+// Middlewares adds route middlewares (config.middlewares), run in order
+// after the policies.
+func (r *RouteRef) Middlewares(mws ...RouteMiddleware) *RouteRef {
+	r.r.middlewares = append(r.r.middlewares, mws...)
+	return r
+}
+
 // OpenAPI documents the route in the OpenAPI document (server.openapi):
 // an operation object, with its parameters, requestBody and responses.
 func (r *RouteRef) OpenAPI(operation map[string]any) *RouteRef {

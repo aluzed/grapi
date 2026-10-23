@@ -27,8 +27,8 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 
 ## Critères d'acceptation
 - [ ] Une route custom `GET /api/posts/popular` avec `handler: post.popular` est servie et apparaît dans `routes:list`.
-- [ ] Sans token, une route protégée renvoie 403 si le rôle Public n'a pas la permission, et une route marquée `auth: false` répond.
-- [ ] Ordre d'exécution vérifié par test : auth, policies dans l'ordre déclaré, middlewares dans l'ordre déclaré, handler.
+- [x] Sans token, une route protégée renvoie 403 si le rôle Public n'a pas la permission, et une route marquée `auth: false` répond.
+- [x] Ordre d'exécution vérifié par test : auth, policies dans l'ordre déclaré, middlewares dans l'ordre déclaré, handler.
 - [x] Une `PolicyError` garde son message et son status 403 dans la réponse.
 - [ ] Banc de compatibilité : codes de statut identiques à Strapi sur la matrice rôle x route de dev-freelance.
 
@@ -36,6 +36,7 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 - Fait : routes custom en Go (`grapi.App.Route`, `PublicRoute` pour `auth: false`), placées avant les routes core, avec le scope de permission à la Strapi (`api::account.account.anonymize`) et les erreurs `ctx.badRequest`/`ctx.unauthorized` (`grapi.Error`, noms http-errors). Test : `hooks_test.go` (`TestCustomRoutes`).
 - Reste : routes déclarées dans `src/api/*/routes/*` (fichiers JS ou déclaratifs), middlewares de route. Les policies de route existent en mode framework (`API-009`), `grapi routes:list` liste la table (`CLI-003`).
 
+- Middlewares de route (`RouteRef.Middlewares`, l'équivalent de `config.middlewares`). `TestRoutePipelineOrder` : policies dans l'ordre déclaré, puis middlewares autour du handler (`policy1 policy2 m1> m2> handler <m2 <m1`) ; sans token, une route protégée répond 403 `Forbidden` et une route `auth: false` répond 200.
 - `PolicyError` : banc `devfreelance_errors`, message et détails d'une policy repris à l'identique de Strapi.
 
 ## Notes techniques
