@@ -2807,6 +2807,9 @@ func TestAdminMediaBatchAndReplace(t *testing.T) {
 	if dataOf(b)["url"] != oldURL || dataOf(b)["width"].(float64) != 40 || dataOf(b)["name"] != "replaced.png" {
 		t.Fatalf("the same id holds the new content: %v", dataOf(b))
 	}
+	if formats, _ := dataOf(b)["formats"].(map[string]any); len(formats) != 0 {
+		t.Fatalf("the formats follow the new, smaller content: %v", formats)
+	}
 	_, b, _ = c.do("GET", base+"/"+meme, "")
 	pic, _ := dataOf(b)["picture"].(map[string]any)
 	if pic == nil || fmt.Sprint(pic["id"]) != id || pic["width"].(float64) != 40 {

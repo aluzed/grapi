@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # MEDIA-003 : Interface provider et provider local
@@ -36,9 +36,9 @@ Définir l'interface provider de grapi et fournir le provider local.
 - S3 (`MEDIA-004`), Cloudinary (`MEDIA-005`).
 
 ## Critères d'acceptation
-- [ ] **Compat DB (D3)** : les URLs `/uploads/...` d'une base Strapi existante sont servies depuis le même dossier, sans renommage.
-- [ ] Un provider custom enregistré en Go est utilisé à la place du local (TU avec un provider factice).
-- [ ] Le remplacement d'un fichier local garde le même `hash` et met à jour les formats (intégration).
+- [x] **Compat DB (D3)** : les URLs `/uploads/...` d'une base Strapi existante sont servies depuis le même dossier, sans renommage.
+- [x] Un provider custom enregistré en Go est utilisé à la place du local (TU avec un provider factice).
+- [x] Le remplacement d'un fichier local garde le même `hash` et met à jour les formats (intégration).
 - [x] Une tentative de traversée de chemin (`../`) dans un nom de fichier est neutralisée (TU).
 
 ## Avancement

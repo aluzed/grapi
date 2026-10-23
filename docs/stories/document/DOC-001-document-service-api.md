@@ -26,9 +26,9 @@ Exposer `document.Service(uid)` avec la même surface fonctionnelle que `strapi.
 - La validation des valeurs (`DOC-003`), la résolution des relations (`DOC-006`) et les single types (`DOC-007`).
 
 ## Critères d'acceptation
-- [ ] `documentId` généré conforme au format cuid2 Strapi (regex `^[a-z0-9]{24}$`) et unique (test sur 1M générations).
+- [x] `documentId` généré conforme au format cuid2 Strapi (regex `^[a-z0-9]{24}$`) et unique (test sur 1M générations).
 - [x] `FindMany` sans `status` renvoie les brouillons, comme Strapi (`post-list-draft`).
-- [ ] `Create` puis `FindOne` avec `status: published` renvoie `nil` tant que rien n'est publié (D&P actif).
+- [x] `Create` puis `FindOne` avec `status: published` renvoie `nil` tant que rien n'est publié (D&P actif).
 - [x] `Update` sur une locale absente crée la ligne de locale avec les champs non localisés recopiés.
 - [x] Une erreur au milieu d'un `Create` avec composants annule toute l'écriture (une seule transaction).
 - [ ] Banc de compatibilité : findMany, findOne, create, update, delete et clone sur les 21 cas de caractérisation de dev-freelance (admin, REST, documents) donnent le même résultat que Strapi 5.59.

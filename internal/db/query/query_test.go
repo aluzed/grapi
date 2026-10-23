@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -122,4 +123,23 @@ func FuzzWhere(f *testing.F) {
 			}
 		}
 	})
+}
+
+func TestNewDocumentID(t *testing.T) {
+	re := regexp.MustCompile(`^[a-z][a-z0-9]{23}$`)
+	n := 1_000_000
+	if testing.Short() {
+		n = 10_000
+	}
+	seen := make(map[string]struct{}, n)
+	for range n {
+		id := NewDocumentID()
+		if !re.MatchString(id) {
+			t.Fatalf("format: %q", id)
+		}
+		if _, dup := seen[id]; dup {
+			t.Fatalf("duplicate after %d: %q", len(seen), id)
+		}
+		seen[id] = struct{}{}
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/big"
 	"slices"
 	"sort"
 	"strings"
@@ -235,12 +234,23 @@ var cuidAlphabet = []byte("abcdefghijklmnopqrstuvwxyz0123456789")
 // NewDocumentID returns a 24 character id in the format of cuid2, which
 // Strapi uses for documentId: a lowercase letter then base 36 characters.
 func NewDocumentID() string {
-	out := make([]byte, 24)
-	n, _ := rand.Int(rand.Reader, big.NewInt(26))
-	out[0] = cuidAlphabet[n.Int64()]
-	for i := 1; i < len(out); i++ {
-		n, _ := rand.Int(rand.Reader, big.NewInt(36))
-		out[i] = cuidAlphabet[n.Int64()]
+	out := make([]byte, 0, 24)
+	buf := make([]byte, 64)
+	for len(out) < 24 {
+		_, _ = rand.Read(buf)
+		for _, b := range buf {
+			// Bytes past the last whole multiple are dropped: no modulo bias.
+			if len(out) == 0 {
+				if b < 26*9 {
+					out = append(out, cuidAlphabet[b%26])
+				}
+			} else if b < 36*7 {
+				out = append(out, cuidAlphabet[b%36])
+			}
+			if len(out) == 24 {
+				break
+			}
+		}
 	}
 	return string(out)
 }

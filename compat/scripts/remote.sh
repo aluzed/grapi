@@ -52,9 +52,12 @@ start_strapi() {
     set -- -e DATABASE_CLIENT=postgres -e DATABASE_HOST="$run_id-$name-pg" -e DATABASE_NAME=strapi \
       -e DATABASE_USERNAME=strapi -e DATABASE_PASSWORD=strapi
   fi
+  # Uploads land on the host, where grapi can serve them later.
+  mkdir -p "$work/$name-public/uploads"
+  chmod -R 777 "$work/$name-public"
   docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name" \
     -p 127.0.0.1::1337 "$@" \
-    -v "$here/fixtures/$fx:/fixture:ro" -v "$work/$name:/data" "$image" >/dev/null
+    -v "$here/fixtures/$fx:/fixture:ro" -v "$work/$name:/data" -v "$work/$name-public/uploads:/app/public/uploads" "$image" >/dev/null
 }
 
 start_ref() {
@@ -175,6 +178,14 @@ grapi | perf)
     echo "error: Strapi refused register-admin" >&2
     exit 1
   }
+  # A file uploaded by Strapi must be served by grapi at the same URL.
+  s_tok=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$work/b/tokens.json")
+  python3 -c 'import struct,sys,zlib
+def chunk(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d))
+raw = b"".join(b"\0" + bytes([200, 40, 40]) * 4 for _ in range(4))
+sys.stdout.buffer.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 4, 4, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))' >"$work/strapi-upload.png"
+  strapi_file_url=$(curl -s -H "Authorization: Bearer $s_tok" -F "files=@$work/strapi-upload.png;type=image/png" "http://127.0.0.1:$(port_of b)/api/upload" |
+    python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["url"] if isinstance(r,list) else r, file=sys.stdout if isinstance(r,list) else sys.stderr)')
   # A folder tree made by Strapi must read the same on grapi.
   s_auth="Authorization: Bearer $(printf '%s' "$strapi_admin" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')"
   s_url=http://127.0.0.1:$(port_of b)
@@ -193,7 +204,7 @@ grapi | perf)
   else
     set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/b/data.db"
   fi
-  env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_LOG_LEVEL="$([ "$mode" = perf ] && echo info || echo debug)" \
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_PUBLIC_DIR="$work/b-public" GRAPI_LOG_LEVEL="$([ "$mode" = perf ] && echo info || echo debug)" \
     "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
   grapi_pid=$!
   i=0
@@ -218,6 +229,14 @@ grapi | perf)
     -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login")
   echo "Login after admin:reset-user-password: $relogin"
   [ "$relogin" = 200 ] || admin_failed=1
+  # Strapi re-encodes images on upload: compare with what it wrote.
+  served=$(curl -s "$b_url$strapi_file_url" | md5sum | cut -c1-32)
+  if [ -n "$strapi_file_url" ] && [ "$served" = "$(md5sum <"$work/b-public$strapi_file_url" | cut -c1-32)" ]; then
+    echo "Strapi upload served by grapi at $strapi_file_url: identical"
+  else
+    echo "Strapi upload served by grapi at '$strapi_file_url': DIFFERENT"
+    admin_failed=1
+  fi
   g_token=$(curl -s -H 'Content-Type: application/json' -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login" |
     python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')
   curl -sf -H "Authorization: Bearer $g_token" "$b_url/admin/api/v1/upload/folder-structure" >"$work/folders-grapi.json" || admin_failed=1

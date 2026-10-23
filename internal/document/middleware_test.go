@@ -126,3 +126,26 @@ func TestPublishRunsBeforeCreate(t *testing.T) {
 		t.Fatalf("published slug = %v", slug)
 	}
 }
+
+func TestPublishedVersionAppearsOnPublish(t *testing.T) {
+	s := service(t, "basic")
+	ctx := context.Background()
+	row, err := s.Create(ctx, "api::article.article", document.Params{"data": map[string]any{"title": "Draft only"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, _ := row.Get("documentId")
+	id := doc.(string)
+	if pub, err := s.FindOne(ctx, "api::article.article", id, document.Params{"status": "published"}); err != nil || pub != nil {
+		t.Fatalf("nothing published yet: %v %v", pub, err)
+	}
+	if draft, err := s.FindOne(ctx, "api::article.article", id, document.Params{}); err != nil || draft == nil {
+		t.Fatalf("the draft is found by default: %v %v", draft, err)
+	}
+	if _, err := s.Publish(ctx, "api::article.article", id, document.Params{}); err != nil {
+		t.Fatal(err)
+	}
+	if pub, err := s.FindOne(ctx, "api::article.article", id, document.Params{"status": "published"}); err != nil || pub == nil {
+		t.Fatalf("published now: %v %v", pub, err)
+	}
+}
