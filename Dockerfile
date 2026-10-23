@@ -19,12 +19,15 @@ RUN CGO_ENABLED=0 go build -trimpath -tags adminui -ldflags "-s -w -X main.versi
 FROM debian:trixie-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& useradd --uid 1000 --create-home --home-dir /app grapi
+	&& useradd --uid 1000 --create-home --home-dir /app grapi \
+	&& mkdir -p /app/data /app/public/uploads && chown -R grapi:grapi /app
 COPY --from=build /out/grapi /usr/local/bin/grapi
 WORKDIR /app
 USER 1000
 ENV HOST=0.0.0.0 PORT=1337
 EXPOSE 1337
+# Created above with their owner: a volume made for a missing directory
+# belongs to root, and SQLite could not write there.
 VOLUME ["/app/public/uploads", "/app/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD ["grapi", "health"]
 ENTRYPOINT ["grapi"]

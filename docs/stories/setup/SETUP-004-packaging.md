@@ -30,16 +30,17 @@ Produire les artefacts de release : binaires multi-plateformes, image Docker min
 - Le chart Helm.
 
 ## Critères d'acceptation
-- [ ] `make docker` construit l'image **sur le homelab** (`docker --context homelab`) et elle démarre un projet fixture sur Postgres.
+- [x] `make docker` construit l'image **sur le homelab** (`docker --context homelab`) et elle démarre un projet fixture sur Postgres.
 - [x] La variante `purego` compile avec `CGO_ENABLED=0` et le binaire Linux est statique (`file` : « statically linked »).
 - [ ] La même requête d'upload d'image produit des formats `thumbnail`, `small`, `medium` et `large` dans la variante vips, et un message clair dans la variante purego si un format non supporté est demandé.
-- [ ] L'admin est servi par le binaire seul, sans aucun fichier externe.
+- [x] L'admin est servi par le binaire seul, sans aucun fichier externe.
 - [x] L'image tourne en uid 1000 et `HEALTHCHECK` est vert.
 - [x] `DEPLOY.md` décrit les trois modes de déploiement.
 
 ## Avancement
 - Fait : `Dockerfile` (variante Go pur, `debian:trixie-slim`, uid 1000, `HEALTHCHECK` via `grapi health`, 149 Mo), `make docker` qui construit sur le homelab, `DEPLOY.md`. Testé sur le homelab : base Postgres neuve, fixture dev-freelance, healthcheck vert, inscription par l'API.
-- Reste : variante libvips (govips, CGO), SPA admin embarquée, goreleaser, SBOM, image sur ghcr.io.
+- 2026-10-23 : image reconstruite sur le homelab et lancée en SQLite, ce qui a révélé un défaut : `/app/data` et `/app/public/uploads` n'existaient pas dans l'image, si bien que leurs volumes appartenaient à root et que la base SQLite ne pouvait pas s'ouvrir (uid 1000). Ils sont créés avec leur propriétaire. L'admin est servi par le binaire seul : `/admin/`, ses JS et CSS (`/admin/assets/...`) et le repli vers `index.html` (`/admin/settings`) répondent 200, sans aucun fichier d'admin dans l'image.
+- Reste : variante libvips (govips, CGO), goreleaser, SBOM, image sur ghcr.io.
 
 ## Notes techniques
 - La compatibilité de sortie avec sharp n'est pas binaire (encodeurs différents). Le banc (`SETUP-002`) compare donc les dimensions, les formats et les métadonnées, pas les octets.
