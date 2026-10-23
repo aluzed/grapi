@@ -29,11 +29,12 @@ type Config struct {
 
 // Webhook is a row of strapi_webhooks.
 type Webhook struct {
-	ID      int64
-	Name    string
-	URL     string
-	Headers map[string]string
-	Events  []string
+	ID      int64             `json:"id"`
+	Name    string            `json:"name"`
+	URL     string            `json:"url"`
+	Headers map[string]string `json:"headers"`
+	Events  []string          `json:"events"`
+	Enabled bool              `json:"isEnabled"`
 }
 
 // Runner listens to the hub and posts to the webhooks.
@@ -177,11 +178,39 @@ func (r *Runner) worker(ctx context.Context) {
 
 // Send posts body to w once.
 func (r *Runner) Send(ctx context.Context, w Webhook, event string, body []byte) error {
+	status, err := r.post(ctx, w, event, body)
+	if err != nil {
+		return err
+	}
+	if status < 200 || status > 299 {
+		return fmt.Errorf("status %d", status)
+	}
+	return nil
+}
+
+// Test posts the trigger-test event to w, as the admin's trigger button,
+// and returns the response status.
+func (r *Runner) Test(ctx context.Context, w Webhook) (int, error) {
+	body, err := Body("trigger-test", r.clock(), map[string]any{})
+	if err != nil {
+		return 0, err
+	}
+	return r.post(ctx, w, "trigger-test", body)
+}
+
+func (r *Runner) clock() time.Time {
+	if r.now != nil {
+		return r.now()
+	}
+	return time.Now()
+}
+
+func (r *Runner) post(ctx context.Context, w Webhook, event string, body []byte) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.URL, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return 0, err
 	}
 	for k, v := range r.Config.DefaultHeaders {
 		req.Header.Set(k, v)
@@ -193,13 +222,10 @@ func (r *Runner) Send(ctx context.Context, w Webhook, event string, body []byte)
 	req.Header.Set("Content-Type", "application/json")
 	res, err := r.Client.Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	_ = res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return fmt.Errorf("status %d", res.StatusCode)
-	}
-	return nil
+	return res.StatusCode, nil
 }
 
 func (r *Runner) deliver(ctx context.Context, j job) {

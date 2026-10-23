@@ -20,6 +20,7 @@ import { Settings, sections } from '@/pages/settings/Settings'
 
 const settingsAllowed = (to: string) => sections.find((s) => s.to === to)!.allowed
 import { Users } from '@/pages/settings/Users'
+import { Webhooks } from '@/pages/settings/Webhooks'
 import { MediaLibrary } from '@/pages/media/MediaLibrary'
 import { Soon } from '@/pages/Soon'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
@@ -78,6 +79,7 @@ export const router = createBrowserRouter(
             { path: 'roles', element: <RequirePermission allowed={settingsAllowed('/settings/roles')}><Roles /></RequirePermission> },
             { path: 'roles/:id', element: <RequirePermission allowed={settingsAllowed('/settings/roles')}><RoleEditor /></RequirePermission> },
             { path: 'api-tokens', element: <RequirePermission allowed={settingsAllowed('/settings/api-tokens')}><ApiTokens /></RequirePermission> },
+            { path: 'webhooks', element: <RequirePermission allowed={settingsAllowed('/settings/webhooks')}><Webhooks /></RequirePermission> },
             { path: 'locales', element: <RequirePermission allowed={settingsAllowed('/settings/locales')}><Locales /></RequirePermission> },
           ],
         },

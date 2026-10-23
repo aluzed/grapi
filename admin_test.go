@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aluzed/grapi"
 )
@@ -896,5 +897,49 @@ func TestAdminAPITokens(t *testing.T) {
 	}
 	if s, _, _ := c.do("DELETE", "/api-tokens/"+id, ""); s != 200 || api("/api/articles", next) != 401 {
 		t.Fatalf("delete: %d", s)
+	}
+}
+
+func TestAdminWebhooks(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	hits := make(chan string, 10)
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits <- r.Header.Get("X-Strapi-Event") + " " + r.Header.Get("X-Secret")
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer target.Close()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	if s, _, _ := c.do("POST", "/webhooks", `{"name":"x","url":"ftp://nope","events":["entry.nope"]}`); s != 400 {
+		t.Fatalf("validation: %d", s)
+	}
+	s, b, _ := c.do("POST", "/webhooks", `{"name":"Build","url":"`+target.URL+`","headers":{"X-Secret":"s3"},"events":["entry.create"]}`)
+	if s != 201 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	id := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	_, b, _ = c.do("POST", "/webhooks/"+id+"/trigger", "")
+	if dataOf(b)["statusCode"].(float64) != 202 || <-hits != "trigger-test s3" {
+		t.Fatalf("trigger: %v", b)
+	}
+	c.do("POST", "/content-manager/collection-types/api::article.article", `{"data":{"title":"Hook"}}`)
+	select {
+	case got := <-hits:
+		if got != "entry.create s3" {
+			t.Fatalf("event: %q", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no entry.create delivery")
+	}
+	if s, b, _ := c.do("PUT", "/webhooks/"+id, `{"name":"Build","url":"`+target.URL+`","events":["entry.create"],"isEnabled":false}`); s != 200 || dataOf(b)["isEnabled"] != false {
+		t.Fatalf("disable: %d %v", s, b)
+	}
+	if s, _, _ := c.do("DELETE", "/webhooks/"+id, ""); s != 200 {
+		t.Fatalf("delete: %d", s)
+	}
+	if _, b, _ := c.do("GET", "/webhooks", ""); len(b["data"].([]any)) != 0 {
+		t.Fatalf("list after delete: %v", b)
 	}
 }

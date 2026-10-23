@@ -19,6 +19,7 @@ import (
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/webhooks"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -53,6 +54,8 @@ type Config struct {
 	APITokenSalt, EncryptionKey string
 	// ContentActions lists the actions a custom API token can be given.
 	ContentActions func() []string
+	// Webhooks stores and sends the webhooks; nil leaves their routes out.
+	Webhooks *webhooks.Runner
 	// Media is the upload pipeline; nil leaves the media routes out.
 	Media MediaService
 	// UI is the built SPA; nil serves the API only.
@@ -155,6 +158,7 @@ func (s *Server) routes() {
 	s.homepageRoutes()
 	s.i18nRoutes()
 	s.tokenRoutes()
+	s.webhookRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

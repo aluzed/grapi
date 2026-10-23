@@ -142,3 +142,17 @@ Tokens de l'API de contenu (`kind` `content-api`). Actions `admin::api-tokens.{r
 | `PUT /api-tokens/{id}` | `name`, `description`, `type`, `permissions` |
 | `POST /api-tokens/{id}/regenerate` | Nouvelle clé (`accessKey`), l'ancienne cesse de fonctionner |
 | `DELETE /api-tokens/{id}` | Révoque le token |
+
+### Webhooks
+
+Table `strapi_webhooks`, partagée avec le runner qui envoie les événements. Actions `admin::webhooks.{read,create,update,delete}`.
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /webhooks` | `[{id, name, url, headers, events, isEnabled}]` |
+| `GET /webhooks/events` | Événements disponibles (`entry.*`, `media.*`) |
+| `GET /webhooks/{id}` | Un webhook |
+| `POST /webhooks` | `name`, `url` (http ou https), `headers`, `events`, `isEnabled` (vrai par défaut) |
+| `PUT /webhooks/{id}` | Mêmes champs, remplace le webhook |
+| `DELETE /webhooks/{id}` | Supprime le webhook |
+| `POST /webhooks/{id}/trigger` | Envoie l'événement `trigger-test` et renvoie `{statusCode, message}` (`message` en cas d'échec réseau) |
