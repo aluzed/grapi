@@ -12,6 +12,15 @@ export UP_JWT_MANAGEMENT UP_COOKIE_SECURE BODY_MAX_FILE_SIZE
 mode=$2
 db=$3
 here=$(cd "$(dirname "$0")/.." && pwd)
+# A fixture with Go hooks (framework/, built by bench.sh) is served by its
+# own build, and the reference runs the same rules (rules.js). The query mode
+# runs grapi's engine in process, without them, so Strapi does not either.
+serve_bin=$here/bin/grapi
+COMPAT_ROW_RULES=0
+if [ -x "$here/bin/grapi-$fx" ] && [ "$mode" != query ]; then
+  serve_bin=$here/bin/grapi-$fx
+  COMPAT_ROW_RULES=1
+fi
 . "$here/reference/versions.env"
 image="grapi-compat-strapi:$STRAPI_VERSION-$(cd "$here/reference" && find . -type f | sort | xargs sha256sum | sha256sum | cut -c1-12)"
 run_id="compat-$fixture-$$"
@@ -57,7 +66,7 @@ start_strapi() {
   mkdir -p "$work/$name-public/uploads"
   chmod -R 777 "$work/$name-public"
   docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-$name" \
-    -p 127.0.0.1::1337 "$@" \
+    -p 127.0.0.1::1337 "$@" -e COMPAT_ROW_RULES="$COMPAT_ROW_RULES" \
     -v "$here/fixtures/$fx:/fixture:ro" -v "$work/$name:/data" -v "$work/$name-public/uploads:/app/public/uploads" "$image" >/dev/null
 }
 
@@ -211,7 +220,7 @@ sys.stdout.buffer.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBB
     set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/b/data.db"
   fi
   env "$@" HOST=127.0.0.1 PORT="$grapi_port" GRAPI_PUBLIC_DIR="$work/b-public" GRAPI_LOG_LEVEL="$([ "$mode" = perf ] && echo info || echo debug)" \
-    "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
+    "$serve_bin" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi.log" 2>&1 &
   grapi_pid=$!
   i=0
   until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$grapi_port/_health")" = 204 ]; do
@@ -282,7 +291,7 @@ if [ "$mode" = grapi ]; then
     fi
     fwd_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
     env "$@" HOST=127.0.0.1 PORT="$fwd_port" GRAPI_PUBLIC_DIR="$work/a-public" \
-      "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-forward.log" 2>&1 &
+      "$serve_bin" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-forward.log" 2>&1 &
     fwd_pid=$!
     i=0
     until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$fwd_port/_health")" = 204 ]; do
@@ -324,7 +333,7 @@ if [ "$mode" = grapi ] && { [ "$fx" = basic ] || [ "$fx" = relations ]; }; then
     else
       set -- -e DATABASE_CLIENT=sqlite
     fi
-    docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-a2" -p 127.0.0.1::1337 "$@" -e NODE_ENV=development \
+    docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-a2" -p 127.0.0.1::1337 "$@" -e NODE_ENV=development -e COMPAT_ROW_RULES="$COMPAT_ROW_RULES" \
       -v "$here/fixtures/$fx:/fixture:ro" -v "$work/a:/data" "$image" >/dev/null
   }
   start_dev_reference
@@ -427,7 +436,7 @@ if [ "$mode" = grapi ]; then
   reg=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
     -d '{"username":"compat-enduser","email":"compat-enduser@example.com","password":"Compat1234!"}' "http://127.0.0.1:$(port_of b)/api/auth/local/register")
   docker stop "$run_id-b" >/dev/null
-  env "$@" HOST=127.0.0.1 PORT="$grapi_port" "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-enduser.log" 2>&1 &
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" "$serve_bin" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-enduser.log" 2>&1 &
   grapi_pid=$!
   i=0
   until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$grapi_port/_health")" = 204 ]; do

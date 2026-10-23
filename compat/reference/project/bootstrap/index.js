@@ -55,7 +55,10 @@ async function createTokens(strapi) {
 }
 
 module.exports = {
-  register() {},
+  // A fixture's row rules (rules.js), when the bench runs its Go port too.
+  register({ strapi }) {
+    if (process.env.COMPAT_ROW_RULES === '1' && fs.existsSync('/fixture/rules.js')) require('/fixture/rules.js')(strapi);
+  },
   async bootstrap({ strapi }) {
     const config = readFixtureConfig();
     await createLocales(strapi, config.locales || []);

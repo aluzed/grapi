@@ -14,6 +14,11 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$root"
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o compat/bin/compat ./compat/cmd/compat
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o compat/bin/grapi ./cmd/grapi
+# A fixture with a framework/ main (its Go hooks) is served by that build.
+fx=${fixture%%--*}
+if [ -d "compat/fixtures/$fx/framework" ]; then
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o "compat/bin/grapi-$fx" "./compat/fixtures/$fx/framework"
+fi
 ssh "$host" 'mkdir -p ~/grapi-compat'
 rsync -a --delete --exclude report/ --exclude golden/ compat/ "$host:grapi-compat/compat/"
 status=0

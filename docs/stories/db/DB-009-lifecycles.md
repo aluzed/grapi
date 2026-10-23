@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DB-009 : Lifecycles de la base
@@ -36,12 +36,12 @@ Un bus de lifecycles par ligne, avec la même liste d'événements, la même for
 - [x] Un `beforeCreate` qui modifie `params.data.slug` change la valeur écrite.
 - [x] `state` posé dans `beforeUpdate` est lu dans `afterUpdate` de la même opération.
 - [x] Publication d'un document en draft & publish : `beforeCreate` est déclenché pour la ligne publiée. Scénario de caractérisation porté depuis dev-freelance : le slug publié est recalculé depuis le titre, et une publication de thème ne modifie pas le slug du brouillon.
-- [ ] Banc : les 21 cas de caractérisation de dev-freelance (slugs, hash d'abonné, thèmes) donnent les mêmes sorties qu'avec Strapi 5.59, une fois les règles portées en hooks Go.
+- [x] Banc : les 21 cas de caractérisation de dev-freelance (slugs, hash d'abonné, thèmes) donnent les mêmes sorties qu'avec Strapi 5.59, une fois les règles portées en hooks Go.
 - [x] Une erreur levée dans `beforeDelete` annule la suppression, et le client reçoit l'erreur au format Strapi.
 
 ## Avancement
 - Fait : `internal/db/query/lifecycles.go` : les 18 événements, `params` modifiables, `state` par abonné entre before et after, abonné timestamps exécuté en premier comme chez Strapi, `create` et `delete` déclenchant `findOne` comme l'entity manager de Strapi. La publication déclenche `beforeCreate` pour la ligne publiée (`TestPublishRunsBeforeCreate`). Exposé par `grapi.App.OnRowCreate`, `OnRowUpdate`, `OnRowWrite`, `OnRowDelete`, `OnRow`.
-- Reste : les 21 cas de caractérisation de dev-freelance portés en hooks Go (`EXT-002`, exemple).
+- Règles de ligne de dev-freelance portées en hooks Go (`compat/fixtures/devfreelance/framework` : slugs de post, catégorie, média et thème, hash d'abonné, slug de thème préfixé par celui du parent sur `connect`), avec un port de `slugify` 1.6.6 vérifié contre le paquet npm (49 entrées). Banc REST `devfreelance_rules` : les 21 cas (85 requêtes, lectures du brouillon et de la version publiée) identiques à Strapi qui exécute `row-rules.ts` (`rules.js`), sous SQLite et Postgres.
 
 ## Notes techniques
 - Les `params` sont exposés comme des structures Go typées avec un accès dynamique (`Data map[string]any`). Les hooks Go des utilisateurs manipulent des maps, comme en JS.
