@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # AUTH-007 : Utilisateurs admin, rôles admin, invitations
@@ -39,6 +39,11 @@ Le backend de l'administration des admins : création du premier admin, connexio
 - [ ] Un Author ne voit que ses propres entrées dans le Content Manager (intégration avec `AUTH-001`).
 - [ ] La suppression du dernier super admin est refusée (TU).
 - [ ] La CLI `admin:create-user` et `admin:reset-user-password` (`CLI-003`) passent par le même service.
+
+## Avancement
+- `internal/adminapi` (`docs/admin-api.md`) : `auth/init`, `auth/register-admin`, `auth/login`, `auth/forgot-password`, `auth/reset-password` (expiration `admin.forgotPassword.expiresIn`), `auth/registration-info`, `auth/register`, `users/me` (GET, PUT), `users/me/permissions`. Politique de mot de passe et limite de 72 octets.
+- Rôles Super Admin, Editor et Author créés sur une base sans rôle, avec les permissions Content Manager et médiathèque par défaut (`is-creator` pour Author).
+- Reste : CRUD des admins et des rôles, invitations par e-mail, `permissions/check`, catalogue groupé par section, règle du dernier super admin, CLI.
 
 ## Notes techniques
 - Mémoire projet : **ne jamais vider ni réinitialiser la table des admins** sur un serveur (migrations et `DB-011` comprises).

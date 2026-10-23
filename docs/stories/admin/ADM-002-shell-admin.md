@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-002 : Shell admin : connexion, navigation, profil, page d'accueil
@@ -69,6 +69,11 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 - [ ] À 375 px de large, aucun écran du shell n'a de scroll horizontal et tous les boutons d'action sont en pleine largeur.
 - [ ] Le binaire `grapi` sert l'admin sans aucun fichier externe.
 - [ ] Interface disponible en fr et en en, avec bascule depuis le profil.
+
+## Avancement
+- Backend du shell : API `/admin/api/v1` pour le premier admin, la connexion, le refresh, la déconnexion, le mot de passe oublié, l'invitation, le profil et les sessions (`docs/admin-api.md`).
+- `admin/` est monté sous `/admin` avec fallback SPA (`admin.FS`, embarqué avec le tag `adminui`), page d'attente sans build.
+- Reste : la SPA elle-même.
 
 ## Notes techniques
 - Endpoints admin grapi versionnés sous `/admin/api/v1`. Schéma OpenAPI généré (voir `PLG-005`) et client TS généré pour la SPA.

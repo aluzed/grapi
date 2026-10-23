@@ -22,6 +22,7 @@ import (
 
 	"github.com/aluzed/grapi/hook"
 
+	"github.com/aluzed/grapi/internal/adminapi"
 	"github.com/aluzed/grapi/internal/bootstrap"
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/internal/config"
@@ -400,24 +401,35 @@ func ensureJWTSecret(cfg *httpapi.Config, c *config.Config, dir string, log *slo
 	if cfg.Users.JWTSecret != "" {
 		return nil
 	}
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		return err
-	}
-	cfg.Users.JWTSecret = base64.StdEncoding.EncodeToString(b)
-	if _, set := c.Env["JWT_SECRET"]; set {
-		return nil
-	}
-	f, err := os.OpenFile(filepath.Join(dir, ".env"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // the project's own .env
+	secret, err := generateSecret(c, dir, "JWT_SECRET")
 	if err != nil {
 		return err
 	}
-	defer func() { _ = f.Close() }()
-	if _, err := fmt.Fprintf(f, "JWT_SECRET=%s\n", cfg.Users.JWTSecret); err != nil {
-		return err
-	}
+	cfg.Users.JWTSecret = secret
 	log.Info("the users-permissions JWT secret has been generated in the .env file under JWT_SECRET")
 	return nil
+}
+
+// generateSecret returns a random secret and appends it to .env under key,
+// unless key is already set (to an empty value).
+func generateSecret(c *config.Config, dir, key string) (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	secret := base64.StdEncoding.EncodeToString(b)
+	if _, set := c.Env[key]; set {
+		return secret, nil
+	}
+	f, err := os.OpenFile(filepath.Join(dir, ".env"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // the project's own .env
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := fmt.Fprintf(f, "%s=%s\n", key, secret); err != nil {
+		return "", err
+	}
+	return secret, nil
 }
 
 // Project is a loaded Strapi project: its config, schemas and database.
@@ -641,6 +653,16 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err := a.addRoutes(api); err != nil {
 		return nil, err
 	}
+	adminCfg, err := adminConfig(conf, *dir, apiCfg.Email, apiCfg.TrustProxy, log)
+	if err != nil {
+		a.stopWebhooks()
+		return nil, err
+	}
+	adm := adminapi.New(adminCfg, engine, res.Set, log)
+	if err := adm.Bootstrap(ctx); err != nil {
+		a.stopWebhooks()
+		return nil, fmt.Errorf("admin bootstrap: %w", err)
+	}
 	// After the sync and once the services exist, so that a handler can seed.
 	if err := a.syncHook(ctx, hook.AfterSync, res.Set, d); err != nil {
 		a.stopWebhooks()
@@ -656,7 +678,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 	port, _ := conf.Int("server.port")
 	stop := a.stopWebhooks
 	destroy := a.onDestroy
-	return &Server{Handler: api, Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
+	return &Server{Handler: withAdmin(adm, api), Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
 		for _, fn := range destroy {
 			if err := fn(context.Background()); err != nil {
 				log.Error("destroy", "error", err)

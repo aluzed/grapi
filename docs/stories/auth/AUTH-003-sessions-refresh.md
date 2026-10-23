@@ -34,7 +34,9 @@ Un service de sessions unique, utilisé par `AUTH-007` (admin) et par `AUTH-002`
 
 ## Avancement
 - Routes `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/sessions` et `DELETE /auth/sessions/:sessionId` présentes, avec leurs permissions (Public pour `refresh`, Authenticated pour les autres, seedées au bootstrap). En mode `legacy-support` (défaut de Strapi), elles répondent 404 comme Strapi : corpus `basic_roles`, SQLite et Postgres. `jwtManagement: refresh` est signalé au démarrage comme non pris en charge.
-- Reste : le gestionnaire de sessions et tout le mode `refresh` (users-permissions et admin).
+- Gestionnaire de sessions `internal/auth/session` sur `strapi_sessions` : rotation, rejeu détecté (révocation de l'appareil), expirations idle et absolue, horloge injectable (tests unitaires sur un store mémoire).
+- Côté admin, branché dans l'API `/admin/api/v1` (option B) : login, `access-token`, `logout`, sessions du profil, cookie httpOnly. Testé de bout en bout (`admin_test.go`). Le contrat est celui de grapi (`docs/admin-api.md`), pas les routes `/admin/*` de Strapi.
+- Reste : le mode `refresh` de users-permissions, et la purge périodique.
 
 ## Notes techniques
 - Horloge injectable (`func() time.Time`) partout pour tester les expirations.
