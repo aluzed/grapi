@@ -25,14 +25,18 @@ Un provider S3 avec les mêmes options de configuration, pour qu'une config Stra
 - Migration des fichiers local vers S3 (un outil de CLI pourra venir plus tard).
 
 ## Critères d'acceptation
-- [ ] Upload, remplacement et suppression testés contre MinIO sur le homelab.
-- [ ] Bucket privé : les URLs renvoyées par l'API sont signées et expirent (intégration).
-- [ ] Avec `baseUrl`, les URLs pointent sur le CDN, formats compris.
-- [ ] Un upload de 200 Mo passe en multipart sans dépasser 100 Mo de RSS.
+- [x] Upload, remplacement et suppression testés contre MinIO sur le homelab.
+- [x] Bucket privé : les URLs renvoyées par l'API sont signées et expirent (intégration).
+- [x] Avec `baseUrl`, les URLs pointent sur le CDN, formats compris.
+- [x] Un upload de 200 Mo passe en multipart sans dépasser 100 Mo de RSS.
 
 ## Avancement
 - Fait : provider `aws-s3` sans SDK (SigV4 maison, vérifiée sur le vecteur officiel d'AWS) : clé `rootPath/path/hash+ext`, ACL `public-read` par défaut (absente si `ACL` est vidée, `private` donne des URL signées, 15 minutes par défaut), `endpoint` et `forcePathStyle` pour les stockages compatibles, `baseUrl` pour un CDN, options `s3Options` et anciennes options à la racine. Test d'intégration (`s3_integration_test.go`) passé le 2026-10-22 contre RustFS sur le homelab (MinIO n'est plus distribué en image) : upload, lecture signée de l'original et de la miniature, suppression.
 - Reste : envoi multipart pour les gros fichiers, options avancées du provider (checksum, classe de stockage, chiffrement, tags).
+
+- `make test-integration-s3` (`scripts/with-homelab-s3.sh`) : un stockage S3 jetable sur le homelab, SeaweedFS, car MinIO ne publie plus ses images communautaires (Docker Hub et Quay refusés). Tests : envoi, GET signé, vignette et suppression (`TestUploadToS3`) ; remplacement qui garde le `hash` et sert le nouvel objet, URL signée refusée après `signedUrlExpires`, nouvelle URL signée à la relecture, envoi de 200 Mo sans hausse notable du pic de RSS (`TestS3ReplaceExpiryAndLargeUpload`) ; bucket public avec `baseUrl` : fichier et formats sur le CDN (`TestS3BaseURL`).
+- Le gros envoi part en un seul `PutObject` en flux, charge utile non signée, depuis le fichier temporaire, et non en multipart comme `@aws-sdk/lib-storage` : la mémoire reste bornée, mais un objet est limité à 5 Go.
+- Le test a trouvé une vraie fuite : `probeSVG` lisait tout fichier non-image en entier pour y chercher `<svg` (191 Mo de RSS pour 200 Mo envoyés, tous providers confondus). La recherche se limite maintenant au premier Mio.
 
 ## Notes techniques
 - `aws-sdk-go-v2` : `service/s3`, `feature/s3/manager` (multipart) et `s3.NewPresignClient`.

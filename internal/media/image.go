@@ -76,8 +76,17 @@ func isAVIF(head []byte) bool {
 	return len(head) >= 12 && string(head[4:8]) == "ftyp" && (string(head[8:12]) == "avif" || string(head[8:12]) == "avis")
 }
 
+// svgHead is how much of a file is searched for the <svg> tag: it opens
+// the document, and reading a large binary whole would hold it in memory.
+const svgHead = 1 << 20
+
 func probeSVG(path string) (Info, error) {
-	b, err := os.ReadFile(path) //nolint:gosec // a temporary upload file
+	f, err := os.Open(path) //nolint:gosec // a temporary upload file
+	if err != nil {
+		return Info{}, err
+	}
+	defer func() { _ = f.Close() }()
+	b, err := io.ReadAll(io.LimitReader(f, svgHead))
 	if err != nil {
 		return Info{}, err
 	}

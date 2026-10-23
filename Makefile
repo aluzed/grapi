@@ -4,7 +4,7 @@ GOBIN := $(shell go env GOPATH)/bin
 GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
 GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: typecheck-compat e2e-invite docker ci admin admin-check build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: test-integration-s3 typecheck-compat e2e-invite docker ci admin admin-check build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 # What GitHub Actions used to run, locally (Actions is off on the repo).
 ci: lint licenses admin-check test test-integration-homelab
@@ -31,6 +31,9 @@ test-integration:
 	go test -p 1 -tags integration ./...
 
 # Same, against a throwaway Postgres on the homelab.
+test-integration-s3:
+	./scripts/with-homelab-s3.sh go test -p 1 -tags integration -run S3 -v .
+
 test-integration-homelab:
 	./scripts/with-homelab-postgres.sh go test -p 1 -tags integration ./...
 
