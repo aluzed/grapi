@@ -260,8 +260,17 @@ func Optimize(src, dst string, info Info, quality int, autoOrient bool) (Resized
 }
 
 func scaleTo(out io.Writer, img image.Image, format string, w, h int) error {
+	// CatmullRom keeps a float buffer of the target width by the source
+	// height: a large photo is first brought down to twice the target with
+	// ApproxBiLinear, which needs none.
+	src := img
+	if b := img.Bounds(); b.Dx() > 4*w && b.Dy() > 4*h {
+		mid := image.NewRGBA(image.Rect(0, 0, 2*w, 2*h))
+		draw.ApproxBiLinear.Scale(mid, mid.Bounds(), img, b, draw.Src, nil)
+		src = mid
+	}
 	dstImg := image.NewRGBA(image.Rect(0, 0, w, h))
-	draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), img, img.Bounds(), draw.Over, nil)
+	draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), src, src.Bounds(), draw.Over, nil)
 	return encode(out, dstImg, format, 80)
 }
 
