@@ -21,6 +21,7 @@ grapi db:sync --dry-run -dir <project>       # what the start-up schema sync wou
 grapi db:check -dir <project>                # consistency report: schema, documentIds, orphan links, password hashes
 grapi api-token:create|list|delete|regenerate # content API tokens
 grapi permissions:list|grant|revoke <role>   # users-permissions role permissions
+grapi admin:create-user|reset-user-password|list-users  # admins (--email, --password-stdin)
 grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]
 grapi openapi [-o file]                      # the content API's OpenAPI document
 grapi ts:generate-types [-o dir]             # types/generated/*.d.ts for @strapi/strapi

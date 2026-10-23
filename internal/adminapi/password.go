@@ -1,6 +1,7 @@
 package adminapi
 
 import (
+	"errors"
 	"net/mail"
 	"strings"
 	"unicode"
@@ -56,3 +57,18 @@ func checkEmail(field, e string) []FieldError {
 	}
 	return nil
 }
+
+// ValidatePassword applies the admin password policy.
+func ValidatePassword(p string) error {
+	if errs := checkPassword("password", p); len(errs) > 0 {
+		msgs := make([]string, len(errs))
+		for i, e := range errs {
+			msgs[i] = e.Message
+		}
+		return errors.New(strings.Join(msgs, ", "))
+	}
+	return nil
+}
+
+// HashPassword is the bcrypt hash of an admin password.
+func HashPassword(p string) (string, error) { return hashPassword(p) }

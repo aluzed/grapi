@@ -200,6 +200,12 @@ grapi | perf)
     -d '{"email":"compat-admin@example.com","password":"Compat1234"}' "$b_url/admin/api/v1/auth/login")
   echo "Strapi admin login on grapi: $login"
   [ "$login" = 200 ] || admin_failed=1
+  env "$@" "$here/bin/grapi" admin:reset-user-password -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" \
+    --email compat-admin@example.com --password Compat5678 >/dev/null || admin_failed=1
+  relogin=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+    -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login")
+  echo "Login after admin:reset-user-password: $relogin"
+  [ "$relogin" = 200 ] || admin_failed=1
   ;;
 *)
   echo "error: unknown mode $mode" >&2

@@ -26,7 +26,7 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `telemetry:*` (pas de télémétrie, `EXT-007`) et `enterprise install` (sans objet).
 
 ## Critères d'acceptation
-- [ ] `admin:reset-user-password` fonctionne sur une base Strapi 5.59 existante, sans rien casser d'autre (règle projet : on ne touche jamais à la table des admins en dehors de cette opération ciblée).
+- [x] `admin:reset-user-password` fonctionne sur une base Strapi 5.59 existante, sans rien casser d'autre (règle projet : on ne touche jamais à la table des admins en dehors de cette opération ciblée).
 - [ ] `configuration:dump` sur une base Strapi produit un fichier que `strapi configuration:restore` accepte, et inversement (banc `SETUP-002`).
 - [ ] `routes:list` affiche méthode, chemin, handler et policies pour toutes les routes, y compris celles des plugins.
 - [ ] Le mot de passe saisi en interactif n'est jamais affiché ni loggé.
@@ -37,6 +37,7 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `grapi routes:list` : la table des routes au format de Strapi (`HEAD|GET` pour les GET, comme koa), test `TestRoutesList`. Strapi y liste aussi les couches de son routeur (fichiers publics, admin), que grapi sert hors table.
 - `grapi configuration:dump [-f fichier] [-p]` et `configuration:restore [-f fichier] [-s replace|merge|keep]` : les entrées `plugin_*` du core store, triées par clé, valeurs brutes, et les trois importeurs de Strapi avec leurs statistiques (`TestConfigurationDumpRestore`).
 - `grapi report` indique aussi GraphQL (on/off), l'accès OpenAPI et les providers d'upload et d'e-mail.
+- `grapi admin:create-user` (Super Admin actif, mot de passe par `--password-stdin` de préférence), `admin:reset-user-password` (seul le mot de passe change, les sessions de l'admin sont fermées) et `admin:list-users`, via la politique de mot de passe et le hash de l'API admin. Test `TestAdminCommands` ; au banc en mode grapi, l'admin créé par Strapi est réinitialisé puis se connecte avec le nouveau mot de passe (SQLite et Postgres).
 - `grapi content-types:list` et `components:list` (tableau `Name` de Strapi), `TestListCommands`.
 - `grapi middlewares:list` et `hooks:list` : les middlewares que grapi implémente (sous les noms de Strapi) et les hooks intégrés. Strapi liste aussi ses middlewares absents de grapi (compression, session, favicon...) et ceux de l'admin.
 - Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, les commandes admin, `rename:field`.
