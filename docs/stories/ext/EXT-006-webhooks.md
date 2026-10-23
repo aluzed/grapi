@@ -33,6 +33,6 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 - Fait : `internal/webhooks` : webhooks lus dans `strapi_webhooks` à chaque événement, payload `{event, createdAt, model, uid, entry}`, en-têtes `defaultHeaders` puis webhook puis `X-Strapi-Event` et `Content-Type`, délai de 10 s, 5 envois en parallèle, nouvelles tentatives avec backoff exponentiel (`server.webhooks.retries`, 3 par défaut, 0 pour le comportement de Strapi).
 - Écart avec le ticket : la file n'est pas persistée en base (une table de plus modifierait le schéma d'une base Strapi). `contentTypeEvents` n'existe pas dans Strapi 5.59.0 publié (il est sur la branche principale après le tag).
 - Protection SSRF optionnelle : `server.webhooks.blockPrivateNetworks: true` refuse les livraisons vers les adresses de loopback, privées et link-local, contrôlées à la connexion (après DNS), `TestPublicOnlyTransport`.
-- Reste : API admin (CRUD, trigger), comparaison avec un récepteur d'échos sur le banc.
-
+- API admin (CRUD, trigger) faite (`ADM-008`, `TestAdminWebhooks`).
 - Banc : livraisons identiques à Strapi (événements, en-têtes, corps) pour création, publication, mise à jour et suppression, fixtures `basic` et `relations` (voir `DOC-005`). En production, comme Strapi, une URL de webhook qui pointe vers une adresse locale ou privée est refusée à la création et à la modification (« Url is not supported because it isn't reachable over the public internet ») ; le banc relance donc la référence Strapi en développement pour son récepteur d'échos.
+- Reste : le critère du récepteur hors ligne, dont la file qui survit à un redémarrage (écart assumé plus haut : pas de table en plus dans une base Strapi).
