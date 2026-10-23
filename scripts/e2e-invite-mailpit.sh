@@ -3,7 +3,8 @@
 # server: Mailpit runs on the homelab (nothing in Docker locally), grapi runs
 # here on a throwaway copy of the basic fixture. Invite, read the mail in
 # Mailpit, follow the link, register, log in; reset the password from its
-# e-mail, log out; then send the test e-mail.
+# e-mail, log out; then send the test e-mail. End users: reset the password
+# and confirm the e-mail from users-permissions' mails.
 # usage: scripts/e2e-invite-mailpit.sh
 set -eu
 host=${COMPAT_HOST:-homelab}
@@ -118,6 +119,37 @@ login=$(curl -s -c "$jar" -o /dev/null -w '%{http_code}' -H 'Content-Type: appli
 curl -sf -b "$jar" -c "$jar" -o /dev/null -X POST "$base/auth/logout"
 refresh=$(curl -s -b "$jar" -o /dev/null -w '%{http_code}' -X POST "$base/auth/access-token")
 [ "$refresh" = 401 ] || { echo "error: the session survives the logout ($refresh)" >&2; exit 1; }
+# End users: the reset and confirmation links of users-permissions' mails.
+wait_mail() {
+  i=0
+  until [ "$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages_count"]')" -ge 1 ]; do
+    i=$((i + 1))
+    [ $i -gt 20 ] && { tail -20 "$work/grapi.log"; echo "error: $1 did not reach Mailpit" >&2; exit 1; }
+    sleep 1
+  done
+  curl -sf "http://127.0.0.1:$api/api/v1/message/$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages"][0]["ID"]')"
+}
+users=http://127.0.0.1:$port/api/auth
+curl -sf -X DELETE "http://127.0.0.1:$api/api/v1/messages" >/dev/null
+curl -sf -o /dev/null -H 'Content-Type: application/json' -d '{"username":"enduser","email":"enduser@example.test","password":"E2e-User1"}' "$users/local/register"
+curl -sf -o /dev/null -H 'Content-Type: application/json' -d '{"email":"enduser@example.test"}' "$users/forgot-password"
+code=$(wait_mail "the end user's reset mail" | json '__import__("re").search(r"code=([A-Za-z0-9]+)", d["Text"] + d["HTML"]).group(1)')
+reset=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+  -d "{\"code\":\"$code\",\"password\":\"E2e-User2\",\"passwordConfirmation\":\"E2e-User2\"}" "$users/reset-password")
+[ "$reset" = 200 ] || { echo "error: end user reset ($reset)" >&2; exit 1; }
+login=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d '{"identifier":"enduser@example.test","password":"E2e-User2"}' "$users/local")
+[ "$login" = 200 ] || { echo "error: end user login after the reset ($login)" >&2; exit 1; }
+curl -sf -o /dev/null -X PUT -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"email_confirmation":true}' "$base/users-permissions/advanced"
+curl -sf -X DELETE "http://127.0.0.1:$api/api/v1/messages" >/dev/null
+curl -sf -o /dev/null -H 'Content-Type: application/json' -d '{"username":"confirmed","email":"confirmed@example.test","password":"E2e-User1"}' "$users/local/register"
+before=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d '{"identifier":"confirmed@example.test","password":"E2e-User1"}' "$users/local")
+[ "$before" = 400 ] || { echo "error: an unconfirmed user logs in ($before)" >&2; exit 1; }
+confirmation=$(wait_mail "the confirmation mail" | json '__import__("re").search(r"confirmation=([A-Za-z0-9]+)", d["Text"] + d["HTML"]).group(1)')
+followed=$(curl -s -o /dev/null -w '%{http_code}' "$users/email-confirmation?confirmation=$confirmation")
+[ "$followed" = 301 ] || [ "$followed" = 302 ] || { echo "error: confirmation link ($followed)" >&2; exit 1; }
+after=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d '{"identifier":"confirmed@example.test","password":"E2e-User1"}' "$users/local")
+[ "$after" = 200 ] || { echo "error: login after the confirmation ($after)" >&2; exit 1; }
+echo "end user e2e: reset link and confirmation link received by mail and followed, logins work"
 echo "invitation e2e: mail delivered by SMTP to Mailpit, link followed, invited admin logged in"
 echo "password reset e2e: link received by mail, new password works; logout ends the session"
 echo "test e-mail e2e: Settings > E-mail test delivered to Mailpit"
