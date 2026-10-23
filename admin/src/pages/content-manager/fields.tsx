@@ -374,8 +374,15 @@ const span: Record<number, string> = { 4: 'md:col-span-4', 6: 'md:col-span-6', 8
 
 // LayoutGrid renders the root fields along the configured edit layout:
 // rows of 12 columns on desktop, stacked on mobile.
-export function LayoutGrid(props: Omit<Parameters<typeof FieldsGrid>[0], 'fields'> & { layout: { name: string; size: number }[][]; fields: string[] }) {
-  const { layout, fields, ...rest } = props
+export function LayoutGrid(
+  props: Omit<Parameters<typeof FieldsGrid>[0], 'fields'> & {
+    layout: { name: string; size: number }[][]
+    fields: string[]
+    // writable says whether the user may change a field; the others are read only.
+    writable?: (name: string) => boolean
+  },
+) {
+  const { layout, fields, writable, ...rest } = props
   const placed = new Set(layout.flat().map((f) => f.name))
   const rows = [...layout, ...fields.filter((f) => !placed.has(f)).map((name) => [{ name, size: 12 }])]
   return (
@@ -385,9 +392,9 @@ export function LayoutGrid(props: Omit<Parameters<typeof FieldsGrid>[0], 'fields
           {row
             .filter((f) => fields.includes(f.name))
             .map((f) => (
-              <div key={f.name} className={span[f.size] ?? 'md:col-span-12'}>
+              <fieldset key={f.name} disabled={writable ? !writable(f.name) : undefined} className={span[f.size] ?? 'md:col-span-12'}>
                 <FieldsGrid {...rest} fields={[f.name]} single />
-              </div>
+              </fieldset>
             ))}
         </div>
       ))}

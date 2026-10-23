@@ -70,7 +70,7 @@ export type Model = {
   listColumns: string[]
   labels: Record<string, string>
   settings: { pageSize: number; defaultSortBy: string; defaultSortOrder: 'ASC' | 'DESC'; searchable: boolean; filterable: boolean; bulkable: boolean }
-  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; publish: boolean }
+  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; publish: boolean; createFields?: string[] | null; updateFields?: string[] | null }
   editLayout: { name: string; size: number }[][]
   editMeta: Record<string, { label: string; description: string; placeholder: string; visible: boolean; editable: boolean }>
   canConfigure: boolean

@@ -50,6 +50,10 @@ type ModelPermissions struct {
 	Update  bool `json:"update"`
 	Delete  bool `json:"delete"`
 	Publish bool `json:"publish"`
+	// CreateFields and UpdateFields are the fields the user may write,
+	// null for all of them: the edit view shows the others read only.
+	CreateFields []string `json:"createFields"`
+	UpdateFields []string `json:"updateFields"`
 }
 
 // Model is a content type as the Content Manager shows it.
@@ -100,6 +104,7 @@ func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) 
 	perms := ModelPermissions{
 		Read: a.Can(actionRead, uid, ""), Create: a.Can(actionCreate, uid, ""), Update: a.Can(actionUpdate, uid, ""),
 		Delete: a.Can(actionDelete, uid, ""), Publish: a.Can(actionPublish, uid, ""),
+		CreateFields: a.Fields(actionCreate, uid), UpdateFields: a.Fields(actionUpdate, uid),
 	}
 	if !perms.Read {
 		return nil, nil

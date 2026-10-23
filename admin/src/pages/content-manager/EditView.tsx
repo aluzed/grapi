@@ -192,6 +192,9 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
         ? t('cm.newEntry')
         : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
   const canSave = creating ? model.permissions.create : model.permissions.update
+  const writableFields = creating ? model.permissions.createFields : model.permissions.updateFields
+  // null allows every field; a field is writable when it or one of its sub-fields is allowed.
+  const writable = (name: string) => writableFields == null || writableFields.some((f) => f === name || f.startsWith(name + '.'))
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
@@ -287,7 +290,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       ) : (
         <Card>
           <fieldset disabled={!canSave}>
-            <LayoutGrid layout={model.editLayout ?? []} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
+            <LayoutGrid layout={model.editLayout ?? []} writable={writable} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
           </fieldset>
         </Card>
       )}
