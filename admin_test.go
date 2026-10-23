@@ -49,8 +49,13 @@ func dataOf(m map[string]any) map[string]any {
 
 func newAdminProject(t *testing.T) (*httptest.Server, *captureMail, func()) {
 	t.Helper()
+	return newAdminFixture(t, "basic")
+}
+
+func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMail, func()) {
+	t.Helper()
 	dir := t.TempDir()
-	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
+	if err := copyDir(filepath.Join("compat", "fixtures", fixture, "src"), filepath.Join(dir, "src")); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
@@ -454,5 +459,56 @@ func TestAdminContentManager(t *testing.T) {
 	}
 	if s, _, _ := super.do("DELETE", base+"/"+ids[""], ""); s != 200 {
 		t.Fatalf("delete: %d", s)
+	}
+}
+
+func TestAdminRelations(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "relations")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	create := func(uid, data string) string {
+		t.Helper()
+		s, b, _ := c.do("POST", "/content-manager/collection-types/"+uid, `{"data":`+data+`}`)
+		if s != 201 {
+			t.Fatalf("create %s: %d %v", uid, s, b)
+		}
+		return dataOf(b)["documentId"].(string)
+	}
+	writer := create("api::writer.writer", `{"name":"Ursula"}`)
+	tags := []string{create("api::tag.tag", `{"name":"go"}`), create("api::tag.tag", `{"name":"cms"}`), create("api::tag.tag", `{"name":"admin"}`)}
+
+	s, b, _ := c.do("GET", "/content-manager/relations/api::post.post/tags?_q=cms", "")
+	if s != 200 || len(b["data"].([]any)) != 1 || b["data"].([]any)[0].(map[string]any)["label"] != "cms" {
+		t.Fatalf("relation targets: %d %v", s, b)
+	}
+	if s, _, _ := c.do("GET", "/content-manager/relations/api::post.post/title", ""); s != 404 {
+		t.Fatalf("not a relation: %d", s)
+	}
+
+	post := create("api::post.post", `{"title":"Hello","writer":{"set":[{"documentId":"`+writer+`"}]},"tags":{"set":[{"documentId":"`+tags[2]+`"},{"documentId":"`+tags[0]+`"}]}}`)
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
+	got := dataOf(b)
+	if w, _ := got["writer"].(map[string]any); w == nil || w["name"] != "Ursula" {
+		t.Fatalf("writer: %v", got["writer"])
+	}
+	names := func(v any) []string {
+		var out []string
+		for _, e := range v.([]any) {
+			out = append(out, e.(map[string]any)["name"].(string))
+		}
+		return out
+	}
+	if n := names(got["tags"]); strings.Join(n, ",") != "admin,go" {
+		t.Fatalf("tags in set order: %v", n)
+	}
+	if s, b, _ := c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"writer":{"set":[]},"tags":{"set":[{"documentId":"`+tags[1]+`"},{"documentId":"`+tags[2]+`"}]}}}`); s != 200 {
+		t.Fatalf("update relations: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
+	got = dataOf(b)
+	if got["writer"] != nil || strings.Join(names(got["tags"]), ",") != "cms,admin" {
+		t.Fatalf("after update: writer %v tags %v", got["writer"], got["tags"])
 	}
 }

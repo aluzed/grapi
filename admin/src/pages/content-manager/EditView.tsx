@@ -13,15 +13,19 @@ import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
-import { entryPath, label } from './hooks'
+import { entryPath, label, useModels } from './hooks'
+import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
 
-const editable = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
+const editableTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
 
 type Values = Record<string, unknown>
 
+const editable = (attr: Attribute) => editableTypes.has(attr.type) || isEditableRelation(attr)
+
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
 
-function toInput(attr: Attribute, v: unknown): unknown {
+function toInput(attr: Attribute, v: unknown, models: Model[]): unknown {
+  if (attr.type === 'relation') return relationItems(v, attr, models)
   if (v === null || v === undefined) return attr.type === 'boolean' ? false : ''
   if (attr.type === 'json') return JSON.stringify(v, null, 2)
   if (attr.type === 'datetime') return String(v).slice(0, 16)
@@ -31,6 +35,7 @@ function toInput(attr: Attribute, v: unknown): unknown {
 
 // fromInput converts the form value back; undefined leaves the field out.
 function fromInput(attr: Attribute, v: unknown): unknown {
+  if (attr.type === 'relation') return { set: ((v as RelationItem[] | undefined) ?? []).map((i) => ({ documentId: i.documentId })) }
   if (attr.type === 'boolean') return Boolean(v)
   if (v === '' || v === undefined) return attr.type === 'password' ? undefined : null
   switch (attr.type) {
@@ -113,6 +118,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
   const navigate = useNavigate()
   const confirm = useConfirm()
   const queryClient = useQueryClient()
+  const models = useModels().data ?? []
   const [params] = useSearchParams()
   const locale = params.get('locale') ?? ''
   const creating = documentId === undefined
@@ -138,8 +144,8 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
     if (!creating && !entry.data) return
     const next: Values = {}
     for (const [name, attr] of fields) {
-      if (!editable.has(attr.type)) continue
-      next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name])
+      if (!editable(attr)) continue
+      next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], models)
     }
     setValues(next)
     // fields derive from model, which keys this component.
@@ -149,7 +155,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
     const out: Values = {}
     const errs: Record<string, string> = {}
     for (const [name, attr] of fields) {
-      if (!editable.has(attr.type)) continue
+      if (!editable(attr)) continue
       try {
         const v = fromInput(attr, values[name])
         if (v !== undefined) out[name] = v
@@ -261,7 +267,18 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
         <Card>
           <fieldset disabled={!canSave} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {fields.map(([name, attr]) =>
-              editable.has(attr.type) ? (
+              attr.type === 'relation' && editable(attr) ? (
+                <RelationField
+                  key={name}
+                  uid={model.uid}
+                  name={name}
+                  attr={attr}
+                  label={label(model, name) + (attr.required ? ' *' : '')}
+                  value={(values[name] as RelationItem[] | undefined) ?? []}
+                  locale={locale || undefined}
+                  onChange={(v) => setValues((s) => ({ ...s, [name]: v }))}
+                />
+              ) : editable(attr) ? (
                 <Field key={name} name={name} attr={attr} model={model} value={values[name]} error={errors[name]} onChange={(v) => setValues((s) => ({ ...s, [name]: v }))} />
               ) : (
                 <div key={name} className="flex flex-col gap-1.5">

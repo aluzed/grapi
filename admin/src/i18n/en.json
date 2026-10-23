@@ -183,5 +183,12 @@
   "roles.action.update": "Update",
   "roles.action.delete": "Delete",
   "roles.action.publish": "Publish",
-  "roles.back": "Back to the roles"
+  "roles.back": "Back to the roles",
+  "rel.add": "Add a relation",
+  "rel.search": "Search to add",
+  "rel.remove": "Remove",
+  "rel.up": "Move up",
+  "rel.down": "Move down",
+  "rel.none": "No relation",
+  "rel.noResult": "No result"
 }

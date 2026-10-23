@@ -77,8 +77,9 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | `GET /content-manager/models` | Content types lisibles : `uid`, `kind`, `info`, `draftAndPublish`, `localized`, `attributes` lisibles, `mainField`, `listColumns`, `labels`, `settings` (taille de page, tri par défaut, recherche, filtres, actions groupées) et `permissions` de l'utilisateur. Lit la configuration de vue de Strapi (`plugin_content_manager_configuration_content_types::<uid>`) quand elle existe. |
 | `GET /content-manager/locales` | Locales i18n, avec `isDefault` |
 | `GET /content-manager/collection-types/{uid}?page=&pageSize=&sort=&_q=&filters=&locale=&status=` | Liste. `filters` est un objet JSON au format des filtres REST, `status` vaut `draft` (défaut) ou `published`. Chaque document porte `status` : `draft`, `published` ou `modified`. |
+| `GET /content-manager/relations/{uid}/{field}?_q=&page=&pageSize=&locale=` | Documents que la relation `field` peut viser (hors morph) : `{id, documentId, label}`, `label` étant le `mainField` de la cible, avec `meta.pagination` |
 | `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document, relations, médias et composants peuplés |
-| `POST /content-manager/collection-types/{uid}` | `{data, locale}`. Renseigne `createdBy` et `updatedBy`. |
+| `POST /content-manager/collection-types/{uid}` | `{data, locale}`. Renseigne `createdBy` et `updatedBy`. Les relations s'écrivent comme dans l'API REST (`{set: [{documentId}]}` remplace la liste dans cet ordre, `connect` et `disconnect` sont acceptés). |
 | `PUT /content-manager/collection-types/{uid}/{documentId}` | `{data, locale}`. Renseigne `updatedBy`. |
 | `DELETE /content-manager/collection-types/{uid}/{documentId}?locale=` | Supprime le document (dans la locale) |
 | `POST /content-manager/collection-types/{uid}/actions/bulk-delete` | `{documentIds, locale}` |

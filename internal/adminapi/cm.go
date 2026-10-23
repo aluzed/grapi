@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -641,4 +642,74 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 		return asValidation(err)
 	}
 	return data(w, visible(toMap(row), ct, string(ct.UID), a))
+}
+
+func (s *Server) relationRoutes() {
+	s.authed("GET /content-manager/relations/{uid}/{field}", s.cmRelationTargets)
+}
+
+// RelationTarget is a document a relation field can point to.
+type RelationTarget struct {
+	ID         any    `json:"id"`
+	DocumentID string `json:"documentId"`
+	Label      string `json:"label"`
+}
+
+// cmRelationTargets lists the documents the relation field of uid can link,
+// searched with _q, labelled by the target's main field.
+func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *User) error {
+	ct, a, _, err := s.cmAccess(r, u, actionRead)
+	if err != nil {
+		return err
+	}
+	field := r.PathValue("field")
+	attr, ok := ct.Attributes.Get(field)
+	if !ok || attr.Type != schema.TypeRelation || attr.IsMorph() || attr.Target == "" || !a.Can(actionRead, string(ct.UID), field) {
+		return errNotFound
+	}
+	target, ok := s.set.ContentType(schema.UID(attr.Target))
+	if !ok {
+		return errNotFound
+	}
+	ctx := r.Context()
+	mainField := defaultMainField(target)
+	if cfg, err := s.configuration(ctx, attr.Target); err != nil {
+		return err
+	} else if cfg != nil && cfg.Settings.MainField != "" {
+		mainField = cfg.Settings.MainField
+	}
+	page, size := pageParams(r)
+	p := document.Params{"page": page, "pageSize": size, "sort": mainField + ":asc"}
+	if mainField != "id" {
+		p["fields"] = []any{mainField}
+	}
+	if q := strings.TrimSpace(r.URL.Query().Get("_q")); q != "" {
+		p["_q"] = q
+	}
+	if target.Localized() {
+		if l := r.URL.Query().Get("locale"); l != "" {
+			p["locale"] = l
+		}
+	}
+	rows, err := s.docs.FindMany(ctx, attr.Target, p)
+	if err != nil {
+		return asValidation(err)
+	}
+	total, err := s.docs.Count(ctx, attr.Target, p)
+	if err != nil {
+		return asValidation(err)
+	}
+	out := make([]RelationTarget, 0, len(rows))
+	for _, row := range rows {
+		m := toMap(row)
+		label := ""
+		if v := m[mainField]; v != nil {
+			label = fmt.Sprint(v)
+		}
+		id, _ := m[schema.AttrDocumentID].(string)
+		out = append(out, RelationTarget{ID: m["id"], DocumentID: id, Label: label})
+	}
+	pages := int((total + int64(size) - 1) / int64(size))
+	writeJSON(w, http.StatusOK, map[string]any{"data": out, "meta": map[string]any{"pagination": Pagination{Page: page, PageSize: size, PageCount: pages, Total: total}, "mainField": mainField}})
+	return nil
 }

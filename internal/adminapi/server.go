@@ -140,6 +140,7 @@ func (s *Server) routes() {
 	s.roleRoutes()
 	s.contentManagerRoutes()
 	s.contentManagerEditRoutes()
+	s.relationRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})
