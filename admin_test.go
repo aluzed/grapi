@@ -72,6 +72,7 @@ func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMa
 	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
 	t.Setenv("JWT_SECRET", "test")
 	t.Setenv("ADMIN_JWT_SECRET", "admin-test")
+	t.Setenv("API_TOKEN_SALT", "salt-test")
 	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
 	mail := &captureMail{}
 	app.UseEmailProvider("capture", mail)
@@ -835,5 +836,65 @@ func TestAdminLocales(t *testing.T) {
 	_, b, _ = c.do("GET", base+"?locale=fr", "")
 	if len(b["data"].([]any)) != 0 {
 		t.Fatalf("the fr entries went with the locale: %v", b)
+	}
+}
+
+func TestAdminAPITokens(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("GET", "/api-tokens/actions", "")
+	actions := b["data"].([]any)
+	found := false
+	for _, a := range actions {
+		found = found || a == "api::article.article.find"
+	}
+	if !found {
+		t.Fatalf("actions: %v", actions)
+	}
+	if s, _, _ := c.do("POST", "/api-tokens", `{"name":"Bad","type":"custom","permissions":["api::nope.nope.find"]}`); s != 400 {
+		t.Fatalf("unknown action: %d", s)
+	}
+	s, b, _ := c.do("POST", "/api-tokens", `{"name":"Front","description":"Site","type":"custom","lifespan":30,"permissions":["api::article.article.find"]}`)
+	if s != 201 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	tok := dataOf(b)
+	key, id := tok["accessKey"].(string), strconv.Itoa(int(tok["id"].(float64)))
+	if len(key) != 256 || tok["expiresAt"] == nil {
+		t.Fatalf("token: %v", tok)
+	}
+	api := func(path, key string) int {
+		req, _ := http.NewRequest("GET", ts.URL+path, nil)
+		req.Header.Set("Authorization", "Bearer "+key)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = res.Body.Close()
+		return res.StatusCode
+	}
+	if api("/api/articles", key) != 200 || api("/api/tags", key) != 403 {
+		t.Fatalf("custom token scope: %d %d", api("/api/articles", key), api("/api/tags", key))
+	}
+	_, b, _ = c.do("GET", "/api-tokens", "")
+	if l := b["data"].([]any); len(l) != 1 || l[0].(map[string]any)["accessKey"] != nil {
+		t.Fatalf("list hides keys: %v", l)
+	}
+	if s, b, _ := c.do("PUT", "/api-tokens/"+id, `{"permissions":["api::article.article.find","api::tag.tag.find"]}`); s != 200 || len(dataOf(b)["permissions"].([]any)) != 2 {
+		t.Fatalf("update: %d %v", s, b)
+	}
+	if api("/api/tags", key) != 200 {
+		t.Fatal("updated permissions apply")
+	}
+	_, b, _ = c.do("POST", "/api-tokens/"+id+"/regenerate", "")
+	next := dataOf(b)["accessKey"].(string)
+	if api("/api/articles", key) != 401 || api("/api/articles", next) != 200 {
+		t.Fatal("regenerate replaces the key")
+	}
+	if s, _, _ := c.do("DELETE", "/api-tokens/"+id, ""); s != 200 || api("/api/articles", next) != 401 {
+		t.Fatalf("delete: %d", s)
 	}
 }

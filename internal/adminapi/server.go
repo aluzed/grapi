@@ -48,6 +48,11 @@ type Config struct {
 	ForgotPasswordFrom string
 	// ResetPasswordTTL is admin.forgotPassword.expiresIn, 1 hour by default.
 	ResetPasswordTTL time.Duration
+	// APITokenSalt is admin.apiToken.salt, EncryptionKey
+	// admin.secrets.encryptionKey (stored keys can then be shown again).
+	APITokenSalt, EncryptionKey string
+	// ContentActions lists the actions a custom API token can be given.
+	ContentActions func() []string
 	// Media is the upload pipeline; nil leaves the media routes out.
 	Media MediaService
 	// UI is the built SPA; nil serves the API only.
@@ -149,6 +154,7 @@ func (s *Server) routes() {
 	s.uidRoutes()
 	s.homepageRoutes()
 	s.i18nRoutes()
+	s.tokenRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

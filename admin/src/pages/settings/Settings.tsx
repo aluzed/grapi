@@ -13,6 +13,7 @@ export const sections: Section[] = [
   { to: '/settings', label: 'settings.overview', allowed: () => true },
   { to: '/settings/users', label: 'settings.users', allowed: (p) => can(p, 'admin::users.read') },
   { to: '/settings/roles', label: 'settings.roles', allowed: (p) => can(p, 'admin::roles.read') },
+  { to: '/settings/api-tokens', label: 'settings.apiTokens', allowed: (p) => can(p, 'admin::api-tokens.read') },
   { to: '/settings/locales', label: 'settings.locales', allowed: (p) => can(p, 'plugin::i18n.locale.read') },
 ]
 

@@ -3,11 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,27 +14,6 @@ import (
 
 	"github.com/aluzed/grapi"
 )
-
-func TestEncryptKeyRoundTrip(t *testing.T) {
-	enc, err := encryptKey("secret", "token")
-	if err != nil {
-		t.Fatal(err)
-	}
-	parts := strings.Split(enc, ":")
-	if len(parts) != 4 || parts[0] != "v1" || len(parts[1]) != 32 {
-		t.Fatalf("format %s", enc)
-	}
-	key := sha256.Sum256([]byte("secret"))
-	block, _ := aes.NewCipher(key[:])
-	gcm, _ := cipher.NewGCMWithNonceSize(block, 16)
-	iv, _ := hex.DecodeString(parts[1])
-	data, _ := hex.DecodeString(parts[2])
-	tag, _ := hex.DecodeString(parts[3])
-	out, err := gcm.Open(nil, iv, append(data, tag...), nil)
-	if err != nil || string(out) != "token" {
-		t.Fatalf("decrypt: %q %v", out, err)
-	}
-}
 
 // A project managed from the CLI only: grant a permission, create a
 // token, use it.

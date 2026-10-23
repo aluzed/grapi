@@ -11,11 +11,14 @@ import { Profile } from '@/pages/profile/Profile'
 import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManager'
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
+import { ApiTokens } from '@/pages/settings/ApiTokens'
 import { Locales } from '@/pages/settings/Locales'
 import { Overview } from '@/pages/settings/Overview'
 import { RoleEditor } from '@/pages/settings/RoleEditor'
 import { Roles } from '@/pages/settings/Roles'
 import { Settings, sections } from '@/pages/settings/Settings'
+
+const settingsAllowed = (to: string) => sections.find((s) => s.to === to)!.allowed
 import { Users } from '@/pages/settings/Users'
 import { MediaLibrary } from '@/pages/media/MediaLibrary'
 import { Soon } from '@/pages/Soon'
@@ -71,10 +74,11 @@ export const router = createBrowserRouter(
           element: <Settings />,
           children: [
             { index: true, element: <Overview /> },
-            { path: 'users', element: <RequirePermission allowed={sections[1]!.allowed}><Users /></RequirePermission> },
-            { path: 'roles', element: <RequirePermission allowed={sections[2]!.allowed}><Roles /></RequirePermission> },
-            { path: 'roles/:id', element: <RequirePermission allowed={sections[2]!.allowed}><RoleEditor /></RequirePermission> },
-            { path: 'locales', element: <RequirePermission allowed={sections[3]!.allowed}><Locales /></RequirePermission> },
+            { path: 'users', element: <RequirePermission allowed={settingsAllowed('/settings/users')}><Users /></RequirePermission> },
+            { path: 'roles', element: <RequirePermission allowed={settingsAllowed('/settings/roles')}><Roles /></RequirePermission> },
+            { path: 'roles/:id', element: <RequirePermission allowed={settingsAllowed('/settings/roles')}><RoleEditor /></RequirePermission> },
+            { path: 'api-tokens', element: <RequirePermission allowed={settingsAllowed('/settings/api-tokens')}><ApiTokens /></RequirePermission> },
+            { path: 'locales', element: <RequirePermission allowed={settingsAllowed('/settings/locales')}><Locales /></RequirePermission> },
           ],
         },
         { path: '*', element: <NotFound /> },

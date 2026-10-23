@@ -128,3 +128,17 @@ Présentes quand le plugin i18n est actif. La liste des locales est `GET /conten
 | `DELETE /i18n/locales/{id}` | `plugin::i18n.locale.delete` | Supprime la locale et, comme Strapi, toutes les entrées écrites dans cette locale. Refusé pour la locale par défaut. |
 
 `PUT /content-manager/collection-types/{uid}/{documentId}` avec une `locale` où le document n'existe pas encore crée cette version (action `create`). Les champs non localisés sont partagés entre les versions.
+
+### API tokens
+
+Tokens de l'API de contenu (`kind` `content-api`). Actions `admin::api-tokens.{read,create,update,regenerate,delete}`. La clé suit le schéma de Strapi (`internal/auth/apitoken`) : 128 octets aléatoires en hexadécimal, stockés en HMAC-SHA512 avec `admin.apiToken.salt`, et chiffrés avec `admin.secrets.encryptionKey` quand il est défini (le token peut alors être réaffiché).
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /api-tokens` | Tokens, sans leur clé |
+| `GET /api-tokens/actions` | Actions qu'un token personnalisé peut recevoir (`api::article.article.find`…) |
+| `GET /api-tokens/{id}` | Un token avec ses `permissions`, et sa clé si elle est stockée chiffrée |
+| `POST /api-tokens` | `name` (unique), `description`, `type` (`read-only`, `full-access`, `custom`), `lifespan` (7, 30, 90 jours ou 0 pour illimité), `permissions` (type `custom`). Renvoie la clé une seule fois (`accessKey`). |
+| `PUT /api-tokens/{id}` | `name`, `description`, `type`, `permissions` |
+| `POST /api-tokens/{id}/regenerate` | Nouvelle clé (`accessKey`), l'ancienne cesse de fonctionner |
+| `DELETE /api-tokens/{id}` | Révoque le token |

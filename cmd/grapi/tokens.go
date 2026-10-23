@@ -2,13 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
-	"crypto/sha512"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/auth/apitoken"
 	"github.com/aluzed/grapi/internal/db/query"
 )
 
@@ -27,32 +21,7 @@ const (
 	apiTokenPermUID = "admin::api-token-permission"
 	upRoleUID       = "plugin::users-permissions.role"
 	upPermissionUID = "plugin::users-permissions.permission"
-	day             = 24 * time.Hour
 )
-
-// lifespans are Strapi's API_TOKEN_LIFESPANS, in days.
-var lifespans = map[int]bool{7: true, 30: true, 90: true}
-
-// encryptKey is the admin encryption service: AES-256-GCM with the
-// SHA-256 of admin.secrets.encryptionKey, "v1:iv:data:tag" in hex.
-func encryptKey(secret, value string) (string, error) {
-	key := sha256.Sum256([]byte(secret))
-	block, err := aes.NewCipher(key[:])
-	if err != nil {
-		return "", err
-	}
-	gcm, err := cipher.NewGCMWithNonceSize(block, 16)
-	if err != nil {
-		return "", err
-	}
-	iv := make([]byte, 16)
-	if _, err := rand.Read(iv); err != nil {
-		return "", err
-	}
-	sealed := gcm.Seal(nil, iv, []byte(value), nil)
-	data, tag := sealed[:len(sealed)-gcm.Overhead()], sealed[len(sealed)-gcm.Overhead():]
-	return "v1:" + hex.EncodeToString(iv) + ":" + hex.EncodeToString(data) + ":" + hex.EncodeToString(tag), nil
-}
 
 func openEngine(dir, configDir string, stderr io.Writer) (*grapi.Project, *query.Engine, error) {
 	p, err := grapi.LoadProject(dir, configDir, stderr)
@@ -81,7 +50,7 @@ func apiTokenCreate(args []string, stdout, stderr io.Writer) error {
 	default:
 		return fmt.Errorf("--type must be read-only, full-access or custom")
 	}
-	if *days != 0 && !lifespans[*days] {
+	if !apitoken.Lifespans[*days] {
 		return fmt.Errorf("--lifespan must be 7, 30 or 90")
 	}
 	var actions []string
@@ -124,7 +93,7 @@ func apiTokenCreate(args []string, stdout, stderr io.Writer) error {
 		data["description"] = *desc
 	}
 	if *days > 0 {
-		life := time.Duration(*days) * day
+		life := time.Duration(*days) * apitoken.Day
 		data["lifespan"] = strconv.FormatInt(life.Milliseconds(), 10)
 		data["expiresAt"] = time.Now().Add(life)
 	}
@@ -175,27 +144,11 @@ func apiTokenList(args []string, stdout, stderr io.Writer) error {
 	return w.Flush()
 }
 
-// apiTokenDelete is `grapi api-token:delete --id N`.
-// newAccessKey is the api-token service's: 128 random bytes in hex, stored
-// as its HMAC-SHA512 with the salt, and encrypted when an encryption key
-// is set.
+// newAccessKey is the api-token service's key, see apitoken.New.
 func newAccessKey(p *grapi.Project, salt string) (string, query.Data, error) {
-	raw := make([]byte, 128)
-	if _, err := rand.Read(raw); err != nil {
-		return "", nil, err
-	}
-	accessKey := hex.EncodeToString(raw)
-	m := hmac.New(sha512.New, []byte(salt))
-	m.Write([]byte(accessKey))
-	data := query.Data{"accessKey": hex.EncodeToString(m.Sum(nil))}
-	if secret, _ := p.Conf.String("admin.secrets.encryptionKey"); secret != "" {
-		enc, err := encryptKey(secret, accessKey)
-		if err != nil {
-			return "", nil, err
-		}
-		data["encryptedKey"] = enc
-	}
-	return accessKey, data, nil
+	secret, _ := p.Conf.String("admin.secrets.encryptionKey")
+	key, cols, err := apitoken.New(salt, secret)
+	return key, query.Data(cols), err
 }
 
 // apiTokenRegenerate is `grapi api-token:regenerate --id N`: a new key for

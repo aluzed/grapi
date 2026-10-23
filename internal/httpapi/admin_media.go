@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"net/http"
+	"sort"
 
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/schema"
@@ -55,3 +56,18 @@ func (s *Server) AdminDeleteFile(ctx context.Context, id any) (query.Row, error)
 
 // SignFile replaces the URLs of a private provider's file by signed ones.
 func (s *Server) SignFile(ctx context.Context, row query.Row) { s.signFile(ctx, row) }
+
+// ContentAPIActions are the content API actions a custom API token can be
+// given (api::article.article.find...), sorted.
+func (s *Server) ContentAPIActions() []string {
+	var out []string
+	for group, g := range s.actions() {
+		for controller, actions := range g["controllers"] {
+			for a := range actions {
+				out = append(out, group+"."+controller+"."+a)
+			}
+		}
+	}
+	sort.Strings(out)
+	return out
+}

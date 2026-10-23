@@ -37,6 +37,7 @@ Les mêmes tokens, avec le même format de stockage, pour qu'un token créé par
 - [ ] Les comparaisons de tokens sont à temps constant (`crypto/subtle`).
 
 ## Avancement
+- Gestion depuis l'admin (`/admin/api/v1/api-tokens`, page Paramètres > API tokens) : création, édition, permissions personnalisées, régénération, révocation. Schéma de clé dans `internal/auth/apitoken`, partagé avec la CLI.
 - Fait : stratégie `api-token` sur le Content API (read-only, full-access, custom, expiration en 401). Création, liste et suppression en CLI (`grapi api-token:create|list|delete`, `cmd/grapi/tokens.go`) : 128 octets aléatoires, `accessKey` en HMAC-SHA512 avec le sel, `encryptedKey` au format du service de chiffrement de l'admin (`v1:iv:data:tag`, AES-256-GCM sur le SHA-256 de `admin.secrets.encryptionKey`, déchiffré par Node à l'identique), durées de vie 7, 30 ou 90 jours.
 - `lastUsedAt` mis à jour à l'usage comme `updateLastUsedAt` (au plus une fois par heure), vérifié dans `TestTokensAndPermissions`.
 - `grapi api-token:regenerate --id N` : nouvelle clé (HMAC et chiffrement comme à la création), l'ancienne cesse de fonctionner (`TestTokensAndPermissions`).

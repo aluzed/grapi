@@ -54,8 +54,9 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - Administrateurs : liste avec recherche et statut (actif, invitation en attente, bloqué), invitation (e-mail, rôles, lien d'inscription copiable), édition (identité, rôles, activation), suppression avec confirmation.
 - Rôles : liste avec nombre d'utilisateurs, création, suppression (refusée si le rôle est attribué), éditeur : nom, description, matrice create, read, update, delete, publish par content type avec « Ses entrées seulement » (`is-creator`), actions des plugins et des réglages groupées par catégorie. Super Admin en lecture seule.
 - Locales : liste, ajout depuis la liste ISO avec nom affiché et locale par défaut, édition, suppression confirmée (avec les entrées de la locale), défaut non supprimable.
+- API tokens : liste (type, expiration, dernière utilisation), création avec durée et type, matrice des actions par content type pour le type personnalisé, clé affichée une fois avec copie, édition, régénération et suppression confirmées. La logique de clé est partagée avec la CLI (`internal/auth/apitoken`). Testé (`TestAdminAPITokens` utilise le token sur l'API de contenu) et vérifié dans Chrome.
 - Vérifié dans Chrome sur le binaire.
-- Reste : permissions par champ, par locale et `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (webhooks, tokens, users-permissions, e-mail, médias, projet).
+- Reste : permissions par champ, par locale et `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (webhooks, admin et transfer tokens, users-permissions, e-mail, médias, projet).
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.
