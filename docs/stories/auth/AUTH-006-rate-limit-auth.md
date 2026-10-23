@@ -23,14 +23,16 @@ Le même rate limiting, avec les mêmes clés, la même configuration et le mêm
 - Le rate limiting global de l'API (non fourni par Strapi). Il peut faire l'objet d'un middleware optionnel plus tard.
 
 ## Critères d'acceptation
-- [ ] La 11e tentative de login en moins de 60 s depuis la même IP donne 429 (intégration).
-- [ ] Changer d'`identifier` à chaque essai ne contourne pas la limite sur `/auth/local` (régression GHSA-7mqx).
-- [ ] Derrière un proxy avec `X-Forwarded-For`, c'est l'IP client qui sert de clé, seulement si `server.proxy` est actif.
-- [ ] Le corps de la réponse 429 est identique à celui de Strapi (banc `SETUP-002`).
+- [x] La 11e tentative de login en moins de 60 s depuis la même IP donne 429 (intégration).
+- [x] Changer d'`identifier` à chaque essai ne contourne pas la limite sur `/auth/local` (régression GHSA-7mqx).
+- [x] Derrière un proxy avec `X-Forwarded-For`, c'est l'IP client qui sert de clé, seulement si `server.proxy` est actif.
+- [x] Le corps de la réponse 429 est identique à celui de Strapi (banc `SETUP-002`).
 
 ## Avancement
 - Fait : middleware `rateLimit` de users-permissions sur auth local, register, forgot, reset, change-password et send-email-confirmation, clé `buildPrefixKey` à l'identique (routes sans identifiant comprises), fenêtre fixe en mémoire comme koa2-ratelimit, en-têtes `X-RateLimit-*` et `Retry-After`, 429 `RateLimitError`, config `ratelimit` (`enabled`, `interval` en ms ou `{min: 5}`, `max`), IP réelle avec `server.proxy`. Banc dev-freelance : la 11e connexion sur `/api/auth/local` donne le même 429 que Strapi (`ratelimit-login-11`).
 - Vérifié dans Strapi 5.59 : `POST /api/email` n'a pas de rate limit ; les routes limitées sont les 6 de grapi plus `/connect/(.*)`, qui viendra avec `AUTH-005`. Les mutations GraphQL d'auth partagent le compteur des routes REST (`PLG-004`).
+- Critères prouvés : `TestLoginRateLimitIgnoresIdentifier` (11 identifiants différents et un `X-Forwarded-For` falsifié : la 11e tentative donne 429), `TestLoginRateLimitUsesProxyClientIP` (`server.proxy.koa` : une IP client par compteur ; `maxIpsCount` écarte une première adresse forgée), banc dev-freelance `ratelimit-login-11` pour le corps du 429.
+- `server.proxy` lu comme Strapi 5 : `koa`, `ipHeader`, `maxIpsCount` (`internal/clientip`, port de `request.ip` de Koa). Un `proxy: true` booléen ne fait plus confiance aux en-têtes (Strapi ne lit que `proxy.koa`) : avant, grapi croyait `X-Forwarded-For` là où Strapi l'ignore, ce qui permettait de contourner la limite.
 - Reste : `/connect/(.*)` (avec `AUTH-005`), routes admin (`admin.rateLimit`), stockage Redis.
 
 ## Notes techniques

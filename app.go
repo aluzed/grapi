@@ -174,11 +174,16 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		}
 	}
 	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
+	// Strapi 5 reads server.proxy.koa only: a boolean proxy trusts nothing.
 	switch p := c.Get("server.proxy").(type) {
 	case bool:
-		cfg.TrustProxy = p
+		if p {
+			slog.Default().Warn("server.proxy: true is ignored, as in Strapi 5: set server.proxy.koa to trust the proxy headers")
+		}
 	case map[string]any:
-		cfg.TrustProxy = p["koa"] == true
+		cfg.Proxy.Koa = p["koa"] == true
+		cfg.Proxy.IPHeader, _ = p["ipHeader"].(string)
+		cfg.Proxy.MaxIPs, _ = c.Int("server.proxy.maxIpsCount")
 	}
 	public, _ := c.String("server.dirs.public")
 	if public == "" {
@@ -690,7 +695,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err := a.addRoutes(api); err != nil {
 		return nil, err
 	}
-	adminCfg, err := adminConfig(conf, *dir, apiCfg.Email, apiCfg.TrustProxy, log)
+	adminCfg, err := adminConfig(conf, *dir, apiCfg.Email, apiCfg.Proxy, log)
 	if err != nil {
 		a.stopWebhooks()
 		return nil, err

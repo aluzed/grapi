@@ -15,6 +15,7 @@ import (
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/auth/session"
+	"github.com/aluzed/grapi/internal/clientip"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
@@ -41,8 +42,9 @@ type Config struct {
 	Path     string
 	Sessions session.Config
 	Cookie   Cookie
-	// TrustProxy is server.proxy: X-Forwarded-Proto tells HTTPS.
-	TrustProxy bool
+	// Proxy is server.proxy: the client IP, and X-Forwarded-Proto telling
+	// HTTPS when trusted.
+	Proxy clientip.Proxy
 	// AdminURL is admin.absoluteUrl, used in the e-mails.
 	AdminURL string
 	Email    *email.Service

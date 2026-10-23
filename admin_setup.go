@@ -10,6 +10,7 @@ import (
 	"github.com/aluzed/grapi/admin"
 	"github.com/aluzed/grapi/internal/adminapi"
 	"github.com/aluzed/grapi/internal/auth/users"
+	"github.com/aluzed/grapi/internal/clientip"
 	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/plugins/email"
 )
@@ -21,8 +22,8 @@ func seconds(c *config.Config, key string) time.Duration {
 
 // adminConfig reads admin.*; a missing admin.auth.secret is generated in
 // .env under ADMIN_JWT_SECRET.
-func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy bool, log *slog.Logger) (adminapi.Config, error) {
-	cfg := adminapi.Config{TrustProxy: trustProxy, Email: mail}
+func adminConfig(c *config.Config, dir string, mail *email.Service, proxy clientip.Proxy, log *slog.Logger) (adminapi.Config, error) {
+	cfg := adminapi.Config{Proxy: proxy, Email: mail}
 	cfg.Path, _ = c.String("admin.url")
 	if strings.HasPrefix(cfg.Path, "http") || cfg.Path == "" {
 		cfg.Path = "/admin"

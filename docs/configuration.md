@@ -34,6 +34,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `server.openapi['content-api']`: `access: public` serves the content API's OpenAPI 3.1 document on `<api prefix>/openapi.json` (`route.path` to move it), as Strapi 5.59 does; `disabled` (the default) does not. The document is Strapi's for the same project, limited to the routes grapi serves. `grapi openapi [-o file]` writes it without starting the server.
 
+`server.proxy`: `koa: true` trusts the proxy headers, as Koa does for Strapi: the client IP (rate limits, audit logs) is the first address of `ipHeader` (`X-Forwarded-For` by default), after keeping only the last `maxIpsCount` ones when it is set, and `X-Forwarded-Proto: https` marks the admin cookie `Secure`. Strapi 5 reads `server.proxy.koa` only, so `proxy: true` trusts nothing (grapi logs a warning).
+
 `server.webhooks`: `retries` (3; Strapi makes none), `defaultHeaders`, and `blockPrivateNetworks` (false), a grapi option that refuses deliveries to loopback, private and link-local addresses.
 
 `api.documents.strictRelations` (false by default): required relations and media are enforced on non-draft writes, as in Strapi. A value other than a boolean stops the start (Strapi fails on the first write).

@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"sort"
@@ -51,20 +50,6 @@ func (s *Server) ensureAuditTable(ctx context.Context) error {
 	return nil
 }
 
-func clientIP(r *http.Request, trustProxy bool) string {
-	if trustProxy {
-		if f := r.Header.Get("X-Forwarded-For"); f != "" {
-			ip, _, _ := strings.Cut(f, ",")
-			return strings.TrimSpace(ip)
-		}
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
 // audit records action by u (nil for an anonymous one, a failed login).
 // The payload never holds secrets: callers pass what is safe to keep.
 func (s *Server) audit(r *http.Request, u *User, action string, payload map[string]any) {
@@ -74,7 +59,7 @@ func (s *Server) audit(r *http.Request, u *User, action string, payload map[stri
 	if payload == nil {
 		payload = map[string]any{}
 	}
-	payload["ip"], payload["userAgent"], payload["method"], payload["route"] = clientIP(r, s.cfg.TrustProxy), r.UserAgent(), r.Method, r.URL.Path
+	payload["ip"], payload["userAgent"], payload["method"], payload["route"] = s.cfg.Proxy.IP(r), r.UserAgent(), r.Method, r.URL.Path
 	s.writeAudit(context.WithoutCancel(r.Context()), u, "admin-panel", action, payload)
 }
 

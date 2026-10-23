@@ -22,7 +22,7 @@ Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert l
   - Sans, la session est de type `session` et le cookie meurt avec le navigateur.
 - `POST /auth/access-token` fait tourner le refresh token (nouveau cookie) et renvoie un nouvel access token. Rejouer un refresh token déjà utilisé révoque toutes les sessions de cet appareil, sauf dans la minute qui suit sa rotation et tant que le token suivant n'a pas lui-même tourné : la requête reçoit alors le même token suivant. Les onglets d'un navigateur partagent le cookie et peuvent renouveler en même temps.
 - Durées : `admin.auth.sessions.{accessTokenLifespan, maxRefreshTokenLifespan, idleRefreshTokenLifespan, maxSessionLifespan, idleSessionLifespan}`, en secondes, avec les défauts de Strapi (30 min, 30 j, 14 j, 1 j, 2 h).
-- Cookie : `admin.auth.cookie.{secure, sameSite, domain}`. Sans `secure` explicite, le cookie est `Secure` derrière HTTPS (ou `X-Forwarded-Proto: https` avec `server.proxy`).
+- Cookie : `admin.auth.cookie.{secure, sameSite, domain}`. Sans `secure` explicite, le cookie est `Secure` derrière HTTPS (ou `X-Forwarded-Proto: https` avec `server.proxy.koa`).
 - Secret : `admin.auth.secret`, sinon `ADMIN_JWT_SECRET`. S'il manque, grapi en génère un et l'ajoute au `.env`.
 
 ## Routes

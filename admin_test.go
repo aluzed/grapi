@@ -858,11 +858,17 @@ func TestAdminLocales(t *testing.T) {
 	if len(b["data"].([]any)) != 1 {
 		t.Fatalf("fr list: %v", b)
 	}
-	var frID string
+	var frID, enID string
 	for _, l := range locales {
-		if m := l.(map[string]any); m["code"] == "fr" {
+		switch m := l.(map[string]any); m["code"] {
+		case "fr":
 			frID = strconv.Itoa(int(m["id"].(float64)))
+		case "en":
+			enID = strconv.Itoa(int(m["id"].(float64)))
 		}
+	}
+	if s, b, _ := c.do("DELETE", "/i18n/locales/"+enID, ""); s != 400 || !strings.Contains(fmt.Sprint(b["error"]), "Cannot delete the default locale") {
+		t.Fatalf("the default locale cannot be deleted: %d %v", s, b)
 	}
 	_, b, _ = c.do("POST", "/releases", `{"name":"French launch"}`)
 	frRelease := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))

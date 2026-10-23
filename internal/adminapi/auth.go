@@ -69,7 +69,7 @@ func (s *Server) secure(r *http.Request) bool {
 	if r.TLS != nil {
 		return true
 	}
-	return s.cfg.TrustProxy && strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+	return s.cfg.Proxy.Koa && strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 
 func (s *Server) cookie(r *http.Request, value string, expires time.Time) *http.Cookie {

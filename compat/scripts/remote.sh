@@ -265,6 +265,45 @@ esac
 
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a"
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
+if [ "$mode" = grapi ]; then
+  # Forward check: a second grapi opens the database Strapi (a) wrote with
+  # the corpus, and must read every content type the way Strapi serves it.
+  forward_check() {
+    mkdir -p "$work/snap"
+    "$here/bin/compat" snapshot -fixture-dir "$here/fixtures/$fx" -name "$fixture-snapshot" -out "$work/snap/snapshot.yaml"
+    "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/fwd-strapi"
+    docker stop "$run_id-a" >/dev/null
+    if [ "$db" = postgres ]; then
+      set -- DATABASE_CLIENT=postgres DATABASE_HOST=127.0.0.1 DATABASE_PORT="$(docker port "$run_id-a-pg" 5432/tcp | head -1 | sed 's/.*://')" \
+        DATABASE_NAME=strapi DATABASE_USERNAME=strapi DATABASE_PASSWORD=strapi
+    else
+      set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/a/data.db"
+    fi
+    fwd_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+    env "$@" HOST=127.0.0.1 PORT="$fwd_port" GRAPI_PUBLIC_DIR="$work/a-public" \
+      "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-forward.log" 2>&1 &
+    fwd_pid=$!
+    i=0
+    until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$fwd_port/_health")" = 204 ]; do
+      i=$((i + 1))
+      if [ $i -gt 60 ] || ! kill -0 "$fwd_pid" 2>/dev/null; then
+        tail -30 "$work/grapi-forward.log"
+        echo "error: grapi did not start on Strapi's database" >&2
+        return 1
+      fi
+      sleep 1
+    done
+    "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "http://127.0.0.1:$fwd_port" -tokens "$work/a/tokens.json" -out "$work/out/fwd-grapi"
+    kill "$fwd_pid" 2>/dev/null || true
+    wait "$fwd_pid" 2>/dev/null || true
+    mkdir -p "$here/report"
+    fwd_report="$here/report/$(date +%F)-$fixture-forward-$db.md"
+    "$here/bin/compat" diff -a "$work/out/fwd-strapi" -b "$work/out/fwd-grapi" -report "$fwd_report" \
+      -title "Forward $fixture ($db): grapi reading Strapi's writes vs Strapi" || admin_failed=1
+    sed -n 5p "$fwd_report"
+  }
+  forward_check || admin_failed=1
+fi
 if [ "$mode" = grapi ] && { [ "$fx" = basic ] || [ "$fx" = relations ]; }; then
   # Webhooks: the same hook and the same writes on Strapi (a) and grapi (b),
   # recorded by an echo receiver on the bench network, then compared.

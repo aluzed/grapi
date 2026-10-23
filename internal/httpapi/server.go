@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/aluzed/grapi/internal/auth/session"
+	"github.com/aluzed/grapi/internal/clientip"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
@@ -42,8 +43,8 @@ type Config struct {
 	Email *email.Service
 	// ServerURL and AdminURL are server.absoluteUrl and admin.absoluteUrl.
 	ServerURL, AdminURL string
-	// TrustProxy is server.proxy: the client IP comes from X-Forwarded-For.
-	TrustProxy bool
+	// Proxy is server.proxy: where the client IP comes from.
+	Proxy clientip.Proxy
 	// GraphQL is the graphql plugin, nil when it is not enabled.
 	GraphQL *GraphQLConfig
 	// OpenAPI serves the content API's document, nil when access is disabled.

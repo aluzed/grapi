@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"net"
 	"net/http"
 	"path"
 	"strconv"
@@ -67,20 +66,6 @@ func prefixKey(p, ip string, body []byte) string {
 	return strings.ToLower(email) + ":" + rp + ":" + ip
 }
 
-func clientIP(r *http.Request, trustProxy bool) string {
-	if trustProxy {
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			first, _, _ := strings.Cut(xff, ",")
-			return strings.TrimSpace(first)
-		}
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
 // allow counts a hit and sets the X-RateLimit headers; false past max.
 func (l *limiter) allow(w http.ResponseWriter, key string, cfg RateLimit, now time.Time) bool {
 	l.mu.Lock()
@@ -136,7 +121,7 @@ func (s *Server) rateLimited(w http.ResponseWriter, r *http.Request) bool {
 		body, _ = io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
 		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
-	key := prefixKey(r.URL.Path, clientIP(r, s.cfg.TrustProxy), body)
+	key := prefixKey(r.URL.Path, s.cfg.Proxy.IP(r), body)
 	if s.limiter.allow(w, key, cfg, time.Now()) {
 		return false
 	}
