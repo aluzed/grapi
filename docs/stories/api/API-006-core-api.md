@@ -24,10 +24,11 @@ La même API REST générée, avec les mêmes chemins, codes et formats de répo
 
 ## Critères d'acceptation
 - [x] Les 5 routes d'un collection type répondent avec les mêmes statuts et corps que Strapi pour post, category, theme et medium de dev-freelance.
-- [ ] `except: ['delete']` retire la route.
-- [ ] Une surcharge `find` qui appelle la base puis ajoute `meta.extra` fonctionne.
+- [x] `except: ['delete']` retire la route.
+- [x] Une surcharge `find` qui appelle la base puis ajoute `meta.extra` fonctionne.
 - [x] Réponse de `DELETE` : 204 sans corps, comme Strapi 5.59 (vérifier sur le banc).
 
+- `App.CoreRouter(uid).Only/Except` (options de `createCoreRouter`) et `App.OverrideCoreAction(uid, action, fn)` (surcharge de `createCoreController` qui appelle `super`) : `TestCoreRouterAndActionOverride` (le `find` surchargé compte en base et ajoute `meta.extra` à la réponse d'origine ; `except: delete` retire la route, qui répond 405 comme le `allowedMethods` de Koa puisque le chemin sert encore GET et PUT).
 - Banc `devfreelance_crud` (36 cas, SQLite et Postgres) identique à Strapi : create, find, findOne, update et delete sur post, category, theme et medium de dev-freelance, avec les règles du projet ; findOne et update après suppression en 404, create public en 403.
 - `DELETE` (banc `basic_core`) : 204 sans corps, y compris sur un document déjà supprimé ou inconnu, comme Strapi 5.59.
 

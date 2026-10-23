@@ -129,6 +129,22 @@ app.Route("GET", "/posts/popular", "api::post.post.popular", popular).
 	})
 ```
 
+## Core router and controller (`createCoreRouter`, `createCoreController`)
+
+```go
+app.CoreRouter("api::tag.tag").Except("delete") // or Only("find", "findOne")
+app.OverrideCoreAction("api::post.post", "find", func(c *grapi.Request, next func() (map[string]any, error)) (map[string]any, error) {
+	body, err := next() // super.find: {data, meta}
+	if err != nil {
+		return nil, err
+	}
+	body["meta"].(map[string]any)["extra"] = true
+	return body, nil
+})
+```
+
+A removed action answers 405 when its path serves other methods, as Koa's `allowedMethods`. An overridden action keeps the core status; its keys are re-encoded in name order.
+
 ## Upload and email providers
 
 ```go

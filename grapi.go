@@ -47,6 +47,8 @@ type App struct {
 	hooks               *hook.Registry
 	openapiMutate       []func(map[string]any)
 	sanitizers          httpapi.Sanitizers
+	coreRouterRefs      []coreRouterRef
+	coreActions         map[string]httpapi.CoreAction
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error

@@ -46,6 +46,10 @@ type Config struct {
 	ServerURL, AdminURL string
 	// Sanitizers are the registered content API sanitizers.
 	Sanitizers Sanitizers
+	// CoreRouters are createCoreRouter's only and except, by content type.
+	CoreRouters map[string]CoreRouterConfig
+	// CoreActions override core actions, by "uid.action".
+	CoreActions map[string]CoreAction
 	// Proxy is server.proxy: where the client IP comes from.
 	Proxy clientip.Proxy
 	// GraphQL is the graphql plugin, nil when it is not enabled.
@@ -190,7 +194,7 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	base := strings.TrimPrefix(s.cfg.Prefix, "/")
 	if ct.IsSingleType() {
 		p := []string{base, ct.Info.SingularName}
-		s.routes = append(s.routes,
+		s.addCoreRoutes(uid,
 			route{"GET", p, uid, "find", s.singleFind, "", false, false, nil},
 			route{"PUT", p, uid, "update", s.singleUpdate, "", false, false, nil},
 			route{"DELETE", p, uid, "delete", s.singleDelete, "", false, false, nil},
@@ -199,13 +203,28 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	}
 	list := []string{base, ct.Info.PluralName}
 	one := []string{base, ct.Info.PluralName, ":id"}
-	s.routes = append(s.routes,
+	s.addCoreRoutes(uid,
 		route{"GET", list, uid, "find", s.find, "", false, false, nil},
 		route{"GET", one, uid, "findOne", s.findOne, "", false, false, nil},
 		route{"POST", list, uid, "create", s.create, "", false, false, nil},
 		route{"PUT", one, uid, "update", s.update, "", false, false, nil},
 		route{"DELETE", one, uid, "delete", s.remove, "", false, false, nil},
 	)
+}
+
+// addCoreRoutes applies the core router's only and except, and the action
+// overrides.
+func (s *Server) addCoreRoutes(uid string, routes ...route) {
+	conf := s.cfg.CoreRouters[uid]
+	for _, rt := range routes {
+		if !conf.keeps(rt.action) {
+			continue
+		}
+		if a, ok := s.cfg.CoreActions[uid+"."+rt.action]; ok {
+			rt.handler = s.overridden(rt.handler, a)
+		}
+		s.routes = append(s.routes, rt)
+	}
 }
 
 func matchPath(pattern, path []string) (map[string]string, bool) {

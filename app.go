@@ -623,6 +623,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	apiCfg := apiConfig(conf, *dir)
 	apiCfg.Sanitizers = a.sanitizers
+	a.coreAPIConfig(&apiCfg)
 	if apiCfg.Upload.LimitInputPixels, err = limitInputPixels(conf); err != nil {
 		return nil, err
 	}
