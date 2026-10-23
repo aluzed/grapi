@@ -85,3 +85,15 @@ func TestCORS(t *testing.T) {
 		t.Error("cors left out of the config must not run")
 	}
 }
+
+func TestCheckRequiredMiddlewares(t *testing.T) {
+	all := []any{"strapi::logger", "strapi::errors", "strapi::security", map[string]any{"name": "strapi::cors", "config": map[string]any{}}, "strapi::poweredBy", "strapi::query", "strapi::body", "strapi::session", "strapi::favicon", "strapi::public"}
+	if err := CheckRequiredMiddlewares(all); err != nil {
+		t.Fatal(err)
+	}
+	err := CheckRequiredMiddlewares([]any{"strapi::errors", "strapi::query", "strapi::body", "strapi::public", "strapi::favicon"})
+	want := `Missing required middlewares in configuration. Add the following middlewares: "strapi::security, strapi::cors".`
+	if err == nil || err.Error() != want {
+		t.Fatalf("got %v", err)
+	}
+}

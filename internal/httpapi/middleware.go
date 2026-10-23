@@ -233,6 +233,35 @@ func ParseMiddlewares(list []any) (Middlewares, error) {
 	return m, nil
 }
 
+// requiredMiddlewares are the ones Strapi refuses to start without.
+var requiredMiddlewares = []string{"strapi::errors", "strapi::security", "strapi::cors", "strapi::query", "strapi::body", "strapi::public", "strapi::favicon"}
+
+// CheckRequiredMiddlewares is Strapi's checkRequiredMiddlewares on the
+// middlewares config list.
+func CheckRequiredMiddlewares(list []any) error {
+	have := map[string]bool{}
+	for _, entry := range list {
+		switch e := entry.(type) {
+		case string:
+			have[e] = true
+		case map[string]any:
+			if n, ok := e["name"].(string); ok {
+				have[n] = true
+			}
+		}
+	}
+	var missing []string
+	for _, n := range requiredMiddlewares {
+		if !have[n] {
+			missing = append(missing, n)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("Missing required middlewares in configuration. Add the following middlewares: \"%s\".", strings.Join(missing, ", ")) //nolint:revive,staticcheck // Strapi's message, word for word
+	}
+	return nil
+}
+
 func toStrings(v any) []string {
 	switch x := v.(type) {
 	case string:

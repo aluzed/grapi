@@ -620,6 +620,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	apiCfg := apiConfig(conf, *dir)
 	if list, ok := conf.Get("middlewares").([]any); ok {
+		if err := httpapi.CheckRequiredMiddlewares(list); err != nil {
+			return nil, fmt.Errorf("config middlewares: %w", err)
+		}
 		mw, err := httpapi.ParseMiddlewares(list)
 		if err != nil {
 			return nil, fmt.Errorf("config middlewares: %w", err)

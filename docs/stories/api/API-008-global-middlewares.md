@@ -31,15 +31,17 @@ Les mêmes middlewares, mêmes valeurs par défaut, même mécanisme d'ordre et 
 - Le rate limit d'authentification (`AUTH-006`).
 
 ## Critères d'acceptation
-- [ ] Les en-têtes de réponse d'une requête `/api/posts` sont identiques à Strapi, sauf `X-Powered-By` qui est absent : banc de compatibilité.
-- [ ] Retirer un middleware obligatoire de la config donne une erreur claire au démarrage.
+- [x] Les en-têtes de réponse d'une requête `/api/posts` sont identiques à Strapi, sauf `X-Powered-By` qui est absent : banc de compatibilité.
+- [x] Retirer un middleware obligatoire de la config donne une erreur claire au démarrage.
 - [x] Préflight CORS identique à Strapi pour une origine listée et une origine refusée.
 - [ ] Upload de 2 Go avec `maxFileSize` 1 Go : 413 sans saturer la mémoire (streaming vers fichier temporaire).
 
 ## Avancement
 - Fait : `strapi::security` (en-têtes koa-helmet et CSP par défaut de Strapi 5.59, relevés sur l'image de référence, directives configurables) et `strapi::cors` (port de `matchOrigin` et de `@koa/cors`), lus depuis `config/middlewares.*` ; `internal/httpapi/middleware.go`.
 - `strapi::body` : limites de koa-body (`jsonLimit`, `formLimit`, `textLimit`, défauts 1mb, 56kb, 56kb), 413 `PayloadTooLargeError` sans `details` avant le routage et l'authentification, comme Strapi. Corpus `basic_limits` (option `pad` du runner pour gonfler un corps), SQLite et Postgres ; `TestBodyLimits`.
-- Reste : comparaison des en-têtes sur le banc, middlewares custom, erreur au démarrage si un middleware obligatoire manque.
+- En-têtes : option `responseHeaders` du runner et corpus `basic_headers` (liste, avec `Origin`, 404, 403, 400 de validation, création, `/_health`) : en-têtes identiques à Strapi sous SQLite et Postgres. Seuls écarts, voulus : pas de `X-Powered-By`, pas d'en-tête `Strapi` sur `/_health`, un `X-Request-Id` en plus.
+- Middlewares obligatoires : comme Strapi, le démarrage s'arrête si la liste ne contient pas `strapi::errors`, `security`, `cors`, `query`, `body`, `public` et `favicon`, avec son message (`TestCheckRequiredMiddlewares`). La doc disait à tort qu'en retirer un le désactivait.
+- Reste : middlewares custom, upload de 2 Go en streaming.
 
 ## Notes techniques
 - **Pas de middleware poweredBy, et aucun en-tête `X-Powered-By`** (décision du 2026-10-22). Il ne sert à rien et signale le logiciel à un attaquant qui cherche une CVE. Le serveur ne révèle ni son nom ni sa version, et le nom `strapi::poweredBy` est ignoré, avec un avertissement, dans une config migrée. De même, `/_health` ne renvoie pas l'en-tête `strapi: You are so French!`.

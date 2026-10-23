@@ -38,6 +38,9 @@ type Case struct {
 	// Cookies records the Set-Cookie attributes of the response; save takes
 	// a cookie's value with the path "cookie:<name>".
 	Cookies bool `yaml:"cookies"`
+	// ResponseHeaders records the response headers (runner.ignoredHeaders
+	// aside).
+	ResponseHeaders bool `yaml:"responseHeaders"`
 }
 
 // Upload is a generated PNG sent as multipart/form-data under Field ("files"

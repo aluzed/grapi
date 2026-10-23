@@ -1,0 +1,10 @@
+fixture: basic
+cases:
+  # Response headers, Strapi's security and CORS middlewares included.
+  - { name: headers-list, method: GET, path: /api/articles, query: "fields[0]=title", token: full, responseHeaders: true }
+  - { name: headers-list-with-origin, method: GET, path: /api/articles, query: "fields[0]=title", token: full, responseHeaders: true, headers: { Origin: "http://example.com" } }
+  - { name: headers-not-found, method: GET, path: /api/nothing-here, token: full, responseHeaders: true }
+  - { name: headers-forbidden, method: GET, path: /api/articles, query: "fields[0]=title", responseHeaders: true }
+  - { name: headers-validation, method: POST, path: /api/articles, token: full, responseHeaders: true, body: { data: { title: 42 } } }
+  - { name: headers-create, method: POST, path: /api/tags, token: full, responseHeaders: true, body: { data: { name: "headers" } } }
+  - { name: headers-health, method: GET, path: /_health, responseHeaders: true }

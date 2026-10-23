@@ -34,6 +34,16 @@ type Result struct {
 	Skipped     string `json:"skipped,omitempty"`
 	// Cookies are the Set-Cookie attributes, values left out.
 	Cookies []string `json:"cookies,omitempty"`
+	// Headers are the response headers, when the case asks for them.
+	Headers map[string]string `json:"headers,omitempty"`
+}
+
+// ignoredHeaders change on every request or with the connection, or differ
+// on purpose: grapi names no server (X-Powered-By, the "Strapi" header of
+// /_health) and sends back a request id.
+var ignoredHeaders = map[string]bool{
+	"Date": true, "Content-Length": true, "X-Response-Time": true, "Connection": true, "Keep-Alive": true,
+	"Transfer-Encoding": true, "X-Powered-By": true, "Strapi": true, "X-Request-Id": true,
 }
 
 // Target is one engine under test.
@@ -155,6 +165,14 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		return Result{Status: resp.StatusCode, Error: err.Error()}, nil
 	}
 	res := Result{Status: resp.StatusCode, ContentType: mediaType(resp.Header.Get("Content-Type"))}
+	if c.ResponseHeaders {
+		res.Headers = map[string]string{}
+		for k, v := range resp.Header {
+			if !ignoredHeaders[k] {
+				res.Headers[k] = strings.Join(v, ", ")
+			}
+		}
+	}
 	if c.Cookies {
 		for _, ck := range resp.Cookies() {
 			res.Cookies = append(res.Cookies, describeCookie(ck))
