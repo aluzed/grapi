@@ -60,7 +60,7 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - E-mail : fournisseur et expéditeurs par défaut, envoi d'un e-mail de test (`TestAdminEmailTest`).
 - Vérifié dans Chrome sur le binaire.
 - Critères prouvés : webhook limité aux événements cochés (`TestAdminWebhooks`), token `find` sans écriture (`TestAdminAPITokens`), rôle modifié appliqué aux sessions ouvertes (`TestAdminRoleChangeAppliesAtOnce`), Super Admin protégé et dernier actif non désactivable (`TestAdminUsersAndRoles`), e-mail de test reçu dans Mailpit (`make e2e-invite`), et toutes les suppressions confirmées, y compris le retrait d'un élément de composant, de bloc, de relation ou de média dans un formulaire.
-- Éditeur de rôle : bouton « Restreindre » par content type, champs autorisés pour créer, lire et modifier, et locales autorisées pour un type localisé (tout coché : pas de restriction, `fields`/`locales` absents). Champs vérifiés de bout en bout dans Chrome ; l'écran des locales reste à essayer sur un projet localisé avant de cocher le critère.
+- Éditeur de rôle : bouton « Restreindre » par content type, champs autorisés pour créer, lire et modifier, et locales autorisées pour un type localisé (tout coché : pas de restriction, `fields`/`locales` absents). Vérifié dans Chrome sur la fixture `i18n-dp` : `update` limité à `title` et `body` et à la locale `en`, enregistré tel quel par le serveur.
 - Reste : `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (événements par content type des webhooks, suppression groupée, admin et transfer tokens, liste des routes d'un rôle users-permissions, e-mail, médias, projet).
 
 ## Hors périmètre
@@ -71,7 +71,7 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - [x] Un webhook créé depuis l'admin reçoit les événements cochés, et uniquement ceux-là (vérifié avec un récepteur de test).
 - [x] Un API token personnalisé limité à `find` sur `api::post.post` peut lister les posts et reçoit 403 sur la création.
 - [x] Modifier un rôle admin met à jour les permissions des utilisateurs connectés sans reconnexion, dès la requête suivante.
-- [ ] L'éditeur RBAC permet de restreindre `update` à deux champs et à une locale, et le serveur l'applique.
+- [x] L'éditeur RBAC permet de restreindre `update` à deux champs et à une locale, et le serveur l'applique.
 - [x] Le Super Admin ne peut ni être supprimé ni perdre ses permissions. Le dernier Super Admin actif ne peut pas être désactivé.
 - [x] L'e-mail de test arrive (Mailpit en test).
 - [x] Toutes les suppressions passent par la modale de confirmation.
