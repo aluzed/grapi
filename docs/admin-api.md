@@ -224,7 +224,7 @@ Un `PUT` de réglages ne met à jour que les clés connues du core store, en fus
 
 ### Content-Type Builder
 
-Lecture avec `plugin::content-type-builder.read`. L'écriture n'est possible que sous `grapi develop`, qui recharge l'application quand `src/` change (403 sinon).
+Lecture avec `plugin::content-type-builder.read`. L'écriture n'est possible que sous `grapi develop`, qui recharge l'application quand `src/` change (403 sinon). Pendant un rechargement, les requêtes en cours se terminent sur l'ancienne version, les nouvelles attendent la nouvelle (jusqu'à 10 s, puis 503 avec `Retry-After: 1`) : aucune ne voit un schéma à moitié synchronisé.
 
 | Méthode et chemin | Rôle |
 |---|---|

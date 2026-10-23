@@ -49,7 +49,8 @@ func (a *App) Develop(onListen func(addr string)) error {
 	}
 	var current atomic.Pointer[Server]
 	current.Store(srv)
-	httpSrv := srv.httpServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { current.Load().Handler.ServeHTTP(w, r) }))
+	gate := &reloadGate{wait: 10 * time.Second}
+	httpSrv := srv.httpServer(gate.handler(func() http.Handler { return current.Load().Handler }))
 	ln, addr, err := srv.listener()
 	if err != nil {
 		return err
@@ -88,12 +89,15 @@ func (a *App) Develop(onListen func(addr string)) error {
 				continue
 			}
 			last = now
+			gate.begin()
 			next, err := a.Setup()
 			if err != nil {
+				gate.end()
 				fmt.Fprintln(stderr, "grapi develop: reload failed, keeping the previous version:", err)
 				continue
 			}
 			old := current.Swap(next)
+			gate.end()
 			_ = old.Close()
 			fmt.Fprintln(stderr, "grapi develop: reloaded")
 		}

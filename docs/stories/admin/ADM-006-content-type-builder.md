@@ -42,7 +42,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
   - grapi expose les routes REST sans redémarrage.
 - [x] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
 - [x] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
-- [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
+- [x] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
 - [x] En mode production, `POST` d'écriture du CTB renvoie 403.
 - [x] Toute suppression passe par la modale de confirmation qui liste les impacts.
 
@@ -54,6 +54,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - Renommage d'un champ scalaire (`renamedFrom`) : migration SQL `ALTER TABLE … RENAME COLUMN` écrite dans `database/migrations`, jouée au rechargement avant la synchronisation, configuration de vue déplacée (métadonnées, colonnes, mise en page, champ principal, tri), uid qui ciblaient l'ancien nom mis à jour. Relations, médias et composants ne se renomment pas (tables de jointure) : refus explicite. Testé (`TestAdminContentTypeBuilderRename` : la valeur survit, SQLite et Postgres via `make ci`).
 - Les noms réservés du builder ne s'appliquent qu'aux nouveaux attributs : un type existant qui en porte déjà un (`meta`) reste modifiable.
 - Suppressions : la modale liste ce qui change ailleurs (relations vers un type supprimé, champs composant et zones dynamiques d'un composant supprimé, autre côté d'une relation bidirectionnelle), calculé comme le serveur l'applique (`admin/src/pages/ctb/model.ts`, testé). Retirer un côté d'une relation bidirectionnelle retire l'autre, comme le builder de Strapi ; avant, le lot était refusé (`inverse-missing`) (`TestAdminContentTypeBuilderDropsInverse`). Vérifié dans Chrome sous `grapi develop` jusqu'à l'enregistrement et au rechargement.
+- Rechargement de `grapi develop` : une barrière (`reload_gate.go`) laisse finir les requêtes en cours avant la synchronisation du schéma, fait attendre les nouvelles (10 s au plus, puis 503 avec `Retry-After`) et ne ferme l'ancienne version qu'une fois vide. Sous charge (8 clients en continu, ajout d'un champ, `ALTER TABLE`), 0 erreur sur ~11 000 réponses ; sans la barrière, des 500 à chaque essai (`TestDevelopReloadUnderLoad`, `TestReloadGate`, avec `-race`).
 - Reste : un cas de banc automatique avec un champ de chaque type, les custom fields, le schéma visuel des relations, les icônes de composant.
 
 ## Notes techniques
