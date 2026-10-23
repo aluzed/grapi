@@ -130,7 +130,7 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 
 Une erreur de validation du document porte `details.errors: [{path, message}]` avec le chemin complet (`links.0.label`).
 
-Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message}]}` : un document invalide ou hors des droits n'empêche pas les autres.
+Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message, details?}]}` : un document invalide ou hors des droits n'empêche pas les autres. Pour un document invalide, `details.errors` donne les champs en cause, au même format qu'une erreur de validation.
 
 ### Médiathèque
 
