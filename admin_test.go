@@ -2519,6 +2519,17 @@ func TestAdminUploadFromPrivateURLs(t *testing.T) {
 		}
 		return strings.Join(out, ",")
 	}
+	// Wide: a Postgres timestamp holds the process local time, like Strapi.
+	future := time.Now().Add(48 * time.Hour).UTC().Format(time.RFC3339)
+	if got := names("name:ASC&to=2001-01-01T00:00:00Z"); got != "" {
+		t.Fatalf("to filters out the later uploads: %s", got)
+	}
+	if got := names("name:ASC&from=2001-01-01T00:00:00Z&to=" + future); got != "first.png,second.png" {
+		t.Fatalf("from and to: %s", got)
+	}
+	if s, _, _ := c.do("GET", "/upload/files?from=yesterday", ""); s != 400 {
+		t.Fatalf("from validation: %d", s)
+	}
 	if got := names("name:ASC"); got != "first.png,second.png" {
 		t.Fatalf("sort name:ASC: %s", got)
 	}

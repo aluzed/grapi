@@ -138,7 +138,7 @@ Routes présentes quand le plugin upload est actif. Les droits sont `plugin::upl
 
 | Méthode et chemin | Rôle |
 |---|---|
-| `GET /upload/files?folder=&_q=&type=&sort=&page=&pageSize=&all=` | Fichiers d'un dossier (`folder` : id, racine par défaut ; `all=true` : tous). `type` vaut `image`, `video`, `audio` ou `file`. Tri par `name`, `createdAt`, `updatedAt`, `size` (défaut `createdAt:desc`). |
+| `GET /upload/files?folder=&_q=&type=&sort=&from=&to=&page=&pageSize=&all=` | Fichiers d'un dossier (`folder` : id, racine par défaut ; `all=true` : tous). `type` vaut `image`, `video`, `audio` ou `file`. Tri par `name`, `createdAt`, `updatedAt`, `size`, direction `asc` ou `desc` sans tenir compte de la casse (défaut `createdAt:desc`). `from` et `to` (RFC 3339) bornent la date d'envoi. |
 | `GET /upload/files/{id}` | Un fichier, avec son dossier |
 | `PUT /upload/files/{id}` | `name`, `alternativeText`, `caption`, `folder` (id) ou `rootFolder: true` |
 | `DELETE /upload/files/{id}` | Supprime le fichier et ses formats chez le provider |

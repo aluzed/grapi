@@ -635,5 +635,10 @@
   "media.formats": "Formats",
   "media.usedIn": "Utilisé dans",
   "media.unused": "Aucune entrée n'utilise ce fichier.",
-  "media.openEntry": "Ouvrir l'entrée"
+  "media.openEntry": "Ouvrir l'entrée",
+  "media.from": "Envoyé après",
+  "media.to": "Envoyé avant",
+  "media.viewGrid": "Grille",
+  "media.viewList": "Liste",
+  "media.preview": "Aperçu"
 }

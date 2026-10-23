@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/db/query"
@@ -95,6 +96,15 @@ func (s *Server) listFiles(w http.ResponseWriter, r *http.Request, _ *User, a *p
 			map[string]any{"mime": map[string]any{"$notContainsi": "video/"}},
 			map[string]any{"mime": map[string]any{"$notContainsi": "audio/"}},
 		}})
+	}
+	for param, op := range map[string]string{"from": "$gte", "to": "$lte"} {
+		if v := q.Get(param); v != "" {
+			at, err := time.Parse(time.RFC3339, v)
+			if err != nil {
+				return validation([]FieldError{{Path: []string{param}, Message: param + " must be an RFC 3339 date"}})
+			}
+			parts = append(parts, map[string]any{"createdAt": map[string]any{op: at.UTC().Format("2006-01-02T15:04:05.000Z")}})
+		}
 	}
 	if f, _ := a.Filter(uploadRead, ""); f != nil {
 		parts = append(parts, f)

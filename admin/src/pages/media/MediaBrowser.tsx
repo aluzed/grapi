@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
 import { EntityActionsMenu } from '@/components/ui/entity-actions-menu'
+import { Table, Td, Th, Tr } from '@/components/ui/table'
+import { Tabs } from '@/components/ui/tabs'
 import { SelectField, TextField } from '@/components/ui/field'
 import { api, ApiError, requestWithMeta, upload } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -177,7 +179,7 @@ export type BrowserProps = {
 }
 
 export function MediaBrowser({ onOpen, pick }: BrowserProps) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { permissions } = useAuth()
   const queryClient = useQueryClient()
   const [path, setPath] = useState<Crumb[]>([{ id: null, name: t('media.root') }])
@@ -185,6 +187,23 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   // allowedTypes are plural in Strapi schemas (images, videos, audios, files).
   const initialType = pick?.allowedTypes?.length === 1 ? ({ images: 'image', videos: 'video', audios: 'audio' }[pick.allowedTypes[0]!] ?? '') : ''
   const [type, setType] = useState(initialType)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [view, setViewState] = useState<'grid' | 'list'>(() => {
+    try {
+      return localStorage.getItem('grapi.media.view') === 'list' ? 'list' : 'grid'
+    } catch {
+      return 'grid'
+    }
+  })
+  const setView = (v: 'grid' | 'list') => {
+    setViewState(v)
+    try {
+      localStorage.setItem('grapi.media.view', v)
+    } catch {
+      // Private mode: the choice lasts for the page.
+    }
+  }
   const [page, setPage] = useState(1)
   const [creating, setCreating] = useState(false)
   const [renaming, setRenaming] = useState<MediaFolder | null>(null)
@@ -205,6 +224,8 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const params = new URLSearchParams({ folder: folderParam, page: String(page), pageSize: String(config.data?.pageSize ?? 10), sort: sortBy })
   if (q) params.set('_q', q)
   if (type) params.set('type', type)
+  if (from) params.set('from', new Date(from).toISOString())
+  if (to) params.set('to', new Date(to).toISOString())
   const files = useQuery({
     queryKey: ['media', 'files', params.toString()],
     queryFn: () => requestWithMeta<MediaFile[], { pagination: Pagination }>(`/upload/files?${params}`),
@@ -357,6 +378,36 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
           </div>
         )}
       </div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:w-[28rem]">
+          <TextField
+            label={t('media.from')}
+            type="datetime-local"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value)
+              setPage(1)
+            }}
+          />
+          <TextField
+            label={t('media.to')}
+            type="datetime-local"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value)
+              setPage(1)
+            }}
+          />
+        </div>
+        <Tabs
+          tabs={[
+            { id: 'grid', label: t('media.viewGrid') },
+            { id: 'list', label: t('media.viewList') },
+          ]}
+          value={view}
+          onChange={(id) => setView(id as 'grid' | 'list')}
+        />
+      </div>
       {canUpload && <p className="hidden text-xs text-muted md:block">{t('media.drop')}</p>}
       {!pick && selecting && chosen.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
@@ -424,6 +475,74 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
       {list.length === 0 && !files.isPending ? (
         <Card className="text-center text-sm text-muted">{t('media.empty')}</Card>
       ) : (
+        view === 'list' ? (
+        <>
+          <div className="hidden md:block">
+            <Table>
+              <thead>
+                <tr>
+                  <Th className="w-16">
+                    <span className="sr-only">{t('media.preview')}</span>
+                  </Th>
+                  <Th>{t('media.name')}</Th>
+                  <Th>{t('media.mime')}</Th>
+                  <Th>{t('media.size')}</Th>
+                  <Th>{t('media.createdAt')}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((f) => {
+                  const on = selectedIds.has(f.id)
+                  return (
+                    <Tr key={f.id} className={cn('cursor-pointer', on && 'bg-primary/10')} onClick={() => click(f)} title={pick || selecting ? t('media.selectFile', { name: f.name }) : t('media.open', { name: f.name })}>
+                      <Td>
+                        <span className="relative block h-10 w-10 overflow-hidden rounded bg-background">
+                          <Thumb file={f} />
+                          {on && (
+                            <span className="absolute inset-0 flex items-center justify-center bg-primary/60 text-primary-foreground">
+                              <Check className="h-4 w-4" aria-hidden />
+                            </span>
+                          )}
+                        </span>
+                      </Td>
+                      <Td className="max-w-xs truncate font-medium">{f.name}</Td>
+                      <Td className="text-muted">{f.mime}</Td>
+                      <Td className="text-muted">{f.size.toLocaleString(language)} KB</Td>
+                      <Td className="text-muted">{new Date(f.createdAt).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}</Td>
+                    </Tr>
+                  )
+                })}
+              </tbody>
+            </Table>
+          </div>
+          <ul className="flex flex-col gap-2 md:hidden">
+            {list.map((f) => {
+              const on = selectedIds.has(f.id)
+              return (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    title={pick || selecting ? t('media.selectFile', { name: f.name }) : t('media.open', { name: f.name })}
+                    aria-pressed={pick || selecting ? on : undefined}
+                    onClick={() => click(f)}
+                    className={cn('flex w-full items-center gap-3 rounded-lg border bg-surface p-2 text-left shadow-sm', on ? 'border-primary ring-2 ring-primary' : 'border-border')}
+                  >
+                    <span className="block h-12 w-12 shrink-0 overflow-hidden rounded bg-background">
+                      <Thumb file={f} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium">{f.name}</span>
+                      <span className="block text-xs text-muted">
+                        {f.mime} · {f.size.toLocaleString(language)} KB
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+        ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {list.map((f) => {
             const on = selectedIds.has(f.id)
@@ -450,6 +569,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             )
           })}
         </ul>
+        )
       )}
       {pagination && pagination.pageCount > 1 && (
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
