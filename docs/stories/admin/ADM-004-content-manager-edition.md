@@ -52,7 +52,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Duplication (depuis la liste ou l'édition) : formulaire de création pré-rempli, sans les champs uniques ni les uid, et sans les `id` des composants pour que la copie crée les siens. Vérifié dans Chrome sur une page à composants imbriqués : l'original garde ses composants.
 - Locales : sélecteur dans l'en-tête, création de la version d'une autre locale avec les champs non localisés repris de la locale par défaut (sinon l'enregistrement écraserait ces champs partagés). Testé (`TestAdminLocales`) et vérifié dans Chrome sur `i18n-dp`.
 - Blocks : éditeur par blocs (paragraphe, titres 1 à 6, listes, citation, code avec langage, image de la médiathèque), réordonnables, mise en forme en ligne en Markdown léger (gras, italique, souligné, barré, code, lien) convertie vers et depuis les nœuds Strapi, avec échappement des caractères spéciaux (`admin/src/lib/blocks.ts`, tests aller-retour). Vérifié dans Chrome : le JSON enregistré est au format Strapi. Ce n'est pas un éditeur WYSIWYG.
-- Permissions par champ : `/content-manager/models` donne `createFields` et `updateFields` (`null` sans restriction), l'EditView désactive les champs absents de la liste et le serveur ignore leurs valeurs (`TestAdminFieldLevelUpdate`). Reste à voir le rendu en lecture seule dans le navigateur.
+- Permissions par champ : `/content-manager/models` donne `createFields` et `updateFields` (`null` sans restriction), l'EditView désactive les champs absents de la liste et le serveur ignore leurs valeurs (`TestAdminFieldLevelUpdate`). Vérifié dans Chrome sur le binaire : champs grisés et non modifiables.
 - Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
@@ -65,7 +65,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - [ ] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
 - [ ] Un UID déjà pris est signalé avant l'enregistrement.
 - [ ] « Remplir depuis une autre locale » copie uniquement les champs localisés.
-- [ ] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
+- [x] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
 - [ ] À 375 px, tous les champs, composants et actions sont empilés, avec des boutons en pleine largeur.
 
 ## Notes techniques
