@@ -295,6 +295,24 @@ if [ "$mode" = grapi ]; then
   "$here/bin/compat" diff -a "$work/out/snap-strapi" -b "$work/out/snap-grapi" -report "$here/report/$(date +%F)-$fixture-reverse-$db.md" \
     -title "Reverse $fixture ($db): Strapi reading grapi's writes vs grapi" || true
   sed -n 5p "$here/report/$(date +%F)-$fixture-reverse-$db.md"
+  # An end user registered by Strapi must log in on grapi (same table, bcrypt).
+  reg=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+    -d '{"username":"compat-enduser","email":"compat-enduser@example.com","password":"Compat1234!"}' "http://127.0.0.1:$(port_of b)/api/auth/local/register")
+  docker stop "$run_id-b" >/dev/null
+  env "$@" HOST=127.0.0.1 PORT="$grapi_port" "$here/bin/grapi" start -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" >"$work/grapi-enduser.log" 2>&1 &
+  grapi_pid=$!
+  i=0
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$grapi_port/_health")" = 204 ]; do
+    i=$((i + 1))
+    [ $i -gt 60 ] && break
+    sleep 1
+  done
+  enduser=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+    -d '{"identifier":"compat-enduser@example.com","password":"Compat1234!"}' "$b_url/api/auth/local")
+  echo "Strapi end user login on grapi: $enduser (registered by Strapi: $reg)"
+  { [ "$reg" = 200 ] && [ "$enduser" = 200 ]; } || admin_failed=1
+  kill "$grapi_pid" 2>/dev/null || true
+  wait "$grapi_pid" 2>/dev/null || true
 fi
 # dump_schema <name> <dir>: the schema Strapi computed (strapi_database_schema)
 # and the physical one, as reference for grapi's metadata and DDL.
