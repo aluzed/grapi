@@ -10,8 +10,12 @@ import { bidirectional, fieldTypes, relationKinds, type Attr, type SchemaFile } 
 const num = (v: string) => (v.trim() === '' ? undefined : Number(v))
 
 // FieldDialog edits one attribute; onDone gets the attribute to store.
+// Scalar fields can be renamed: a migration renames their column.
+const renameable = new Set(['string', 'text', 'richtext', 'blocks', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'date', 'datetime', 'time', 'boolean', 'json'])
+
 export function FieldDialog({
   initial,
+  persisted,
   owner,
   contentTypes,
   components,
@@ -19,6 +23,8 @@ export function FieldDialog({
   onDone,
 }: {
   initial: Attr | null
+  // persisted is true when the field exists in the saved schema.
+  persisted: boolean
   owner: SchemaFile
   contentTypes: SchemaFile[]
   components: SchemaFile[]
@@ -38,6 +44,10 @@ export function FieldDialog({
     }
     if (owner.attributes.some((a) => a.name === attr.name && a !== initial)) {
       setError(`${attr.name} ×2`)
+      return
+    }
+    if (initial && persisted && attr.name !== initial.name) {
+      onDone(clean({ ...attr, renamedFrom: (initial.renamedFrom as string | undefined) ?? initial.name }))
       return
     }
     onDone(clean(attr))
@@ -96,7 +106,15 @@ export function FieldDialog({
       }
     >
       <div className="flex flex-col gap-4">
-        <TextField label={t('ctb.fieldName')} value={attr.name} error={error} autoFocus onChange={(e) => set({ name: e.target.value })} disabled={Boolean(initial)} />
+        <TextField
+          label={t('ctb.fieldName')}
+          value={attr.name}
+          error={error}
+          autoFocus
+          onChange={(e) => set({ name: e.target.value })}
+          disabled={Boolean(initial) && !renameable.has(type)}
+          hint={initial && renameable.has(type) && persisted ? t('ctb.renameHint') : undefined}
+        />
         {type === 'enumeration' && (
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             {t('ctb.enum')}

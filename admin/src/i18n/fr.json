@@ -494,5 +494,6 @@
   "filters.true": "vrai",
   "filters.false": "faux",
   "cm.duplicate": "Dupliquer",
-  "cm.duplicateOf": "Copie de {name}"
+  "cm.duplicateOf": "Copie de {name}",
+  "ctb.renameHint": "Renommer conserve les valeurs : la colonne est renommée à l'enregistrement."
 }

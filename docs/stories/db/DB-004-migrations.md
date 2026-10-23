@@ -67,3 +67,6 @@ Exécuter les migrations dans le bon ordre et chacune dans sa transaction, avec 
 
 ## Fichiers
 - `internal/db/migrate/migrate.go`, `storage.go`, tests ; `cmd/grapi/migration.go` à venir
+
+## Avancement
+- 2026-10-23 : `grapi start` ne passait pas `database/migrations` au runner, les migrations SQL du projet ne tournaient donc pas au démarrage (seuls les tests du paquet les couvraient). Corrigé, test `TestProjectMigrationsRun` (une seule exécution).

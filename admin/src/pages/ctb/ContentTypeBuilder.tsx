@@ -383,12 +383,15 @@ export function ContentTypeBuilder() {
       {fieldDialog && current && (
         <FieldDialog
           initial={fieldDialog.initial}
+          persisted={Boolean(fieldDialog.initial && [...(schema.data?.contentTypes ?? []), ...(schema.data?.components ?? [])].find((x) => x.uid === current.uid)?.attributes.some((a) => a.name === ((fieldDialog.initial!.renamedFrom as string | undefined) ?? fieldDialog.initial!.name)))}
           owner={current}
           contentTypes={cts}
           components={comps}
           onClose={() => setFieldDialog(null)}
           onDone={(a) => {
-            const attributes = fieldDialog.initial ? current.attributes.map((x) => (x === fieldDialog.initial ? a : x)) : [...current.attributes, a]
+            const old = fieldDialog.initial?.name
+            let attributes = fieldDialog.initial ? current.attributes.map((x) => (x === fieldDialog.initial ? a : x)) : [...current.attributes, a]
+            if (old && old !== a.name) attributes = attributes.map((x) => (x.type === 'uid' && x.targetField === old ? { ...x, targetField: a.name } : x))
             const f = { ...current, attributes }
             if (isComponent(current.uid)) setComps((l) => l.map((x) => (x.uid === f.uid ? f : x)))
             else put(f)

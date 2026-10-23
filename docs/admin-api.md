@@ -202,5 +202,6 @@ Règles du lot :
 - Tout ou rien : le lot est appliqué à une copie de `src/` puis chargé ; une erreur (nom réservé ou pas en kebab-case, nom déjà pris, relation vers un type inconnu…) le rejette sans rien écrire.
 - Fichiers au format Strapi, écrits de façon atomique : `src/api/<nom>/content-types/<nom>/schema.json` et `src/components/<catégorie>/<nom>.json`.
 - `singularName` et `pluralName` ne changent pas à la mise à jour : ils font l'uid et la table.
+- Un attribut scalaire avec `renamedFrom` est renommé : une migration SQL renomme sa colonne (valeurs conservées) et sa configuration de vue suit. Relations, médias et composants ne se renomment pas.
 - Une relation `oneToOne`, `oneToMany`, `manyToOne` ou `manyToMany` avec `targetAttribute` est écrite des deux côtés (`inversedBy` ici, `mappedBy` sur la cible).
 - Supprimer un type retire aussi les relations qui le visent ; supprimer un composant retire ses usages (attributs et zones dynamiques). Les tables restent en base.

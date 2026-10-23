@@ -1227,3 +1227,68 @@ func TestAdminSmokeFixtures(t *testing.T) {
 		})
 	}
 }
+
+func TestAdminContentTypeBuilderRename(t *testing.T) {
+	ts, _, stop, dir := newAdminApp(t, "basic", true)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Kept","views":42}}`)
+	id := dataOf(b)["documentId"].(string)
+	// A stored view configuration, so that the rename moves it.
+	_, b, _ = c.do("GET", "/content-manager/configuration/api::article.article", "")
+	cfg := dataOf(b)
+	cfg["layouts"].(map[string]any)["list"] = []any{"id", "title", "views"}
+	body, _ := json.Marshal(cfg)
+	c.do("PUT", "/content-manager/configuration/api::article.article", string(body))
+
+	_, b, _ = c.do("GET", "/content-type-builder/schema", "")
+	var article map[string]any
+	for _, x := range dataOf(b)["contentTypes"].([]any) {
+		if x.(map[string]any)["uid"] == "api::article.article" {
+			article = x.(map[string]any)
+		}
+	}
+	for _, a := range article["attributes"].([]any) {
+		if m := a.(map[string]any); m["name"] == "views" {
+			m["name"], m["renamedFrom"] = "readers", "views"
+		}
+	}
+	batch, _ := json.Marshal(map[string]any{"contentTypes": []any{map[string]any{"action": "update", "uid": "api::article.article", "data": article}}})
+	if s, b, _ := c.do("POST", "/content-type-builder/update-schema", string(batch)); s != 200 {
+		t.Fatalf("rename: %d %v", s, b)
+	}
+	migrations, _ := filepath.Glob(filepath.Join(dir, "database/migrations/*.sql"))
+	if len(migrations) != 1 {
+		t.Fatalf("one migration: %v", migrations)
+	}
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}, AutoReload: true})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	ts2 := httptest.NewServer(srv.Handler)
+	defer func() { ts2.Close(); _ = srv.Close() }()
+	c2 := newAdminClient(t, ts2.URL)
+	_, b, _ = c2.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd"}`)
+	c2.token = dataOf(b)["token"].(string)
+	_, b, _ = c2.do("GET", base+"/"+id, "")
+	if d := dataOf(b); d["readers"] != float64(42) || d["views"] != nil {
+		t.Fatalf("the values follow the rename: %v", d)
+	}
+	_, b, _ = c2.do("GET", "/content-manager/configuration/api::article.article", "")
+	if list := dataOf(b)["layouts"].(map[string]any)["list"].([]any); len(list) != 3 || list[2] != "readers" {
+		t.Fatalf("the view configuration follows: %v", list)
+	}
+	for _, a := range article["attributes"].([]any) {
+		if m := a.(map[string]any); m["name"] == "readers" {
+			m["name"], m["renamedFrom"] = "title2", "nope"
+		}
+	}
+	batch, _ = json.Marshal(map[string]any{"contentTypes": []any{map[string]any{"action": "update", "uid": "api::article.article", "data": article}}})
+	if s, _, _ := c2.do("POST", "/content-type-builder/update-schema", string(batch)); s != 400 {
+		t.Fatalf("renaming a missing attribute is refused: %d", s)
+	}
+}

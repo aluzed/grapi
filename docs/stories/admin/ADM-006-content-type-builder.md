@@ -40,7 +40,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - [ ] Créer un content type avec 1 champ de chaque type, des relations et un composant :
   - les `schema.json` écrits sont valides au format Strapi, et Strapi 5.59 les charge sans erreur (vérifié par le banc `SETUP-002`) ;
   - grapi expose les routes REST sans redémarrage.
-- [ ] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
+- [x] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
 - [x] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
 - [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
 - [x] En mode production, `POST` d'écriture du CTB renvoie 403.
@@ -51,7 +51,9 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - API admin (`docs/admin-api.md`, Content-Type Builder) : lecture des schémas depuis les fichiers, lot `update-schema` validé sur une copie de `src/` puis écrit atomiquement, relations bidirectionnelles écrites des deux côtés, nettoyage des références à la suppression, statut par hash du schéma. Écriture réservée à `grapi develop`, qui recharge l'application dans le process par bascule atomique (pas de redémarrage du binaire). Testé (`TestAdminContentTypeBuilder`, `TestAdminContentTypeBuilderProduction`).
 - Interface (`admin/src/pages/ctb/`) : liste des types de collection, types uniques et composants, détail des champs, création et édition d'un type (nom affiché, ID d'API dérivé, draft & publish, i18n) ou d'un composant (catégorie), ajout et édition de champ (21 types, réglages de base et avancés, relations avec champ inverse, composants, zones dynamiques), suppressions confirmées, brouillon local enregistré par lot puis attente du rechargement par le hash du schéma. Lecture seule hors `grapi develop`. Vérifié dans Chrome sous `grapi develop` : type créé avec une relation bidirectionnelle, rechargé et servi sans redémarrer.
 - Vérifié le 2026-10-23 : l'image Strapi 5.59 du banc démarre sur un `src/` modifié par le CTB de grapi (type Recette avec relation manyToMany et champ inverse sur Tag) et sert `/api/recettes`. Vérification manuelle, pas encore un cas automatique du banc.
-- Reste : le renommage de champ avec migration, un cas de banc automatique avec un champ de chaque type, la liste des impacts dans la modale de suppression, les custom fields, le schéma visuel des relations, les icônes de composant.
+- Renommage d'un champ scalaire (`renamedFrom`) : migration SQL `ALTER TABLE … RENAME COLUMN` écrite dans `database/migrations`, jouée au rechargement avant la synchronisation, configuration de vue déplacée (métadonnées, colonnes, mise en page, champ principal, tri), uid qui ciblaient l'ancien nom mis à jour. Relations, médias et composants ne se renomment pas (tables de jointure) : refus explicite. Testé (`TestAdminContentTypeBuilderRename` : la valeur survit, SQLite et Postgres via `make ci`).
+- Les noms réservés du builder ne s'appliquent qu'aux nouveaux attributs : un type existant qui en porte déjà un (`meta`) reste modifiable.
+- Reste : un cas de banc automatique avec un champ de chaque type, la liste des impacts dans la modale de suppression, les custom fields, le schéma visuel des relations, les icônes de composant.
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

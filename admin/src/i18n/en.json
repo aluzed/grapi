@@ -494,5 +494,6 @@
   "filters.true": "true",
   "filters.false": "false",
   "cm.duplicate": "Duplicate",
-  "cm.duplicateOf": "Copy of {name}"
+  "cm.duplicateOf": "Copy of {name}",
+  "ctb.renameHint": "Renaming keeps the values: the column is renamed when saving."
 }

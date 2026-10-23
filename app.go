@@ -551,7 +551,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		return nil, fmt.Errorf("%s: %w", hook.BeforeSync, err)
 	}
 	err := migrate.WithLock(ctx, d, func(ctx context.Context) error {
-		ran, err := migrate.Run(ctx, d, migrate.Options{RunMigrations: true, Log: log})
+		ran, err := migrate.Run(ctx, d, migrate.Options{Dir: os.DirFS(filepath.Join(*dir, "database", "migrations")), RunMigrations: true, Log: log})
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package adminapi
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/builtin"
+	"github.com/aluzed/grapi/internal/db/naming"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -193,7 +195,14 @@ var inverse = map[string]string{schema.OneToOne: schema.OneToOne, schema.OneToMa
 type plan struct {
 	files   map[string]*schema.OrderedMap[json.RawMessage]
 	removes []string
+	renames []rename
 	errs    []FieldError
+}
+
+// rename is a scalar attribute renamed in place: a migration renames its
+// column, so the values stay.
+type rename struct {
+	uid, from, to string
 }
 
 func (p *plan) fail(path []string, format string, args ...any) {
@@ -207,7 +216,19 @@ func setRaw(m *schema.OrderedMap[json.RawMessage], k string, v any) {
 
 // attributesOf turns the edited list into the file's attributes object,
 // pulling the inverse side of the bidirectional relations out.
-func attributesOf(uid string, list []map[string]any, p *plan, at []string, dp bool) (*schema.OrderedMap[json.RawMessage], map[string]map[string]any) {
+func (s *Server) attributesOf(uid string, list []map[string]any, p *plan, at []string, dp bool) (*schema.OrderedMap[json.RawMessage], map[string]map[string]any) {
+	// Names already in the schema load: only the new ones face the
+	// builder's stricter reserved names.
+	existing := map[string]bool{}
+	if ct, ok := s.set.ContentType(schema.UID(uid)); ok {
+		for n := range ct.Attributes.All() {
+			existing[n] = true
+		}
+	} else if c, ok := s.set.Component(schema.UID(uid)); ok {
+		for n := range c.Attributes.All() {
+			existing[n] = true
+		}
+	}
 	var attrs schema.OrderedMap[json.RawMessage]
 	inverses := map[string]map[string]any{}
 	seen := map[string]bool{}
@@ -221,16 +242,19 @@ func attributesOf(uid string, list []map[string]any, p *plan, at []string, dp bo
 		case seen[name]:
 			p.fail(path, "the attribute %s is defined twice", name)
 			continue
-		case schema.IsReservedAttributeName(name, dp):
+		case !existing[name] && schema.IsReservedAttributeName(name, dp):
 			p.fail(path, "the attribute name %s is reserved", name)
 			continue
 		}
 		seen[name] = true
 		out := map[string]any{}
 		for k, v := range a {
-			if k != "name" && k != "targetAttribute" {
+			if k != "name" && k != "targetAttribute" && k != "renamedFrom" {
 				out[k] = v
 			}
+		}
+		if from, _ := a["renamedFrom"].(string); from != "" && from != name {
+			p.renames = append(p.renames, rename{uid: uid, from: from, to: name})
 		}
 		if t, _ := a["type"].(string); t == schema.TypeRelation {
 			rel, _ := a["relation"].(string)
@@ -326,7 +350,7 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 			c.Data.Options = map[string]any{}
 		}
 		setRaw(top, "options", c.Data.Options)
-		attrs, inv := attributesOf(uid, c.Data.Attributes, p, at, false)
+		attrs, inv := s.attributesOf(uid, c.Data.Attributes, p, at, false)
 		for k, v := range inv {
 			allInverses[k] = v
 		}
@@ -392,7 +416,7 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 			top.Delete("pluginOptions")
 		}
 		dp, _ := c.Data.Options["draftAndPublish"].(bool)
-		attrs, inv := attributesOf(uid, c.Data.Attributes, p, at, dp)
+		attrs, inv := s.attributesOf(uid, c.Data.Attributes, p, at, dp)
 		for k, v := range inv {
 			allInverses[k] = v
 		}
@@ -567,6 +591,7 @@ func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, _ *User, _ *p
 		return err
 	}
 	p := s.build(b.ContentTypes, b.Components)
+	migrations := s.renameMigrations(p)
 	if len(p.errs) > 0 {
 		return validation(p.errs)
 	}
@@ -584,8 +609,114 @@ func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, _ *User, _ *p
 	if _, _, err := builtin.Load(os.DirFS(tmp)); err != nil {
 		return validation([]FieldError{{Path: []string{}, Message: err.Error()}})
 	}
+	// The migrations go first: the reload runs them before the schema sync,
+	// which then finds the columns under their new names.
+	for path, sql := range migrations {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, []byte(sql), 0o600); err != nil { //nolint:gosec // a name built from checked identifiers
+			return err
+		}
+	}
 	if err := s.apply(p, s.cfg.ProjectDir); err != nil {
 		return err
 	}
+	for _, rn := range p.renames {
+		if err := s.renameInViewConfig(r.Context(), rn); err != nil {
+			return err
+		}
+	}
 	return data(w, map[string]any{"schemaHash": s.schemaHash()})
+}
+
+var renameable = map[string]bool{
+	schema.TypeString: true, schema.TypeText: true, schema.TypeRichText: true, schema.TypeBlocks: true, schema.TypeEmail: true,
+	schema.TypePassword: true, schema.TypeUID: true, schema.TypeEnumeration: true, schema.TypeInteger: true, schema.TypeBigInteger: true,
+	schema.TypeFloat: true, schema.TypeDecimal: true, schema.TypeDate: true, schema.TypeTime: true, schema.TypeDateTime: true,
+	schema.TypeTimestamp: true, schema.TypeBoolean: true, schema.TypeJSON: true,
+}
+
+// renameMigrations checks the renames of a plan and returns their SQL
+// migrations, by file path.
+func (s *Server) renameMigrations(p *plan) map[string]string {
+	out := map[string]string{}
+	stamp := s.now().UTC()
+	for i, rn := range p.renames {
+		var attrs *schema.OrderedMap[*schema.Attribute]
+		if ct, ok := s.set.ContentType(schema.UID(rn.uid)); ok {
+			attrs = &ct.Attributes
+		} else if c, ok := s.set.Component(schema.UID(rn.uid)); ok {
+			attrs = &c.Attributes
+		} else {
+			p.fail([]string{"attributes"}, "%s is new: nothing to rename", rn.uid)
+			continue
+		}
+		old, ok := attrs.Get(rn.from)
+		if !ok {
+			p.fail([]string{"attributes"}, "%s has no attribute %s to rename", rn.uid, rn.from)
+			continue
+		}
+		if _, taken := attrs.Get(rn.to); taken {
+			p.fail([]string{"attributes"}, "%s already has an attribute %s", rn.uid, rn.to)
+			continue
+		}
+		if !renameable[old.Type] || old.IsCustomField() {
+			p.fail([]string{"attributes"}, "renaming a %s field is not supported: create a new field instead", old.Type)
+			continue
+		}
+		model, ok := s.e.MD.Model(rn.uid)
+		if !ok {
+			p.fail([]string{"attributes"}, "no table for %s", rn.uid)
+			continue
+		}
+		from, err1 := naming.Default.Column(naming.SnakeCase(rn.from))
+		to, err2 := naming.Default.Column(naming.SnakeCase(rn.to))
+		if ma, ok := model.Attributes.Get(rn.from); ok && ma.ColumnName != "" {
+			from = ma.ColumnName
+		}
+		if err1 != nil || err2 != nil {
+			p.fail([]string{"attributes"}, "invalid column name for %s", rn.to)
+			continue
+		}
+		q := s.e.DB.Dialect.Quote
+		name := fmt.Sprintf("%s.%02d.rename-%s-%s", stamp.Format("2006.01.02T15.04.05"), i, schema.KebabCase(model.TableName), schema.KebabCase(rn.to))
+		path := filepath.Join(s.cfg.ProjectDir, "database", "migrations", name+".sql")
+		out[path] = fmt.Sprintf("-- Content-Type Builder: %s.%s renamed to %s, values kept.\nALTER TABLE %s RENAME COLUMN %s TO %s;\n",
+			rn.uid, rn.from, rn.to, q(model.TableName), q(from), q(to))
+	}
+	return out
+}
+
+// renameInViewConfig moves a renamed field's view configuration.
+func (s *Server) renameInViewConfig(ctx context.Context, rn rename) error {
+	key := "configuration_content_types::" + rn.uid
+	var c ViewConfig
+	found, err := s.store.Get(ctx, cmScope, key, &c)
+	if err != nil || !found {
+		return err
+	}
+	if m, ok := c.Metadatas[rn.from]; ok {
+		delete(c.Metadatas, rn.from)
+		c.Metadatas[rn.to] = m
+	}
+	for i, n := range c.Layouts.List {
+		if n == rn.from {
+			c.Layouts.List[i] = rn.to
+		}
+	}
+	for _, row := range c.Layouts.Edit {
+		for i := range row {
+			if row[i].Name == rn.from {
+				row[i].Name = rn.to
+			}
+		}
+	}
+	if c.Settings.MainField == rn.from {
+		c.Settings.MainField = rn.to
+	}
+	if c.Settings.DefaultSortBy == rn.from {
+		c.Settings.DefaultSortBy = rn.to
+	}
+	return s.store.Set(ctx, cmScope, key, c)
 }
