@@ -94,6 +94,19 @@ app.RoutePolicies("api::post.post.update", "global::is-editor", grapi.PolicyRef{
 
 A name without namespace is looked up in the route's API or plugin (`is-owner` on an `api::account...` route is `api::account.is-owner`), then in `global::`. An unknown policy stops the start. `false` answers Strapi's 403 `PolicyError`.
 
+## Sanitizers (`strapi.sanitizers.add`)
+
+```go
+app.AddSanitizer("content-api.output", func(uid string, entry map[string]any) map[string]any {
+	if uid == "api::post.post" {
+		delete(entry, "internalScore")
+	}
+	return entry
+})
+```
+
+`content-api.input` gets the data of a write, `content-api.output` each top-level entry of a response, after the built-in rules (private fields, permissions), in registration order.
+
 ## Upload and email providers
 
 ```go

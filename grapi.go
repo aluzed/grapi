@@ -11,6 +11,7 @@ import (
 	"github.com/aluzed/grapi/hook"
 
 	"github.com/aluzed/grapi/internal/graphql"
+	"github.com/aluzed/grapi/internal/httpapi"
 
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
@@ -45,6 +46,7 @@ type App struct {
 	graphql             graphql.Options
 	hooks               *hook.Registry
 	openapiMutate       []func(map[string]any)
+	sanitizers          httpapi.Sanitizers
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error

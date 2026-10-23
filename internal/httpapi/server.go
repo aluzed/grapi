@@ -44,6 +44,8 @@ type Config struct {
 	Email *email.Service
 	// ServerURL and AdminURL are server.absoluteUrl and admin.absoluteUrl.
 	ServerURL, AdminURL string
+	// Sanitizers are the registered content API sanitizers.
+	Sanitizers Sanitizers
 	// Proxy is server.proxy: where the client IP comes from.
 	Proxy clientip.Proxy
 	// GraphQL is the graphql plugin, nil when it is not enabled.

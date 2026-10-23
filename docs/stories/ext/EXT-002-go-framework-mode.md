@@ -86,6 +86,7 @@ func main() {
 - Reste : surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
 
 - Exemples godoc (`example_test.go`) : `App.Setup` exécuté avec sa sortie (route publique servie par le handler), `OnRowCreate`, `UseDocuments`, `Route` avec `Policy` et `RoutePolicies`, `Cron`, `OnBootstrap` avec le hook `AfterSync`. Chaque symbole exporté a son commentaire (revive `exported`).
+- Types internes encore visibles dans l'API publique (relevé du 2026-10-23, `go doc -all`) : `App.Documents()` renvoie le `*document.Service` interne, dont les méthodes renvoient des `query.Row` ; `Project` expose `Conf`, `Res`, `MD`, `Desired` et `DB`, et `Project.Routes()` des `httpapi.RouteInfo`. Les alias (`document.Context`, `EmailProvider`, `GraphQL*`, `Upload*`) sont le motif retenu. Pour le critère 3, il faut un `document.Service` et une ligne publics, et sortir `Project` de l'API (il sert à `cmd/grapi`).
 - Exemple réel : `compat/fixtures/devfreelance/framework`, le backend de dev-freelance sur grapi (règles de ligne, middlewares de documents avec un faux LLM, port de `slugify` 1.6.6). Le banc le compile et le sert à la place de `grapi` : 21 cas de caractérisation et toggles IA identiques à Strapi par REST. Restent l'invalidation de cache et les chemins admin et documents.
 
 ## Notes techniques

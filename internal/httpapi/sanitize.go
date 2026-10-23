@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
@@ -691,7 +692,7 @@ func (s *Server) populatePathAllowed(segments []string, m *schemaModel, auth *Au
 
 // sanitizeOutput removes passwords, private fields and relations auth
 // cannot read, in the entry and everything populated.
-func (s *Server) sanitizeOutput(v any, m *schemaModel, auth *Auth) any {
+func (s *Server) sanitizeOutputDeep(v any, m *schemaModel, auth *Auth) any {
 	if m == nil || v == nil {
 		return v
 	}
@@ -699,13 +700,13 @@ func (s *Server) sanitizeOutput(v any, m *schemaModel, auth *Auth) any {
 	case []any:
 		out := make([]any, len(x))
 		for i, e := range x {
-			out[i] = s.sanitizeOutput(e, m, auth)
+			out[i] = s.sanitizeOutputDeep(e, m, auth)
 		}
 		return out
 	case []query.Row:
 		out := make([]any, len(x))
 		for i, e := range x {
-			out[i] = s.sanitizeOutput(e, m, auth)
+			out[i] = s.sanitizeOutputDeep(e, m, auth)
 		}
 		return out
 	case query.Row:
@@ -726,7 +727,7 @@ func (s *Server) sanitizeOutput(v any, m *schemaModel, auth *Auth) any {
 				case a.Type == schema.TypeDynamicZone || isMorphTo(a):
 					val = s.sanitizePolymorphic(val, auth, a.Type == schema.TypeDynamicZone)
 				default:
-					val = s.sanitizeOutput(val, s.target(a), auth)
+					val = s.sanitizeOutputDeep(val, s.target(a), auth)
 				}
 			}
 			out.Set(k, val)
@@ -751,7 +752,7 @@ func (s *Server) sanitizePolymorphic(v any, auth *Auth, dz bool) any {
 		if !dz && !auth.Allowed(ts+".find") {
 			return nil, false
 		}
-		return s.sanitizeOutput(row, s.schemaOf(ts), auth), true
+		return s.sanitizeOutputDeep(row, s.schemaOf(ts), auth), true
 	}
 	if list, ok := v.([]any); ok {
 		out := []any{}
@@ -768,7 +769,7 @@ func (s *Server) sanitizePolymorphic(v any, auth *Auth, dz bool) any {
 
 // sanitizeInput removes id, documentId, non writable attributes and
 // relations auth cannot read.
-func (s *Server) sanitizeInput(data map[string]any, m *schemaModel, auth *Auth) map[string]any {
+func (s *Server) sanitizeInputBuiltin(data map[string]any, m *schemaModel, auth *Auth) map[string]any {
 	out := map[string]any{}
 	for k, v := range data {
 		if k == "id" || k == schema.AttrDocumentID {
@@ -1028,4 +1029,73 @@ func sortedKeys(m map[string]any) []string {
 		}
 	}
 	return keys
+}
+
+// Sanitizer is a function of strapi.sanitizers.add('content-api.input' or
+// 'content-api.output'): it gets the model and one entry after the
+// built-in rules, and returns the entry to keep.
+type Sanitizer func(uid string, entry map[string]any) map[string]any
+
+// Sanitizers are the registered content API sanitizers.
+type Sanitizers struct{ Input, Output []Sanitizer }
+
+// sanitizeOutput is Strapi's contentAPI.sanitize.output: the built-in rules
+// at every level, then the registered sanitizers on each top-level entry.
+func (s *Server) sanitizeOutput(v any, m *schemaModel, auth *Auth) any {
+	out := s.sanitizeOutputDeep(v, m, auth)
+	if m == nil || len(s.cfg.Sanitizers.Output) == 0 {
+		return out
+	}
+	if list, ok := out.([]any); ok {
+		for i, e := range list {
+			list[i] = applySanitizers(e, m.uid, s.cfg.Sanitizers.Output)
+		}
+		return list
+	}
+	return applySanitizers(out, m.uid, s.cfg.Sanitizers.Output)
+}
+
+func (s *Server) sanitizeInput(data map[string]any, m *schemaModel, auth *Auth) map[string]any {
+	out := s.sanitizeInputBuiltin(data, m, auth)
+	if m == nil || out == nil {
+		return out
+	}
+	for _, fn := range s.cfg.Sanitizers.Input {
+		out = fn(m.uid, out)
+	}
+	return out
+}
+
+// applySanitizers runs fns on an entry, keeping the key order: the kept
+// keys stay in place, the added ones follow in name order.
+func applySanitizers(v any, uid string, fns []Sanitizer) any {
+	om, ok := v.(*schema.OrderedMap[any])
+	if !ok || om == nil {
+		return v
+	}
+	entry := map[string]any{}
+	var order []string
+	for k, val := range om.All() {
+		entry[k] = val
+		order = append(order, k)
+	}
+	for _, fn := range fns {
+		entry = fn(uid, entry)
+	}
+	out := &schema.OrderedMap[any]{}
+	for _, k := range order {
+		if val, ok := entry[k]; ok {
+			out.Set(k, val)
+			delete(entry, k)
+		}
+	}
+	rest := make([]string, 0, len(entry))
+	for k := range entry {
+		rest = append(rest, k)
+	}
+	sort.Strings(rest)
+	for _, k := range rest {
+		out.Set(k, entry[k])
+	}
+	return out
 }

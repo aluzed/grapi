@@ -622,6 +622,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		return nil, fmt.Errorf("bootstrap: %w", err)
 	}
 	apiCfg := apiConfig(conf, *dir)
+	apiCfg.Sanitizers = a.sanitizers
 	if list, ok := conf.Get("middlewares").([]any); ok {
 		if err := httpapi.CheckRequiredMiddlewares(list); err != nil {
 			return nil, fmt.Errorf("config middlewares: %w", err)

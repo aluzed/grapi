@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # API-005 : Sanitize et validation (entrée, sortie, requête, selon les permissions)
@@ -21,10 +21,15 @@ Un traverseur schéma-dépendant et les règles de sanitize et validate de Strap
 - Les règles de valeurs (`DOC-003`).
 
 ## Critères d'acceptation
-- [ ] Un champ `private` n'apparaît jamais dans `/api/*`, ni via `populate`, ni via `fields`.
-- [ ] Le rôle Public sans permission `find` sur `user` ne peut pas peupler `author` d'un post.
-- [ ] `filters[author][password][$startsWith]=a` est refusé (cas de fuite connu dans l'écosystème).
-- [ ] Banc de compatibilité : même ensemble de clés en sortie que Strapi pour chaque rôle (Public, Authenticated, token read-only, token full-access).
+- [x] Un champ `private` n'apparaît jamais dans `/api/*`, ni via `populate`, ni via `fields`.
+- [x] Le rôle Public sans permission `find` sur `user` ne peut pas peupler `author` d'un post.
+- [x] `filters[author][password][$startsWith]=a` est refusé (cas de fuite connu dans l'écosystème).
+- [x] Banc de compatibilité : même ensemble de clés en sortie que Strapi pour chaque rôle (Public, Authenticated, token read-only, token full-access).
+
+## Avancement
+- Banc `devfreelance_sanitize` (41 cas, SQLite et Postgres) identique à Strapi pour Public, un utilisateur authentifié, un token lecture seule et un token complet : `fields`, `populate`, `filters` et `sort` sur `password` et `resetPasswordToken` (relation `author` comprise) refusés en `400 Invalid key`, `populate[author][fields][0]=password` refusé, `/api/users?fields[0]=password`. Puis le rôle Authenticated limité à `find` sur les posts : `author` n'est pas peuplé, ses filtres et tris sont refusés, `/api/users` répond 403. Le champ privé `internalNote` de `basic` ne sort ni par `fields` ni par `filters` (`basic`).
+- Registre de sanitizers : `App.AddSanitizer("content-api.input" | "content-api.output", fn)`, appliqués après les règles intégrées, à chaque entrée de premier niveau, comme `strapi.sanitizers.add` (`TestSanitizers`). L'ordre des clés est conservé, les clés ajoutées suivent par ordre alphabétique.
+- Hors périmètre pour l'instant : le registre des validators (`strapi.validators.add`).
 
 ## Notes techniques
 - Un seul traverseur générique (visitor) réutilisé par les trois usages ; il ne doit jamais faire d'accès base.
