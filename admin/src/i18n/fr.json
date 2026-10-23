@@ -350,5 +350,18 @@
   "email.to": "Destinataire",
   "email.send": "Envoyer",
   "email.sent": "E-mail de test envoyé à {to}",
-  "email.configHelp": "Le fournisseur se configure dans la configuration du projet (config/plugins), pas ici."
+  "email.configHelp": "Le fournisseur se configure dans la configuration du projet (config/plugins), pas ici.",
+  "blocks.kind": "Type de bloc",
+  "blocks.paragraph": "Paragraphe",
+  "blocks.h": "Titre {n}",
+  "blocks.quote": "Citation",
+  "blocks.code": "Code",
+  "blocks.ul": "Liste à puces",
+  "blocks.ol": "Liste numérotée",
+  "blocks.image": "Image",
+  "blocks.add": "Ajouter un bloc",
+  "blocks.help": "Mise en forme : **gras**, *italique*, <u>souligné</u>, ~~barré~~, `code`, [lien](https://…). Listes : une entrée par ligne.",
+  "blocks.language": "Langage",
+  "blocks.chooseImage": "Choisir une image",
+  "blocks.empty": "Aucun bloc"
 }

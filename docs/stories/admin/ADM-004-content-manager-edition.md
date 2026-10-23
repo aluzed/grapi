@@ -50,7 +50,8 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Médias : champ simple ou multiple, sélection dans la médiathèque, réordonnancement, retrait (aussi dans les composants).
 - Relations dans les composants (`?component=`), génération d'uid depuis le champ cible et vérification de disponibilité (`/content-manager/uid/*`). Testés (`TestAdminComponents`, `TestAdminUID`).
 - Locales : sélecteur dans l'en-tête, création de la version d'une autre locale avec les champs non localisés repris de la locale par défaut (sinon l'enregistrement écraserait ces champs partagés). Testé (`TestAdminLocales`) et vérifié dans Chrome sur `i18n-dp`.
-- Reste : relations morph, statut des cibles, blocks, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
+- Blocks : éditeur par blocs (paragraphe, titres 1 à 6, listes, citation, code avec langage, image de la médiathèque), réordonnables, mise en forme en ligne en Markdown léger (gras, italique, souligné, barré, code, lien) convertie vers et depuis les nœuds Strapi, avec échappement des caractères spéciaux (`admin/src/lib/blocks.ts`, tests aller-retour). Vérifié dans Chrome : le JSON enregistré est au format Strapi. Ce n'est pas un éditeur WYSIWYG.
+- Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.

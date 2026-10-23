@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
 import { useI18n } from '@/providers/I18nProvider'
+import { fromItems, toItems, type Item } from '@/lib/blocks'
+import { BlocksField } from './BlocksField'
 import { MediaField, mediaItems } from './MediaField'
 import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
 import type { MediaFile } from '@/lib/types'
@@ -24,7 +26,7 @@ const scalarTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 
 export function isEditable(attr: Attribute): boolean {
   if (scalarTypes.has(attr.type)) return true
   if (attr.type === 'relation') return isEditableRelation(attr)
-  return attr.type === 'component' || attr.type === 'dynamiczone' || attr.type === 'media'
+  return attr.type === 'component' || attr.type === 'dynamiczone' || attr.type === 'media' || attr.type === 'blocks'
 }
 
 export function toInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown {
@@ -33,6 +35,8 @@ export function toInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown
       return relationItems(v, attr, ctx.models)
     case 'media':
       return mediaItems(v)
+    case 'blocks':
+      return toItems(v)
     case 'component': {
       const c = ctx.components.get(attr.component ?? '')
       if (!c) return attr.repeatable ? [] : null
@@ -69,6 +73,10 @@ export function fromInput(attr: Attribute, v: unknown, ctx: FieldContext): unkno
   switch (attr.type) {
     case 'relation':
       return { set: ((v as RelationItem[] | undefined) ?? []).map((i) => ({ documentId: i.documentId })) }
+    case 'blocks': {
+      const items = (v as Item[] | undefined) ?? []
+      return items.length ? fromItems(items) : null
+    }
     case 'media': {
       const ids = ((v as MediaFile[] | undefined) ?? []).map((f) => f.id)
       return attr.multiple ? ids : (ids[0] ?? null)
@@ -406,6 +414,8 @@ export function FieldsGrid({
           case 'uid':
             if (root) return <UIDField key={name} name={name} attr={attr} text={text} value={values[name]} values={values} error={errors[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
             break
+          case 'blocks':
+            return <BlocksField key={name} label={text} value={(values[name] as Item[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
           case 'media':
             return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
           case 'component':

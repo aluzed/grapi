@@ -350,5 +350,18 @@
   "email.to": "Recipient",
   "email.send": "Send",
   "email.sent": "Test email sent to {to}",
-  "email.configHelp": "The provider is set in the project configuration (config/plugins), not here."
+  "email.configHelp": "The provider is set in the project configuration (config/plugins), not here.",
+  "blocks.kind": "Block type",
+  "blocks.paragraph": "Paragraph",
+  "blocks.h": "Heading {n}",
+  "blocks.quote": "Quote",
+  "blocks.code": "Code",
+  "blocks.ul": "Bulleted list",
+  "blocks.ol": "Numbered list",
+  "blocks.image": "Image",
+  "blocks.add": "Add a block",
+  "blocks.help": "Formatting: **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, `code`, [link](https://…). Lists: one item per line.",
+  "blocks.language": "Language",
+  "blocks.chooseImage": "Choose an image",
+  "blocks.empty": "No block"
 }
