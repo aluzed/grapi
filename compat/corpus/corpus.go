@@ -33,6 +33,11 @@ type Case struct {
 	Files []Upload          `yaml:"files"`
 	Save  map[string]string `yaml:"save"`
 	Skip  string            `yaml:"skip"`
+	// Headers are sent as is, after {{var}} expansion ("Cookie").
+	Headers map[string]string `yaml:"headers"`
+	// Cookies records the Set-Cookie attributes of the response; save takes
+	// a cookie's value with the path "cookie:<name>".
+	Cookies bool `yaml:"cookies"`
 }
 
 // Upload is a generated PNG sent as multipart/form-data under Field ("files"

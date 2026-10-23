@@ -72,3 +72,25 @@ cases:
     method: POST
     path: /api/auth/logout
     body: {}
+  # The refresh token in an httpOnly cookie (x-strapi-refresh-cookie).
+  - name: login-cookie
+    method: POST
+    path: /api/auth/local
+    headers: { x-strapi-refresh-cookie: httpOnly }
+    cookies: true
+    save: { cjwt: jwt, crt: "cookie:strapi_up_refresh" }
+    body: { identifier: "ada@example.com", password: "N3wPassw0rd!", deviceId: "tablet" }
+  - name: refresh-cookie
+    method: POST
+    path: /api/auth/refresh
+    headers: { x-strapi-refresh-cookie: httpOnly, Cookie: "strapi_up_refresh={{crt}}" }
+    cookies: true
+    save: { cjwt2: jwt }
+    body: {}
+  - name: logout-cookie
+    method: POST
+    path: /api/auth/logout
+    bearer: "{{cjwt2}}"
+    headers: { x-strapi-refresh-cookie: httpOnly }
+    cookies: true
+    body: {}

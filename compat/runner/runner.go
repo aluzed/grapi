@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -31,6 +32,8 @@ type Result struct {
 	Body        any    `json:"body"`
 	Error       string `json:"error,omitempty"`
 	Skipped     string `json:"skipped,omitempty"`
+	// Cookies are the Set-Cookie attributes, values left out.
+	Cookies []string `json:"cookies,omitempty"`
 }
 
 // Target is one engine under test.
@@ -130,6 +133,13 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		}
 		req.Header.Set("Authorization", "Bearer "+bearer)
 	}
+	for k, v := range c.Headers {
+		x, err := expand(v, vars)
+		if err != nil {
+			return Result{Error: err.Error()}, nil
+		}
+		req.Header.Set(k, x)
+	}
 	if c.Method != "" && c.Method != http.MethodGet {
 		// Writes in the same millisecond tie on createdAt, and the tie order
 		// is the engine's: keep the timestamps distinct.
@@ -145,6 +155,21 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		return Result{Status: resp.StatusCode, Error: err.Error()}, nil
 	}
 	res := Result{Status: resp.StatusCode, ContentType: mediaType(resp.Header.Get("Content-Type"))}
+	if c.Cookies {
+		for _, ck := range resp.Cookies() {
+			res.Cookies = append(res.Cookies, describeCookie(ck))
+		}
+		sort.Strings(res.Cookies)
+	}
+	for name, p := range c.Save {
+		if cookie, ok := strings.CutPrefix(p, "cookie:"); ok {
+			for _, ck := range resp.Cookies() {
+				if ck.Name == cookie {
+					vars[name] = ck.Value
+				}
+			}
+		}
+	}
 	if len(raw) > 0 {
 		var decoded any
 		if err := json.Unmarshal(raw, &decoded); err != nil {
@@ -159,6 +184,38 @@ func runCase(t Target, c corpus.Case, vars map[string]string) (Result, []byte) {
 		}
 	}
 	return res, raw
+}
+
+// describeCookie keeps what two engines must agree on: the name, the flags
+// and whether the cookie is cleared, never the value or the dates.
+func describeCookie(c *http.Cookie) string {
+	parts := []string{c.Name}
+	if c.Value == "" || (!c.Expires.IsZero() && c.Expires.Before(time.Now())) || c.MaxAge < 0 {
+		parts = append(parts, "cleared")
+	} else if c.MaxAge > 0 || !c.Expires.IsZero() {
+		parts = append(parts, "persistent")
+	}
+	if c.HttpOnly {
+		parts = append(parts, "httponly")
+	}
+	if c.Secure {
+		parts = append(parts, "secure")
+	}
+	if c.Path != "" {
+		parts = append(parts, "path="+c.Path)
+	}
+	if c.Domain != "" {
+		parts = append(parts, "domain="+c.Domain)
+	}
+	switch c.SameSite {
+	case http.SameSiteLaxMode:
+		parts = append(parts, "samesite=lax")
+	case http.SameSiteStrictMode:
+		parts = append(parts, "samesite=strict")
+	case http.SameSiteNoneMode:
+		parts = append(parts, "samesite=none")
+	}
+	return strings.Join(parts, "; ")
 }
 
 // encodeQuery escapes the values of a qs-style query written in clear in the

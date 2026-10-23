@@ -661,5 +661,15 @@
   "roles.sameRoleHelp": "Only the entries created by an admin who shares a role with the user.",
   "users.deleteSelection": "Delete the selection",
   "users.deleteManyConfirm": "Delete the selected admins ({count})? Their sessions end.",
-  "users.deletedMany": "Admins deleted: {count}"
+  "users.deletedMany": "Admins deleted: {count}",
+  "media.crop": "Crop",
+  "media.cropHelp": "Draw the area to keep on the image.",
+  "media.cropReplace": "Crop the original",
+  "media.cropCopy": "Crop as a copy",
+  "media.cropped": "Image cropped",
+  "media.croppedCopy": "Cropped copy created",
+  "media.cropFailed": "The image could not be cropped",
+  "media.focalHelp": "Click the image to set its focal point.",
+  "media.focalSet": "Focal point: {x} %, {y} %",
+  "media.focalClear": "Remove the focal point"
 }

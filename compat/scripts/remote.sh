@@ -6,7 +6,8 @@ fixture=$1
 # "relations--write" runs querycases/relations--write.yaml on fixtures/relations.
 fx=${fixture%%--*}
 UP_JWT_MANAGEMENT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("upConfig", {}).get("jwtManagement", "legacy-support"))' "$(cd "$(dirname "$0")/.." && pwd)/fixtures/$fx/compat.json" 2>/dev/null || echo legacy-support)
-export UP_JWT_MANAGEMENT
+UP_COOKIE_SECURE=$(python3 -c 'import json,sys; v=json.load(open(sys.argv[1])).get("upConfig", {}).get("sessions", {}).get("cookie", {}).get("secure", False); print(str(v).lower())' "$(cd "$(dirname "$0")/.." && pwd)/fixtures/$fx/compat.json" 2>/dev/null || echo false)
+export UP_JWT_MANAGEMENT UP_COOKIE_SECURE
 mode=$2
 db=$3
 here=$(cd "$(dirname "$0")/.." && pwd)

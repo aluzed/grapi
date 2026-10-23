@@ -159,6 +159,20 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		cfg.Users.Sessions.Cookie.MaxAge = time.Duration(n) * time.Millisecond
 	}
 	cfg.Users.Production = c.Environment == "production"
+	switch keys := c.Get("server.app.keys").(type) {
+	case []any:
+		for _, k := range keys {
+			if k, ok := k.(string); ok && k != "" {
+				cfg.Users.AppKeys = append(cfg.Users.AppKeys, k)
+			}
+		}
+	case string:
+		for _, k := range strings.Split(keys, ",") {
+			if k = strings.TrimSpace(k); k != "" {
+				cfg.Users.AppKeys = append(cfg.Users.AppKeys, k)
+			}
+		}
+	}
 	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
 	switch p := c.Get("server.proxy").(type) {
 	case bool:

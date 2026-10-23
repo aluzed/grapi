@@ -37,6 +37,9 @@ type UsersConfig struct {
 	Sessions      UPSessions
 	// Production is NODE_ENV=production: the refresh cookie's default Secure.
 	Production bool
+	// AppKeys are server.app.keys: koa signs the refresh cookie with the
+	// first one (a ".sig" cookie), as Strapi does.
+	AppKeys []string
 }
 
 func (s *Server) addUsersRoutes() {

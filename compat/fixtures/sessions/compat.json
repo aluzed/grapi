@@ -1,3 +1,10 @@
 {
-  "upConfig": { "jwtManagement": "refresh" }
+  "upConfig": {
+    "jwtManagement": "refresh",
+    "sessions": {
+      "cookie": {
+        "secure": false
+      }
+    }
+  }
 }

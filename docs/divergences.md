@@ -60,6 +60,7 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 - Aucun en-tête `X-Powered-By`, et `/_health` n'envoie pas l'en-tête `strapi` : le serveur ne se signale pas (`API-008`, `API-001`).
 - Webhooks : nouvelles tentatives par défaut ; Strapi n'en fait aucune (`EXT-006`).
 - users-permissions en `jwtManagement: refresh` : un access token cesse d'être accepté dès que sa session est révoquée (déconnexion, révocation, changement de mot de passe). Strapi ne vérifie que la signature et l'accepte jusqu'à son expiration (10 minutes par défaut) (`AUTH-003`).
+- users-permissions en `jwtManagement: refresh`, cookie `Secure` (production) sur une connexion HTTP simple : grapi le pose, Strapi (Koa) répond 500 (`AUTH-003`).
 - Sessions (admin et users-permissions) : rejouer un refresh token déjà tourné rend la même suite pendant 1 minute (onglets concurrents), puis révoque l'appareil ; Strapi rend la suite sans limite de temps (`AUTH-003`).
 - users-permissions en `jwtManagement: refresh` : la confirmation d'e-mail qui renvoie l'utilisateur répond un vrai access token ; Strapi y sérialise une promesse (`"jwt": {}`) (`AUTH-003`).
 - Archives d'export natives en AES-256-GCM ; Strapi chiffre en AES-128-ECB, format que grapi sait lire et, sur demande, écrire (`CLI-004`).

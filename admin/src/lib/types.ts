@@ -110,6 +110,7 @@ export type MediaFile = {
   url: string
   createdAt: string
   folder?: { id: number; name: string; path: string } | null
+  focalPoint?: { x: number; y: number } | null
 }
 
 export type MediaFolder = { id: number; name: string; path: string; pathId: number; filesCount: number; childrenCount: number }

@@ -2,6 +2,9 @@ package httpapi
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha1" //nolint:gosec // keygrip, koa's cookie signature, is HMAC-SHA1
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"sort"
@@ -88,6 +91,19 @@ func (s *Server) setRefreshCookie(w http.ResponseWriter, value string) {
 		ck.Expires = time.Now().Add(c.MaxAge)
 	}
 	http.SetCookie(w, ck)
+	if keys := s.cfg.Users.AppKeys; len(keys) > 0 {
+		sig := *ck //nolint:gosec // the same attributes as the cookie it signs
+		sig.Name, sig.Value = ck.Name+".sig", keygripSign(keys[0], ck.Name+"="+value)
+		http.SetCookie(w, &sig)
+	}
+}
+
+// keygripSign is keygrip's sign, koa's cookie signature: HMAC-SHA1 in
+// base64url without padding.
+func keygripSign(key, data string) string {
+	m := hmac.New(sha1.New, []byte(key))
+	m.Write([]byte(data))
+	return base64.RawURLEncoding.EncodeToString(m.Sum(nil))
 }
 
 func deviceIDOf(body map[string]any) string {

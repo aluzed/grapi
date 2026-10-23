@@ -40,7 +40,8 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - Vue liste (table sur desktop, cartes sur mobile, choix mémorisé dans le navigateur) et filtres par date d'envoi (`from`, `to` sur `createdAt`, validés côté serveur).
 - Progression et annulation des envois : barre de progression et bouton « Annuler l'envoi » (l'envoi passe par XMLHttpRequest, seul à suivre le corps d'une requête ; `admin/src/lib/upload.test.ts`).
 - Un fichier utilisé dans un composant (même imbriqué) est rattaché à l'entrée qui porte le composant, via les tables de liaison des composants (`TestAdminFileRelatedThroughComponent`).
-- Reste : point focal et recadrage.
+- Recadrage dans le navigateur (canvas), comme Strapi : zone tracée à la souris ou au doigt, puis « Recadrer l'original » (remplacement, formats régénérés) ou « Recadrer une copie » (nouveau fichier dans le même dossier) ; vérifié dans Chrome (copie de 450 × 300 pour une moitié d'image de 900 × 600). Calcul des pixels testé (`admin/src/lib/crop.test.ts`).
+- Point focal : clic sur l'image du détail, repère affiché, bouton pour le retirer ; `focalPoint` `{x, y}` en pourcentage validé comme Strapi (0 à 100, `null` l'efface) (`TestAdminFocalPoint`), vérifié dans Chrome.
 
 ## Hors périmètre
 - Le traitement d'image côté serveur (`MEDIA-002`) et les providers (`MEDIA-003` à `MEDIA-005`).
@@ -50,7 +51,7 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - [ ] Uploader 20 images en une fois crée 20 fichiers, avec leurs formats générés selon les réglages.
 - [ ] Remplacer un fichier conserve son id, et tous les documents qui l'utilisent pointent sur le nouveau contenu.
 - [ ] Supprimer un dossier non vide passe par une modale qui annonce le nombre de fichiers et sous-dossiers impactés.
-- [ ] Le point focal enregistré est renvoyé par l'API (`focalPoint`).
+- [x] Le point focal enregistré est renvoyé par l'API (`focalPoint`).
 - [ ] Le sélecteur depuis un champ `allowedTypes: ["images"]` ne propose que des images.
 - [ ] Un utilisateur sans `update` voit les détails en lecture seule.
 - [ ] À 375 px, la grille passe sur une ou deux colonnes et toutes les actions sont en pleine largeur.

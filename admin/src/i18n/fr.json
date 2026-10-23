@@ -661,5 +661,15 @@
   "roles.sameRoleHelp": "Seulement les entrées créées par un admin qui partage un rôle avec l'utilisateur.",
   "users.deleteSelection": "Supprimer la sélection",
   "users.deleteManyConfirm": "Supprimer les administrateurs sélectionnés ({count}) ? Leurs sessions sont fermées.",
-  "users.deletedMany": "Administrateurs supprimés : {count}"
+  "users.deletedMany": "Administrateurs supprimés : {count}",
+  "media.crop": "Recadrer",
+  "media.cropHelp": "Tracez sur l'image la zone à garder.",
+  "media.cropReplace": "Recadrer l'original",
+  "media.cropCopy": "Recadrer une copie",
+  "media.cropped": "Image recadrée",
+  "media.croppedCopy": "Copie recadrée créée",
+  "media.cropFailed": "L'image n'a pas pu être recadrée",
+  "media.focalHelp": "Cliquez sur l'image pour placer son point focal.",
+  "media.focalSet": "Point focal : {x} %, {y} %",
+  "media.focalClear": "Retirer le point focal"
 }

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "ok": true
+  },
+  "cookies": [
+    "strapi_up_refresh.sig; cleared; httponly; path=/; samesite=lax",
+    "strapi_up_refresh; cleared; httponly; path=/; samesite=lax"
+  ]
+}

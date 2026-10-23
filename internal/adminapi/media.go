@@ -2,6 +2,7 @@ package adminapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -255,6 +256,20 @@ func (s *Server) entryOfComponent(ctx context.Context, cuid string, id int64, de
 	return "", 0, false
 }
 
+// focalPoint checks {x, y} in percent, as Strapi's validation does; null
+// clears it.
+func focalPoint(raw json.RawMessage) (any, error) {
+	if string(raw) == "null" {
+		return nil, nil
+	}
+	var p struct{ X, Y *float64 }
+	bad := validation([]FieldError{{Path: []string{"focalPoint"}, Message: "focalPoint must be {x, y} between 0 and 100"}})
+	if err := json.Unmarshal(raw, &p); err != nil || p.X == nil || p.Y == nil || *p.X < 0 || *p.X > 100 || *p.Y < 0 || *p.Y > 100 {
+		return nil, bad
+	}
+	return map[string]any{"x": *p.X, "y": *p.Y}, nil
+}
+
 // writableFile checks the row filter of assets.update (is-creator).
 func (s *Server) writableFile(ctx context.Context, a *permissions.Ability, id int64) error {
 	f, _ := a.Filter(uploadUpdate, "")
@@ -288,6 +303,8 @@ func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *
 		Caption         *string `json:"caption"`
 		Folder          *int64  `json:"folder"`
 		RootFolder      bool    `json:"rootFolder"`
+		// FocalPoint is {x, y} in percent, or null to clear it.
+		FocalPoint json.RawMessage `json:"focalPoint"`
 	}
 	if err := decode(r, &b); err != nil {
 		return err
@@ -304,6 +321,13 @@ func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *
 	}
 	if b.Caption != nil {
 		set["caption"] = nullable(*b.Caption)
+	}
+	if len(b.FocalPoint) > 0 {
+		fp, err := focalPoint(b.FocalPoint)
+		if err != nil {
+			return err
+		}
+		set["focalPoint"] = fp
 	}
 	switch {
 	case b.RootFolder:

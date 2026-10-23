@@ -2729,3 +2729,25 @@ func TestAdminFileRelatedThroughComponent(t *testing.T) {
 		t.Fatalf("the use inside the seo component leads to the page: %v", b)
 	}
 }
+
+func TestAdminFocalPoint(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, up := c.upload("/upload", "f.png", pngBytes(t))
+	id := strconv.Itoa(int(up["list"].([]any)[0].(map[string]any)["id"].(float64)))
+	if s, _, _ := c.do("PUT", "/upload/files/"+id, `{"focalPoint":{"x":120,"y":5}}`); s != 400 {
+		t.Fatalf("out of range: %d", s)
+	}
+	if s, b, _ := c.do("PUT", "/upload/files/"+id, `{"focalPoint":{"x":25.5,"y":75}}`); s != 200 || fmt.Sprint(dataOf(b)["focalPoint"]) != "map[x:25.5 y:75]" {
+		t.Fatalf("set: %d %v", s, dataOf(b)["focalPoint"])
+	}
+	if _, b, _ := c.do("PUT", "/upload/files/"+id, `{"name":"g.png"}`); dataOf(b)["focalPoint"] == nil {
+		t.Fatal("another update keeps it")
+	}
+	if _, b, _ := c.do("PUT", "/upload/files/"+id, `{"focalPoint":null}`); dataOf(b)["focalPoint"] != nil {
+		t.Fatalf("null clears it: %v", dataOf(b)["focalPoint"])
+	}
+}
