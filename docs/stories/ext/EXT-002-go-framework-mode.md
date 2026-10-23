@@ -75,7 +75,7 @@ func main() {
 
 ## Critères d'acceptation
 - [ ] Le projet d'exemple `examples/dev-freelance` reproduit les règles de slug, de hash, le middleware IA (avec un faux LLM) et l'invalidation du cache, et passe les 21 cas de caractérisation x 3 chemins (admin, REST, documents) avec le même résultat que la prod Strapi actuelle.
-- [ ] Les API publiques sont documentées (godoc) et couvertes par un test d'exemple (`Example*`).
+- [x] Les API publiques sont documentées (godoc) et couvertes par un test d'exemple (`Example*`).
 - [ ] Aucun type de `internal/` n'apparaît dans les signatures publiques.
 
 ## Avancement
@@ -85,6 +85,7 @@ func main() {
 - Phases `OnRegister`, `OnBootstrap` (services prêts, `Documents()` disponible, une erreur arrête le démarrage) et `OnDestroy` (à la fermeture du serveur), test `TestPhases`. Providers d'upload et d'e-mail du projet (`UseUploadProvider`, `UseEmailProvider`).
 - Reste : surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
 
+- Exemples godoc (`example_test.go`) : `App.Setup` exécuté avec sa sortie (route publique servie par le handler), `OnRowCreate`, `UseDocuments`, `Route` avec `Policy` et `RoutePolicies`, `Cron`, `OnBootstrap` avec le hook `AfterSync`. Chaque symbole exporté a son commentaire (revive `exported`).
 - Exemple réel : `compat/fixtures/devfreelance/framework`, le backend de dev-freelance sur grapi (règles de ligne, middlewares de documents avec un faux LLM, port de `slugify` 1.6.6). Le banc le compile et le sert à la place de `grapi` : 21 cas de caractérisation et toggles IA identiques à Strapi par REST. Restent l'invalidation de cache et les chemins admin et documents.
 
 ## Notes techniques
