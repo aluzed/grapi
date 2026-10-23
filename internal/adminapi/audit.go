@@ -98,7 +98,7 @@ func (s *Server) writeAudit(ctx context.Context, u *User, origin, action string,
 		s.e.DB.Dialect.Quote(auditTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6), s.ph(7), s.ph(8), s.ph(9), s.ph(10))
 	now := s.now().UTC()
 	// The write itself succeeded: an audit failure is logged, not returned.
-	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(time.RFC3339Nano), id, name, email, origin, string(b), str("uid"), str("documentId"), str("locale")); err != nil {
+	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(storedTime), id, name, email, origin, string(b), str("uid"), str("documentId"), str("locale")); err != nil {
 		s.log.Error("audit log", "action", action, "error", err)
 	}
 }
@@ -109,7 +109,7 @@ func AuditCLI(ctx context.Context, d *db.DB, action string, payload map[string]a
 	b, _ := json.Marshal(payload)
 	ph := d.Dialect.Placeholder
 	_, err := d.Exec(ctx, fmt.Sprintf(`insert into %s (action, date, origin, payload) values (%s, %s, 'cli', %s)`, d.Dialect.Quote(auditTable), ph(1), ph(2), ph(3)),
-		action, time.Now().UTC().Format(time.RFC3339Nano), string(b))
+		action, time.Now().UTC().Format(storedTime), string(b))
 	return err
 }
 
@@ -125,7 +125,7 @@ func (s *Server) purgeAudit(ctx context.Context) {
 		return
 	}
 	s.auditPurgedAt = now
-	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
+	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(storedTime)
 	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where date < %s`, s.e.DB.Dialect.Quote(auditTable), s.ph(1)), cut); err != nil {
 		s.log.Error("audit purge", "error", err)
 	}

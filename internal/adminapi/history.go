@@ -19,6 +19,10 @@ import (
 // the schema registry so that Strapi never sees it.
 const historyTable = "grapi_history_versions"
 
+// storedTime writes the dates of grapi's own tables with a fixed width, so
+// that they sort as strings (RFC 3339 nano drops trailing zeros).
+const storedTime = "2006-01-02T15:04:05.000000000Z07:00"
+
 func (s *Server) ensureHistoryTable(ctx context.Context) error {
 	id := "id integer primary key autoincrement"
 	if s.e.DB.Dialect.Name() == "postgres" {
@@ -102,7 +106,7 @@ func (s *Server) recordVersion(ctx context.Context, ct *schema.ContentType, docu
 	q := fmt.Sprintf(`insert into %s (uid, document_id, locale, status, data, schema_fields, created_at, created_by_id) values (%s, %s, %s, %s, %s, %s, %s, %s)`,
 		s.e.DB.Dialect.Quote(historyTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6), s.ph(7), s.ph(8))
 	now := s.now().UTC()
-	if _, err := s.e.DB.Exec(ctx, q, uid, documentID, loc, status, string(dataJSON), string(fieldsJSON), now.Format(time.RFC3339Nano), userID); err != nil {
+	if _, err := s.e.DB.Exec(ctx, q, uid, documentID, loc, status, string(dataJSON), string(fieldsJSON), now.Format(storedTime), userID); err != nil {
 		s.log.Error("history insert", "uid", uid, "error", err)
 		return
 	}
@@ -185,7 +189,7 @@ func (s *Server) purgeHistory(ctx context.Context) {
 		return
 	}
 	s.historyPurgedAt = now
-	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
+	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(storedTime)
 	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where created_at < %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1)), cut); err != nil {
 		s.log.Error("history purge", "error", err)
 	}

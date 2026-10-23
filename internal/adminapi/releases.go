@@ -208,7 +208,7 @@ func (s *Server) assess(ctx context.Context, r *Release) {
 
 func (s *Server) saveStatus(ctx context.Context, r *Release) {
 	_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`update %s set status = %s, updated_at = %s where id = %s and released_at is null and status <> 'failed'`, s.q(releasesTable), s.ph(1), s.ph(2), s.ph(3)),
-		r.Status, s.now().UTC().Format(time.RFC3339Nano), r.ID)
+		r.Status, s.now().UTC().Format(storedTime), r.ID)
 }
 
 func (s *Server) listReleases(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
@@ -314,7 +314,7 @@ func (s *Server) createRelease(w http.ResponseWriter, r *http.Request, u *User, 
 	if err != nil {
 		return err
 	}
-	now := s.now().UTC().Format(time.RFC3339Nano)
+	now := s.now().UTC().Format(storedTime)
 	var id int64
 	q := fmt.Sprintf(`insert into %s (name, scheduled_at, timezone, status, created_at, updated_at, created_by_id) values (%s, %s, %s, 'empty', %s, %s, %s) returning id`,
 		s.q(releasesTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6))
@@ -376,7 +376,7 @@ func (s *Server) updateRelease(w http.ResponseWriter, r *http.Request, u *User, 
 	}
 	// A new schedule gives a failed release another chance.
 	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`update %s set name = %s, scheduled_at = %s, timezone = %s, error = null, status = case when status = 'failed' then 'ready' else status end, updated_at = %s where id = %s`,
-		s.q(releasesTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5)), name, at, tz, s.now().UTC().Format(time.RFC3339Nano), id); err != nil {
+		s.q(releasesTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5)), name, at, tz, s.now().UTC().Format(storedTime), id); err != nil {
 		return err
 	}
 	s.audit(r, u, "release.update", map[string]any{"id": id, "name": name, "scheduledAt": at})
@@ -459,7 +459,7 @@ func (s *Server) addReleaseAction(w http.ResponseWriter, r *http.Request, u *Use
 		}
 	}
 	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`insert into %s (release_id, type, uid, document_id, locale, created_at) values (%s, %s, %s, %s, %s, %s)`,
-		s.q(actionsTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6)), id, b.Type, b.UID, b.DocumentID, locale, s.now().UTC().Format(time.RFC3339Nano)); err != nil {
+		s.q(actionsTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6)), id, b.Type, b.UID, b.DocumentID, locale, s.now().UTC().Format(storedTime)); err != nil {
 		return err
 	}
 	s.audit(r, u, "release-action.add", map[string]any{"release": id, "type": b.Type, "uid": b.UID, "documentId": b.DocumentID, "locale": locale})
@@ -555,7 +555,7 @@ func (s *Server) publishRelease(ctx context.Context, rel *Release) ([]ReleaseAct
 				return fmt.Errorf("%s %s: %w", a.UID, a.DocumentID, err)
 			}
 		}
-		now := s.now().UTC().Format(time.RFC3339Nano)
+		now := s.now().UTC().Format(storedTime)
 		res, err := s.e.DB.Exec(ctx, fmt.Sprintf(`update %s set status = 'done', released_at = %s, error = null, updated_at = %s where id = %s and released_at is null`,
 			s.q(releasesTable), s.ph(1), s.ph(2), s.ph(3)), now, now, rel.ID)
 		if err != nil {
