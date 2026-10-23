@@ -2247,3 +2247,117 @@ func TestAdminAuditExportStreams(t *testing.T) {
 		t.Logf("heap growth during the export: %d MB", grew>>20)
 	}
 }
+
+// TestAdminAuditEvents checks that each audited write logs exactly one
+// entry, with its action, and that reads log nothing.
+func TestAdminAuditEvents(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	total := func() int {
+		_, b, _ := c.do("GET", "/audit-logs?pageSize=1", "")
+		return int(b["meta"].(map[string]any)["pagination"].(map[string]any)["total"].(float64))
+	}
+	last := func() string {
+		_, b, _ := c.do("GET", "/audit-logs?pageSize=1", "")
+		return b["data"].([]any)[0].(map[string]any)["action"].(string)
+	}
+	idOf := func(b map[string]any) string { return strconv.Itoa(int(dataOf(b)["id"].(float64))) }
+	docOf := func(b map[string]any) string { return dataOf(b)["documentId"].(string) }
+	const base = "/content-manager/collection-types/api::article.article"
+	var entry, folder, file, locale, role, user, token, hook, release, action string
+	steps := []struct {
+		want string
+		run  func()
+	}{
+		{"admin.auth.success", func() { c.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd"}`) }},
+		{"admin.auth.error", func() { c.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Wrong0ne"}`) }},
+		{"entry.create", func() { _, b, _ := c.do("POST", base, `{"data":{"title":"A"}}`); entry = docOf(b) }},
+		{"entry.update", func() { c.do("PUT", base+"/"+entry, `{"data":{"title":"B"}}`) }},
+		{"entry.publish", func() { c.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+entry+`"]}`) }},
+		{"entry.unpublish", func() { c.do("POST", base+"/actions/bulk-unpublish", `{"documentIds":["`+entry+`"]}`) }},
+		{"entry.delete", func() { c.do("DELETE", base+"/"+entry, "") }},
+		{"media-folder.create", func() { _, b, _ := c.do("POST", "/upload/folders", `{"name":"Docs"}`); folder = idOf(b) }},
+		{"media-folder.update", func() { c.do("PUT", "/upload/folders/"+folder, `{"name":"Papers"}`) }},
+		{"media.create", func() {
+			_, b := c.upload("/upload", "a.png", pngBytes(t))
+			file = strconv.Itoa(int(b["list"].([]any)[0].(map[string]any)["id"].(float64)))
+		}},
+		{"media.update", func() { c.do("PUT", "/upload/files/"+file, `{"alternativeText":"A"}`) }},
+		{"media.delete", func() { c.do("DELETE", "/upload/files/"+file, "") }},
+		{"media-folder.delete", func() { c.do("DELETE", "/upload/folders/"+folder, "") }},
+		{"locale.create", func() { _, b, _ := c.do("POST", "/i18n/locales", `{"code":"fr"}`); locale = idOf(b) }},
+		{"locale.update", func() { c.do("PUT", "/i18n/locales/"+locale, `{"name":"Français"}`) }},
+		{"locale.default.update", func() { c.do("PUT", "/i18n/locales/"+locale, `{"isDefault":true}`) }},
+		{"role.create", func() { _, b, _ := c.do("POST", "/roles", `{"name":"Temp"}`); role = idOf(b) }},
+		{"role.update", func() { c.do("PUT", "/roles/"+role, `{"name":"Temporary"}`) }},
+		{"permission.update", func() { c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[]}`) }},
+		{"user.create", func() {
+			_, b, _ := c.do("POST", "/users", `{"firstname":"Ed","email":"ed@example.com","roles":[`+role+`]}`)
+			user = strconv.Itoa(int(dataOf(b)["user"].(map[string]any)["id"].(float64)))
+		}},
+		{"user.update", func() { c.do("PUT", "/users/"+user, `{"firstname":"Edward"}`) }},
+		{"user.delete", func() { c.do("DELETE", "/users/"+user, "") }},
+		{"role.delete", func() { c.do("DELETE", "/roles/"+role, "") }},
+		{"user.password.update", func() { c.do("PUT", "/users/me", `{"currentPassword":"Passw0rd","password":"Passw0rd2"}`) }},
+		{"user.password-reset.create", func() { c.do("POST", "/auth/forgot-password", `{"email":"ada@example.com"}`) }},
+		{"token.create", func() { _, b, _ := c.do("POST", "/api-tokens", `{"name":"T","type":"read-only"}`); token = idOf(b) }},
+		{"token.update", func() { c.do("PUT", "/api-tokens/"+token, `{"name":"T2","type":"read-only"}`) }},
+		{"token.regenerate", func() { c.do("POST", "/api-tokens/"+token+"/regenerate", "") }},
+		{"token.delete", func() { c.do("DELETE", "/api-tokens/"+token, "") }},
+		{"webhook.create", func() {
+			_, b, _ := c.do("POST", "/webhooks", `{"name":"W","url":"https://example.com/hook","events":["entry.create"]}`)
+			hook = idOf(b)
+		}},
+		{"webhook.update", func() {
+			c.do("PUT", "/webhooks/"+hook, `{"name":"W2","url":"https://example.com/hook","events":["entry.create"]}`)
+		}},
+		{"webhook.delete", func() { c.do("DELETE", "/webhooks/"+hook, "") }},
+		{"release.create", func() { _, b, _ := c.do("POST", "/releases", `{"name":"R"}`); release = idOf(b) }},
+		{"release.update", func() { c.do("PUT", "/releases/"+release, `{"name":"R2"}`) }},
+		{"release-action.add", func() {
+			_, b, _ := c.do("POST", base, `{"data":{"title":"In release"}}`)
+			doc := docOf(b)
+			c.do("POST", "/releases/"+release+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+doc+`"}`)
+			_, b, _ = c.do("GET", "/releases/"+release, "")
+			action = strconv.Itoa(int(dataOf(b)["actions"].([]any)[0].(map[string]any)["id"].(float64)))
+		}},
+		{"release-action.remove", func() { c.do("DELETE", "/releases/"+release+"/actions/"+action, "") }},
+		{"release.delete", func() { c.do("DELETE", "/releases/"+release, "") }},
+		{"release-settings.update", func() { c.do("PUT", "/releases/settings", `{"defaultTimezone":"UTC"}`) }},
+		{"admin.logout", func() {
+			_, b, _ := c.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd2"}`)
+			c.token = dataOf(b)["token"].(string)
+			c.do("POST", "/auth/logout", "")
+			_, b, _ = c.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd2"}`)
+			c.token = dataOf(b)["token"].(string)
+		}},
+	}
+	for _, st := range steps {
+		before := total()
+		st.run()
+		n := total() - before
+		// These steps log a setup entry first, and a login after.
+		lastAction := last()
+		switch st.want {
+		case "release-action.add":
+			n--
+		case "admin.logout":
+			n -= 2
+			_, b, _ := c.do("GET", "/audit-logs?pageSize=2", "")
+			lastAction = b["data"].([]any)[1].(map[string]any)["action"].(string)
+		}
+		if n != 1 || lastAction != st.want {
+			t.Fatalf("%s: %d entries, last %s", st.want, n, lastAction)
+		}
+	}
+	before := total()
+	for _, path := range []string{"/users/me", "/roles", "/users", "/api-tokens", "/webhooks", "/releases", "/i18n/locales", "/upload/files", base} {
+		c.do("GET", path, "")
+	}
+	if n := total() - before; n != 0 {
+		t.Fatalf("reads log nothing: %d", n)
+	}
+}

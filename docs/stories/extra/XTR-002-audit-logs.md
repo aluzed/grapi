@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # XTR-002 : Audit logs
@@ -42,7 +42,7 @@ Un journal d'audit immuable des actions d'administration, consultable, filtrable
 - Signature ou chaînage cryptographique des entrées.
 
 ## Critères d'acceptation
-- [ ] Chaque événement du périmètre produit exactement une entrée avec la bonne action et l'origine attendue (test table-driven).
+- [x] Chaque événement du périmètre produit exactement une entrée avec la bonne action et l'origine attendue (test table-driven).
 - [x] Une lecture (`GET` admin) ne produit aucune entrée.
 - [x] `entry.update` ne contient que les champs modifiés, avec valeurs avant et après.
 - [x] Création d'un webhook avec en-tête `Authorization` : le payload ne contient ni la valeur de l'en-tête ni le chemin de l'URL.
@@ -61,7 +61,8 @@ Un journal d'audit immuable des actions d'administration, consultable, filtrable
 - `entry.update` : champs modifiés avec valeurs avant et après (`changes: [{path, before, after}]`, même comparaison que l'historique), sans champs privés ni mots de passe. Releases : `release.*`, `release-action.*`, `release-settings.update`, et `release.trigger` du planificateur (origine `scheduler`, sans utilisateur, statut `done` ou `failed`). Origine `cli` pour `admin:create-user` et `admin:reset-user-password`.
 - Colonnes `uid`, `document_id`, `locale` (ajoutées au démarrage sur une table existante), filtres `origin`, `uid`, `documentId`, `locale` ; filtre d'origine dans l'écran. Plafond `admin.auditLogs.exportMaxRows` (1 000 000). Purge par le planificateur du serveur (au démarrage puis au plus une fois par heure).
 - Testé : `TestAdminAuditDetails` (avant/après, champ privé absent, purge, liste et CSV identiques, export sans permission refusé), `TestAdminAuditExportStreams` (200 000 lignes exportées, tas +1 Mo sur SQLite), `TestAdminReleases`, `TestAdminCommands`.
-- Reste : le test table-driven de chaque événement, l'origine `admin-token` (l'API admin n'accepte aujourd'hui que des sessions).
+- `TestAdminAuditEvents` : 40 écritures de l'admin, une entrée chacune avec la bonne action, aucune pour les lectures (content types et composants : `TestAdminContentTypeBuilder` ; invitation : `TestAdminUsersAndRoles`). `locale.update` n'est plus journalisé quand seule la locale par défaut change.
+- Non fait, sans objet aujourd'hui : l'origine `admin-token`, l'API admin n'acceptant que des sessions ; à reprendre si des jetons d'API admin arrivent.
 
 ## Notes techniques
 - Abonnement à l'event hub (`DOC-005`) et aux hooks des services admin ; l'acteur et l'origine viennent du contexte de requête (`API-001`).

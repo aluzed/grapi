@@ -102,13 +102,13 @@ func (s *Server) updateLocale(w http.ResponseWriter, r *http.Request, u *User, _
 		return err
 	}
 	ctx := r.Context()
+	code := getString(row, "code")
 	if b.Name != nil && *b.Name != "" {
 		if row, err = s.e.Update(ctx, localeUID, map[string]any{"id": get(row, "id")}, query.Data{"name": *b.Name}, query.Params{}); err != nil {
 			return err
 		}
+		s.audit(r, u, "locale.update", map[string]any{"code": code})
 	}
-	code := getString(row, "code")
-	s.audit(r, u, "locale.update", map[string]any{"code": code})
 	if b.IsDefault {
 		if err := s.setDefaultLocale(ctx, code); err != nil {
 			return err
