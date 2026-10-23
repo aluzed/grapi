@@ -48,6 +48,8 @@ type Config struct {
 	ForgotPasswordFrom string
 	// ResetPasswordTTL is admin.forgotPassword.expiresIn, 1 hour by default.
 	ResetPasswordTTL time.Duration
+	// Media is the upload pipeline; nil leaves the media routes out.
+	Media MediaService
 	// UI is the built SPA; nil serves the API only.
 	UI fs.FS
 	// Develop enables the Content-Type Builder entry.
@@ -143,6 +145,7 @@ func (s *Server) routes() {
 	s.relationRoutes()
 	s.singleTypeRoutes()
 	s.componentRoutes()
+	s.mediaRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

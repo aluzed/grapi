@@ -3,7 +3,11 @@ package grapi_test
 import (
 	"bytes"
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -602,5 +606,109 @@ func TestAdminValidationDetails(t *testing.T) {
 	}
 	if path := errs[0].(map[string]any)["path"].([]any); len(path) < 2 || path[0] != "links" {
 		t.Fatalf("error path: %v", errs)
+	}
+}
+
+func pngBytes(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 40, 30))
+	for x := 0; x < 40; x++ {
+		img.Set(x, x%30, color.RGBA{R: 200, A: 255})
+	}
+	var b bytes.Buffer
+	if err := png.Encode(&b, img); err != nil {
+		t.Fatal(err)
+	}
+	return b.Bytes()
+}
+
+func (c *adminClient) upload(path, name string, content []byte) (int, map[string]any) {
+	c.t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	fw, _ := mw.CreateFormFile("files", name)
+	_, _ = fw.Write(content)
+	_ = mw.Close()
+	req, _ := http.NewRequest("POST", c.base+"/admin/api/v1"+path, &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	res, err := c.client.Do(req)
+	if err != nil {
+		c.t.Fatal(err)
+	}
+	defer func() { _ = res.Body.Close() }()
+	raw, _ := io.ReadAll(res.Body)
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		var list []any
+		if json.Unmarshal(raw, &list) == nil {
+			return res.StatusCode, map[string]any{"list": list}
+		}
+	}
+	return res.StatusCode, out
+}
+
+func TestAdminMedia(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+
+	s, b, _ := c.do("POST", "/upload/folders", `{"name":"Photos"}`)
+	if s != 201 {
+		t.Fatalf("create folder: %d %v", s, b)
+	}
+	folder := dataOf(b)
+	fid := strconv.Itoa(int(folder["id"].(float64)))
+	if folder["path"] != "/1" {
+		t.Fatalf("folder path: %v", folder)
+	}
+	if s, _, _ := c.do("POST", "/upload/folders", `{"name":"Photos"}`); s != 400 {
+		t.Fatalf("duplicate folder: %d", s)
+	}
+	if s, b, _ := c.do("POST", "/upload/folders", `{"name":"2026","parent":`+fid+`}`); s != 201 || dataOf(b)["path"] != "/1/2" {
+		t.Fatalf("subfolder: %d %v", s, b)
+	}
+
+	s, up := c.upload("/upload", "red.png", pngBytes(t))
+	if s != 201 {
+		t.Fatalf("upload: %d %v", s, up)
+	}
+	file := up["list"].([]any)[0].(map[string]any)
+	id := strconv.Itoa(int(file["id"].(float64)))
+	if file["mime"] != "image/png" || file["width"].(float64) != 40 {
+		t.Fatalf("uploaded file: %v", file)
+	}
+	_, b, _ = c.do("GET", "/upload/files", "")
+	if list := b["data"].([]any); len(list) != 1 {
+		t.Fatalf("root files: %v", b)
+	}
+	if s, b, _ := c.do("PUT", "/upload/files/"+id, `{"alternativeText":"A red line","folder":`+fid+`}`); s != 200 || dataOf(b)["folderPath"] != "/1" {
+		t.Fatalf("move file: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", "/upload/files", "")
+	if len(b["data"].([]any)) != 0 {
+		t.Fatalf("the root is empty after the move: %v", b)
+	}
+	_, b, _ = c.do("GET", "/upload/files?folder="+fid+"&_q=red%20line&type=image", "")
+	if len(b["data"].([]any)) != 1 {
+		t.Fatalf("search in the folder: %v", b)
+	}
+	_, b, _ = c.do("GET", "/upload/folders", "")
+	if f := b["data"].([]any)[0].(map[string]any); f["filesCount"].(float64) != 1 || f["childrenCount"].(float64) != 1 {
+		t.Fatalf("folder counts: %v", b)
+	}
+	if s, up = c.upload("/upload?folder="+fid, "second.png", pngBytes(t)); s != 201 {
+		t.Fatalf("upload into a folder: %d %v", s, up)
+	}
+	if _, b, _ = c.do("GET", "/upload/files?folder="+fid, ""); len(b["data"].([]any)) != 2 {
+		t.Fatalf("the upload lands in the folder: %v", b)
+	}
+	if s, _, _ := c.do("DELETE", "/upload/files/"+id, ""); s != 200 {
+		t.Fatalf("delete: %d", s)
+	}
+	if s, _, _ := c.do("GET", "/upload/files/"+id, ""); s != 404 {
+		t.Fatalf("deleted file: %d", s)
 	}
 }

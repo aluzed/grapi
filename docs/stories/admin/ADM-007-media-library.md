@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-007 : Media Library
@@ -30,6 +30,10 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - **Modale de sélection** pour les champs média (`ADM-004`) : mêmes fonctions, avec le filtre `allowedTypes` du champ et une sélection simple ou multiple.
 - **Réglages** (Settings > Media Library) : optimisation de taille, formats responsive, orientation automatique.
 - **Permissions** : access, create (upload), read, update, download, copy link, et la condition `is-creator`.
+
+## Avancement
+- API (`docs/admin-api.md`, Médiathèque) : liste des fichiers par dossier avec recherche, type et tri, détail, édition des métadonnées et déplacement, suppression, upload par la chaîne de l'API de contenu (`AdminUpload`) dans un dossier, remplacement, dossiers (liste avec compteurs, création numérotée comme Strapi). Testé de bout en bout (`TestAdminMedia`).
+- Reste : l'interface (page et modale de sélection).
 
 ## Hors périmètre
 - Le traitement d'image côté serveur (`MEDIA-002`) et les providers (`MEDIA-003` à `MEDIA-005`).

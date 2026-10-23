@@ -95,3 +95,17 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 Une erreur de validation du document porte `details.errors: [{path, message}]` avec le chemin complet (`links.0.label`).
 
 Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message}]}` : un document invalide ou hors des droits n'empêche pas les autres.
+
+### Médiathèque
+
+Routes présentes quand le plugin upload est actif. Les droits sont `plugin::upload.read` (lecture), `plugin::upload.assets.create` (upload, dossiers) et `plugin::upload.assets.update` (édition, déplacement, suppression, remplacement). La condition `is-creator` de `assets.update` limite aux fichiers de l'admin. Un fichier uploadé depuis l'admin porte `createdBy` et `updatedBy`.
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /upload/files?folder=&_q=&type=&sort=&page=&pageSize=&all=` | Fichiers d'un dossier (`folder` : id, racine par défaut ; `all=true` : tous). `type` vaut `image`, `video`, `audio` ou `file`. Tri par `name`, `createdAt`, `updatedAt`, `size` (défaut `createdAt:desc`). |
+| `GET /upload/files/{id}` | Un fichier, avec son dossier |
+| `PUT /upload/files/{id}` | `name`, `alternativeText`, `caption`, `folder` (id) ou `rootFolder: true` |
+| `DELETE /upload/files/{id}` | Supprime le fichier et ses formats chez le provider |
+| `POST /upload?folder=` | Multipart `files` (et `fileInfo`), même traitement que l'API de contenu : optimisation, formats, provider. Avec `?id=`, met à jour les infos ou remplace le fichier en gardant son id. |
+| `GET /upload/folders?parent=` | Sous-dossiers (racine par défaut), avec `filesCount` et `childrenCount` |
+| `POST /upload/folders` | `name`, `parent`. Le `pathId` suit le plus grand existant, le `path` est celui du parent plus ce numéro, comme Strapi. Nom unique dans le dossier parent. |

@@ -338,16 +338,22 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, rc *request
 	if err != nil {
 		return err
 	}
-	folder, err := s.apiUploadFolder(ctx)
-	if err != nil {
-		return err
+	folder := uploadTarget(ctx)
+	if folder == nil {
+		var err error
+		if folder, err = s.apiUploadFolder(ctx); err != nil {
+			return err
+		}
 	}
 	var settings uploadSettings
 	if err := s.uploadSettings(ctx, &settings); err != nil {
 		return err
 	}
-	folderID, _ := folder.Get("id")
-	folderPath, _ := folder.Get("path")
+	var folderID, folderPath any = nil, "/"
+	if folder != rootFolder {
+		folderID, _ = folder.Get("id")
+		folderPath, _ = folder.Get("path")
+	}
 	metas := map[string]string{}
 	for _, k := range []string{"ref", "refId", "field", "path"} {
 		if v := req.fields[k]; len(v) > 0 {
@@ -498,6 +504,9 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		"ext":             ext,
 		"mime":            mimeType,
 		"size":            media.BytesToKbytes(f.size),
+	}
+	if by := ctx.Value(uploaderKey{}); by != nil {
+		file["createdBy"], file["updatedBy"] = by, by
 	}
 	if metas["refId"] != "" && metas["ref"] != "" && metas["field"] != "" {
 		file["related"] = []any{map[string]any{"id": metas["refId"], "__type": metas["ref"], "__pivot": map[string]any{"field": metas["field"]}}}
