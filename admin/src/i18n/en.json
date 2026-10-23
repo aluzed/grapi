@@ -495,5 +495,18 @@
   "filters.false": "false",
   "cm.duplicate": "Duplicate",
   "cm.duplicateOf": "Copy of {name}",
-  "ctb.renameHint": "Renaming keeps the values: the column is renamed when saving."
+  "ctb.renameHint": "Renaming keeps the values: the column is renamed when saving.",
+  "media.selectMode": "Select files",
+  "media.move": "Move",
+  "media.moveTo": "Destination folder",
+  "media.moved": "{count} files moved",
+  "media.bulkDeleteConfirm": "Delete {count} files? Entries using them lose them.",
+  "media.bulkDeleted": "{count} files deleted",
+  "media.renameFolder": "Rename",
+  "media.deleteFolder": "Delete",
+  "media.deleteFolderConfirm": "Delete the folder {name} with all its files and subfolders?",
+  "media.folderDeleted": "Folder deleted",
+  "media.replace": "Replace the file",
+  "media.replaced": "File replaced",
+  "media.cancelSelection": "Cancel the selection"
 }

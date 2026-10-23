@@ -495,5 +495,18 @@
   "filters.false": "faux",
   "cm.duplicate": "Dupliquer",
   "cm.duplicateOf": "Copie de {name}",
-  "ctb.renameHint": "Renommer conserve les valeurs : la colonne est renommée à l'enregistrement."
+  "ctb.renameHint": "Renommer conserve les valeurs : la colonne est renommée à l'enregistrement.",
+  "media.selectMode": "Sélectionner des fichiers",
+  "media.move": "Déplacer",
+  "media.moveTo": "Dossier de destination",
+  "media.moved": "{count} fichier(s) déplacé(s)",
+  "media.bulkDeleteConfirm": "Supprimer {count} fichier(s) ? Les entrées qui les utilisent les perdent.",
+  "media.bulkDeleted": "{count} fichier(s) supprimé(s)",
+  "media.renameFolder": "Renommer",
+  "media.deleteFolder": "Supprimer",
+  "media.deleteFolderConfirm": "Supprimer le dossier {name} avec tous ses fichiers et sous-dossiers ?",
+  "media.folderDeleted": "Dossier supprimé",
+  "media.replace": "Remplacer le fichier",
+  "media.replaced": "Fichier remplacé",
+  "media.cancelSelection": "Annuler la sélection"
 }

@@ -1292,3 +1292,37 @@ func TestAdminContentTypeBuilderRename(t *testing.T) {
 		t.Fatalf("renaming a missing attribute is refused: %d", s)
 	}
 }
+
+func TestAdminMediaBulk(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("POST", "/upload/folders", `{"name":"A"}`)
+	a := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	_, b, _ = c.do("POST", "/upload/folders", `{"name":"B","parent":`+a+`}`)
+	bID := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	var ids []string
+	for _, n := range []string{"one.png", "two.png"} {
+		_, up := c.upload("/upload", n, pngBytes(t))
+		ids = append(ids, strconv.Itoa(int(up["list"].([]any)[0].(map[string]any)["id"].(float64))))
+	}
+	c.upload("/upload?folder="+bID, "deep.png", pngBytes(t))
+	if s, b, _ := c.do("POST", "/upload/actions/bulk-move", `{"fileIds":[`+ids[0]+`,`+ids[1]+`],"destination":`+a+`}`); s != 200 || dataOf(b)["files"].(float64) != 2 {
+		t.Fatalf("move: %d %v", s, b)
+	}
+	if _, b, _ := c.do("GET", "/upload/files?folder="+a, ""); len(b["data"].([]any)) != 2 {
+		t.Fatalf("files moved into A: %v", b)
+	}
+	if s, b, _ := c.do("PUT", "/upload/folders/"+bID, `{"name":"Renamed"}`); s != 200 || dataOf(b)["name"] != "Renamed" {
+		t.Fatalf("rename folder: %d %v", s, b)
+	}
+	s, b, _ := c.do("DELETE", "/upload/folders/"+a, "")
+	if s != 200 || dataOf(b)["files"].(float64) != 3 || dataOf(b)["folders"].(float64) != 2 {
+		t.Fatalf("delete folder with its content: %d %v", s, b)
+	}
+	if _, b, _ := c.do("GET", "/upload/files?all=true", ""); len(b["data"].([]any)) != 0 {
+		t.Fatalf("no file left: %v", b)
+	}
+}

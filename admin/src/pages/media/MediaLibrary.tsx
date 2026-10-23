@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Copy, Download, Save, Trash2 } from 'lucide-react'
+import { Copy, Download, RefreshCw, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { TextField } from '@/components/ui/field'
-import { api } from '@/lib/api'
+import { api, upload } from '@/lib/api'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import type { MediaFile } from '@/lib/types'
@@ -31,6 +31,16 @@ function FileDialog({ file, onClose }: { file: MediaFile; onClose: () => void })
   }
   const save = useMutation({ mutationFn: () => api.put(`/upload/files/${file.id}`, form), onSuccess: () => done(t('media.saved')), onError: (e) => showError(e) })
   const remove = useMutation({ mutationFn: () => api.del(`/upload/files/${file.id}`), onSuccess: () => done(t('media.deleted')), onError: (e) => showError(e) })
+  const replaceInput = useRef<HTMLInputElement>(null)
+  const replace = useMutation({
+    mutationFn: (f: File) => {
+      const form = new FormData()
+      form.append('files', f)
+      return upload(`/upload?id=${file.id}`, form)
+    },
+    onSuccess: () => done(t('media.replaced')),
+    onError: (e) => showError(e),
+  })
   return (
     <Dialog
       open
@@ -84,6 +94,22 @@ function FileDialog({ file, onClose }: { file: MediaFile; onClose: () => void })
           >
             {t('media.copy')}
           </Button>
+          {canUpdate && (
+            <>
+              <Button variant="outline" title={t('media.replace')} icon={<RefreshCw className="h-4 w-4" />} loading={replace.isPending} onClick={() => replaceInput.current?.click()} className="w-full md:w-auto">
+                {t('media.replace')}
+              </Button>
+              <input
+                ref={replaceInput}
+                type="file"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) replace.mutate(f)
+                }}
+              />
+            </>
+          )}
           <a href={file.url} download={file.name} title={t('media.download')} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-background md:w-auto">
             <Download className="h-4 w-4" />
             {t('media.download')}

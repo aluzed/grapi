@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronRight, File, Folder, FolderPlus, Upload } from 'lucide-react'
+import { Check, CheckSquare, ChevronRight, File, Folder, FolderInput, FolderPlus, Pencil, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
+import { EntityActionsMenu } from '@/components/ui/entity-actions-menu'
 import { SelectField, TextField } from '@/components/ui/field'
 import { api, ApiError, requestWithMeta, upload } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -12,6 +13,7 @@ import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import type { MediaFile, MediaFolder, Pagination } from '@/lib/types'
 import { useAuth } from '@/providers/AuthProvider'
+import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 
 type Crumb = { id: number | null; name: string }
@@ -28,13 +30,13 @@ export function Thumb({ file, className }: { file: MediaFile; className?: string
   )
 }
 
-function NewFolder({ parent, onClose }: { parent: number | null; onClose: () => void }) {
+function NewFolder({ parent, folder, onClose }: { parent: number | null; folder?: MediaFolder; onClose: () => void }) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
-  const [name, setName] = useState('')
+  const [name, setName] = useState(folder?.name ?? '')
   const [error, setError] = useState<string>()
   const create = useMutation({
-    mutationFn: () => api.post('/upload/folders', { name, parent }),
+    mutationFn: () => (folder ? api.put(`/upload/folders/${folder.id}`, { name }) : api.post('/upload/folders', { name, parent })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['media'] })
       onClose()
@@ -47,7 +49,7 @@ function NewFolder({ parent, onClose }: { parent: number | null; onClose: () => 
   return (
     <Dialog
       open
-      title={t('media.newFolder')}
+      title={folder ? t('media.renameFolder') : t('media.newFolder')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
       footer={
@@ -55,13 +57,57 @@ function NewFolder({ parent, onClose }: { parent: number | null; onClose: () => 
           <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
             {t('common.cancel')}
           </Button>
-          <Button title={t('media.create')} icon={<FolderPlus className="h-4 w-4" />} loading={create.isPending} onClick={() => create.mutate()} className="w-full md:w-auto">
-            {t('media.create')}
+          <Button title={folder ? t('common.save') : t('media.create')} icon={<FolderPlus className="h-4 w-4" />} loading={create.isPending} onClick={() => create.mutate()} className="w-full md:w-auto">
+            {folder ? t('common.save') : t('media.create')}
           </Button>
         </>
       }
     >
       <TextField label={t('media.folderName')} value={name} error={error} autoFocus onChange={(e) => setName(e.target.value)} />
+    </Dialog>
+  )
+}
+
+function MoveDialog({ ids, onClose }: { ids: number[]; onClose: () => void }) {
+  const { t } = useI18n()
+  const queryClient = useQueryClient()
+  const folders = useQuery({ queryKey: ['media', 'folders', 'all'], queryFn: () => api.get<MediaFolder[]>('/upload/folders?all=true') })
+  const [dest, setDest] = useState('root')
+  const move = useMutation({
+    mutationFn: () => api.post<{ files: number }>('/upload/actions/bulk-move', { fileIds: ids, destination: dest === 'root' ? null : Number(dest) }),
+    onSuccess: (r) => {
+      toast.success(t('media.moved', { count: String(r.files) }))
+      void queryClient.invalidateQueries({ queryKey: ['media'] })
+      onClose()
+    },
+    onError: (e) => showError(e),
+  })
+  return (
+    <Dialog
+      open
+      title={t('media.move')}
+      onClose={onClose}
+      closeLabel={t('common.cancel')}
+      footer={
+        <>
+          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
+            {t('common.cancel')}
+          </Button>
+          <Button title={t('media.move')} icon={<FolderInput className="h-4 w-4" />} loading={move.isPending} onClick={() => move.mutate()} className="w-full md:w-auto">
+            {t('media.move')}
+          </Button>
+        </>
+      }
+    >
+      <SelectField label={t('media.moveTo')} value={dest} onChange={(e) => setDest(e.target.value)}>
+        <option value="root">{t('media.root')}</option>
+        {folders.data?.map((f) => (
+          <option key={f.id} value={f.id}>
+            {'· '.repeat(Math.max(0, f.path.split('/').length - 2))}
+            {f.name}
+          </option>
+        ))}
+      </SelectField>
     </Dialog>
   )
 }
@@ -83,7 +129,13 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const [type, setType] = useState(initialType)
   const [page, setPage] = useState(1)
   const [creating, setCreating] = useState(false)
+  const [renaming, setRenaming] = useState<MediaFolder | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [selecting, setSelecting] = useState(false)
+  const [chosen, setChosen] = useState<number[]>([])
+  const [moving, setMoving] = useState(false)
+  const confirm = useConfirm()
+  const canUpdate = can(permissions, 'plugin::upload.assets.update')
   const input = useRef<HTMLInputElement>(null)
   const folder = path[path.length - 1]!.id
   const folderParam = folder === null ? 'root' : String(folder)
@@ -114,8 +166,26 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
     if (list && list.length > 0) send.mutate([...list])
   }
 
-  const selectedIds = new Set(pick?.selected.map((f) => f.id))
+  const removeFolder = useMutation({
+    mutationFn: (f: MediaFolder) => api.del(`/upload/folders/${f.id}`),
+    onSuccess: () => {
+      toast.success(t('media.folderDeleted'))
+      void queryClient.invalidateQueries({ queryKey: ['media'] })
+    },
+    onError: (e) => showError(e),
+  })
+  const bulkDelete = useMutation({
+    mutationFn: (ids: number[]) => api.post<{ files: number }>('/upload/actions/bulk-delete', { fileIds: ids }),
+    onSuccess: (r) => {
+      toast.success(t('media.bulkDeleted', { count: String(r.files) }))
+      setChosen([])
+      void queryClient.invalidateQueries({ queryKey: ['media'] })
+    },
+    onError: (e) => showError(e),
+  })
+  const selectedIds = new Set(pick ? pick.selected.map((f) => f.id) : chosen)
   const click = (f: MediaFile) => {
+    if (!pick && selecting) return setChosen((c) => (c.includes(f.id) ? c.filter((x) => x !== f.id) : [...c, f.id]))
     if (!pick) return onOpen?.(f)
     if (selectedIds.has(f.id)) pick.onChange(pick.selected.filter((x) => x.id !== f.id))
     else pick.onChange(pick.multiple ? [...pick.selected, f] : [f])
@@ -174,24 +244,63 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             ))}
           </SelectField>
         </div>
-        {canUpload && (
+        {(canUpload || (!pick && canUpdate)) && (
           <div className="flex flex-col gap-2 md:flex-row">
+            {!pick && canUpdate && (
+              <Button
+                variant="outline"
+                title={selecting ? t('media.cancelSelection') : t('media.selectMode')}
+                icon={selecting ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
+                onClick={() => {
+                  setSelecting(!selecting)
+                  setChosen([])
+                }}
+                className="w-full md:w-auto"
+              >
+                {selecting ? t('media.cancelSelection') : t('media.selectMode')}
+              </Button>
+            )}
+            {canUpload && (
             <Button variant="outline" title={t('media.newFolder')} icon={<FolderPlus className="h-4 w-4" />} onClick={() => setCreating(true)} className="w-full md:w-auto">
               {t('media.newFolder')}
             </Button>
+            )}
+            {canUpload && (
             <Button title={t('media.upload')} icon={<Upload className="h-4 w-4" />} loading={send.isPending} onClick={() => input.current?.click()} className="w-full md:w-auto">
               {send.isPending ? t('media.uploading') : t('media.upload')}
             </Button>
-            <input ref={input} type="file" multiple hidden onChange={(e) => onFiles(e.target.files)} />
+            )}
+            {canUpload && <input ref={input} type="file" multiple hidden onChange={(e) => onFiles(e.target.files)} />}
           </div>
         )}
       </div>
       {canUpload && <p className="hidden text-xs text-muted md:block">{t('media.drop')}</p>}
+      {!pick && selecting && chosen.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
+          <span className="text-sm font-medium">{t('media.selected', { count: String(chosen.length) })}</span>
+          <div className="flex flex-col gap-2 md:flex-row">
+            <Button variant="outline" title={t('media.move')} icon={<FolderInput className="h-4 w-4" />} onClick={() => setMoving(true)} className="w-full md:w-auto">
+              {t('media.move')}
+            </Button>
+            <Button
+              variant="destructive-outline"
+              title={t('media.delete')}
+              icon={<Trash2 className="h-4 w-4" />}
+              className="w-full md:w-auto"
+              onClick={async () => {
+                if (await confirm({ title: t('media.delete'), message: t('media.bulkDeleteConfirm', { count: String(chosen.length) }), confirmLabel: t('media.delete'), destructive: true })) bulkDelete.mutate(chosen)
+              }}
+            >
+              {t('media.delete')}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {!q && (folders.data?.length ?? 0) > 0 && (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {folders.data!.map((f) => (
-            <li key={f.id}>
+            <li key={f.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm hover:border-primary/40">
               <button
                 type="button"
                 title={t('media.open', { name: f.name })}
@@ -199,7 +308,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
                   setPath([...path, { id: f.id, name: f.name }])
                   setPage(1)
                 }}
-                className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left shadow-sm hover:border-primary/40"
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 <Folder className="h-6 w-6 shrink-0 text-primary" aria-hidden />
                 <span className="min-w-0">
@@ -207,6 +316,22 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
                   <span className="block text-xs text-muted">{t('media.files', { count: String(f.filesCount) })}</span>
                 </span>
               </button>
+              {!pick && canUpdate && (
+                <EntityActionsMenu
+                  label={t('cm.actions')}
+                  actions={[
+                    { label: t('media.renameFolder'), icon: <Pencil className="h-4 w-4" />, onSelect: () => setRenaming(f) },
+                    {
+                      label: t('media.deleteFolder'),
+                      icon: <Trash2 className="h-4 w-4" />,
+                      destructive: true,
+                      onSelect: async () => {
+                        if (await confirm({ title: t('media.deleteFolder'), message: t('media.deleteFolderConfirm', { name: f.name }), confirmLabel: t('media.deleteFolder'), destructive: true })) removeFolder.mutate(f)
+                      },
+                    },
+                  ]}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -222,8 +347,8 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
               <li key={f.id}>
                 <button
                   type="button"
-                  title={pick ? t('media.selectFile', { name: f.name }) : t('media.open', { name: f.name })}
-                  aria-pressed={pick ? on : undefined}
+                  title={pick || selecting ? t('media.selectFile', { name: f.name }) : t('media.open', { name: f.name })}
+                  aria-pressed={pick || selecting ? on : undefined}
                   onClick={() => click(f)}
                   className={cn('group relative block w-full overflow-hidden rounded-lg border bg-surface text-left shadow-sm', on ? 'border-primary ring-2 ring-primary' : 'border-border hover:border-primary/40')}
                 >
@@ -254,6 +379,16 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
         </div>
       )}
       {creating && <NewFolder parent={folder} onClose={() => setCreating(false)} />}
+      {renaming && <NewFolder parent={folder} folder={renaming} onClose={() => setRenaming(null)} />}
+      {moving && (
+        <MoveDialog
+          ids={chosen}
+          onClose={() => {
+            setMoving(false)
+            setChosen([])
+          }}
+        />
+      )}
     </div>
   )
 }

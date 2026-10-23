@@ -158,6 +158,7 @@ func (s *Server) routes() {
 	s.singleTypeRoutes()
 	s.componentRoutes()
 	s.mediaRoutes()
+	s.mediaBulkRoutes()
 	s.uidRoutes()
 	s.homepageRoutes()
 	s.i18nRoutes()

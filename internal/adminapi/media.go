@@ -269,15 +269,21 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, u *User, a 
 
 func (s *Server) listFolders(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
 	ctx := r.Context()
-	where := map[string]any{"parent": map[string]any{"id": map[string]any{"$null": true}}}
-	if v := r.URL.Query().Get("parent"); v != "" && v != "root" {
+	var where any = map[string]any{"parent": map[string]any{"id": map[string]any{"$null": true}}}
+	if r.URL.Query().Get("all") == "true" {
+		where = nil
+	} else if v := r.URL.Query().Get("parent"); v != "" && v != "root" {
 		id, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return validation([]FieldError{{Path: []string{"parent"}, Message: "parent must be an id"}})
 		}
 		where = map[string]any{"parent": map[string]any{"id": id}}
 	}
-	rows, err := s.e.FindMany(ctx, folderUID, query.Params{Where: where, OrderBy: []any{map[string]any{"name": "asc"}}})
+	order := []any{map[string]any{"name": "asc"}}
+	if where == nil {
+		order = []any{map[string]any{"path": "asc"}}
+	}
+	rows, err := s.e.FindMany(ctx, folderUID, query.Params{Where: where, OrderBy: order})
 	if err != nil {
 		return err
 	}
@@ -353,4 +359,175 @@ func (s *Server) createFolder(w http.ResponseWriter, r *http.Request, u *User, _
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"data": toMap(row)})
 	return nil
+}
+
+func (s *Server) mediaBulkRoutes() {
+	if _, ok := s.set.ContentType(fileUID); !ok || s.cfg.Media == nil {
+		return
+	}
+	s.allowed("PUT /upload/folders/{id}", uploadUpdate, s.renameFolder)
+	s.allowed("DELETE /upload/folders/{id}", uploadUpdate, s.deleteFolder)
+	s.allowed("POST /upload/actions/bulk-delete", uploadUpdate, s.bulkDeleteMedia)
+	s.allowed("POST /upload/actions/bulk-move", uploadUpdate, s.bulkMoveFiles)
+}
+
+func (s *Server) folderByPath(r *http.Request) (query.Row, error) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		return nil, errNotFound
+	}
+	row, err := s.e.FindOne(r.Context(), folderUID, query.Params{Where: map[string]any{"id": id}})
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, &Error{Status: http.StatusNotFound, Name: "NotFoundError", Message: "Folder not found"}
+	}
+	return row, nil
+}
+
+func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
+	row, err := s.folderByPath(r)
+	if err != nil {
+		return err
+	}
+	var b struct {
+		Name string `json:"name"`
+	}
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	name := strings.TrimSpace(b.Name)
+	if name == "" {
+		return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
+	}
+	ctx := r.Context()
+	parent, err := s.e.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": get(row, "id")}, Populate: map[string]any{"parent": true}})
+	if err != nil {
+		return err
+	}
+	siblings := map[string]any{"parent": map[string]any{"id": map[string]any{"$null": true}}}
+	if p, ok := get(parent, "parent").(query.Row); ok && p != nil {
+		siblings = map[string]any{"parent": map[string]any{"id": get(p, "id")}}
+	}
+	if n, err := s.e.Count(ctx, folderUID, query.Params{Where: and(siblings, map[string]any{"name": name}, map[string]any{"id": map[string]any{"$ne": get(row, "id")}})}); err != nil {
+		return err
+	} else if n > 0 {
+		return validation([]FieldError{{Path: []string{"name"}, Message: "A folder with this name already exists"}})
+	}
+	out, err := s.e.Update(ctx, folderUID, map[string]any{"id": get(row, "id")}, query.Data{"name": name, "updatedBy": u.ID}, query.Params{})
+	if err != nil {
+		return err
+	}
+	return data(w, toMap(out))
+}
+
+// removeFolders deletes folders with everything under them: subfolders by
+// path, files by folderPath, as Strapi's folder deletion does.
+func (s *Server) removeFolders(ctx context.Context, ids []int64) (files, folders int, err error) {
+	for _, id := range ids {
+		row, err := s.e.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": id}})
+		if err != nil {
+			return files, folders, err
+		}
+		if row == nil {
+			continue
+		}
+		path := getString(row, "path")
+		under := []any{map[string]any{"path": path}, map[string]any{"path": map[string]any{"$startsWith": path + "/"}}}
+		fileRows, err := s.e.FindMany(ctx, fileUID, query.Params{Where: map[string]any{"$or": []any{
+			map[string]any{"folderPath": path}, map[string]any{"folderPath": map[string]any{"$startsWith": path + "/"}},
+		}}, Select: []string{"id"}})
+		if err != nil {
+			return files, folders, err
+		}
+		for _, f := range fileRows {
+			if _, err := s.cfg.Media.AdminDeleteFile(ctx, get(f, "id")); err != nil {
+				return files, folders, err
+			}
+			files++
+		}
+		n, err := s.e.DeleteMany(ctx, folderUID, query.Params{Where: map[string]any{"$or": under}})
+		if err != nil {
+			return files, folders, err
+		}
+		folders += int(n)
+	}
+	return files, folders, nil
+}
+
+func (s *Server) deleteFolder(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+	row, err := s.folderByPath(r)
+	if err != nil {
+		return err
+	}
+	files, folders, err := s.removeFolders(r.Context(), []int64{toInt64(get(row, "id"))})
+	if err != nil {
+		return err
+	}
+	return data(w, map[string]any{"files": files, "folders": folders})
+}
+
+type mediaSelection struct {
+	FileIDs   []int64 `json:"fileIds"`
+	FolderIDs []int64 `json:"folderIds"`
+	// Destination is the target folder of a move, nil for the root.
+	Destination *int64 `json:"destination"`
+}
+
+func (s *Server) bulkDeleteMedia(w http.ResponseWriter, r *http.Request, _ *User, a *permissions.Ability) error {
+	var b mediaSelection
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	deleted, skipped := 0, 0
+	for _, id := range b.FileIDs {
+		if err := s.writableFile(ctx, a, id); err != nil {
+			skipped++
+			continue
+		}
+		row, err := s.cfg.Media.AdminDeleteFile(ctx, id)
+		if err != nil {
+			return err
+		}
+		if row != nil {
+			deleted++
+		}
+	}
+	files, folders, err := s.removeFolders(ctx, b.FolderIDs)
+	if err != nil {
+		return err
+	}
+	return data(w, map[string]any{"files": deleted + files, "folders": folders, "skipped": skipped})
+}
+
+func (s *Server) bulkMoveFiles(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
+	var b mediaSelection
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	set := query.Data{"folder": nil, "folderPath": "/", "updatedBy": u.ID}
+	if b.Destination != nil {
+		folder, err := s.e.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": *b.Destination}})
+		if err != nil {
+			return err
+		}
+		if folder == nil {
+			return validation([]FieldError{{Path: []string{"destination"}, Message: "Folder does not exist"}})
+		}
+		set["folder"], set["folderPath"] = *b.Destination, get(folder, "path")
+	}
+	moved := 0
+	for _, id := range b.FileIDs {
+		if err := s.writableFile(ctx, a, id); err != nil {
+			continue
+		}
+		if _, err := s.e.Update(ctx, fileUID, map[string]any{"id": id}, set, query.Params{}); err != nil {
+			return err
+		}
+		moved++
+	}
+	return data(w, map[string]any{"files": moved})
 }
