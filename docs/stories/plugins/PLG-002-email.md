@@ -40,7 +40,8 @@ Un service e-mail avec une interface provider, cinq providers et des templates s
 - Correction du critère 3 : chez Strapi, une variable inconnue n'est pas rendue vide, elle reste telle quelle (`template()` de users-permissions désactive `evaluate` et `escape`, seule l'interpolation stricte s'applique). grapi fait de même.
 - Providers `sendgrid` (`apiKey`, API v3 `mail/send`), `mailgun` (`key`, `username`, `url`, `domain`, formulaire `messages` en auth basique) et `amazon-ses` (`key`, `secret`, `amazon` : action `SendEmail` de l'API query, signée SigV4, région lue dans l'endpoint), avec les `providerOptions` des providers Strapi (`internal/plugins/email/http.go`, tests sur serveurs `httptest`). Une réponse en erreur de l'API remonte avec son statut.
 - Providers du projet en mode framework : `app.UseEmailProvider(nom, p)`, test `TestCustomEmailProvider` (mail de `forgot-password` reçu par le provider).
-- Reste : envoi réel vers chaque service (comptes de test), routes admin (`/email/test`, `/email/settings`).
+- Routes admin `GET /email/settings` et `POST /email/test` faites (`internal/adminapi/emailsettings.go`) ; l'e-mail de test passe par un vrai SMTP jusqu'à Mailpit (`make e2e-invite`).
+- Reste : envoi réel vers chaque service hébergé (SendGrid, Mailgun, Amazon SES), qui demande des comptes de test.
 
 ## Notes techniques
 - `wneessen/go-mail` (SMTP, sendmail) et `emersion/go-msgauth/dkim` pour signer.
