@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DOC-005 : Événements entry.* et event hub
@@ -21,14 +21,14 @@ Un event hub interne et l'émission des événements de documents avec le même 
 
 ## Critères d'acceptation
 - [x] Aucun événement émis si la transaction est annulée.
-- [ ] Le payload de `entry.publish` correspond à Strapi (champs, relations peuplées ou non selon la config) sur le banc de compatibilité.
+- [x] Le payload de `entry.publish` correspond à Strapi (champs, relations peuplées ou non selon la config) sur le banc de compatibilité.
 - [x] Un abonné qui panique ne bloque ni l'écriture ni les autres abonnés (erreur journalisée).
 
 ## Avancement
 - Fait : `internal/events` (On, Once, Subscribe, Destroy, paniques isolées) et l'émission des six événements `entry.*` aux mêmes endroits que le dépôt Strapi, après commit (`db.OnCommit`), avec l'entrée relue en deep populate et assainie. Tests : `internal/events/hub_test.go`, `internal/webhooks/webhooks_test.go`.
 - `media.create`, `media.update` et `media.delete` sont émis par l'upload (création, remplacement, mise à jour des infos, suppression ; `upload_test.go`).
 - Forme du payload relue contre `services/document-service/events.js` et `webhook-runner.js` de Strapi 5.59 (2026-10-22) : `{event, createdAt, model, uid, entry}`, `model` étant le `modelName`, entrée relue en populate profond sauf pour `entry.delete` et `entry.unpublish`, puis assainie ; émission après le commit.
-- Reste : comparaison du payload sur le banc (récepteur d'échos, avec `EXT-006`).
+- Banc (mode `grapi`, fixtures `basic` et `relations`, SQLite et Postgres) : un récepteur d'échos enregistre les livraisons d'un même webhook chez Strapi et chez grapi pour les mêmes écritures (création, publication, mise à jour, suppression) ; événements, en-têtes et corps (relations peuplées comprises) sont identiques. Le banc a révélé que les événements partaient chacun dans leur goroutine, donc dans un ordre quelconque (`entry.publish` avant `entry.create`) : ils passent maintenant par une file ordonnée, dans l'ordre des commits. Une suppression émet ses `entry.delete` dans l'ordre des `id` (brouillon puis version publiée) ; Strapi suit l'ordre physique de la base, que le banc compare donc comme un ensemble.
 
 ## Notes techniques
 - Les hooks `onCommit` de la transaction (`DB-001`) déclenchent l'émission.

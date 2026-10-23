@@ -25,6 +25,7 @@ type Service struct {
 	// StrictRelations is api.documents.strictRelations: required relations
 	// and media are enforced on non-draft writes.
 	StrictRelations bool
+	emits           emitter
 }
 
 // New returns the document service of an application.
@@ -678,6 +679,11 @@ func (s *Service) deleteCore(ctx context.Context, uid, documentID string, p Para
 		}
 		if ct.DraftAndPublish() && p["status"] == "draft" {
 			return errors.New("Cannot delete a draft document") //nolint:revive,staticcheck // Strapi's message
+		}
+		// Row order, as Strapi's unordered findMany gives it: the draft, then
+		// the published version; their entry.delete events follow it.
+		if lookup.OrderBy == nil {
+			lookup.OrderBy = []any{map[string]any{"id": "asc"}}
 		}
 		rows, err := s.E.FindMany(ctx, uid, lookup)
 		if err != nil {

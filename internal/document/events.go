@@ -2,6 +2,7 @@ package document
 
 import (
 	"context"
+	"sync"
 
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/query"
@@ -17,7 +18,7 @@ func (s *Service) emit(ctx context.Context, name, uid string, entry query.Row) {
 	}
 	id, _ := entry.Get("id")
 	db.OnCommit(ctx, func() {
-		go func() {
+		s.emits.push(func() {
 			e := entry
 			if name != "entry.delete" && name != "entry.unpublish" {
 				row, err := s.E.FindOne(context.Background(), uid, query.Params{Where: map[string]any{"id": id}, Populate: s.deepPopulate(uid, nil)})
@@ -32,8 +33,44 @@ func (s *Service) emit(ctx context.Context, name, uid string, entry query.Row) {
 				model = ct.Info.SingularName
 			}
 			s.Events.Emit(name, map[string]any{"model": model, "uid": uid, "entry": s.sanitizeEntry(uid, e)})
-		}()
+		})
 	})
+}
+
+// emitter runs the event emissions one at a time, in commit order: a
+// document created and published gives entry.create then entry.publish,
+// as in Strapi. The worker goroutine ends when the queue is empty.
+type emitter struct {
+	mu      sync.Mutex
+	queue   []func()
+	running bool
+}
+
+func (e *emitter) push(fn func()) {
+	e.mu.Lock()
+	e.queue = append(e.queue, fn)
+	if e.running {
+		e.mu.Unlock()
+		return
+	}
+	e.running = true
+	e.mu.Unlock()
+	go e.drain()
+}
+
+func (e *emitter) drain() {
+	for {
+		e.mu.Lock()
+		if len(e.queue) == 0 {
+			e.running = false
+			e.mu.Unlock()
+			return
+		}
+		fn := e.queue[0]
+		e.queue = e.queue[1:]
+		e.mu.Unlock()
+		fn()
+	}
 }
 
 // sanitizeEntry is defaultSanitizeOutput without auth: passwords and

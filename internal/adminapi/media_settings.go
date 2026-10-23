@@ -113,14 +113,18 @@ func publicOnly(_, address string, _ syscall.RawConn) error {
 		return err
 	}
 	ip := net.ParseIP(host)
-	if ip == nil {
-		return errPrivateAddress
-	}
-	_, cgnat, _ := net.ParseCIDR("100.64.0.0/10")
-	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() || cgnat.Contains(ip) {
+	if ip == nil || localIP(ip) {
 		return errPrivateAddress
 	}
 	return nil
+}
+
+var cgnat = func() *net.IPNet { _, n, _ := net.ParseCIDR("100.64.0.0/10"); return n }()
+
+// localIP reports an address that is not reachable over the public
+// internet: loopback, private, link-local, CGNAT, unspecified or multicast.
+func localIP(ip net.IP) bool {
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() || cgnat.Contains(ip)
 }
 
 func (s *Server) urlClient() *http.Client {

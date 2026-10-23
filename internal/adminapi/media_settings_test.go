@@ -13,3 +13,19 @@ func TestPublicOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestWebhookURLInProduction(t *testing.T) {
+	ctx := t.Context()
+	for url, ok := range map[string]bool{
+		"http://127.0.0.1:9000/hook": false, "http://10.0.0.5/hook": false, "http://[::1]/hook": false,
+		"https://93.184.216.34/hook": true,
+	} {
+		b := webhookBody{Name: "w", URL: url}
+		if _, err := b.webhook(ctx, true); (err == nil) != ok {
+			t.Errorf("production %s: %v", url, err)
+		}
+		if _, err := b.webhook(ctx, false); err != nil {
+			t.Errorf("development accepts %s: %v", url, err)
+		}
+	}
+}

@@ -241,6 +241,59 @@ esac
 
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a"
 "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "$b_url" -tokens "$b_tokens" -out "$work/out/b"
+if [ "$mode" = grapi ] && { [ "$fx" = basic ] || [ "$fx" = relations ]; }; then
+  # Webhooks: the same hook and the same writes on Strapi (a) and grapi (b),
+  # recorded by an echo receiver on the bench network, then compared.
+  mkdir -p "$work/echo"
+  chmod 777 "$work/echo"
+  docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-echo" -p 127.0.0.1::9000 \
+    -v "$here/scripts/echo.js:/echo.js:ro" -v "$work/echo:/out" --entrypoint node "$image" /echo.js >/dev/null
+  echo_port=$(docker port "$run_id-echo" 9000/tcp | head -1 | sed 's/.*://')
+  hook_events='["entry.create","entry.update","entry.delete","entry.publish","entry.unpublish"]'
+  # In production Strapi refuses a webhook URL that is not public: the
+  # reference restarts in development on its own database for this check.
+  docker stop "$run_id-a" >/dev/null
+  # A function keeps the positional parameters: grapi restarts with them below.
+  start_dev_reference() {
+    if [ "$db" = postgres ]; then
+      set -- -e DATABASE_CLIENT=postgres -e DATABASE_HOST="$run_id-a-pg" -e DATABASE_NAME=strapi -e DATABASE_USERNAME=strapi -e DATABASE_PASSWORD=strapi
+    else
+      set -- -e DATABASE_CLIENT=sqlite
+    fi
+    docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-a2" -p 127.0.0.1::1337 "$@" -e NODE_ENV=development \
+      -v "$here/fixtures/$fx:/fixture:ro" -v "$work/a:/data" "$image" >/dev/null
+  }
+  start_dev_reference
+  wait_up a2
+  a_url=http://127.0.0.1:$(port_of a2)
+  a_admin=$(curl -sf -H 'Content-Type: application/json' -d "$admin_body" "$a_url/admin/register-admin" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')
+  curl -sf -o /dev/null -H "Authorization: Bearer $a_admin" -H 'Content-Type: application/json' \
+    -d "{\"name\":\"compat\",\"url\":\"http://$run_id-echo:9000/strapi\",\"headers\":{\"X-Test\":\"1\"},\"events\":$hook_events}" "$a_url/admin/webhooks" || admin_failed=1
+  g_admin=$(curl -s -H 'Content-Type: application/json' -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login" |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')
+  curl -sf -o /dev/null -H "Authorization: Bearer $g_admin" -H 'Content-Type: application/json' \
+    -d "{\"name\":\"compat\",\"url\":\"http://127.0.0.1:$echo_port/grapi\",\"headers\":{\"X-Test\":\"1\"},\"events\":$hook_events,\"isEnabled\":true}" "$b_url/admin/api/v1/webhooks" || admin_failed=1
+  for side in a b; do
+    if [ $side = a ]; then url=$a_url; tok=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$work/a/tokens.json")
+    else url=$b_url; tok=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$b_tokens"); fi
+    hdr="Authorization: Bearer $tok"
+    doc_of() { python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["documentId"])'; }
+    tag=$(curl -s -H "$hdr" -H 'Content-Type: application/json' -d '{"data":{"name":"webhook-tag"}}' "$url/api/tags" | doc_of)
+    if [ "$fx" = relations ]; then
+      plural=posts
+      doc=$(curl -s -H "$hdr" -H 'Content-Type: application/json' -d "{\"data\":{\"title\":\"Webhook\",\"tags\":[\"$tag\"]}}" "$url/api/posts?status=published" | doc_of)
+    else
+      plural=articles
+      doc=$(curl -s -H "$hdr" -H 'Content-Type: application/json' -d '{"data":{"title":"Webhook"}}' "$url/api/articles?status=published" | doc_of)
+    fi
+    sleep 1
+    curl -s -o /dev/null -X PUT -H "$hdr" -H 'Content-Type: application/json' -d '{"data":{"title":"Webhook 2"}}' "$url/api/$plural/$doc"
+    sleep 1
+    curl -s -o /dev/null -X DELETE -H "$hdr" "$url/api/$plural/$doc"
+  done
+  sleep 3
+  python3 "$here/scripts/webhook-compare.py" "$work/echo/strapi.jsonl" "$work/echo/grapi.jsonl" || admin_failed=1
+fi
 if [ "$mode" = perf ]; then
   # Same data on both sides (the corpus just ran on each): load the
   # variable free GET cases, and sample the memory before, during, after.

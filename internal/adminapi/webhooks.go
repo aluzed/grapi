@@ -1,7 +1,9 @@
 package adminapi
 
 import (
+	"context"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"slices"
@@ -72,7 +74,27 @@ type webhookBody struct {
 	Enabled *bool             `json:"isEnabled"`
 }
 
-func (b *webhookBody) webhook() (webhooks.Webhook, error) {
+// publicHost is Strapi's is-public-url test: the host must not resolve to
+// a local or private address (a failed lookup fails too).
+func publicHost(ctx context.Context, host string) bool {
+	if ip := net.ParseIP(host); ip != nil {
+		return !localIP(ip)
+	}
+	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil || len(addrs) == 0 {
+		return false
+	}
+	for _, a := range addrs {
+		if localIP(a.IP) {
+			return false
+		}
+	}
+	return true
+}
+
+// webhook checks the body; in production, as Strapi does, the URL must be
+// reachable over the public internet.
+func (b *webhookBody) webhook(ctx context.Context, production bool) (webhooks.Webhook, error) {
 	var errs []FieldError
 	b.Name = strings.TrimSpace(b.Name)
 	if b.Name == "" {
@@ -80,6 +102,8 @@ func (b *webhookBody) webhook() (webhooks.Webhook, error) {
 	}
 	if u, err := url.Parse(b.URL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		errs = append(errs, FieldError{Path: []string{"url"}, Message: "url must be a valid http or https URL"})
+	} else if production && !publicHost(ctx, u.Hostname()) {
+		errs = append(errs, FieldError{Path: []string{"url"}, Message: "Url is not supported because it isn't reachable over the public internet"})
 	}
 	for i, e := range b.Events {
 		if !slices.Contains(webhooks.Events, e) {
@@ -111,7 +135,7 @@ func (s *Server) createWebhook(w http.ResponseWriter, r *http.Request, u *User, 
 	if err := decode(r, &b); err != nil {
 		return err
 	}
-	wh, err := b.webhook()
+	wh, err := b.webhook(r.Context(), s.cfg.Environment == "production")
 	if err != nil {
 		return err
 	}
@@ -132,7 +156,7 @@ func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request, u *User, 
 	if err := decode(r, &b); err != nil {
 		return err
 	}
-	wh, err := b.webhook()
+	wh, err := b.webhook(r.Context(), s.cfg.Environment == "production")
 	if err != nil {
 		return err
 	}

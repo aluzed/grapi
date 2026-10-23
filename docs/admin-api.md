@@ -191,7 +191,7 @@ Table `strapi_webhooks`, partagée avec le runner qui envoie les événements. A
 | `GET /webhooks` | `[{id, name, url, headers, events, isEnabled}]` |
 | `GET /webhooks/events` | Événements disponibles (`entry.*`, `media.*`) |
 | `GET /webhooks/{id}` | Un webhook |
-| `POST /webhooks` | `name`, `url` (http ou https), `headers`, `events`, `isEnabled` (vrai par défaut) |
+| `POST /webhooks` | `name`, `url` (http ou https ; en production, refusée si elle pointe vers une adresse locale ou privée, comme Strapi), `headers`, `events`, `isEnabled` (vrai par défaut) |
 | `PUT /webhooks/{id}` | Mêmes champs, remplace le webhook |
 | `DELETE /webhooks/{id}` | Supprime le webhook |
 | `POST /webhooks/{id}/trigger` | Envoie l'événement `trigger-test` et renvoie `{statusCode, message}` (`message` en cas d'échec réseau) |

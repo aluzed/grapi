@@ -24,7 +24,7 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 - La signature HMAC des payloads : amélioration possible, à proposer séparément.
 
 ## Critères d'acceptation
-- [ ] Payload et en-têtes identiques à Strapi pour `entry.publish` (banc de compatibilité avec un récepteur d'échos).
+- [x] Payload et en-têtes identiques à Strapi pour `entry.publish` (banc de compatibilité avec un récepteur d'échos).
 - [x] Un webhook désactivé ne reçoit rien.
 - [ ] Récepteur hors ligne : par défaut, essais espacés puis abandon après la limite, et la file survit à un redémarrage ; avec `retries: 0`, un seul essai et une erreur journalisée.
 - [x] L'en-tête `X-Strapi-Event` est conservé tel quel (compatibilité des récepteurs existants).
@@ -35,15 +35,4 @@ Le même modèle de webhooks, le même payload et les mêmes en-têtes, avec une
 - Protection SSRF optionnelle : `server.webhooks.blockPrivateNetworks: true` refuse les livraisons vers les adresses de loopback, privées et link-local, contrôlées à la connexion (après DNS), `TestPublicOnlyTransport`.
 - Reste : API admin (CRUD, trigger), comparaison avec un récepteur d'échos sur le banc.
 
-## Notes techniques
-- Client HTTP dédié, avec délais d'attente et sans suivi de redirection vers des IP privées si `server.webhooks.blockPrivateIPs` est actif (protection SSRF, en option).
-
-## Référence Strapi
-- `core/core/src/services/webhook-store.ts`, `webhook-runner.ts`, `worker-queue.ts`
-- `core/admin/server/src/routes/webhooks.ts`
-
-## Dépendances
-- `DOC-005`, `DB-001`
-
-## Fichiers
-- `internal/webhook/store.go`, `internal/webhook/runner.go`, `internal/webhook/queue.go`, `internal/webhook/admin_api.go`
+- Banc : livraisons identiques à Strapi (événements, en-têtes, corps) pour création, publication, mise à jour et suppression, fixtures `basic` et `relations` (voir `DOC-005`). En production, comme Strapi, une URL de webhook qui pointe vers une adresse locale ou privée est refusée à la création et à la modification (« Url is not supported because it isn't reachable over the public internet ») ; le banc relance donc la référence Strapi en développement pour son récepteur d'échos.
