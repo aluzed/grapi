@@ -29,17 +29,19 @@ Reproduire l'authentification locale des utilisateurs finaux, avec les mêmes ro
 - OAuth (`AUTH-005`), rate limiting (`AUTH-006`), sessions et refresh (`AUTH-003`).
 
 ## Critères d'acceptation
-- [ ] **Compat DB (D3)** : un utilisateur créé par Strapi 5.59, dont le hash bcryptjs est en `$2a$10$...`, se connecte avec son mot de passe sur grapi, sans migration.
+- [x] **Compat DB (D3)** : un utilisateur créé par Strapi 5.59, dont le hash bcryptjs est en `$2a$10$...`, se connecte avec son mot de passe sur grapi, sans migration.
 - [x] Un JWT émis par Strapi avec le même `JWT_SECRET` est accepté par grapi, et inversement.
 - [ ] Banc `SETUP-002` : register, login, me, forgot, reset, change-password et email-confirmation donnent un JSON identique (champs privés absents), avec les mêmes codes HTTP et les mêmes messages d'erreur (`ValidationError` « Invalid identifier or password », etc.).
 - [ ] `allow_register: false` donne 403 sur register. `unique_email` est respecté.
 - [ ] Le lien de reset et de confirmation reçu par e-mail (Mailpit sur le homelab) fonctionne de bout en bout.
-- [ ] `password` n'apparaît jamais dans une réponse, y compris en populate depuis un autre type.
+- [x] `password` n'apparaît jamais dans une réponse, y compris en populate depuis un autre type.
 
 ## Avancement
 - Fait : JWT HS256 identique à jsonwebtoken 9 (`internal/auth/users`), stratégies api-token puis users-permissions dans l'ordre de Strapi, `POST /auth/local`, `/auth/local/register`, `/auth/change-password`, `GET /users/me`, CRUD `/users`, génération de `JWT_SECRET` dans `.env`. Les routes HTTP sont dans `internal/httpapi/users.go`.
 - Fait aussi : forgot-password, reset-password, email-confirmation, send-email-confirmation, et la confirmation à l'inscription (`internal/httpapi/users_email.go`) ; forgot-password vérifié de bout en bout vers Mailpit. Banc dev-freelance : 116/116.
 - Reste : `validatePassword` de la config (JS), `unique_email` entre providers (avec `AUTH-005`). `allow_register: false` et le refus d'un e-mail déjà pris pour le même provider (même sans `unique_email`, comme Strapi) sont couverts par `TestRegisterSettings`. Le lien de confirmation est suivi de bout en bout dans `TestEmailConfirmationLink` (inscription sans JWT, login refusé, lien reçu par un provider e-mail du projet, 302 vers `email_confirmation_redirection`, login accepté).
+
+- Preuves (banc, 2026-10-23) : un utilisateur inscrit par Strapi se connecte sur grapi (`remote.sh`, 200) ; `devfreelance_sanitize` montre que `password` ne sort ni par `fields` ni par `populate`, et que ses filtres sont refusés. `devfreelance_auth` (14 cas) couvre forgot-password, reset-password, send-email-confirmation et email-confirmation sans envoi réel (adresses inconnues, codes invalides, corps invalides), plus change-password et register sans corps : identique à Strapi. L'ordre des erreurs suit celui de yup (validation en ordre inverse, tri par le premier nom contenu dans le chemin : `passwordConfirmation` avant `password`).
 
 ## Notes techniques
 - `golang.org/x/crypto/bcrypt` lit les préfixes `$2a$`, `$2b$` et `$2y$`. Garder le coût 10 à l'écriture pour rester interopérable.

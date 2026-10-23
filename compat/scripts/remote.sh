@@ -322,6 +322,16 @@ sys.stdout.buffer.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBB
   fi
   g_token=$(curl -s -H 'Content-Type: application/json' -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login" |
     python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')
+  # A token Strapi created and encrypted is shown again, decrypted, by grapi.
+  full_id=$(curl -s -H "Authorization: Bearer $g_token" "$b_url/admin/api/v1/api-tokens" |
+    python3 -c 'import json,sys; print(next(t["id"] for t in json.load(sys.stdin)["data"] if t["name"] == "compat-full"))')
+  shown=$(curl -s -H "Authorization: Bearer $g_token" "$b_url/admin/api/v1/api-tokens/$full_id" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"].get("accessKey") or "")')
+  if [ -n "$shown" ] && [ "$shown" = "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$work/b/tokens.json")" ]; then
+    echo "Strapi's encrypted token shown by grapi: identical"
+  else
+    echo "Strapi's encrypted token shown by grapi: DIFFERENT"
+    admin_failed=1
+  fi
   curl -sf -H "Authorization: Bearer $g_token" "$b_url/admin/api/v1/upload/folder-structure" >"$work/folders-grapi.json" || admin_failed=1
   tree='import json,sys
 def norm(nodes): return sorted(({"id": n["id"], "name": n["name"], "children": norm(n.get("children") or [])} for n in nodes), key=lambda n: n["id"])

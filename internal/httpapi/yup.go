@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // The users-permissions bodies are checked with yup in strict mode
-// (validateYupSchema): no cast, all errors collected in field order.
+// (validateYupSchema): no cast, all errors collected in yup's order.
 
 type bodyField struct {
 	name     string
@@ -63,7 +64,12 @@ func yupPrint(v any) string {
 
 func (sc bodySchema) validate(body map[string]any) error {
 	var errs []bodyError
-	for _, f := range sc.fields {
+	// yup validates the fields in reverse order (its toposort of fields
+	// without dependencies), then sorts the errors by the first key whose
+	// name is contained in the error path: password and passwordConfirmation
+	// tie, so the latter comes first.
+	for i := len(sc.fields) - 1; i >= 0; i-- {
+		f := sc.fields[i]
 		value, present := body[f.name]
 		fail := func(msg string) {
 			errs = append(errs, bodyError{path: []string{f.name}, message: msg, value: value, hasVal: present})
@@ -92,6 +98,16 @@ func (sc bodySchema) validate(body map[string]any) error {
 			}
 		}
 	}
+	keyIndex := func(e bodyError) int {
+		path := strings.Join(e.path, ".")
+		for i, f := range sc.fields {
+			if strings.Contains(path, f.name) {
+				return i
+			}
+		}
+		return len(sc.fields)
+	}
+	sort.SliceStable(errs, func(a, b int) bool { return keyIndex(errs[a]) < keyIndex(errs[b]) })
 	if sc.noUnknown {
 		var unknown []string
 		for _, k := range sortedKeys(body) {
