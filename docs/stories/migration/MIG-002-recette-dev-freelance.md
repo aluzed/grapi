@@ -37,7 +37,7 @@ Démontrer que le front Go de dev-freelance fonctionne à l'identique contre gra
 
 ## Critères d'acceptation
 - [ ] Les hash des 7 endpoints sont **identiques** entre Strapi 5.59 et grapi sur la même copie de base : posts, categories, themes, sticky-posts, memes, projects, theme-pages.
-- [ ] Les 21 cas de caractérisation donnent 0 différence sur les chemins REST et Document Service.
+- [x] Les 21 cas de caractérisation donnent 0 différence sur les chemins REST et Document Service.
 - [x] Le corpus du banc `devfreelance` est entièrement OK, ou chaque DIFF restant est listé dans `docs/divergences.md` avec sa justification.
 - [ ] Le front `apps/web` rend les 7 pages types à l'identique contre les deux moteurs.
 - [x] Un upload d'image via l'API produit les formats `thumbnail` et `small` (comme en prod).
@@ -49,8 +49,8 @@ Démontrer que le front Go de dev-freelance fonctionne à l'identique contre gra
 - Banc `devfreelance` en mode grapi : 116/116 sous SQLite et Postgres.
 - Rapport de perf (2026-10-22, `docs/perf.md`, mode `perf` du banc) : sur les appels du front, grapi tient environ 5 570 req/s contre 326 pour Strapi 5.59 sous Node, p99 13 ms contre 125 ms, 32 à 43 Mio de mémoire contre 260 à 780 Mio.
 - Sur la copie de prod (même jour, supprimée ensuite) : grapi 5 211 req/s, p99 19,6 ms, 28 à 47 Mio ; Strapi 242 req/s, p99 172 ms, 416 à 744 Mio.
-- Les 21 cas de caractérisation passent par le chemin REST à l'identique (banc `devfreelance_rules`, règles de ligne portées en Go dans `compat/fixtures/devfreelance/framework`).
-- Reste : le front `apps/web` contre les deux moteurs, la mesure sous Bun, les 21 cas par le chemin Document Service (le mode `query` du banc exécute le moteur de grapi sans les hooks du projet).
+- Les 21 cas de caractérisation, avec le code du projet des deux côtés (`rules.js` pour Strapi, `compat/fixtures/devfreelance/framework/backend` pour grapi) : 0 différence par REST (`devfreelance_rules`, 93 requêtes) et par le Document Service (`devfreelance--rules`, 87 cas, `unpublish` compris), sous SQLite et Postgres.
+- Reste : le front `apps/web` contre les deux moteurs, la mesure sous Bun.
 
 ## Notes techniques
 - La génération IA appelle un vrai LLM : utiliser un faux endpoint en test (même forme de réponse), et ne faire qu'un seul essai réel, comme pour la vérification des middlewares de la 5.59.

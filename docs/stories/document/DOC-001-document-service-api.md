@@ -38,7 +38,7 @@ Exposer `document.Service(uid)` avec la même surface fonctionnelle que `strapi.
 - Banc : opérations `doc*` dans le mode `query` (`components--docs.yaml`, identique à Strapi sur SQLite et Postgres).
 - Reste : `clone`, la copie des champs non localisés (`copyNonLocalizedFields`), les événements (`DOC-005`), le validateur d'entrées (`DOC-003`).
 
-- Les 21 cas de caractérisation de dev-freelance passent par REST à l'identique (`devfreelance_rules`) ; restent les chemins Document Service et admin.
+- Les 21 cas de caractérisation de dev-freelance passent à l'identique par REST (`devfreelance_rules`) et par le Document Service (`devfreelance--rules` : create, update, publish, unpublish, findOne, findMany, count) ; restent le chemin admin, delete et clone.
 
 ## Notes techniques
 - La signature Go prend un `context.Context` qui porte la transaction, l'auth et la locale de requête.

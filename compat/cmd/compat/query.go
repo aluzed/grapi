@@ -26,9 +26,13 @@ type queryCases struct {
 	Fixture string `json:"fixture" yaml:"fixture"`
 	// Isolated cases write: grapi plays the seed and the cases on a
 	// database of its own instead of reading Strapi's.
-	Isolated bool        `json:"isolated,omitempty" yaml:"isolated"`
-	Seed     []seedRow   `json:"seed" yaml:"seed"`
-	Cases    []queryCase `json:"cases" yaml:"cases"`
+	Isolated bool `json:"isolated,omitempty" yaml:"isolated"`
+	// Hooks runs the fixture's project code on both sides: rules.js in
+	// Strapi, its Go port (fixtureHooks) in grapi, which then serves the
+	// doc* cases from a full App.
+	Hooks bool        `json:"hooks,omitempty" yaml:"hooks"`
+	Seed  []seedRow   `json:"seed" yaml:"seed"`
+	Cases []queryCase `json:"cases" yaml:"cases"`
 }
 
 type seedRow struct {
@@ -95,6 +99,8 @@ func queryCmd(args []string) error {
 	casesFile := fs.String("cases", "", "JSON cases (query-cases output)")
 	out := fs.String("out", "", "results file")
 	seed := fs.Bool("seed", false, "insert the seed rows first (isolated cases)")
+	hooks := fs.String("hooks", "", "fixture whose Go hooks the doc* cases run with (cases with hooks: true)")
+	configDir := fs.String("config", "", "grapi config directory, with -hooks")
 	_ = fs.Parse(args)
 	raw, err := os.ReadFile(*casesFile)
 	if err != nil {
@@ -120,6 +126,18 @@ func queryCmd(args []string) error {
 	defer func() { _ = d.Close() }()
 	e := &query.Engine{DB: d, MD: md}
 	docs := document.New(e, res.Set)
+	if c.Hooks {
+		register, ok := fixtureHooks[*hooks]
+		if !ok {
+			return fmt.Errorf("no Go hooks for the fixture %q", *hooks)
+		}
+		app, closeApp, err := hookedApp(*fixture, *configDir, *client, *dsn, register)
+		if err != nil {
+			return err
+		}
+		defer closeApp()
+		docs = app.Documents()
+	}
 	if *seed {
 		for _, s := range c.Seed {
 			if _, err := e.Create(ctx, s.UID, s.Data, query.Params{}); err != nil {

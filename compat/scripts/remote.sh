@@ -154,7 +154,10 @@ query)
     grapi_db="postgres://strapi:strapi@127.0.0.1:$(docker port "$run_id-a-pg" 5432/tcp | head -1 | sed 's/.*://')/strapi?sslmode=disable"
   fi
   cp "$cases" "$work/a/cases.json"
-  docker run --rm --label "grapi-compat=$run_id" --network "$run_id" "$@" \
+  # Cases with hooks: true run the fixture's project code on both sides.
+  hooks=0
+  grep -q '"hooks": true' "$cases" && hooks=1
+  docker run --rm --label "grapi-compat=$run_id" --network "$run_id" "$@" -e COMPAT_ROW_RULES="$hooks" \
     -v "$here/fixtures/$fx:/fixture:ro" -v "$work/a:/data" -v "$here/tools:/tools:ro" \
     --entrypoint sh "$image" -c 'rm -rf /app/src && cp -r /fixture/src /app/src && cp /app/bootstrap/index.js /app/src/index.js && node /app/bootstrap/scaffold.js && node /tools/run-queries.js /data/cases.json /data/strapi.json'
   set --
@@ -169,6 +172,7 @@ query)
     set -- -seed
     volatile=-volatile
   fi
+  [ "$hooks" = 1 ] && set -- "$@" -hooks "$fx" -config "$here/reference/grapi-config"
   "$here/bin/compat" query -fixture "$here/fixtures/$fx" -client "$db" -db "$grapi_db" -cases "$cases" -out "$work/grapi.json" "$@"
   mkdir -p "$here/report"
   report="$here/report/$(date +%Y-%m-%d)-$fixture-query-$db.md"
