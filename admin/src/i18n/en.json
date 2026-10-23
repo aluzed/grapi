@@ -242,5 +242,19 @@
   "home.counts": "Entries",
   "home.lastEdited": "Last edited",
   "home.lastPublished": "Last published",
-  "home.nothing": "Nothing yet."
+  "home.nothing": "Nothing yet.",
+  "cm.missingLocale": "This entry does not exist in {locale} yet. Saving creates it.",
+  "settings.locales": "Locales",
+  "locales.add": "Add a locale",
+  "locales.code": "Locale",
+  "locales.name": "Display name",
+  "locales.default": "Default locale",
+  "locales.makeDefault": "Use as the default locale",
+  "locales.edit": "Edit",
+  "locales.delete": "Delete",
+  "locales.deleteConfirm": "Delete the locale {name}? Every entry written in it is deleted too.",
+  "locales.deleted": "Locale deleted",
+  "locales.saved": "Locale saved",
+  "locales.created": "Locale added",
+  "locales.isDefault": "Default"
 }

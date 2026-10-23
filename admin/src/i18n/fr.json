@@ -242,5 +242,19 @@
   "home.counts": "Entrées",
   "home.lastEdited": "Dernières modifications",
   "home.lastPublished": "Dernières publications",
-  "home.nothing": "Rien pour l'instant."
+  "home.nothing": "Rien pour l'instant.",
+  "cm.missingLocale": "Cette entrée n'existe pas encore en {locale}. L'enregistrer la crée.",
+  "settings.locales": "Locales",
+  "locales.add": "Ajouter une locale",
+  "locales.code": "Locale",
+  "locales.name": "Nom affiché",
+  "locales.default": "Locale par défaut",
+  "locales.makeDefault": "En faire la locale par défaut",
+  "locales.edit": "Modifier",
+  "locales.delete": "Supprimer",
+  "locales.deleteConfirm": "Supprimer la locale {name} ? Toutes les entrées écrites dans cette locale sont supprimées aussi.",
+  "locales.deleted": "Locale supprimée",
+  "locales.saved": "Locale enregistrée",
+  "locales.created": "Locale ajoutée",
+  "locales.isDefault": "Par défaut"
 }

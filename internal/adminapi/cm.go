@@ -232,7 +232,7 @@ func (s *Server) cmLocales(w http.ResponseWriter, r *http.Request, _ *User) erro
 	def := s.docs.DefaultLocale(r.Context())
 	for _, row := range rows {
 		code := getString(row, "code")
-		out = append(out, map[string]any{"code": code, "name": getString(row, "name"), "isDefault": code == def})
+		out = append(out, map[string]any{"id": get(row, "id"), "code": code, "name": getString(row, "name"), "isDefault": code == def})
 	}
 	return data(w, out)
 }
@@ -627,17 +627,33 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 	}
 	id := r.PathValue("documentId")
 	p := localeParam(ct, b.Locale)
-	ok, err := s.allows(r.Context(), ct, id, p["locale"], filter)
+	ctx := r.Context()
+	ok, err := s.allows(ctx, ct, id, p["locale"], filter)
 	if err != nil {
 		return err
+	}
+	action := actionUpdate
+	if !ok && p["locale"] != nil {
+		// A document of another locale: this writes its first version in
+		// the requested one.
+		if ok, err = s.allows(ctx, ct, id, "*", filter); err != nil {
+			return err
+		}
+		if ok && !a.Can(actionCreate, string(ct.UID), "") {
+			return errForbidden
+		}
+		action = actionCreate
 	}
 	if !ok {
 		return errNotFound
 	}
-	d := writable(b.Data, ct, actionUpdate, a)
+	d := writable(b.Data, ct, action, a)
 	d[schema.AttrUpdatedBy] = u.ID
+	if action == actionCreate {
+		d[schema.AttrCreatedBy] = u.ID
+	}
 	p["data"] = d
-	row, err := s.docs.Update(r.Context(), string(ct.UID), id, p)
+	row, err := s.docs.Update(ctx, string(ct.UID), id, p)
 	if err != nil {
 		return asValidation(err)
 	}

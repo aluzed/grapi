@@ -11,6 +11,7 @@ import { Profile } from '@/pages/profile/Profile'
 import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManager'
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
+import { Locales } from '@/pages/settings/Locales'
 import { Overview } from '@/pages/settings/Overview'
 import { RoleEditor } from '@/pages/settings/RoleEditor'
 import { Roles } from '@/pages/settings/Roles'
@@ -73,6 +74,7 @@ export const router = createBrowserRouter(
             { path: 'users', element: <RequirePermission allowed={sections[1]!.allowed}><Users /></RequirePermission> },
             { path: 'roles', element: <RequirePermission allowed={sections[2]!.allowed}><Roles /></RequirePermission> },
             { path: 'roles/:id', element: <RequirePermission allowed={sections[2]!.allowed}><RoleEditor /></RequirePermission> },
+            { path: 'locales', element: <RequirePermission allowed={sections[3]!.allowed}><Locales /></RequirePermission> },
           ],
         },
         { path: '*', element: <NotFound /> },

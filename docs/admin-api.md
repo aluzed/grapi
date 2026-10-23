@@ -115,3 +115,16 @@ Routes présentes quand le plugin upload est actif. Les droits sont `plugin::upl
 | `POST /upload?folder=` | Multipart `files` (et `fileInfo`), même traitement que l'API de contenu : optimisation, formats, provider. Avec `?id=`, met à jour les infos ou remplace le fichier en gardant son id. |
 | `GET /upload/folders?parent=` | Sous-dossiers (racine par défaut), avec `filesCount` et `childrenCount` |
 | `POST /upload/folders` | `name`, `parent`. Le `pathId` suit le plus grand existant, le `path` est celui du parent plus ce numéro, comme Strapi. Nom unique dans le dossier parent. |
+
+### Locales (i18n)
+
+Présentes quand le plugin i18n est actif. La liste des locales est `GET /content-manager/locales` (tout admin connecté).
+
+| Méthode et chemin | Action | Rôle |
+|---|---|---|
+| `GET /i18n/iso-locales` | `plugin::i18n.locale.read` | Liste ISO des locales proposables |
+| `POST /i18n/locales` | `plugin::i18n.locale.create` | `code` (ISO), `name` (nom ISO par défaut), `isDefault` |
+| `PUT /i18n/locales/{id}` | `plugin::i18n.locale.update` | `name`, `isDefault` |
+| `DELETE /i18n/locales/{id}` | `plugin::i18n.locale.delete` | Supprime la locale et, comme Strapi, toutes les entrées écrites dans cette locale. Refusé pour la locale par défaut. |
+
+`PUT /content-manager/collection-types/{uid}/{documentId}` avec une `locale` où le document n'existe pas encore crée cette version (action `create`). Les champs non localisés sont partagés entre les versions.

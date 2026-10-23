@@ -32,3 +32,10 @@ func Name(code string) (string, bool) {
 	n, ok := load()[code]
 	return n, ok
 }
+
+// All returns the list, in file order.
+func All() []Locale {
+	var list []Locale
+	_ = json.Unmarshal(raw, &list)
+	return list
+}

@@ -54,6 +54,7 @@ export type Attribute = {
   default?: unknown
   components?: string[]
   allowedTypes?: string[]
+  pluginOptions?: { i18n?: { localized?: boolean } }
 }
 
 export type Model = {
@@ -75,7 +76,7 @@ export type Entry = Record<string, unknown> & { id: number; documentId: string; 
 
 export type Pagination = { page: number; pageSize: number; pageCount: number; total: number }
 
-export type Locale = { code: string; name: string; isDefault: boolean }
+export type Locale = { id: number; code: string; name: string; isDefault: boolean }
 
 export type BulkResult = { count: number; documentIds: string[]; errors: { documentId: string; message: string }[] }
 

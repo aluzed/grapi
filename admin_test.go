@@ -784,3 +784,56 @@ func TestAdminHomepage(t *testing.T) {
 		t.Fatalf("homepage: %v", d)
 	}
 }
+
+func TestAdminLocales(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "i18n-dp")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	if s, b, _ := c.do("POST", "/i18n/locales", `{"code":"fr"}`); s != 201 || dataOf(b)["name"] != "French (fr)" {
+		t.Fatalf("create locale: %d %v", s, b)
+	}
+	if s, _, _ := c.do("POST", "/i18n/locales", `{"code":"xx-nope"}`); s != 400 {
+		t.Fatalf("unknown code: %d", s)
+	}
+	_, b, _ = c.do("GET", "/content-manager/locales", "")
+	locales := b["data"].([]any)
+	if len(locales) != 2 {
+		t.Fatalf("locales: %v", locales)
+	}
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Hello","views":3}}`)
+	id := dataOf(b)["documentId"].(string)
+	if s, b, _ := c.do("PUT", base+"/"+id, `{"locale":"fr","data":{"title":"Bonjour","views":7}}`); s != 200 || dataOf(b)["locale"] != "fr" {
+		t.Fatalf("create the fr version: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"/"+id+"?locale=fr", "")
+	if d := dataOf(b); d["title"] != "Bonjour" {
+		t.Fatalf("fr version: %v", d)
+	}
+	_, b, _ = c.do("GET", base+"/"+id+"?locale=en", "")
+	if d := dataOf(b); d["title"] != "Hello" || d["views"].(float64) != 7 {
+		t.Fatalf("en version keeps its title and shares the non localized views: %v", d)
+	}
+	_, b, _ = c.do("GET", base+"?locale=fr", "")
+	if len(b["data"].([]any)) != 1 {
+		t.Fatalf("fr list: %v", b)
+	}
+	var frID string
+	for _, l := range locales {
+		if m := l.(map[string]any); m["code"] == "fr" {
+			frID = strconv.Itoa(int(m["id"].(float64)))
+		}
+	}
+	if s, _, _ := c.do("DELETE", "/i18n/locales/"+frID, ""); s != 200 {
+		t.Fatalf("delete locale: %d", s)
+	}
+	if s, _, _ := c.do("GET", base+"/"+id+"?locale=en", ""); s != 200 {
+		t.Fatalf("the en version stays: %d", s)
+	}
+	_, b, _ = c.do("GET", base+"?locale=fr", "")
+	if len(b["data"].([]any)) != 0 {
+		t.Fatalf("the fr entries went with the locale: %v", b)
+	}
+}

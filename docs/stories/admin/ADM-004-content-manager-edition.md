@@ -49,7 +49,8 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Composants (simples et répétables, imbriqués) et zones dynamiques : ajout, retrait, réordonnancement, choix du composant, document chargé en profondeur (`populate` récursif) et renvoyé entier avec les `id` des composants. Erreurs de validation avec leur chemin (`links.0.label`). Testé (`TestAdminComponents`, `TestAdminValidationDetails`) et vérifié dans Chrome sur le fixture `components`.
 - Médias : champ simple ou multiple, sélection dans la médiathèque, réordonnancement, retrait (aussi dans les composants).
 - Relations dans les composants (`?component=`), génération d'uid depuis le champ cible et vérification de disponibilité (`/content-manager/uid/*`). Testés (`TestAdminComponents`, `TestAdminUID`).
-- Reste : relations morph, statut des cibles, blocks, locales, mise en page configurée (`ADM-005`).
+- Locales : sélecteur dans l'en-tête, création de la version d'une autre locale avec les champs non localisés repris de la locale par défaut (sinon l'enregistrement écraserait ces champs partagés). Testé (`TestAdminLocales`) et vérifié dans Chrome sur `i18n-dp`.
+- Reste : relations morph, statut des cibles, blocks, « remplir depuis une autre locale », mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.

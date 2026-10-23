@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { SelectField } from '@/components/ui/field'
 import { api, ApiError } from '@/lib/api'
 import { showError } from '@/lib/form'
 import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
@@ -13,7 +14,7 @@ import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
 import { FieldsGrid, fromInput, isEditable, JSONError, toInput, type FieldContext, type Values } from './fields'
-import { entryPath, useModels } from './hooks'
+import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
 
@@ -26,9 +27,10 @@ export function useComponents() {
 export function EditView() {
   const model = useModel()
   const { documentId } = useParams()
+  const [params] = useSearchParams()
   const components = useComponents()
   if (!model || !components.data) return null
-  return <Edit key={`${model.uid}/${documentId ?? 'create'}`} model={model} documentId={documentId} single={model.kind === 'singleType'} components={components.data} />
+  return <Edit key={`${model.uid}/${documentId ?? 'create'}/${params.get('locale') ?? ''}`} model={model} documentId={documentId} single={model.kind === 'singleType'} components={components.data} />
 }
 
 function Edit({ model, documentId, single, components }: { model: Model; documentId?: string; single: boolean; components: ComponentModel[] }) {
@@ -37,8 +39,9 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const confirm = useConfirm()
   const queryClient = useQueryClient()
   const models = useModels().data ?? []
-  const [params] = useSearchParams()
-  const locale = params.get('locale') ?? ''
+  const [params, setParams] = useSearchParams()
+  const locales = useLocales(model.localized)
+  const locale = params.get('locale') ?? (model.localized ? (locales.data?.find((l) => l.isDefault)?.code ?? '') : '')
   const loc = locale ? `?locale=${locale}` : ''
   const fields = model.fields.filter((f) => !readOnlyFields.has(f))
   const [values, setValues] = useState<Values>({})
@@ -51,10 +54,25 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
 
   const entry = useQuery({
     queryKey: ['cm', 'entry', model.uid, documentId, locale],
-    queryFn: () => api.get<Entry | null>(single ? `${singlePath(model.uid)}${loc}` : `${entryPath(model.uid, documentId)}${loc}`),
+    queryFn: () =>
+      api.get<Entry | null>(single ? `${singlePath(model.uid)}${loc}` : `${entryPath(model.uid, documentId)}${loc}`).catch((err) => {
+        // Not written in this locale yet: an empty form creates it.
+        if (err instanceof ApiError && err.status === 404 && model.localized && documentId !== undefined) return null
+        throw err
+      }),
     enabled: single || documentId !== undefined,
+    retry: false,
   })
-  const creating = single ? entry.isSuccess && entry.data === null : documentId === undefined
+  const missingLocale = !single && documentId !== undefined && entry.isSuccess && entry.data === null
+  // A new locale version shares the non localized fields of the others:
+  // they come from the default locale, never from the defaults.
+  const defaultLocale = locales.data?.find((l) => l.isDefault)?.code
+  const source = useQuery({
+    queryKey: ['cm', 'entry', model.uid, documentId, defaultLocale],
+    queryFn: () => api.get<Entry>(`${entryPath(model.uid, documentId)}?locale=${defaultLocale}`),
+    enabled: missingLocale && Boolean(defaultLocale) && defaultLocale !== locale,
+  })
+  const creating = single ? entry.isSuccess && entry.data === null : documentId === undefined || missingLocale
   const listStatus = useQuery({
     queryKey: ['cm', 'entry-status', model.uid, documentId, locale],
     queryFn: () => api.get<Entry[]>(`${entryPath(model.uid)}?pageSize=1&filters=${encodeURIComponent(JSON.stringify({ documentId: { $eq: documentId } }))}${locale ? `&locale=${locale}` : ''}`),
@@ -64,16 +82,19 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
 
   useEffect(() => {
     if (single ? !entry.isSuccess : !creating && !entry.data) return
+    if (missingLocale && source.isPending && source.fetchStatus !== 'idle') return
     const src: Values = entry.data ?? {}
+    const shared: Values = source.data ?? {}
     const next: Values = {}
     for (const name of fields) {
       const attr = model.attributes[name]
       if (!attr || !isEditable(attr)) continue
-      next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
+      if (missingLocale && attr.pluginOptions?.i18n?.localized === false && name in shared) next[name] = toInput(attr, shared[name], ctx)
+      else next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
     setValues(next)
     // ctx and fields derive from props that key this component.
-  }, [entry.data, entry.isSuccess, creating])
+  }, [entry.data, entry.isSuccess, creating, source.data, source.isPending])
 
   const payload = (): Values | null => {
     const out: Values = {}
@@ -106,13 +127,13 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     mutationFn: (data: Values) =>
       single
         ? api.put<Entry>(singlePath(model.uid), { data, locale: locale || undefined })
-        : creating
+        : documentId === undefined
           ? api.post<Entry>(entryPath(model.uid), { data, locale: locale || undefined })
           : api.put<Entry>(entryPath(model.uid, documentId), { data, locale: locale || undefined }),
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
       void refreshAll()
-      if (creating && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${loc}`, { replace: true })
+      if (documentId === undefined && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${loc}`, { replace: true })
     },
     onError: fail,
   })
@@ -163,7 +184,24 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
               {status && <StatusBadge status={status} />}
             </p>
           </div>
-          <div className="flex flex-col gap-2 md:flex-row">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end">
+            {model.localized && (locales.data?.length ?? 0) > 1 && (
+              <SelectField
+                label={t('cm.locale')}
+                value={locale}
+                onChange={(e) => {
+                  const next = new URLSearchParams(params)
+                  next.set('locale', e.target.value)
+                  setParams(next, { replace: true })
+                }}
+              >
+                {locales.data?.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.name}
+                  </option>
+                ))}
+              </SelectField>
+            )}
             {canSave && (
               <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full md:w-auto">
                 {t('common.save')}
@@ -196,7 +234,8 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
         </div>
       </div>
 
-      {(single || !creating) && entry.isPending ? (
+      {missingLocale && <Card className="text-sm text-muted">{t('cm.missingLocale', { locale: locales.data?.find((l) => l.code === locale)?.name ?? locale })}</Card>}
+      {(single || documentId !== undefined) && entry.isPending ? (
         <p className="text-sm text-muted">{t('common.loading')}</p>
       ) : (
         <Card>
