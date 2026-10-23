@@ -8,6 +8,8 @@ Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert l
 
 `admin_test.go` couvre l'API de bout en bout, dont un test de fumée sur tous les fixtures du banc (`TestAdminSmokeFixtures`). Avec le tag `integration` et `GRAPI_TEST_PG_DSN` (`make ci`, Postgres du homelab), la même suite tourne aussi sur Postgres.
 
+`make e2e-invite` vérifie l'invitation d'un admin avec un vrai serveur SMTP : Mailpit tourne sur le homelab (tunnel SSH), grapi ici sur une copie de la fixture `basic` ; l'e-mail reçu fournit le lien d'inscription, l'invité s'inscrit puis se connecte.
+
 ## Format
 - Succès : `{"data": ...}`.
 - Erreur : `{"data": null, "error": {"status", "name", "message", "details"}}`. Une erreur de validation porte `details.errors: [{path: [...], message}]`.

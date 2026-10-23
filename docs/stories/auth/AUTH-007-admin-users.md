@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # AUTH-007 : Utilisateurs admin, rôles admin, invitations
@@ -33,9 +33,9 @@ Le backend de l'administration des admins : création du premier admin, connexio
 - UI (`ADM-002`, `ADM-008`), SSO (`XTR-001`), audit logs (`XTR-002`). Pas de limite de sièges : c'est une contrainte de licence Strapi, sans objet ici.
 
 ## Critères d'acceptation
-- [ ] Sur une base vide, `/admin/init` renvoie `hasAdmin: false`. Après `register-admin`, il renvoie `true`, et un second `register-admin` est refusé.
+- [x] Sur une base vide, `/admin/init` renvoie `hasAdmin: false`. Après `register-admin`, il renvoie `true`, et un second `register-admin` est refusé.
 - [x] **Compat DB (D3)** : un admin d'une base Strapi 5.59 se connecte sur grapi avec son mot de passe, et ses rôles et permissions s'appliquent.
-- [ ] Le flux d'invitation fonctionne de bout en bout (Mailpit sur le homelab).
+- [x] Le flux d'invitation fonctionne de bout en bout (Mailpit sur le homelab).
 - [x] Un Author ne voit que ses propres entrées dans le Content Manager (intégration avec `AUTH-001`).
 - [x] La suppression du dernier super admin est refusée (TU).
 - [x] La CLI `admin:create-user` et `admin:reset-user-password` (`CLI-003`) passent par le même service.
@@ -46,7 +46,7 @@ Le backend de l'administration des admins : création du premier admin, connexio
 - Banc en mode grapi : un admin enregistré par Strapi 5.59 (`/admin/register-admin`) se connecte sur grapi (`/admin/api/v1/auth/login`), SQLite et Postgres.
 - CRUD des admins (invitation par e-mail avec `registrationToken`, recherche, pagination, batch-delete) et des rôles, permissions d'un rôle validées contre le catalogue, catalogue groupé par section, règle du dernier Super Admin actif. Chaque route exige son action admin. Testé de bout en bout (`admin_test.go`, e-mails capturés par un provider de test).
 - `POST /permissions/check` : `{permissions: [{action, subject, field}]}` renvoie un booléen par entrée (`TestAdminPermissionsCheck`, permissions par champ comprises).
-- Reste : l'invitation testée sur Mailpit.
+- Invitation de bout en bout : `make e2e-invite` (`scripts/e2e-invite-mailpit.sh`) lance Mailpit sur le homelab, grapi ici avec le provider SMTP, invite un admin, lit l'e-mail dans Mailpit, suit le lien, inscrit et connecte l'invité. `/auth/init` et le refus d'un second `register-admin` : `TestAdminFirstAdminAndSessions`.
 
 ## Notes techniques
 - Mémoire projet : **ne jamais vider ni réinitialiser la table des admins** sur un serveur (migrations et `DB-011` comprises).
