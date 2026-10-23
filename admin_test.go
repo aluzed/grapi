@@ -2,6 +2,7 @@ package grapi_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -855,6 +856,11 @@ func TestAdminLocales(t *testing.T) {
 			frID = strconv.Itoa(int(m["id"].(float64)))
 		}
 	}
+	_, b, _ = c.do("POST", "/releases", `{"name":"French launch"}`)
+	frRelease := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	if s, b, _ := c.do("POST", frRelease+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+id+`","locale":"fr"}`); s != 201 {
+		t.Fatalf("fr entry in a release: %d %v", s, b)
+	}
 	if s, _, _ := c.do("DELETE", "/i18n/locales/"+frID, ""); s != 200 {
 		t.Fatalf("delete locale: %d", s)
 	}
@@ -864,6 +870,9 @@ func TestAdminLocales(t *testing.T) {
 	_, b, _ = c.do("GET", base+"?locale=fr", "")
 	if len(b["data"].([]any)) != 0 {
 		t.Fatalf("the fr entries went with the locale: %v", b)
+	}
+	if _, b, _ = c.do("GET", frRelease, ""); dataOf(b)["count"].(float64) != 0 {
+		t.Fatalf("and left the pending releases: %v", dataOf(b))
 	}
 }
 
@@ -1731,5 +1740,32 @@ func TestAdminReleaseLocalePermissions(t *testing.T) {
 	}
 	if s, b, _ := super.do("POST", rel+"/publish", ""); s != 200 {
 		t.Fatalf("super admin publishes: %d %v", s, b)
+	}
+}
+
+func TestAdminReleaseForgetsDeletedDocuments(t *testing.T) {
+	var app *grapi.App
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App) { app = a })
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("POST", "/content-manager/collection-types/api::article.article", `{"data":{"title":"Gone"}}`)
+	id := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("POST", "/releases", `{"name":"R"}`)
+	rel := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("POST", rel+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+id+`"}`)
+	if _, err := app.Documents().Delete(context.Background(), "api::article.article", id, nil); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, b, _ = c.do("GET", rel, ""); dataOf(b)["count"].(float64) == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("a document deleted by the Document Service leaves the release: %v", dataOf(b))
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }

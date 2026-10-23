@@ -145,6 +145,7 @@ func (s *Server) deleteLocale(w http.ResponseWriter, r *http.Request, u *User, _
 			if _, err := s.docs.Delete(ctx, uid, id, document.Params{"locale": code}); err != nil {
 				return asValidation(err)
 			}
+			s.forgetDocument(ctx, uid, id, code)
 		}
 	}
 	if _, err := s.e.Delete(ctx, localeUID, map[string]any{"id": get(row, "id")}, query.Params{}); err != nil {

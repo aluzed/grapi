@@ -645,9 +645,40 @@ func (s *Server) wakeScheduler(at any) {
 	}
 }
 
+// forgetDeleted takes a document deleted outside the admin (content API,
+// Document Service) out of the pending releases once no version is left.
+func (s *Server) forgetDeleted(ctx context.Context, payload map[string]any) {
+	uid, _ := payload["uid"].(string)
+	entry := toMap(payload["entry"])
+	id, _ := entry[schema.AttrDocumentID].(string)
+	if uid == "" || id == "" {
+		return
+	}
+	locale := entry["locale"]
+	p := document.Params{"status": "draft"}
+	if l, ok := locale.(string); ok && l != "" {
+		p["locale"] = l
+	}
+	if row, err := s.docs.FindOne(ctx, uid, id, p); err != nil || row != nil {
+		return
+	}
+	s.forgetDocument(ctx, uid, id, locale)
+}
+
 // StartScheduler checks the scheduled releases every interval until ctx
 // ends; a time passed while the server was down runs at once.
 func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
+	if s.docs.Events != nil {
+		off := s.docs.Events.Subscribe(func(name string, payload map[string]any) {
+			if name == "entry.delete" {
+				s.forgetDeleted(ctx, payload)
+			}
+		})
+		go func() {
+			<-ctx.Done()
+			off()
+		}()
+	}
 	go func() {
 		s.runScheduled(ctx)
 		t := time.NewTicker(interval)
