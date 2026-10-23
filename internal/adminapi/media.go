@@ -11,6 +11,7 @@ import (
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/schema"
 )
 
 const (
@@ -35,6 +36,7 @@ func (s *Server) mediaRoutes() {
 	}
 	s.allowed("GET /upload/files", uploadRead, s.listFiles)
 	s.allowed("GET /upload/files/{id}", uploadRead, s.getFile)
+	s.allowed("GET /upload/files/{id}/related", uploadRead, s.fileRelated)
 	s.allowed("PUT /upload/files/{id}", uploadUpdate, s.updateFile)
 	s.allowed("DELETE /upload/files/{id}", uploadUpdate, s.deleteFile)
 	s.allowed("POST /upload", uploadCreate, s.uploadFiles)
@@ -148,6 +150,63 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request, _ *User, _ *per
 	}
 	s.cfg.Media.SignFile(r.Context(), row)
 	return data(w, toMap(row))
+}
+
+// fileRelated lists the entries that use a file and that the admin may
+// read; a use inside a component is not traced back to its entry yet.
+func (s *Server) fileRelated(w http.ResponseWriter, r *http.Request, _ *User, a *permissions.Ability) error {
+	id, err := fileID(r)
+	if err != nil {
+		return err
+	}
+	ctx := r.Context()
+	q := fmt.Sprintf(`select related_id, related_type, field from %s where file_id = %s order by id`, s.e.DB.Dialect.Quote("files_related_mph"), s.ph(1))
+	rows, err := s.e.DB.Query(ctx, q, id)
+	if err != nil {
+		return err
+	}
+	type use struct {
+		id         int64
+		uid, field string
+	}
+	var uses []use
+	for rows.Next() {
+		var x use
+		if rows.Scan(&x.id, &x.uid, &x.field) == nil {
+			uses = append(uses, x)
+		}
+	}
+	_ = rows.Close()
+	out := []map[string]any{}
+	seen := map[string]bool{}
+	for _, x := range uses {
+		ct, ok := s.set.ContentType(schema.UID(x.uid))
+		if !ok || !contains(s.ContentManagerTypes(), x.uid) || !a.Can(actionRead, x.uid, "") {
+			continue
+		}
+		row, err := s.e.FindOne(ctx, x.uid, query.Params{Where: map[string]any{"id": x.id}})
+		if err != nil || row == nil {
+			continue
+		}
+		m := toMap(row)
+		docID, _ := m[schema.AttrDocumentID].(string)
+		key := x.uid + "/" + docID + "/" + fmt.Sprint(m["locale"]) + "/" + x.field
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		title := docID
+		if cfg, _ := s.effectiveConfig(ctx, ct); cfg != nil {
+			if v := m[cfg.Settings.MainField]; v != nil && v != "" {
+				title = fmt.Sprint(v)
+			}
+		}
+		out = append(out, map[string]any{
+			"uid": x.uid, "contentType": ct.Info.DisplayName, "kind": ct.Kind, "documentId": docID,
+			"locale": m["locale"], "field": x.field, "title": title, "published": m["publishedAt"] != nil,
+		})
+	}
+	return data(w, out)
 }
 
 // writableFile checks the row filter of assets.update (is-creator).

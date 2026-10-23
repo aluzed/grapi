@@ -2598,3 +2598,26 @@ func TestAdminPermissionsCheck(t *testing.T) {
 		t.Fatalf("limited role: %s", got)
 	}
 }
+
+func TestAdminFileRelated(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "devfreelance")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, up := c.upload("/upload", "cat.png", pngBytes(t))
+	file := strconv.Itoa(int(up["list"].([]any)[0].(map[string]any)["id"].(float64)))
+	const base = "/content-manager/collection-types/api::meme.meme"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Grumpy","picture":`+file+`}}`)
+	meme := dataOf(b)["documentId"].(string)
+	c.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+meme+`"]}`)
+	_, b, _ = c.do("GET", "/upload/files/"+file+"/related", "")
+	list, _ := b["data"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("one entry, draft and published rows merged: %v", b)
+	}
+	u := list[0].(map[string]any)
+	if u["documentId"] != meme || u["title"] != "Grumpy" || u["field"] != "picture" || u["contentType"] != "Meme" {
+		t.Fatalf("use: %v", u)
+	}
+}

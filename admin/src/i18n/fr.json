@@ -629,5 +629,11 @@
   "media.sort.name:ASC": "Ordre alphabétique (A à Z)",
   "media.sort.name:DESC": "Ordre alphabétique inverse (Z à A)",
   "media.sort.updatedAt:DESC": "Modifications les plus récentes",
-  "media.sort.updatedAt:ASC": "Modifications les plus anciennes"
+  "media.sort.updatedAt:ASC": "Modifications les plus anciennes",
+  "media.mime": "Type",
+  "media.createdAt": "Envoyé le",
+  "media.formats": "Formats",
+  "media.usedIn": "Utilisé dans",
+  "media.unused": "Aucune entrée n'utilise ce fichier.",
+  "media.openEntry": "Ouvrir l'entrée"
 }

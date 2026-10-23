@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Copy, Download, RefreshCw, Save, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Copy, Download, ExternalLink, RefreshCw, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,11 @@ function FileDialog({ file, onClose }: { file: MediaFile; onClose: () => void })
   const { t, language } = useI18n()
   const confirm = useConfirm()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const related = useQuery({
+    queryKey: ['media', 'related', file.id],
+    queryFn: () => api.get<{ uid: string; kind: string; contentType: string; documentId: string; locale: string | null; field: string; title: string }[]>(`/upload/files/${file.id}/related`),
+  })
   const { permissions } = useAuth()
   const canUpdate = can(permissions, 'plugin::upload.assets.update')
   const [form, setForm] = useState({ name: file.name, alternativeText: file.alternativeText ?? '', caption: file.caption ?? '' })
@@ -83,8 +89,56 @@ function FileDialog({ file, onClose }: { file: MediaFile; onClose: () => void })
               </dd>
             </>
           )}
+          <dt className="text-muted">{t('media.mime')}</dt>
+          <dd className="break-all">{file.mime}</dd>
+          <dt className="text-muted">{t('media.createdAt')}</dt>
+          <dd>{new Date(file.createdAt).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}</dd>
+          {file.formats && Object.keys(file.formats).length > 0 && (
+            <>
+              <dt className="text-muted">{t('media.formats')}</dt>
+              <dd className="flex flex-col gap-0.5">
+                {Object.entries(file.formats)
+                  .sort(([, a], [, b]) => a.width - b.width)
+                  .map(([name, f]) => (
+                    <span key={name}>
+                      {name} ({f.width} × {f.height})
+                    </span>
+                  ))}
+              </dd>
+            </>
+          )}
         </dl>
-        <div className="flex flex-col gap-2 md:flex-row">
+        <div className="text-xs">
+          <p className="mb-1 font-semibold text-muted">{t('media.usedIn')}</p>
+          {related.data && related.data.length === 0 && <p className="text-muted">{t('media.unused')}</p>}
+          <ul className="flex flex-col gap-2">
+            {related.data?.map((r) => (
+              <li key={`${r.uid}-${r.documentId}-${r.locale}-${r.field}`} className="flex flex-col gap-2 rounded-md border border-border p-2 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{r.title}</p>
+                  <p className="text-muted">
+                    {r.contentType} · {r.field}
+                    {r.locale ? ` · ${r.locale}` : ''}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  title={t('media.openEntry')}
+                  icon={<ExternalLink className="h-4 w-4" />}
+                  onClick={() =>
+                    navigate(
+                      `/content-manager/${r.kind === 'singleType' ? 'single-types' : 'collection-types'}/${encodeURIComponent(r.uid)}${r.kind === 'singleType' ? '' : `/${encodeURIComponent(r.documentId)}`}${r.locale ? `?locale=${r.locale}` : ''}`,
+                    )
+                  }
+                  className="w-full md:w-auto"
+                >
+                  {t('media.openEntry')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap *:whitespace-nowrap">
           <Button
             variant="outline"
             title={t('media.copy')}
