@@ -41,6 +41,9 @@ type Case struct {
 	// ResponseHeaders records the response headers (runner.ignoredHeaders
 	// aside).
 	ResponseHeaders bool `yaml:"responseHeaders"`
+	// NoPerf keeps the case out of the perf load: a case whose expected
+	// answer is a 5xx would count as an error there.
+	NoPerf bool `yaml:"noPerf"`
 }
 
 // Upload is a generated PNG sent as multipart/form-data under Field ("files"

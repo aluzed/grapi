@@ -29,7 +29,7 @@ func PerfURLs(base string, files []corpus.File) []string {
 	var out []string
 	for _, f := range files {
 		for _, c := range f.Cases {
-			if c.Method != "" && c.Method != http.MethodGet || c.Skip != "" || c.Token != "" || c.Bearer != "" {
+			if c.Method != "" && c.Method != http.MethodGet || c.Skip != "" || c.Token != "" || c.Bearer != "" || c.NoPerf {
 				continue
 			}
 			if strings.Contains(c.Path+c.Query, "{{") {

@@ -480,6 +480,15 @@ if [ "$mode" = perf ]; then
     after=$($sampler)
     echo "$res" | python3 -c "import json,sys; r=json.load(sys.stdin); print('| $engine | %.0f | %.1f | %.1f | %.1f | %d | $idle | %s | $after |' % (r['rps'], r['p50ms'], r['p95ms'], r['p99ms'], r['errors'], open('$work/peak-$engine').read()))" >>"$report"
   done
+  # What grapi answered under load: statuses, and the messages that are not
+  # request lines (errors, warnings).
+  {
+    echo
+    echo "grapi statuses under load:"
+    grep -oE '"status":[0-9]+|status=[0-9]+' "$work/grapi.log" | grep -oE '[0-9]+$' | sort | uniq -c | sort -rn | head -10
+    echo "grapi messages other than requests:"
+    grep -vE '"level":"HTTP"|level=HTTP' "$work/grapi.log" | grep -oE '"msg":"[^"]*"|msg="[^"]*"|msg=[^ ]+' | sort | uniq -c | sort -rn | head -10
+  } >>"$report"
   cat "$report"
   exit 0
 fi
