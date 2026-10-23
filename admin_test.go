@@ -1781,3 +1781,45 @@ func TestAdminReleaseForgetsDeletedDocuments(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 	}
 }
+
+func TestAdminReleaseAcrossTypesAndLocales(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "i18n-dp")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	c.do("POST", "/i18n/locales", `{"code":"fr"}`)
+	const articles = "/content-manager/collection-types/api::article.article"
+	const writers = "/content-manager/collection-types/api::writer.writer"
+	_, b, _ = c.do("POST", articles, `{"data":{"title":"Hello"}}`)
+	article := dataOf(b)["documentId"].(string)
+	c.do("PUT", articles+"/"+article+"?locale=fr", `{"data":{"title":"Bonjour"}}`)
+	_, b, _ = c.do("POST", writers, `{"data":{"name":"Ada"}}`)
+	writer := dataOf(b)["documentId"].(string)
+	c.do("POST", writers+"/actions/bulk-publish", `{"documentIds":["`+writer+`"]}`)
+
+	_, b, _ = c.do("POST", "/releases", `{"name":"Mixed"}`)
+	rel := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	for _, a := range []string{
+		`{"type":"publish","uid":"api::article.article","documentId":"` + article + `","locale":"en"}`,
+		`{"type":"publish","uid":"api::article.article","documentId":"` + article + `","locale":"fr"}`,
+		`{"type":"unpublish","uid":"api::writer.writer","documentId":"` + writer + `"}`,
+	} {
+		if s, b, _ := c.do("POST", rel+"/actions", a); s != 201 {
+			t.Fatalf("add %s: %d %v", a, s, b)
+		}
+	}
+	if s, b, _ := c.do("POST", rel+"/publish", ""); s != 200 {
+		t.Fatalf("publish: %d %v", s, b)
+	}
+	for _, locale := range []string{"en", "fr"} {
+		_, b, _ = c.do("GET", articles+"?status=published&locale="+locale, "")
+		if n := len(b["data"].([]any)); n != 1 {
+			t.Fatalf("%s article published: %d", locale, n)
+		}
+	}
+	_, b, _ = c.do("GET", writers+"?status=published", "")
+	if n := len(b["data"].([]any)); n != 0 {
+		t.Fatalf("writer unpublished: %d", n)
+	}
+}

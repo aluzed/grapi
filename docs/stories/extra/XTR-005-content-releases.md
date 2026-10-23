@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # XTR-005 : Content releases (dont planifiées)
@@ -34,7 +34,7 @@ Publier ou dépublier un lot de documents de façon atomique, à la main ou à u
 - Prévisualisation de l'état du site après release.
 
 ## Critères d'acceptation
-- [ ] Une release avec 2 publish et 1 unpublish sur deux content types et deux locales s'applique entièrement ; les 3 documents ont l'état attendu.
+- [x] Une release avec 2 publish et 1 unpublish sur deux content types et deux locales s'applique entièrement ; les 3 documents ont l'état attendu.
 - [x] Une entrée avec un champ requis vide rend la release `blocked` ; la publication manuelle renvoie 400 avec la liste des entrées fautives.
 - [x] Panne simulée sur la 3e action : aucune des actions n'est appliquée et la release n'est pas `done`.
 - [x] Planification à 09:00 `Europe/Paris` le jour du passage à l'heure d'hiver : exécution à l'instant UTC correct.
@@ -48,8 +48,7 @@ Publier ou dépublier un lot de documents de façon atomique, à la main ou à u
 ## Avancement
 Fait : tables, API (`internal/adminapi/releases.go`), état par publication d'essai, publication tout ou rien, planificateur (démarrage, 30 s, réveil sur date passée), `failed`, webhook, audit (origine `scheduler`), retrait des documents supprimés (admin, API de contenu, Document Service) et des versions d'une locale supprimée, permissions, réglage du fuseau par défaut (`GET|PUT /releases/settings`, permissions `releases.settings.*`), écrans (liste, détail groupé par content type ou par locale, « Ajouter à une release » dans l'édition et en lot depuis la liste), atomicité testée par une panne injectée (`TestAdminReleaseIsAtomic`), permission `publish` vérifiée par locale à l'ajout et à la publication (`TestAdminReleaseLocalePermissions`), conversion de fuseau testée sur les deux changements d'heure (`admin/src/lib/tz.test.ts`), test de bout en bout `TestAdminReleases`.
 
-Reste :
-- critère 1 (deux content types, deux locales) à tester explicitement.
+Test de la release mixte : `TestAdminReleaseAcrossTypesAndLocales`. Amélioration possible : bouton « Actualiser » (aujourd'hui l'état se recalcule à chaque ouverture du détail).
 
 ## Notes techniques
 - Tables `grapi_releases` et `grapi_release_actions` (index `(uid, document_id, locale)` pour afficher les releases d'un document).
