@@ -32,9 +32,9 @@ Offrir pour chaque collection type une vue liste générique pilotée par le sch
 
 ## Critères d'acceptation
 - [ ] Les résultats d'une combinaison filtres + tri + recherche + locale + statut sont identiques à l'appel REST équivalent sur le Document Service.
-- [ ] Recharger la page restaure exactement la vue (état dans l'URL).
+- [x] Recharger la page restaure exactement la vue (état dans l'URL).
 - [ ] La publication groupée de 50 documents, dont 3 invalides, publie les 47 valides et liste les 3 en erreur avec le motif.
-- [ ] Chaque suppression, unitaire ou groupée, passe par la modale de confirmation.
+- [x] Chaque suppression, unitaire ou groupée, passe par la modale de confirmation.
 - [ ] Les permissions sont respectées :
   - un utilisateur sans `delete` ne voit pas l'action supprimer ;
   - un champ non lisible n'apparaît pas en colonne ;
@@ -43,7 +43,8 @@ Offrir pour chaque collection type une vue liste générique pilotée par le sch
 
 ## Avancement
 - API (`docs/admin-api.md`, Content Manager) : modèles lisibles avec colonnes, `mainField` et réglages (configuration de vue Strapi lue dans le core store), liste paginée avec recherche `_q`, filtres JSON, tri, locale et statut, statut draft/published/modified par document, suppression unitaire, actions groupées (supprimer, publier, dépublier) avec rapport partiel. Filtre RBAC des conditions et champs lisibles appliqués. Testé de bout en bout (`TestAdminContentManager`) : publication groupée avec un document invalide, Author limité à ses entrées.
-- Reste : l'interface.
+- Interface (`admin/src/pages/content-manager/`) : menu des types avec recherche (select sur mobile), table avec tri par colonne, recherche, onglets Brouillons / Versions publiées, sélecteur de locale, pagination et taille de page, état complet dans l'URL, badges de statut, sélection et actions groupées avec confirmation et rapport partiel, menu engrenage par ligne, cartes sur mobile, bouton « Créer une entrée ». Vérifié dans Chrome sur le binaire, y compris le rechargement d'une URL de liste.
+- Reste : le constructeur de filtres par attribut, la miniature et le `mainField` des relations vérifiés sur un vrai jeu de données, le rapport détaillé de publication groupée (relations en brouillon), les tests à 375 px automatisés.
 
 ## Notes techniques
 - La liste s'appuie sur un endpoint admin qui réutilise le Document Service avec la sanitization RBAC (`AUTH-001`), et non sur l'API de contenu publique.

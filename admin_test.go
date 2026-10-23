@@ -228,7 +228,7 @@ func TestAdminProfile(t *testing.T) {
 	if s, _, _ := c.do("GET", "/nothing", ""); s != 404 {
 		t.Fatalf("unknown admin route: %d", s)
 	}
-	res, err := http.Get(ts.URL + "/admin/content-manager")
+	res, err := http.Get(ts.URL + "/admin/content-manager/collection-types/api::article.article")
 	if err != nil {
 		t.Fatal(err)
 	}

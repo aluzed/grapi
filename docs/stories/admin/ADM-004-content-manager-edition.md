@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-004 : Content Manager : vue édition (champs, composants, zones dynamiques, relations, D&P, i18n)
@@ -40,6 +40,11 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - **Garde-fous** : avertissement à la sortie si des modifications ne sont pas enregistrées.
 - **Single types** : même formulaire, sans liste.
 - **Permissions** : champs non lisibles masqués, champs non modifiables en lecture seule, actions masquées selon `create`, `update`, `publish` et `delete`, permissions par locale.
+
+## Avancement
+- API : lecture d'un document, création (`createdBy`, `updatedBy`) et mise à jour, champs filtrés par les permissions (`docs/admin-api.md`).
+- Formulaire générique dans l'ordre du schéma pour les champs simples (texte, richtext et JSON en zone de texte, nombres, booléen, énumération, dates, uid sans génération, mot de passe jamais pré-rempli), valeurs par défaut, erreurs de validation du serveur par champ, enregistrer, publier, dépublier, supprimer avec confirmation, badge de statut.
+- Reste : relations, médias, composants, zones dynamiques, blocks, génération d'uid, locales, single types, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.

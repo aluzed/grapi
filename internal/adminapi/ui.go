@@ -35,7 +35,9 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 			http.ServeFileFS(w, r, s.cfg.UI, name) //nolint:gosec // name is cleaned and fs.FS rejects paths outside its root
 			return
 		}
-		if path.Ext(name) != "" {
+		// Client routes can end with a dot (api::article.article): only a
+		// missing build asset is a 404.
+		if strings.HasPrefix(name, "assets/") {
 			http.NotFound(w, r)
 			return
 		}

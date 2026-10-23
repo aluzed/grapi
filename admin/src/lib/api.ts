@@ -87,6 +87,21 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   return parse<T>(res)
 }
 
+// requestWithMeta returns data and meta (paginated lists).
+export async function requestWithMeta<T, M>(path: string): Promise<{ data: T; meta: M }> {
+  let res = await send('GET', path)
+  if (res.status === 401 && accessToken !== null) {
+    if (await refresh()) res = await send('GET', path)
+    else onSessionLost()
+  }
+  const json = await res.json().catch(() => null)
+  if (!res.ok) {
+    const e = json?.error ?? {}
+    throw new ApiError(res.status, e.name ?? 'Error', e.message ?? res.statusText, e.details ?? {})
+  }
+  return { data: json.data as T, meta: json.meta as M }
+}
+
 export async function publicRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   return parse<T>(await send(method, path, body, false))
 }

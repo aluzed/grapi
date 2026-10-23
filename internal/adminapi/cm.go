@@ -60,11 +60,13 @@ type Model struct {
 	DraftAndPublish bool                         `json:"draftAndPublish"`
 	Localized       bool                         `json:"localized"`
 	Attributes      map[string]*schema.Attribute `json:"attributes"`
-	MainField       string                       `json:"mainField"`
-	ListColumns     []string                     `json:"listColumns"`
-	Labels          map[string]string            `json:"labels"`
-	Settings        ModelSettings                `json:"settings"`
-	Permissions     ModelPermissions             `json:"permissions"`
+	// Fields are the attribute names in schema order.
+	Fields      []string          `json:"fields"`
+	MainField   string            `json:"mainField"`
+	ListColumns []string          `json:"listColumns"`
+	Labels      map[string]string `json:"labels"`
+	Settings    ModelSettings     `json:"settings"`
+	Permissions ModelPermissions  `json:"permissions"`
 }
 
 // cmConfiguration is the part of Strapi's view configuration (core store)
@@ -141,6 +143,7 @@ func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) 
 			continue
 		}
 		m.Attributes[name] = attr
+		m.Fields = append(m.Fields, name)
 	}
 	m.MainField = defaultMainField(ct)
 	cfg, err := s.configuration(ctx, uid)
