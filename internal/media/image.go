@@ -130,6 +130,8 @@ func FitInside(w, h, maxW, maxH int) (int, int) {
 type Resized struct {
 	Width, Height int
 	Size          int64
+	// Image is the decoded result of Optimize, for the formats.
+	Image image.Image
 }
 
 var resizable = map[string]bool{"jpeg": true, "png": true, "tiff": true, "gif": true}
@@ -179,9 +181,7 @@ func Resize(src, dst string, info Info, maxW, maxH int) (Resized, error) {
 		if err != nil {
 			return Resized{}, err
 		}
-		dstImg := image.NewRGBA(image.Rect(0, 0, w, h))
-		draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), img, img.Bounds(), draw.Over, nil)
-		if err := encode(out, dstImg, info.Format, 80); err != nil {
+		if err := scaleTo(out, img, info.Format, w, h); err != nil {
 			return Resized{}, err
 		}
 	}
@@ -253,8 +253,47 @@ func Optimize(src, dst string, info Info, quality int, autoOrient bool) (Resized
 	}
 	// A turned image is kept even when bigger: the original is sideways.
 	if after.Size() > before.Size() && !turned {
-		return Resized{}, false, nil
+		return Resized{Image: img}, false, nil
 	}
 	b := img.Bounds()
-	return Resized{Width: b.Dx(), Height: b.Dy(), Size: after.Size()}, true, nil
+	return Resized{Width: b.Dx(), Height: b.Dy(), Size: after.Size(), Image: img}, true, nil
+}
+
+func scaleTo(out io.Writer, img image.Image, format string, w, h int) error {
+	dstImg := image.NewRGBA(image.Rect(0, 0, w, h))
+	draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), img, img.Bounds(), draw.Over, nil)
+	return encode(out, dstImg, format, 80)
+}
+
+// Decode reads a still image once, for several ResizeFrom calls: decoding a
+// large photo for every format multiplies the memory it takes.
+func Decode(src string) (image.Image, error) {
+	f, err := os.Open(src) //nolint:gosec // a temporary upload file
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }()
+	img, _, err := image.Decode(f)
+	return img, err
+}
+
+// ResizeFrom is Resize for an image already decoded (not an animated GIF).
+func ResizeFrom(img image.Image, dst string, info Info, maxW, maxH int) (Resized, error) {
+	w, h := FitInside(info.Width, info.Height, maxW, maxH)
+	out, err := os.Create(dst) //nolint:gosec // inside the request's working directory
+	if err != nil {
+		return Resized{}, err
+	}
+	if err := scaleTo(out, img, info.Format, w, h); err != nil {
+		_ = out.Close()
+		return Resized{}, err
+	}
+	if err := out.Close(); err != nil {
+		return Resized{}, err
+	}
+	st, err := os.Stat(dst)
+	if err != nil {
+		return Resized{}, err
+	}
+	return Resized{Width: w, Height: h, Size: st.Size()}, nil
 }

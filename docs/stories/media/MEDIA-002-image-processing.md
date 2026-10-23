@@ -36,6 +36,7 @@ Produire les mêmes formats, avec les mêmes noms, les mêmes dimensions et les 
 - [x] `limitInputPixels` rejette une image hors limite avec une erreur explicite (TU).
 - [ ] Le traitement d'une image de 20 Mpx tient en moins de 300 Mo de RSS (mesure sur le homelab).
 
+- Mémoire (2026-10-23, homelab, PNG de 5000 x 4000, 20 Mpx, envoi par l'admin, 4 formats) : pic de RSS de 486 Mo, ramené à 419 Mo en décodant l'image une seule fois pour l'optimisation et tous les formats (28 Mo au repos, envoi en 4,1 s). L'objectif de 300 Mo n'est pas atteint : il reste le décodage complet en RGBA (80 Mo), l'encodage et la marge du GC ; piste suivante, redimensionner en flux ou poser une limite mémoire pendant le traitement.
 - GIF animé : chaque format garde toutes les images et leurs délais (`TestAnimatedGIFStaysAnimated` : 3 images en 600 x 400, vignette en 234 x 156).
 - `autoOrientation` : l'orientation EXIF d'un JPEG (segment APP1, balise 0x0112) redresse l'image comme `rotate()` de sharp, pour les 8 orientations ; les dimensions enregistrées et les formats suivent l'image redressée (`TestAutoOrientation` : orientation 6, 32 x 16 devient 16 x 32, la moitié gauche passe en haut).
 - `plugins.upload.config.sharp.limitInputPixels` (booléen ou entier >= 0, défaut de sharp 16383², valeur invalide refusée au démarrage avec le message de Strapi). Correction du critère : Strapi ne rejette pas l'image, ses appels sharp échouent et l'upload la range comme un fichier ordinaire, sans dimensions ni formats ; grapi fait de même (`TestUploadLimitInputPixels`).

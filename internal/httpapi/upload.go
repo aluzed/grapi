@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"io/fs"
 	"math"
@@ -520,6 +521,8 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		file["related"] = []any{map[string]any{"id": metas["refId"], "__type": metas["ref"], "__pivot": map[string]any{"field": metas["field"]}}}
 	}
 	src := f.path
+	// The decoded still image, shared by the optimization and the formats.
+	var decoded image.Image
 	img, imgErr := media.Probe(src)
 	isImage := imgErr == nil && map[string]bool{"jpeg": true, "png": true, "webp": true, "tiff": true, "svg": true, "gif": true, "avif": true}[img.Format]
 	if isImage && s.cfg.Upload.LimitInputPixels > 0 && img.Format != "svg" {
@@ -540,6 +543,7 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		if err != nil {
 			return nil, appError("File is not a valid image")
 		}
+		decoded = res.Image
 		if ok {
 			src = optimized
 			file["size"] = media.BytesToKbytes(res.Size)
@@ -575,6 +579,12 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		file["provider_metadata"] = meta
 	}
 	if isImage && media.CanResize(img.Format) {
+		// One decode for every format; an animated GIF goes frame by frame.
+		if decoded == nil && img.Format != "gif" {
+			if d, err := media.Decode(src); err == nil {
+				decoded = d
+			}
+		}
 		formats := map[string]any{}
 		pageH := img.Height
 		if img.PageHeight > 0 {
@@ -583,7 +593,13 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		add := func(key string, maxW, maxH int) error {
 			fh := key + "_" + hash
 			dst := filepath.Join(dir, fh)
-			res, err := media.Resize(src, dst, img, maxW, maxH)
+			var res media.Resized
+			var err error
+			if decoded != nil {
+				res, err = media.ResizeFrom(decoded, dst, img, maxW, maxH)
+			} else {
+				res, err = media.Resize(src, dst, img, maxW, maxH)
+			}
 			if err != nil {
 				return err
 			}
