@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DOC-003 : Validation des entrées et valeurs par défaut
@@ -24,12 +24,13 @@ Valider chaque écriture du Document Service avec les mêmes règles et les mêm
 ## Critères d'acceptation
 - [x] Un brouillon sans champ requis est accepté ; sa publication échoue avec `ValidationError` et le `path` du champ.
 - [x] Deux documents publiés avec la même valeur `unique` dans la même locale : la seconde publication échoue ; dans deux locales différentes, elle réussit.
-- [ ] Les messages et `details.errors` sont identiques à Strapi pour un jeu de 30 cas (banc de compatibilité).
+- [x] Les messages et `details.errors` sont identiques à Strapi pour un jeu de 30 cas (banc de compatibilité).
 - [x] `default` appliqué à la création seulement, jamais à l'update.
 
 - Unicité par locale (banc `i18n-dp_unique`, SQLite et Postgres, identique à Strapi) : un slug `uid` déjà publié est refusé dans la même locale, accepté dans une autre, pour un autre document comme pour une autre locale du même document, et toujours accepté en brouillon.
 - Banc `basic_core` identique à Strapi : un brouillon sans titre requis ou avec un `code` hors motif est accepté, sa publication échoue (`ValidationError` avec le `path`) ; `maxLength` s'applique aussi au brouillon ; un second `code` unique est refusé à la publication mais accepté en brouillon ; les valeurs par défaut sont posées à la création, un update à `null` les laisse à `null`.
 
+- Décompte au banc (2026-10-23) : 113 réponses `ValidationError` dans les goldens de 16 corpus (47 avec `details.errors`, 63 messages distincts), toutes identiques à Strapi en mode grapi ; les seuls écarts connus des fixtures (ordre d'ids de composants, `biginteger` sous SQLite) n'en font pas partie.
 ## Notes techniques
 - Validateur maison piloté par le schéma (pas de lib de validation par tags : le schéma est dynamique).
 - Reproduire les messages yup de Strapi tels quels : les fronts existants les affichent.
