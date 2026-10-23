@@ -41,7 +41,8 @@ Le squelette de la CLI et les commandes de cycle de vie d'un projet.
 
 ## Avancement
 - Fait : `grapi new` (config YAML, `.env` aux secrets aléatoires et `.env.example` aux mêmes clés, `--db`, `--git-init`, `--framework`), `grapi develop` (rechargement en processus : un content type ajouté est servi 131 ms après l'écriture de son `schema.json`), `grapi report`, flags `-env` et `-log-level` sur les commandes de projet. La CLI garde le paquet `flag` de la bibliothèque standard plutôt que cobra.
-- Reste : redémarrage du processus pour le mode framework (`go run`), écritures du Content-Type Builder en develop (`ADM-006`), `--open`.
+- `develop --open` ouvre l'admin dans le navigateur (`open`, `xdg-open` ou `rundll32` selon le système) ; les écritures du Content-Type Builder en develop sont faites (`ADM-006`).
+- Reste : redémarrage du processus pour le mode framework (`go run`).
 
 ## Notes techniques
 - `spf13/cobra`, `fsnotify/fsnotify` avec un debounce de 300 ms.

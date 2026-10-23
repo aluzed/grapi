@@ -75,3 +75,11 @@ func TestNewProjectEnvAndReport(t *testing.T) {
 		}
 	}
 }
+
+func TestAdminURL(t *testing.T) {
+	for addr, want := range map[string]string{"0.0.0.0:18339": "http://localhost:18339/admin", "127.0.0.1:1337": "http://localhost:1337/admin", "bad": "http://localhost:1337/admin"} {
+		if got := adminURL(addr); got != want {
+			t.Errorf("%s: %s", addr, got)
+		}
+	}
+}
