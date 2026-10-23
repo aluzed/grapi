@@ -26,7 +26,8 @@ Un provider Cloudinary avec les mêmes options et les mêmes métadonnées.
 ## Avancement
 - `internal/media/provider/cloudinary.go` : upload signé (`auto/upload`, `public_id` = hash, `actionOptions.upload` signées avec), `secure_url` comme URL, `provider_metadata` = `{public_id, resource_type}` ; suppression par `<resource_type>/destroy` avec `invalidate`, un fichier absent (`not found`) n'est pas une erreur. Test sur un serveur `httptest` qui vérifie chemins, champs et signature.
 - `provider_metadata` circule désormais dans l'upload : enregistré sur le fichier et sur chaque format, rendu au provider à la suppression (y compris les formats remplacés), ce qui permet de supprimer un fichier envoyé par Strapi.
-- Reste : essai sur un compte Cloudinary de test, envoi en flux (`uploadStream`) pour les gros fichiers.
+- L'envoi passe en flux (corps multipart écrit par un `io.Pipe`), comme `uploadStream` : un gros fichier ne tient plus en mémoire.
+- Reste : essai sur un vrai compte Cloudinary de test.
 
 - Tests contre un faux serveur de l'API Cloudinary qui vérifie les signatures SHA-1 : envoi (`TestCloudinary`), remplacement sous le même `public_id` avec la nouvelle URL, suppression d'un fichier envoyé par Strapi par le `public_id` et le `resource_type` de son `provider_metadata` (`TestCloudinaryReplaceAndStrapiMetadata`). Un vrai compte de test n'a pas été utilisé.
 

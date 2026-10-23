@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha1" //nolint:gosec // Cloudinary's API signature is SHA-1
 	"encoding/hex"
@@ -120,27 +119,30 @@ func (c *Cloudinary) Upload(ctx context.Context, f *File, r io.Reader) error {
 		params[k] = paramString(v)
 	}
 	params = c.signed(params)
-	var body bytes.Buffer
-	w := multipart.NewWriter(&body)
 	keys := make([]string, 0, len(params))
 	for k := range params {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range keys {
-		_ = w.WriteField(k, params[k])
-	}
-	part, err := w.CreateFormFile("file", f.Hash+f.Ext)
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(part, r); err != nil {
-		return err
-	}
-	if err := w.Close(); err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint("auto", "upload"), &body)
+	// The file streams into the request, as the provider's uploadStream.
+	pr, pw := io.Pipe()
+	w := multipart.NewWriter(pw)
+	go func() {
+		for _, k := range keys {
+			_ = w.WriteField(k, params[k])
+		}
+		part, err := w.CreateFormFile("file", f.Hash+f.Ext)
+		if err == nil {
+			_, err = io.Copy(part, r)
+		}
+		if err == nil {
+			err = w.Close()
+		}
+		_ = pw.CloseWithError(err)
+	}()
+	// Closing the reader ends the writer if the answer comes before the end.
+	defer func() { _ = pr.Close() }()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint("auto", "upload"), pr)
 	if err != nil {
 		return err
 	}
