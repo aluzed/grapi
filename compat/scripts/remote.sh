@@ -166,6 +166,12 @@ grapi | perf)
   start_ref b
   wait_up a
   wait_up b
+  # An admin registered by Strapi must log in on grapi (same tables, bcrypt).
+  admin_body='{"firstname":"Compat","lastname":"Admin","email":"compat-admin@example.com","password":"Compat1234"}'
+  curl -sf -o /dev/null -H 'Content-Type: application/json' -d "$admin_body" "http://127.0.0.1:$(port_of b)/admin/register-admin" || {
+    echo "error: Strapi refused register-admin" >&2
+    exit 1
+  }
   docker stop "$run_id-b" >/dev/null
   grapi_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
   if [ "$db" = postgres ]; then
@@ -190,6 +196,10 @@ grapi | perf)
   done
   b_url=http://127.0.0.1:$grapi_port
   b_tokens=$work/b/tokens.json
+  login=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+    -d '{"email":"compat-admin@example.com","password":"Compat1234"}' "$b_url/admin/api/v1/auth/login")
+  echo "Strapi admin login on grapi: $login"
+  [ "$login" = 200 ] || admin_failed=1
   ;;
 *)
   echo "error: unknown mode $mode" >&2
@@ -296,4 +306,8 @@ status=0
 "$here/bin/compat" diff -a "$work/out/a" -b "$work/out/b" -report "$report" \
   -title "Compat $fixture ($mode, $db, Strapi $STRAPI_VERSION)" || status=$?
 cat "$report" | head -20
+if [ "${admin_failed:-0}" = 1 ]; then
+  tail -20 "$work/grapi.log"
+  exit 1
+fi
 exit $status
