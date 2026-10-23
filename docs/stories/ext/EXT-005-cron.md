@@ -22,14 +22,15 @@ Le même planificateur, avec les mêmes formats de règle.
 - Exécution distribuée (verrou entre plusieurs instances) : voir les notes techniques.
 
 ## Critères d'acceptation
-- [ ] `*/5 * * * * *` s'exécute toutes les 5 s ; avec `tz: Europe/Paris`, une règle horaire respecte le changement d'heure.
+- [x] `*/5 * * * * *` s'exécute toutes les 5 s ; avec `tz: Europe/Paris`, une règle horaire respecte le changement d'heure.
 - [x] Une tâche à date unique ne s'exécute qu'une fois.
 - [x] `server.cron.enabled: false` désactive tout.
 
 ## Avancement
 - Fait : `internal/cron` (robfig/cron v3, secondes optionnelles, descripteurs `@daily`, fuseau par tâche, bornes start et end, pas de chevauchement sauf `AllowOverlap`, journalisation début, fin, durée et erreurs, paniques isolées), `grapi.App.Cron` et `CronAt`, actifs seulement avec `server.cron.enabled: true` comme chez Strapi. Tests : `internal/cron/cron_test.go`.
 - Changement d'heure aligné sur croner (le planificateur de Strapi 5.59, et non node-schedule) : la règle est évaluée en heure murale du fuseau, une heure sautée s'exécute après le saut (02:30 à 03:30 CEST le 29 mars 2026), une heure répétée une seule fois, à sa première occurrence. `TestDaylightSavingTime` reprend les dates mesurées avec croner 10.0.1 dans l'image de référence.
-- Reste : objets de récurrence (règles non cron), `config/cron-tasks` (JS, `EXT-003`).
+- Objets de récurrence de node-schedule (`App.CronEvery` avec `CronRecurrence{Hour: 14, Minute: 30}`, `CronRange`, listes ; mois comptés à partir de 0, seconde à 0 par défaut) traduits en règle cron (`TestRecurrenceRule`). Règle à 6 champs et changement d'heure testés (`TestEveryFiveSeconds`, `TestDailyRuleAcrossDST`).
+- Reste : `config/cron-tasks` (JS, `EXT-003`).
 
 ## Notes techniques
 - `robfig/cron/v3` avec `cron.WithSeconds()` et un parseur pour les objets de récurrence.

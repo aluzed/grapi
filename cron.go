@@ -17,8 +17,16 @@ type CronOptions struct {
 	AllowOverlap bool
 }
 
+// CronRecurrence is node-schedule's RecurrenceRule (an object rule in
+// Strapi's cron config).
+type CronRecurrence = cron.Recurrence
+
+// CronRange is node-schedule's Range, for a CronRecurrence field.
+type CronRange = cron.Range
+
 type cronTask struct {
 	name, rule string
+	recurrence *CronRecurrence
 	at         time.Time
 	opts       CronOptions
 	task       func(ctx context.Context) error
@@ -28,6 +36,11 @@ type cronTask struct {
 // Tasks run only when server.cron.enabled is true, as in Strapi.
 func (a *App) Cron(name, rule string, opts CronOptions, task func(ctx context.Context) error) {
 	a.cronTasks = append(a.cronTasks, cronTask{name: name, rule: rule, opts: opts, task: task})
+}
+
+// CronEvery schedules task on a recurrence rule ({Hour: 14, Minute: 30}).
+func (a *App) CronEvery(name string, r CronRecurrence, opts CronOptions, task func(ctx context.Context) error) {
+	a.cronTasks = append(a.cronTasks, cronTask{name: name, recurrence: &r, opts: opts, task: task})
 }
 
 // CronAt runs task once at the given time.
@@ -41,10 +54,14 @@ func (a *App) startCron(enabled bool, s *cron.Scheduler) error {
 	}
 	for _, t := range a.cronTasks {
 		var err error
-		if t.rule == "" {
+		opts := cron.Options{TZ: t.opts.TZ, Start: t.opts.Start, End: t.opts.End, AllowOverlap: t.opts.AllowOverlap}
+		switch {
+		case t.recurrence != nil:
+			err = s.AddRecurrence(t.name, *t.recurrence, opts, t.task)
+		case t.rule == "":
 			err = s.At(t.name, t.at, t.task)
-		} else {
-			err = s.Add(t.name, t.rule, cron.Options{TZ: t.opts.TZ, Start: t.opts.Start, End: t.opts.End, AllowOverlap: t.opts.AllowOverlap}, t.task)
+		default:
+			err = s.Add(t.name, t.rule, opts, t.task)
 		}
 		if err != nil {
 			return err
