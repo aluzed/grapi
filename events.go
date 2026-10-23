@@ -1,7 +1,9 @@
 package grapi
 
 // EventHub is strapi.eventHub: the events the entries, the media and the
-// admin emit (entry.create, media.update...), the ones webhooks send.
+// admin emit (entry.create, media.update...), the ones webhooks send. The
+// entry events go out once their transaction commits, one at a time, off
+// the caller's goroutine.
 type EventHub struct{ app *App }
 
 // Events is the event hub, available once Setup ran.
