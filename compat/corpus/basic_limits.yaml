@@ -18,3 +18,18 @@ cases:
     path: /api/tags
     body: { data: { name: "limit-ko" } }
     pad: 1048600
+  # formidable's maxFileSize, lowered to 2000 bytes for this fixture
+  # (compat.json): the file data over it is refused while it streams in.
+  - name: upload-under-max-file-size
+    method: POST
+    path: /api/upload
+    token: full
+    files: [{ name: "small.png", width: 4, height: 4 }]
+  - name: upload-over-max-file-size
+    method: POST
+    path: /api/upload
+    token: full
+    files: [{ name: "big.png", width: 1000, height: 1000 }]
+  - name: upload-files-after-limit
+    path: /api/upload/files
+    token: full

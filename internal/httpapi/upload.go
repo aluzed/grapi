@@ -92,6 +92,7 @@ type multipartRequest struct {
 
 func readMultipart(r *http.Request, dir string) (*multipartRequest, error) {
 	out := &multipartRequest{fields: map[string][]string{}}
+	limit, total := maxFileSizeOf(r.Context()), int64(0)
 	mr, err := r.MultipartReader()
 	if err != nil {
 		return out, nil //nolint:nilerr // a request without multipart has no files
@@ -121,10 +122,13 @@ func readMultipart(r *http.Request, dir string) (*multipartRequest, error) {
 		if err != nil {
 			return nil, err
 		}
-		n, err := io.Copy(f, part)
+		n, err := io.Copy(f, io.LimitReader(part, limit-total+1))
 		_ = f.Close()
 		if err != nil {
 			return nil, err
+		}
+		if total += n; total > limit {
+			return nil, errFileTooBig
 		}
 		out.files = append(out.files, &inputFile{filename: part.FileName(), declared: part.Header.Get("Content-Type"), size: n, path: f.Name()})
 	}

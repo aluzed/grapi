@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"mime"
 	"net/http"
@@ -13,11 +14,12 @@ import (
 // refused the bodies over their limit.
 const maxBodyRead = 256 << 20
 
-// BodyLimits are strapi::body's koa-body limits, in bytes.
-type BodyLimits struct{ JSON, Form, Text int64 }
+// BodyLimits are strapi::body's koa-body limits, in bytes. MaxFileSize is
+// formidable's maxFileSize: the file data of one multipart request.
+type BodyLimits struct{ JSON, Form, Text, MaxFileSize int64 }
 
 // DefaultBodyLimits are koa-body's: 1mb of JSON, 56kb of form or text.
-var DefaultBodyLimits = BodyLimits{JSON: 1 << 20, Form: 56 << 10, Text: 56 << 10}
+var DefaultBodyLimits = BodyLimits{JSON: 1 << 20, Form: 56 << 10, Text: 56 << 10, MaxFileSize: 200 << 20}
 
 // parseBytes reads the bytes package's sizes: a number of bytes, or
 // "56kb", "1mb", "1.5gb".
@@ -50,6 +52,11 @@ func parseBodyLimits(cfg map[string]any) *BodyLimits {
 	for key, dst := range map[string]*int64{"jsonLimit": &l.JSON, "formLimit": &l.Form, "textLimit": &l.Text} {
 		if n, ok := parseBytes(cfg[key]); ok {
 			*dst = n
+		}
+	}
+	if f, ok := cfg["formidable"].(map[string]any); ok {
+		if n, ok := parseBytes(f["maxFileSize"]); ok && n > 0 {
+			l.MaxFileSize = n
 		}
 	}
 	return &l
@@ -95,3 +102,20 @@ func (l BodyLimits) limitBody(w http.ResponseWriter, r *http.Request) bool {
 	}
 	return false
 }
+
+type maxFileSizeKey struct{}
+
+func withMaxFileSize(r *http.Request, n int64) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), maxFileSizeKey{}, n))
+}
+
+func maxFileSizeOf(ctx context.Context) int64 {
+	if n, ok := ctx.Value(maxFileSizeKey{}).(int64); ok {
+		return n
+	}
+	return DefaultBodyLimits.MaxFileSize
+}
+
+// errFileTooBig is Strapi's answer when formidable's maxFileSize is
+// exceeded while the files stream in.
+var errFileTooBig = newError(http.StatusRequestEntityTooLarge, "PayloadTooLargeError", "FileTooBig")

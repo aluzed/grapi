@@ -34,7 +34,11 @@ func uploadTarget(ctx context.Context) query.Row {
 // AdminUpload is the upload route for the admin (see WithUploader): files,
 // file info update with ?id=, or replacement with ?id= and a file.
 func (s *Server) AdminUpload(w http.ResponseWriter, r *http.Request) {
-	if err := s.upload(w, r, &requestContext{params: map[string]string{}}); err != nil {
+	limit := DefaultBodyLimits.MaxFileSize
+	if m := s.cfg.Middlewares; m != nil && m.Body != nil {
+		limit = m.Body.MaxFileSize
+	}
+	if err := s.upload(w, withMaxFileSize(r, limit), &requestContext{params: map[string]string{}}); err != nil {
 		writeError(w, err, s.log)
 	}
 }

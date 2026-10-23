@@ -1,0 +1,29 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": [
+    {
+      "alternativeText": null,
+      "caption": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc9",
+      "ext": ".png",
+      "focalPoint": null,
+      "formats": null,
+      "hash": "\u003csecret\u003e",
+      "height": 4,
+      "id": "#id4",
+      "isUrlSigned": false,
+      "mime": "image/png",
+      "name": "small.png",
+      "previewUrl": null,
+      "provider": "local",
+      "provider_metadata": null,
+      "publishedAt": "\u003cts\u003e",
+      "size": "\u003cimage-size\u003e",
+      "updatedAt": "\u003cts\u003e",
+      "url": "\u003cupload-url\u003e",
+      "width": 4
+    }
+  ]
+}

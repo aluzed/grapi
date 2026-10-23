@@ -201,7 +201,7 @@ func (m Middlewares) wrap(next http.Handler) http.Handler {
 		if limits.limitBody(w, r) {
 			return
 		}
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, withMaxFileSize(r, limits.MaxFileSize))
 	})
 }
 
