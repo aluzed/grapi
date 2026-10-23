@@ -5,6 +5,7 @@
   "options": { "draftAndPublish": true },
   "attributes": {
     "name": { "type": "string", "required": true },
-    "posts": { "type": "relation", "relation": "oneToMany", "target": "api::post.post", "mappedBy": "category" }
+    "posts": { "type": "relation", "relation": "oneToMany", "target": "api::post.post", "mappedBy": "category" },
+    "highlight": { "type": "relation", "relation": "manyToOne", "target": "api::post.post" }
   }
 }

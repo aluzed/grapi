@@ -796,6 +796,10 @@ func (s *Service) publish(ctx context.Context, ct *schema.ContentType, documentI
 	if err != nil {
 		return nil, err
 	}
+	relinks, err := s.loadRelinks(ctx, uid, versionsOf(old), versionsOf(drafts), "published")
+	if err != nil {
+		return nil, err
+	}
 	for _, o := range old {
 		id, _ := o.Get("id")
 		if _, err := s.deleteEntry(ctx, uid, id, query.Params{}); err != nil {
@@ -818,6 +822,9 @@ func (s *Service) publish(ctx context.Context, ct *schema.ContentType, documentI
 			return nil, err
 		}
 		published = append(published, row)
+	}
+	if err := s.syncRelinks(ctx, relinks, append(versionsOf(old), versionsOf(drafts)...), published); err != nil {
+		return nil, err
 	}
 	for _, row := range published {
 		s.emit(ctx, "entry.publish", string(ct.UID), row)
@@ -933,6 +940,10 @@ func (s *Service) discardDraftDocument(ctx context.Context, uid, documentID stri
 		if err != nil {
 			return err
 		}
+		relinks, err := s.loadRelinks(ctx, uid, versionsOf(drafts), versionsOf(versions), "draft")
+		if err != nil {
+			return err
+		}
 		for _, d := range drafts {
 			id, _ := d.Get("id")
 			if _, err := s.deleteEntry(ctx, uid, id, query.Params{}); err != nil {
@@ -954,6 +965,9 @@ func (s *Service) discardDraftDocument(ctx context.Context, uid, documentID stri
 				return err
 			}
 			out = append(out, row)
+		}
+		if err := s.syncRelinks(ctx, relinks, append(versionsOf(drafts), versionsOf(versions)...), out); err != nil {
+			return err
 		}
 		for _, row := range out {
 			s.emit(ctx, "entry.draft-discard", uid, row)

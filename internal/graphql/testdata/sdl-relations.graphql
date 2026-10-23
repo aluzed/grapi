@@ -498,6 +498,7 @@ input CategoryFiltersInput {
   documentId: IDFilterInput
   name: StringFilterInput
   posts: PostFiltersInput
+  highlight: PostFiltersInput
   createdAt: DateTimeFilterInput
   updatedAt: DateTimeFilterInput
   publishedAt: DateTimeFilterInput
@@ -509,6 +510,7 @@ input CategoryFiltersInput {
 input CategoryInput {
   name: String
   posts: [ID]
+  highlight: ID
   publishedAt: DateTime
   locale: String
 }
@@ -518,6 +520,7 @@ type Category {
   name: String!
   posts_connection(filters: PostFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): PostRelationResponseCollection
   posts(filters: PostFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Post]!
+  highlight: Post
   createdAt: DateTime
   updatedAt: DateTime
   publishedAt: DateTime
@@ -531,6 +534,7 @@ type CategoryEntityResponseCollection {
 input CommentFiltersInput {
   documentId: IDFilterInput
   body: StringFilterInput
+  post: PostFiltersInput
   createdAt: DateTimeFilterInput
   updatedAt: DateTimeFilterInput
   publishedAt: DateTimeFilterInput
@@ -541,6 +545,7 @@ input CommentFiltersInput {
 
 input CommentInput {
   body: String
+  post: ID
   publishedAt: DateTime
   locale: String
 }
@@ -549,6 +554,7 @@ type Comment {
   documentId: ID!
   body: String!
   subject: GenericMorph
+  post: Post
   createdAt: DateTime
   updatedAt: DateTime
   publishedAt: DateTime

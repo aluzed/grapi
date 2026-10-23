@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc28",
+      "id": "#id39",
+      "publishedAt": null,
+      "rank": null,
+      "title": "A3",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

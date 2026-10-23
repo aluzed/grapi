@@ -2,6 +2,7 @@ package document
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/aluzed/grapi/internal/db/query"
@@ -151,15 +152,37 @@ func (s *Service) Delete(ctx context.Context, uid, documentID string, p Params) 
 
 // Publish publishes a document's drafts.
 func (s *Service) Publish(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+	if err := s.requireDraftAndPublish(uid, "publish"); err != nil {
+		return nil, err
+	}
 	return asRows(s.run(ctx, uid, Publish, p, &documentID, func(ctx context.Context, p Params) (any, error) { return s.publishCore(ctx, uid, documentID, p) }))
 }
 
 // Unpublish removes a document's published versions.
 func (s *Service) Unpublish(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+	if err := s.requireDraftAndPublish(uid, "unpublish"); err != nil {
+		return nil, err
+	}
 	return asRows(s.run(ctx, uid, Unpublish, p, &documentID, func(ctx context.Context, p Params) (any, error) { return s.unpublishCore(ctx, uid, documentID, p) }))
 }
 
 // DiscardDraft replaces a document's drafts with its published versions.
 func (s *Service) DiscardDraft(ctx context.Context, uid, documentID string, p Params) ([]query.Row, error) {
+	if err := s.requireDraftAndPublish(uid, "discardDraft"); err != nil {
+		return nil, err
+	}
 	return asRows(s.run(ctx, uid, DiscardDraft, p, &documentID, func(ctx context.Context, p Params) (any, error) { return s.discardDraftCore(ctx, uid, documentID, p) }))
+}
+
+// requireDraftAndPublish: Strapi has no publish, unpublish or discardDraft
+// on a model without draft and publish, whose only row they would delete.
+func (s *Service) requireDraftAndPublish(uid, action string) error {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return err
+	}
+	if !ct.DraftAndPublish() {
+		return &appError{fmt.Sprintf("%s is not available: %s has no draft and publish", action, uid)}
+	}
+	return nil
 }

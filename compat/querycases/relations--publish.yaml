@@ -1,0 +1,53 @@
+fixture: relations
+isolated: true
+cases:
+  # Links held on a version that publish, discardDraft or unpublish replaces.
+  - { name: create-a, uid: api::post.post, op: docCreate, params: { data: { title: "A1" } }, save: { pa: documentId } }
+  - { name: publish-a, uid: api::post.post, op: docPublish, params: { documentId: "{{pa}}" } }
+  - { name: create-b, uid: api::post.post, op: docCreate, params: { data: { title: "B1", parent: "{{pa}}", related: ["{{pa}}"] } }, save: { pb: documentId } }
+  - { name: publish-b, uid: api::post.post, op: docPublish, params: { documentId: "{{pb}}" } }
+  - { name: create-c, uid: api::category.category, op: docCreate, params: { data: { name: "Hub", highlight: "{{pa}}", posts: ["{{pb}}", "{{pa}}"] } }, save: { pc: documentId } }
+  - { name: publish-c, uid: api::category.category, op: docPublish, params: { documentId: "{{pc}}" } }
+  - { name: create-comment, uid: api::comment.comment, op: docCreate, params: { data: { body: "first", post: "{{pa}}" } } }
+  - { name: parent-after-create, uid: posts_parent_lnk, op: table }
+  - { name: related-after-create, uid: posts_related_lnk, op: table }
+  - { name: category-after-create, uid: posts_category_lnk, op: table }
+  - { name: highlight-after-create, uid: categories_highlight_lnk, op: table }
+  - { name: comment-after-create, uid: comments_post_lnk, op: table }
+
+  - { name: edit-a, uid: api::post.post, op: docUpdate, params: { documentId: "{{pa}}", data: { title: "A2" } } }
+  - { name: discard-a, uid: api::post.post, op: docDiscardDraft, params: { documentId: "{{pa}}" } }
+  - { name: parent-after-discard, uid: posts_parent_lnk, op: table }
+  - { name: related-after-discard, uid: posts_related_lnk, op: table }
+  - { name: category-after-discard, uid: posts_category_lnk, op: table }
+  - { name: highlight-after-discard, uid: categories_highlight_lnk, op: table }
+  - { name: comment-after-discard, uid: comments_post_lnk, op: table }
+
+  - { name: edit-a-again, uid: api::post.post, op: docUpdate, params: { documentId: "{{pa}}", data: { title: "A3" } } }
+  - { name: republish-a, uid: api::post.post, op: docPublish, params: { documentId: "{{pa}}" } }
+  - { name: parent-after-republish, uid: posts_parent_lnk, op: table }
+  - { name: related-after-republish, uid: posts_related_lnk, op: table }
+  - { name: category-after-republish, uid: posts_category_lnk, op: table }
+  - { name: highlight-after-republish, uid: categories_highlight_lnk, op: table }
+  - { name: comment-after-republish, uid: comments_post_lnk, op: table }
+
+  - { name: republish-c, uid: api::category.category, op: docPublish, params: { documentId: "{{pc}}" } }
+  - { name: category-after-republish-c, uid: posts_category_lnk, op: table }
+  - { name: highlight-after-republish-c, uid: categories_highlight_lnk, op: table }
+
+  - { name: unpublish-a, uid: api::post.post, op: docUnpublish, params: { documentId: "{{pa}}" } }
+  - { name: parent-after-unpublish, uid: posts_parent_lnk, op: table }
+  - { name: category-after-unpublish, uid: posts_category_lnk, op: table }
+  - { name: highlight-after-unpublish, uid: categories_highlight_lnk, op: table }
+  - { name: comment-after-unpublish, uid: comments_post_lnk, op: table }
+  - { name: first-publish-a-again, uid: api::post.post, op: docPublish, params: { documentId: "{{pa}}" } }
+  - { name: parent-after-first-publish, uid: posts_parent_lnk, op: table }
+  - { name: category-after-first-publish, uid: posts_category_lnk, op: table }
+  - { name: comment-after-first-publish, uid: comments_post_lnk, op: table }
+
+  # Without draft and publish, Strapi has no publish, unpublish or discardDraft.
+  - { name: create-tag, uid: api::tag.tag, op: docCreate, params: { data: { name: "retro" } }, save: { tg: documentId } }
+  - { name: publish-no-dp, uid: api::tag.tag, op: docPublish, params: { documentId: "{{tg}}" } }
+  - { name: unpublish-no-dp, uid: api::tag.tag, op: docUnpublish, params: { documentId: "{{tg}}" } }
+  - { name: discard-no-dp, uid: api::tag.tag, op: docDiscardDraft, params: { documentId: "{{tg}}" } }
+  - { name: tag-still-there, uid: api::tag.tag, op: docFindOne, params: { documentId: "{{tg}}", fields: [name] } }

@@ -5,6 +5,7 @@
   "options": { "draftAndPublish": false },
   "attributes": {
     "body": { "type": "string", "required": true },
-    "subject": { "type": "relation", "relation": "morphToOne" }
+    "subject": { "type": "relation", "relation": "morphToOne" },
+    "post": { "type": "relation", "relation": "manyToOne", "target": "api::post.post" }
   }
 }

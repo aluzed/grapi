@@ -1,0 +1,15 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "body": "first",
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc31",
+      "id": "#id1",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

@@ -5364,6 +5364,166 @@
             ]
         },
         {
+            "name": "categories_highlight_lnk",
+            "indexes": [
+                {
+                    "name": "categories_highlight_lnk_fk",
+                    "columns": [
+                        "category_id"
+                    ]
+                },
+                {
+                    "name": "categories_highlight_lnk_ifk",
+                    "columns": [
+                        "post_id"
+                    ]
+                },
+                {
+                    "name": "categories_highlight_lnk_uq",
+                    "columns": [
+                        "category_id",
+                        "post_id"
+                    ],
+                    "type": "unique"
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "categories_highlight_lnk_fk",
+                    "columns": [
+                        "category_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "categories",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "categories_highlight_lnk_ifk",
+                    "columns": [
+                        "post_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "posts",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "category_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "post_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "comments_post_lnk",
+            "indexes": [
+                {
+                    "name": "comments_post_lnk_fk",
+                    "columns": [
+                        "comment_id"
+                    ]
+                },
+                {
+                    "name": "comments_post_lnk_ifk",
+                    "columns": [
+                        "post_id"
+                    ]
+                },
+                {
+                    "name": "comments_post_lnk_uq",
+                    "columns": [
+                        "comment_id",
+                        "post_id"
+                    ],
+                    "type": "unique"
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "comments_post_lnk_fk",
+                    "columns": [
+                        "comment_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "comments",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "comments_post_lnk_ifk",
+                    "columns": [
+                        "post_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "posts",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "comment_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "post_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
             "name": "posts_writer_lnk",
             "indexes": [
                 {

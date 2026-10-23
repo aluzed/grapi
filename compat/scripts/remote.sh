@@ -179,13 +179,18 @@ grapi | perf)
     exit 1
   }
   # A file uploaded by Strapi must be served by grapi at the same URL.
-  s_tok=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$work/b/tokens.json")
   python3 -c 'import struct,sys,zlib
 def chunk(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d))
 raw = b"".join(b"\0" + bytes([200, 40, 40]) * 4 for _ in range(4))
 sys.stdout.buffer.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 4, 4, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))' >"$work/strapi-upload.png"
-  strapi_file_url=$(curl -s -H "Authorization: Bearer $s_tok" -F "files=@$work/strapi-upload.png;type=image/png" "http://127.0.0.1:$(port_of b)/api/upload" |
-    python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["url"] if isinstance(r,list) else r, file=sys.stdout if isinstance(r,list) else sys.stderr)')
+  upload_png() {
+    curl -s -H "Authorization: Bearer $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["full"])' "$work/$1/tokens.json")" \
+      -F "files=@$work/strapi-upload.png;type=image/png" "http://127.0.0.1:$(port_of "$1")/api/upload" |
+      python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["url"] if isinstance(r,list) else r, file=sys.stdout if isinstance(r,list) else sys.stderr)'
+  }
+  strapi_file_url=$(upload_png b)
+  # The reference gets the same file, so both corpus runs start with it.
+  upload_png a >/dev/null
   # A folder tree made by Strapi must read the same on grapi.
   s_auth="Authorization: Bearer $(printf '%s' "$strapi_admin" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')"
   s_url=http://127.0.0.1:$(port_of b)

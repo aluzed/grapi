@@ -1,0 +1,137 @@
+fixture: relations
+cases:
+  # Republishing deletes the old published row: links pointing at it from
+  # other rows must follow the new one.
+  - name: pub-category-create
+    method: POST
+    path: /api/categories
+    token: full
+    save: { pc: data.documentId }
+    body: { data: { name: "Hub" } }
+  - name: pub-post-create-a
+    method: POST
+    path: /api/posts
+    token: full
+    save: { pa: data.documentId }
+    body: { data: { title: "A1", category: "{{pc}}" } }
+  - name: pub-post-create-b
+    method: POST
+    path: /api/posts
+    token: full
+    save: { pb: data.documentId }
+    body: { data: { title: "B1", category: "{{pc}}", parent: "{{pa}}", related: ["{{pa}}"] } }
+  - name: pub-post-create-c-draft
+    method: POST
+    path: /api/posts
+    token: full
+    query: "status=draft"
+    save: { pd: data.documentId }
+    body: { data: { title: "C1", parent: "{{pa}}" } }
+  - name: pub-comment-create
+    method: POST
+    path: /api/comments
+    token: full
+    save: { pm: data.documentId }
+    body: { data: { body: "first", post: "{{pa}}" } }
+  - name: pub-category-highlight
+    method: PUT
+    path: /api/categories/{{pc}}
+    token: full
+    body: { data: { highlight: "{{pa}}" } }
+
+  - name: pub-republish-a
+    method: PUT
+    path: /api/posts/{{pa}}
+    token: full
+    body: { data: { title: "A2" } }
+  - name: pub-after-a-category
+    method: GET
+    path: /api/categories/{{pc}}
+    token: full
+    query: "populate[posts][fields][0]=title&populate[highlight][fields][0]=title"
+  - name: pub-after-a-category-draft
+    method: GET
+    path: /api/categories/{{pc}}
+    token: full
+    query: "status=draft&populate[posts][fields][0]=title&populate[highlight][fields][0]=title"
+  - name: pub-after-a-comment
+    method: GET
+    path: /api/comments/{{pm}}
+    token: full
+    query: "populate[post][fields][0]=title"
+  - name: pub-after-a-post-b
+    method: GET
+    path: /api/posts/{{pb}}
+    token: full
+    query: "populate[parent][fields][0]=title&populate[related][fields][0]=title"
+  - name: pub-after-a-children
+    method: GET
+    path: /api/posts/{{pa}}
+    token: full
+    query: "populate[children][fields][0]=title&populate[category][fields][0]=name"
+  - name: pub-after-a-children-draft
+    method: GET
+    path: /api/posts/{{pa}}
+    token: full
+    query: "status=draft&populate[children][fields][0]=title"
+
+  - name: pub-republish-category
+    method: PUT
+    path: /api/categories/{{pc}}
+    token: full
+    body: { data: { name: "Hub 2" } }
+  - name: pub-after-category-posts
+    method: GET
+    path: /api/posts
+    token: full
+    query: "filters[title][$in][0]=A2&filters[title][$in][1]=B1&sort=title&fields[0]=title&populate[category][fields][0]=name"
+  - name: pub-after-category-self
+    method: GET
+    path: /api/categories/{{pc}}
+    token: full
+    query: "populate[posts][fields][0]=title&populate[highlight][fields][0]=title"
+
+  # Publishing a draft-only post for the first time.
+  - name: pub-first-publish-c
+    method: PUT
+    path: /api/posts/{{pd}}
+    token: full
+    body: { data: { title: "C2" } }
+  - name: pub-after-c-children
+    method: GET
+    path: /api/posts/{{pa}}
+    token: full
+    query: "populate[children][fields][0]=title&populate[children][sort][0]=title"
+  - name: pub-after-c-self
+    method: GET
+    path: /api/posts/{{pd}}
+    token: full
+    query: "populate[parent][fields][0]=title"
+
+  # A draft-only edit leaves the published links alone.
+  - name: pub-draft-edit-a
+    method: PUT
+    path: /api/posts/{{pa}}
+    token: full
+    query: "status=draft"
+    body: { data: { title: "A3" } }
+  - name: pub-after-draft-edit-comment
+    method: GET
+    path: /api/comments/{{pm}}
+    token: full
+    query: "populate[post][fields][0]=title"
+  - name: pub-republish-a-again
+    method: PUT
+    path: /api/posts/{{pa}}
+    token: full
+    body: { data: { title: "A4" } }
+  - name: pub-after-again-comment
+    method: GET
+    path: /api/comments/{{pm}}
+    token: full
+    query: "populate[post][fields][0]=title"
+  - name: pub-after-again-category
+    method: GET
+    path: /api/categories/{{pc}}
+    token: full
+    query: "populate[posts][fields][0]=title&populate[posts][sort][0]=title&populate[highlight][fields][0]=title"

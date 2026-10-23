@@ -193,6 +193,30 @@
  },
  {
   "type": "index",
+  "name": "categories_highlight_lnk_fk",
+  "tbl_name": "categories_highlight_lnk",
+  "sql": "CREATE INDEX `categories_highlight_lnk_fk` on `categories_highlight_lnk` (`category_id`)"
+ },
+ {
+  "type": "index",
+  "name": "categories_highlight_lnk_ifk",
+  "tbl_name": "categories_highlight_lnk",
+  "sql": "CREATE INDEX `categories_highlight_lnk_ifk` on `categories_highlight_lnk` (`post_id`)"
+ },
+ {
+  "type": "index",
+  "name": "categories_highlight_lnk_uq",
+  "tbl_name": "categories_highlight_lnk",
+  "sql": "CREATE UNIQUE INDEX `categories_highlight_lnk_uq` on `categories_highlight_lnk` (`category_id`, `post_id`)"
+ },
+ {
+  "type": "table",
+  "name": "categories_highlight_lnk",
+  "tbl_name": "categories_highlight_lnk",
+  "sql": "CREATE TABLE \"categories_highlight_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `category_id` integer NULL, `post_id` integer NULL, CONSTRAINT `categories_highlight_lnk_fk` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE, CONSTRAINT `categories_highlight_lnk_ifk` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE, CONSTRAINT `categories_highlight_lnk_fk` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE, CONSTRAINT `categories_highlight_lnk_ifk` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE)"
+ },
+ {
+  "type": "index",
   "name": "comments_created_by_id_fk",
   "tbl_name": "comments",
   "sql": "CREATE INDEX `comments_created_by_id_fk` on `comments` (`created_by_id`)"
@@ -214,6 +238,30 @@
   "name": "comments",
   "tbl_name": "comments",
   "sql": "CREATE TABLE \"comments\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `document_id` varchar(255) NULL, `body` varchar(255) NULL, `target_id` integer NULL, `target_type` varchar(255) NULL, `created_at` datetime NULL, `updated_at` datetime NULL, `published_at` datetime NULL, `created_by_id` integer NULL, `updated_by_id` integer NULL, `locale` varchar(255) NULL, CONSTRAINT `comments_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `comments_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `comments_created_by_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL, CONSTRAINT `comments_updated_by_id_fk` FOREIGN KEY (`updated_by_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL)"
+ },
+ {
+  "type": "index",
+  "name": "comments_post_lnk_fk",
+  "tbl_name": "comments_post_lnk",
+  "sql": "CREATE INDEX `comments_post_lnk_fk` on `comments_post_lnk` (`comment_id`)"
+ },
+ {
+  "type": "index",
+  "name": "comments_post_lnk_ifk",
+  "tbl_name": "comments_post_lnk",
+  "sql": "CREATE INDEX `comments_post_lnk_ifk` on `comments_post_lnk` (`post_id`)"
+ },
+ {
+  "type": "index",
+  "name": "comments_post_lnk_uq",
+  "tbl_name": "comments_post_lnk",
+  "sql": "CREATE UNIQUE INDEX `comments_post_lnk_uq` on `comments_post_lnk` (`comment_id`, `post_id`)"
+ },
+ {
+  "type": "table",
+  "name": "comments_post_lnk",
+  "tbl_name": "comments_post_lnk",
+  "sql": "CREATE TABLE \"comments_post_lnk\" (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL, `comment_id` integer NULL, `post_id` integer NULL, CONSTRAINT `comments_post_lnk_fk` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE, CONSTRAINT `comments_post_lnk_ifk` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE, CONSTRAINT `comments_post_lnk_fk` FOREIGN KEY (`comment_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE, CONSTRAINT `comments_post_lnk_ifk` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE)"
  },
  {
   "type": "index",

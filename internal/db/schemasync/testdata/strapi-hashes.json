@@ -41,12 +41,12 @@
       "ce": "dae8b3e668ae2b66f41db276b87466b9c90a6bb0c3f58fab25ee0fa5c91e297b"
     },
     "golden/relations-postgres/schema/database-schema.json": {
-      "full": "2e3652081af7d394a2a5edef790c9b2e65ed90fd6d464675ca85555862b72941",
-      "ce": "d3bebc1b61100a84b51cf34f007243b30fade08cb3dd0c6b3f17ae8461a12b0e"
+      "full": "dc902c81cb3074b1750bd753a5adaf55734d36444b86226e6953effd5a6d2f57",
+      "ce": "7acc4748d485c174939ad06dbc57c0aa1720e1e5aea24cfd2717364da52e5829"
     },
     "golden/relations-sqlite/schema/database-schema.json": {
-      "full": "2e3652081af7d394a2a5edef790c9b2e65ed90fd6d464675ca85555862b72941",
-      "ce": "d3bebc1b61100a84b51cf34f007243b30fade08cb3dd0c6b3f17ae8461a12b0e"
+      "full": "dc902c81cb3074b1750bd753a5adaf55734d36444b86226e6953effd5a6d2f57",
+      "ce": "7acc4748d485c174939ad06dbc57c0aa1720e1e5aea24cfd2717364da52e5829"
     }
   },
   "order": [

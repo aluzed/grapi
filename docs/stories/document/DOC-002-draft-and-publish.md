@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DOC-002 : Draft & Publish
@@ -25,16 +25,19 @@ Reproduire exactement le cycle de vie brouillon / publié de Strapi 5, y compris
 - Content history (`XTR-003`), releases (`XTR-005`).
 
 ## Critères d'acceptation
-- [ ] Après publish, la ligne publiée a un nouvel `id` et le même `document_id`, et les relations entrantes pointent vers elle.
-- [ ] Un hook `beforeCreate` de ligne reçoit l'événement à la publication (cas dev-freelance : slug publié recalculé depuis le titre).
-- [ ] Une catégorie liée à un post publié reste liée après republication du post (relation bidirectionnelle) et après republication de la catégorie.
-- [ ] Les 8 modes de `publicationFilter` renvoient les mêmes documents que Strapi sur un jeu de fixtures couvrant chaque état.
-- [ ] Sans D&P, `publish` n'existe pas (erreur explicite) et `published_at` est toujours renseigné.
-- [ ] Banc de compatibilité : séquence create, publish, update, publish, unpublish, discardDraft identique à Strapi (contenu des deux versions, relations, `publishedAt`).
+- [x] Après publish, la ligne publiée a un nouvel `id` et le même `document_id`, et les relations entrantes pointent vers elle.
+- [x] Un hook `beforeCreate` de ligne reçoit l'événement à la publication (cas dev-freelance : slug publié recalculé depuis le titre).
+- [x] Une catégorie liée à un post publié reste liée après republication du post (relation bidirectionnelle) et après republication de la catégorie.
+- [x] Les 8 modes de `publicationFilter` renvoient les mêmes documents que Strapi sur un jeu de fixtures couvrant chaque état.
+- [x] Sans D&P, `publish` n'existe pas (erreur explicite) et `published_at` est toujours renseigné.
+- [x] Banc de compatibilité : séquence create, publish, update, publish, unpublish, discardDraft identique à Strapi (contenu des deux versions, relations, `publishedAt`).
 
 ## Avancement
 - Publish, unpublish et discardDraft copient les versions avec leurs composants et leurs relations sortantes (résolues vers la version cible, `allowMissingId`) : séquence identique à Strapi sur `components--docs.yaml`.
-- Reste : la resynchronisation des relations entrantes (`unidirectional-relations`, `bidirectional-relations`, `self-referential-relations`), `publicationFilter`.
+- Relations entrantes : avant de supprimer la version remplacée, publish et discardDraft relèvent les liens que les autres lignes tiennent sur elle, puis les reportent sur la nouvelle (`document/relations_sync.go`, port de `unidirectional-relations`, `bidirectional-relations` et `self-referential-relations`). Un lien reporté garde son `id`, comme chez Strapi ; un lien bidirectionnel retrouve sa position côté inverse. Les liens des composants d'une entrée D&P sont écartés (`createComponentRelationFilter`) : la copie de l'entrée les réécrit.
+- Banc REST `relations_publish` (24 cas : republication d'un post lié à une catégorie, à un commentaire, à un parent et en relation auto-référente, puis de la catégorie, première publication, modification du seul brouillon) et banc Document Service `relations--publish` (43 cas : create, publish, update, discardDraft, publish, unpublish, publish, avec le contenu des tables de liens après chaque étape) identiques à Strapi sous SQLite et Postgres. `TestDiscardDraftKeepsIncomingLinks` échoue sans le report.
+- `publicationFilter` : banc `relations--pubfilter` (29 cas : les 8 modes en brouillon et en publié, `hasPublishedVersion`, une valeur invalide, un type sans D&P) identique à Strapi, sur un jeu couvrant chaque état (jamais publié, publié inchangé, publié puis modifié, publié sans brouillon).
+- Sans D&P, `Publish`, `Unpublish` et `DiscardDraft` refusent l'appel (`TestNoDraftAndPublishActions`) : Strapi ne les définit pas sur ce modèle, et `Unpublish` y supprimait la seule ligne du document. `beforeCreate` à la publication : `TestPublishRunsBeforeCreate`.
 
 ## Notes techniques
 - Le recâblage est le point le plus délicat de toute la couche données : écrire d'abord les tests de caractérisation contre Strapi.

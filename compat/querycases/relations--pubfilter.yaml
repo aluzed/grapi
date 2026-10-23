@@ -1,0 +1,35 @@
+fixture: relations
+isolated: true
+cases:
+  # One document per state: draft only, published and unmodified, published
+  # then modified, and a published row without a draft (imported data).
+  - { name: never, uid: api::post.post, op: docCreate, params: { data: { title: "P1 never" } } }
+  - { name: unmodified, uid: api::post.post, op: docCreate, params: { data: { title: "P2 unmodified" } }, save: { p2: documentId } }
+  - { name: modified, uid: api::post.post, op: docCreate, params: { data: { title: "P3 modified" } }, save: { p3: documentId } }
+  - { name: publish-p3, uid: api::post.post, op: docPublish, params: { documentId: "{{p3}}" } }
+  - { name: publish-p2, uid: api::post.post, op: docPublish, params: { documentId: "{{p2}}" } }
+  - { name: count-between, uid: api::post.post, op: docCount, params: {} }
+  - { name: modify-p3, uid: api::post.post, op: docUpdate, params: { documentId: "{{p3}}", data: { title: "P3 modified (edited)" } } }
+  - { name: orphan, uid: api::post.post, op: create, params: { data: { title: "P4 published without draft", documentId: "pubfilterorphan000000000", publishedAt: "2026-01-01T00:00:00.000Z" } } }
+
+  - { name: draft-never-published, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: never-published, fields: [title], sort: title } }
+  - { name: published-never-published, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: never-published, fields: [title], sort: title } }
+  - { name: draft-has-published-version, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: has-published-version, fields: [title], sort: title } }
+  - { name: published-has-published-version, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: has-published-version, fields: [title], sort: title } }
+  - { name: draft-modified, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: modified, fields: [title], sort: title } }
+  - { name: published-modified, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: modified, fields: [title], sort: title } }
+  - { name: draft-unmodified, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: unmodified, fields: [title], sort: title } }
+  - { name: published-unmodified, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: unmodified, fields: [title], sort: title } }
+  - { name: draft-never-published-document, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: never-published-document, fields: [title], sort: title } }
+  - { name: published-never-published-document, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: never-published-document, fields: [title], sort: title } }
+  - { name: draft-has-published-version-document, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: has-published-version-document, fields: [title], sort: title } }
+  - { name: published-has-published-version-document, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: has-published-version-document, fields: [title], sort: title } }
+  - { name: draft-published-without-draft, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: published-without-draft, fields: [title], sort: title } }
+  - { name: published-published-without-draft, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: published-without-draft, fields: [title], sort: title } }
+  - { name: draft-published-with-draft, uid: api::post.post, op: docFindMany, params: { status: draft, publicationFilter: published-with-draft, fields: [title], sort: title } }
+  - { name: published-published-with-draft, uid: api::post.post, op: docFindMany, params: { status: published, publicationFilter: published-with-draft, fields: [title], sort: title } }
+  - { name: draft-has-published-version-true, uid: api::post.post, op: docFindMany, params: { status: draft, hasPublishedVersion: true, fields: [title], sort: title } }
+  - { name: draft-has-published-version-false, uid: api::post.post, op: docFindMany, params: { status: draft, hasPublishedVersion: "false", fields: [title], sort: title } }
+  - { name: published-has-published-version-true, uid: api::post.post, op: docFindMany, params: { status: published, hasPublishedVersion: "true", fields: [title], sort: title } }
+  - { name: invalid-mode, exactError: true, uid: api::post.post, op: docFindMany, params: { publicationFilter: sometimes } }
+  - { name: no-dp-ignores-filter, uid: api::tag.tag, op: docFindMany, params: { publicationFilter: modified, fields: [name] } }

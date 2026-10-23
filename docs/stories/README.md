@@ -81,6 +81,7 @@ compat/               banc de compatibilité contre Strapi de référence
 - `DOC-005` Événements `entry.*` et event hub
 - `DOC-006` Résolution des relations par documentId (locale, status)
 - `DOC-007` Single types
+- `DOC-008` Migrations au changement de schéma (D&P, i18n) et schéma stocké
 
 ### api
 - `API-001` Serveur HTTP, contexte de requête, `/_health`, arrêt propre

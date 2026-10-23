@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "category": {
+          "documentId": "#doc27",
+          "id": "#id6",
+          "name": "Hub 2"
+        },
+        "documentId": "#doc28",
+        "id": "#id38",
+        "title": "A2"
+      },
+      {
+        "category": {
+          "documentId": "#doc27",
+          "id": "#id6",
+          "name": "Hub 2"
+        },
+        "documentId": "#doc29",
+        "id": "#id36",
+        "title": "B1"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 2
+      }
+    }
+  }
+}

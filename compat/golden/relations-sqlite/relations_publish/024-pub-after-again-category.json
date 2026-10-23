@@ -1,0 +1,32 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc27",
+      "highlight": {
+        "documentId": "#doc28",
+        "id": "#id42",
+        "title": "A4"
+      },
+      "id": "#id6",
+      "name": "Hub 2",
+      "posts": [
+        {
+          "documentId": "#doc28",
+          "id": "#id42",
+          "title": "A4"
+        },
+        {
+          "documentId": "#doc29",
+          "id": "#id36",
+          "title": "B1"
+        }
+      ],
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

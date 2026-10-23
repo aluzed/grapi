@@ -1,0 +1,15 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc27",
+      "id": "#id6",
+      "name": "Hub 2",
+      "publishedAt": "\u003cts\u003e",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}

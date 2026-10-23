@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "children": [
+        {
+          "documentId": "#doc29",
+          "id": "#id40",
+          "title": "B1"
+        },
+        {
+          "documentId": "#doc30",
+          "id": "#id37",
+          "title": "C1"
+        }
+      ],
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc28",
+      "id": "#id39",
+      "publishedAt": null,
+      "rank": null,
+      "title": "A2",
+      "updatedAt": "\u003cts\u003e"
+    },
+    "meta": {}
+  }
+}
