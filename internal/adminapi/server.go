@@ -45,6 +45,8 @@ type Config struct {
 	// AdminURL is admin.absoluteUrl, used in the e-mails.
 	AdminURL string
 	Email    *email.Service
+	// EmailProvider is plugins.email.config.provider (sendmail by default).
+	EmailProvider string
 	// ForgotPasswordFrom is admin.forgotPassword.from.
 	ForgotPasswordFrom string
 	// ResetPasswordTTL is admin.forgotPassword.expiresIn, 1 hour by default.
@@ -160,6 +162,7 @@ func (s *Server) routes() {
 	s.tokenRoutes()
 	s.webhookRoutes()
 	s.usersPermissionsRoutes()
+	s.emailRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

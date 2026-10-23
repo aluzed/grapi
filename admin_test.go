@@ -1010,3 +1010,20 @@ func TestAdminUsersPermissions(t *testing.T) {
 		t.Fatalf("delete role: %d", s)
 	}
 }
+
+func TestAdminEmailTest(t *testing.T) {
+	ts, mail, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	if _, b, _ := c.do("GET", "/email/settings", ""); dataOf(b)["provider"] != "capture" {
+		t.Fatalf("settings: %v", b)
+	}
+	if s, _, _ := c.do("POST", "/email/test", `{"to":"nope"}`); s != 400 {
+		t.Fatalf("invalid address: %d", s)
+	}
+	if s, b, _ := c.do("POST", "/email/test", `{"to":"ops@example.com"}`); s != 200 || len(mail.sent) != 1 || mail.sent[0].To != "ops@example.com" {
+		t.Fatalf("test mail: %d %v %v", s, b, mail.sent)
+	}
+}

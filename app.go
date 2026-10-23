@@ -662,6 +662,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	adminCfg.Media, adminCfg.Webhooks = api, runner
 	adminCfg.APITokenSalt, adminCfg.ContentActions = apiCfg.APITokenSalt, api.ContentAPIActions
 	adminCfg.EncryptionKey, _ = conf.String("admin.secrets.encryptionKey")
+	if adminCfg.EmailProvider, _ = conf.String("plugins.email.config.provider"); adminCfg.EmailProvider == "" {
+		adminCfg.EmailProvider = "sendmail"
+	}
 	adm := adminapi.New(adminCfg, docs, log)
 	if err := adm.Bootstrap(ctx); err != nil {
 		a.stopWebhooks()

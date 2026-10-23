@@ -340,5 +340,15 @@
   "up.provider.callback": "URL de redirection de votre front",
   "up.provider.edit": "Modifier",
   "up.provider.on": "Activé",
-  "up.provider.off": "Désactivé"
+  "up.provider.off": "Désactivé",
+  "settings.email": "E-mail",
+  "email.provider": "Fournisseur",
+  "email.defaultFrom": "Expéditeur par défaut",
+  "email.defaultReplyTo": "Adresse de réponse par défaut",
+  "email.notConfigured": "Aucun fournisseur d'e-mail n'est configuré : renseignez plugins.email dans la configuration du projet.",
+  "email.test": "Envoyer un e-mail de test",
+  "email.to": "Destinataire",
+  "email.send": "Envoyer",
+  "email.sent": "E-mail de test envoyé à {to}",
+  "email.configHelp": "Le fournisseur se configure dans la configuration du projet (config/plugins), pas ici."
 }

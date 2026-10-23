@@ -174,3 +174,10 @@ Les rôles et réglages des utilisateurs finaux (API de contenu). Actions `plugi
 | `GET` et `PUT /users-permissions/providers` | Providers OAuth et `email` |
 
 Un `PUT` de réglages ne met à jour que les clés connues du core store, en fusionnant les objets (un provider garde son `callbackUrl` si le corps ne le donne pas) ; une clé inconnue est refusée.
+
+### E-mail
+
+| Méthode et chemin | Action | Rôle |
+|---|---|---|
+| `GET /email/settings` | `plugin::email.settings.read` | `{provider, configured, defaultFrom, defaultReplyTo}` (la configuration reste dans `config/plugins`) |
+| `POST /email/test` | `plugin::email.settings.read` | `{to}` : envoie un e-mail de test ; l'erreur du fournisseur est renvoyée telle quelle |

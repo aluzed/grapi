@@ -340,5 +340,15 @@
   "up.provider.callback": "Redirect URL of your front end",
   "up.provider.edit": "Edit",
   "up.provider.on": "Enabled",
-  "up.provider.off": "Disabled"
+  "up.provider.off": "Disabled",
+  "settings.email": "Email",
+  "email.provider": "Provider",
+  "email.defaultFrom": "Default sender",
+  "email.defaultReplyTo": "Default reply-to",
+  "email.notConfigured": "No email provider is configured: set plugins.email in the project configuration.",
+  "email.test": "Send a test email",
+  "email.to": "Recipient",
+  "email.send": "Send",
+  "email.sent": "Test email sent to {to}",
+  "email.configHelp": "The provider is set in the project configuration (config/plugins), not here."
 }

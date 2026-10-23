@@ -19,6 +19,7 @@ export const sections: Section[] = [
   { to: '/settings/users-permissions/advanced', label: 'up.advanced', allowed: (p) => can(p, 'plugin::users-permissions.advanced-settings.read') },
   { to: '/settings/users-permissions/email-templates', label: 'up.emails', allowed: (p) => can(p, 'plugin::users-permissions.email-templates.read') },
   { to: '/settings/users-permissions/providers', label: 'up.providers', allowed: (p) => can(p, 'plugin::users-permissions.providers.read') },
+  { to: '/settings/email', label: 'settings.email', allowed: (p) => can(p, 'plugin::email.settings.read') },
   { to: '/settings/locales', label: 'settings.locales', allowed: (p) => can(p, 'plugin::i18n.locale.read') },
 ]
 

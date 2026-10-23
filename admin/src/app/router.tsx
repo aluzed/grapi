@@ -12,6 +12,7 @@ import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManag
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
 import { ApiTokens } from '@/pages/settings/ApiTokens'
+import { Email } from '@/pages/settings/Email'
 import { Locales } from '@/pages/settings/Locales'
 import { Overview } from '@/pages/settings/Overview'
 import { RoleEditor } from '@/pages/settings/RoleEditor'
@@ -87,6 +88,7 @@ export const router = createBrowserRouter(
             { path: 'users-permissions/advanced', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/advanced')}><UPAdvanced /></RequirePermission> },
             { path: 'users-permissions/email-templates', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/email-templates')}><UPEmails /></RequirePermission> },
             { path: 'users-permissions/providers', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/providers')}><UPProviders /></RequirePermission> },
+            { path: 'email', element: <RequirePermission allowed={settingsAllowed('/settings/email')}><Email /></RequirePermission> },
             { path: 'locales', element: <RequirePermission allowed={settingsAllowed('/settings/locales')}><Locales /></RequirePermission> },
           ],
         },
