@@ -30,7 +30,7 @@ import (
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
-	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/query"
 )
 
 // adminDatabase, when set, points the admin tests at another database.
@@ -2011,7 +2011,7 @@ func TestAdminHistoryRetention(t *testing.T) {
 			t.Fatal(err)
 		}
 		a.OnBootstrap(func(ctx context.Context) error {
-			_, err := a.Documents().E.DB.Exec(ctx, `insert into grapi_history_versions (uid, document_id, status, data, schema_fields, created_at)
+			_, err := a.SQL().Exec(ctx, `insert into grapi_history_versions (uid, document_id, status, data, schema_fields, created_at)
 				values ('api::article.article', 'old', 'draft', '{}', '{}', '2000-01-01T00:00:00Z')`)
 			return err
 		})
@@ -2019,7 +2019,7 @@ func TestAdminHistoryRetention(t *testing.T) {
 	defer stop()
 	count := func(doc string) int {
 		var n int
-		_ = app.Documents().E.DB.QueryRow(context.Background(), `select count(*) from grapi_history_versions where document_id = '`+doc+`'`).Scan(&n)
+		_ = app.SQL().QueryRow(context.Background(), `select count(*) from grapi_history_versions where document_id = '`+doc+`'`).Scan(&n)
 		return n
 	}
 	deadline := time.Now().Add(5 * time.Second)
@@ -2130,7 +2130,7 @@ func TestAdminAuditDetails(t *testing.T) {
 	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) {
 		app = a
 		a.OnBootstrap(func(ctx context.Context) error {
-			_, err := a.Documents().E.DB.Exec(ctx, `insert into grapi_audit_logs (action, date, origin, payload) values ('admin.logout', '2000-01-01T00:00:00Z', 'admin-panel', '{}')`)
+			_, err := a.SQL().Exec(ctx, `insert into grapi_audit_logs (action, date, origin, payload) values ('admin.logout', '2000-01-01T00:00:00Z', 'admin-panel', '{}')`)
 			return err
 		})
 	})
@@ -2138,7 +2138,7 @@ func TestAdminAuditDetails(t *testing.T) {
 	deadline := time.Now().Add(5 * time.Second)
 	for {
 		var n int
-		_ = app.Documents().E.DB.QueryRow(context.Background(), `select count(*) from grapi_audit_logs where date < '2001'`).Scan(&n)
+		_ = app.SQL().QueryRow(context.Background(), `select count(*) from grapi_audit_logs where date < '2001'`).Scan(&n)
 		if n == 0 {
 			break
 		}
@@ -2214,7 +2214,7 @@ func TestAdminAuditExportStreams(t *testing.T) {
 	const rows = 200_000
 	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) {
 		a.OnBootstrap(func(ctx context.Context) error {
-			d := a.Documents().E.DB
+			d := a.SQL()
 			return d.Tx(ctx, func(ctx context.Context) error {
 				payload := `{"uid":"api::article.article","documentId":"abc","fields":["title","summary","body"],"ip":"127.0.0.1","userAgent":"Mozilla/5.0"}`
 				for i := 0; i < rows; i++ {
@@ -2583,7 +2583,7 @@ func TestAdminPurgesExpiredSessions(t *testing.T) {
 		app = a
 		a.OnBootstrap(func(ctx context.Context) error {
 			old := time.Now().Add(-48 * time.Hour).UTC()
-			_, err := a.Documents().E.Create(ctx, "admin::session", map[string]any{
+			_, err := a.Query("admin::session").Create(ctx, map[string]any{
 				"userId": "1", "sessionId": "expired", "deviceId": "d", "origin": "admin", "type": "refresh", "status": "active",
 				"expiresAt": old, "absoluteExpiresAt": old,
 			}, query.Params{})
@@ -2593,7 +2593,7 @@ func TestAdminPurgesExpiredSessions(t *testing.T) {
 	defer stop()
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		n, err := app.Documents().E.Count(context.Background(), "admin::session", query.Params{Where: map[string]any{"sessionId": "expired"}})
+		n, err := app.Query("admin::session").Count(context.Background(), query.Params{Where: map[string]any{"sessionId": "expired"}})
 		if err != nil {
 			t.Fatal(err)
 		}

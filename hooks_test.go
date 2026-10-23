@@ -16,7 +16,7 @@ import (
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/hook"
-	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/query"
 )
 
 // Mirrors the dev-freelance needs from the EXT-002 sketch; it only checks
@@ -155,12 +155,12 @@ func TestCustomRoutes(t *testing.T) {
 	if code, out := do("POST", "/api/account/anonymize", jwt, `{}`); code != 403 {
 		t.Fatalf("without the permission: %d %v", code, out)
 	}
-	role, err := app.Documents().E.FindOne(context.Background(), "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "authenticated"}})
+	role, err := app.Query("plugin::users-permissions.role").FindOne(context.Background(), query.Params{Where: map[string]any{"type": "authenticated"}})
 	if err != nil || role == nil {
 		t.Fatal(err)
 	}
 	roleID, _ := role.Get("id")
-	if _, err := app.Documents().E.Create(context.Background(), "plugin::users-permissions.permission", query.Data{"action": "api::account.account.anonymize", "role": roleID}, query.Params{}); err != nil {
+	if _, err := app.Query("plugin::users-permissions.permission").Create(context.Background(), query.Data{"action": "api::account.account.anonymize", "role": roleID}, query.Params{}); err != nil {
 		t.Fatal(err)
 	}
 	code, out := do("POST", "/api/account/anonymize", jwt, `{}`)

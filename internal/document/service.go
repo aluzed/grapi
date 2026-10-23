@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/events"
 	"github.com/aluzed/grapi/schema"
@@ -648,10 +649,7 @@ func (s *Service) updateDocument(ctx context.Context, uid, documentID string, p 
 }
 
 // DeleteResult is what deleting a document returns.
-type DeleteResult struct {
-	DocumentID string
-	Entries    []query.Row
-}
+type DeleteResult = document.DeleteResult
 
 // deleteCore deletes every version of documentID (in the locale of p).
 func (s *Service) deleteCore(ctx context.Context, uid, documentID string, p Params) (*DeleteResult, error) {

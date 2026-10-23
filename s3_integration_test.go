@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/aluzed/grapi"
-	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/query"
 )
 
 // Needs GRAPI_TEST_S3_ENDPOINT (an S3 compatible store with bucket
@@ -52,11 +52,10 @@ func TestUploadToS3(t *testing.T) {
 	}
 	defer func() { _ = srv.Close() }()
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
 	for _, a := range []string{"upload", "destroy"} {
-		_, _ = e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{})
+		_, _ = app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{})
 	}
 	ts := httptest.NewServer(srv.Handler)
 	defer ts.Close()
@@ -121,11 +120,10 @@ func s3App(t *testing.T, endpoint, acl, extra, params string) (*httptest.Server,
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
 	for _, a := range []string{"upload", "destroy", "findOne"} {
-		_, _ = e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{})
+		_, _ = app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{})
 	}
 	ts := httptest.NewServer(srv.Handler)
 	return ts, func() { ts.Close(); _ = srv.Close() }

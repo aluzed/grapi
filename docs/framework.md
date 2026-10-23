@@ -68,7 +68,24 @@ app.UseDocuments(func(c *document.Context, next document.Next) (any, error) {
 })
 ```
 
-`app.Documents()` gives the Document Service itself once set up.
+`app.Documents()` gives the Document Service itself once set up (`strapi.documents`: `FindMany`, `FindFirst`, `FindOne`, `Count`, `Create`, `Update`, `Delete`, `Publish`, `Unpublish`, `DiscardDraft`). Under it:
+
+```go
+// strapi.db.query(uid): rows by id, no draft and publish or locale logic, lifecycles run.
+theme, err := app.Query("api::theme.theme").FindOne(ctx, query.Params{Where: map[string]any{"id": 3}, Select: []string{"slug"}})
+
+// strapi.db.connection and strapi.db.transaction: raw SQL, in the transaction of ctx when there is one.
+err = app.SQL().Tx(ctx, func(ctx context.Context) error {
+	_, err := app.SQL().Exec(ctx, "update themes set slug = "+app.SQL().Placeholder(1)+" where id = "+app.SQL().Placeholder(2), "retro", 3)
+	return err
+})
+
+// strapi.eventHub: entry.create, media.update... (the events webhooks send).
+off := app.Events().On("entry.create", func(payload map[string]any) {})
+defer off()
+```
+
+`query` is `github.com/aluzed/grapi/query`. No public signature uses a type of `internal/` (`TestNoInternalTypesInPublicAPI`).
 
 ## Routes and policies
 

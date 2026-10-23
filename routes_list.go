@@ -46,7 +46,7 @@ func (a *App) Routes() ([]RouteInfo, error) {
 	if dir == "" {
 		dir = "."
 	}
-	p, err := LoadProject(dir, a.opts.ConfigDir, io.Discard)
+	p, err := loadProject(dir, a.opts.ConfigDir, io.Discard)
 	if err != nil {
 		return nil, err
 	}

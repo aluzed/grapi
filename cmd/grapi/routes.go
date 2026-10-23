@@ -5,9 +5,9 @@ import (
 	"io"
 	"sort"
 
-	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/hook"
 	"github.com/aluzed/grapi/internal/clitable"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // routesList is `grapi routes:list`: Strapi's table, a GET route listed as
@@ -18,7 +18,7 @@ func routesList(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func listCommand(kind string, args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}

@@ -125,7 +125,7 @@ func queryCmd(args []string) error {
 	}
 	defer func() { _ = d.Close() }()
 	e := &query.Engine{DB: d, MD: md}
-	docs := document.New(e, res.Set)
+	var docs documentService = document.New(e, res.Set)
 	if c.Hooks {
 		register, ok := fixtureHooks[*hooks]
 		if !ok {
@@ -231,7 +231,22 @@ func runCase(ctx context.Context, e *query.Engine, qc queryCase, p query.Params)
 	return nil, fmt.Errorf("unknown op %q", qc.Op)
 }
 
-func runDocCase(ctx context.Context, docs *document.Service, qc queryCase) (any, error) {
+// documentService is the Document Service a case runs on: the bare one, or
+// the App's when the fixture has Go hooks.
+type documentService interface {
+	FindMany(ctx context.Context, uid string, p document.Params) ([]query.Row, error)
+	FindFirst(ctx context.Context, uid string, p document.Params) (query.Row, error)
+	FindOne(ctx context.Context, uid, documentID string, p document.Params) (query.Row, error)
+	Count(ctx context.Context, uid string, p document.Params) (int64, error)
+	Create(ctx context.Context, uid string, p document.Params) (query.Row, error)
+	Update(ctx context.Context, uid, documentID string, p document.Params) (query.Row, error)
+	Delete(ctx context.Context, uid, documentID string, p document.Params) (*document.DeleteResult, error)
+	Publish(ctx context.Context, uid, documentID string, p document.Params) ([]query.Row, error)
+	Unpublish(ctx context.Context, uid, documentID string, p document.Params) ([]query.Row, error)
+	DiscardDraft(ctx context.Context, uid, documentID string, p document.Params) ([]query.Row, error)
+}
+
+func runDocCase(ctx context.Context, docs documentService, qc queryCase) (any, error) {
 	p := document.Params{}
 	for k, v := range qc.Params {
 		p[k] = v

@@ -10,6 +10,7 @@ import (
 	"github.com/aluzed/grapi/internal/db/schemasync"
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
+	"github.com/aluzed/grapi/internal/project"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -61,7 +62,7 @@ type typeChange struct {
 	wasLocalized, localize bool
 }
 
-func changedTypes(old map[string]any, p *Project) []typeChange {
+func changedTypes(old map[string]any, p *project.Project) []typeChange {
 	var out []typeChange
 	for uid, ct := range p.Res.Set.ContentTypes.All() {
 		entry, ok := old[uid]
@@ -81,7 +82,7 @@ func changedTypes(old map[string]any, p *Project) []typeChange {
 // disableMigrations runs before the schema sync, as Strapi's beforeSync:
 // i18n turned off keeps the default locale's rows only, draft and publish
 // turned off drops the drafts.
-func (a *App) disableMigrations(ctx context.Context, p *Project) error {
+func (a *App) disableMigrations(ctx context.Context, p *project.Project) error {
 	old, err := readStoredSchema(ctx, p.DB)
 	if err != nil || old == nil {
 		return err
@@ -118,7 +119,7 @@ func (a *App) disableMigrations(ctx context.Context, p *Project) error {
 // enableMigrations runs after the sync, as Strapi's afterSync: i18n turned
 // on puts the default locale on the rows without one, draft and publish
 // turned on gives every published entry its draft (discardDraft).
-func (a *App) enableMigrations(ctx context.Context, p *Project, docs *document.Service) error {
+func (a *App) enableMigrations(ctx context.Context, p *project.Project, docs *document.Service) error {
 	old, err := readStoredSchema(ctx, p.DB)
 	if err != nil || old == nil {
 		return err

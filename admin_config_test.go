@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // A schema change through the content type builder keeps the view
@@ -132,7 +133,7 @@ func TestAdminReadsStrapiConfiguration(t *testing.T) {
 		t.Fatal(err)
 	}
 	const key = "plugin_content_manager_configuration_content_types::api::article.article"
-	p, err := grapi.LoadProject(dir, "", io.Discard)
+	p, err := project.Load(dir, "", io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +167,7 @@ func TestAdminReadsStrapiConfiguration(t *testing.T) {
 		}
 	}
 
-	p, err = grapi.LoadProject(dir, "", io.Discard)
+	p, err = project.Load(dir, "", io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}

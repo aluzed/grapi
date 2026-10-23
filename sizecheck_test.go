@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/aluzed/grapi"
-	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/query"
 )
 
 type limitedStorage struct{ checked int64 }
@@ -60,10 +60,9 @@ func TestProviderCheckFileSize(t *testing.T) {
 	}
 	defer func() { _ = srv.Close() }()
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
-	if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
+	if _, err := app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
 		t.Fatal(err)
 	}
 	ts := httptest.NewServer(srv.Handler)

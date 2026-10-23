@@ -72,7 +72,12 @@ func New(opts Options) *App {
 
 // Documents is the Document Service, available once Setup ran (in route
 // handlers and hooks).
-func (a *App) Documents() *document.Service { return a.docs }
+func (a *App) Documents() *DocumentService {
+	if a.docs == nil {
+		return nil
+	}
+	return &DocumentService{a.docs}
+}
 
 func (a *App) stderr() io.Writer {
 	if a.opts.Stderr != nil {

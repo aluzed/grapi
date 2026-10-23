@@ -13,6 +13,7 @@ import (
 	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/hook"
 	"github.com/aluzed/grapi/internal/db/store"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 func TestPhases(t *testing.T) {
@@ -81,7 +82,7 @@ func TestSyncHookOldContentTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = srv.Close()
-	p, err := grapi.LoadProject(dir, "", io.Discard)
+	p, err := project.Load(dir, "", io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}

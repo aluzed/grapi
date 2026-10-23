@@ -14,6 +14,7 @@ import (
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/internal/db/store"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 func TestEmailConfirmationLink(t *testing.T) {
@@ -41,7 +42,7 @@ func TestEmailConfirmationLink(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler)
 	defer ts.Close()
 
-	p, err := grapi.LoadProject(dir, "", io.Discard)
+	p, err := project.Load(dir, "", io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}

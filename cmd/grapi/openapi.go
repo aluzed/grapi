@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // openAPI is `grapi openapi [-o file]`: the content API's document, on
@@ -15,7 +15,7 @@ func openAPI(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}

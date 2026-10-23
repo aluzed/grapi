@@ -15,6 +15,7 @@ import (
 
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/db/metadata"
+	pquery "github.com/aluzed/grapi/query"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -26,20 +27,8 @@ type Engine struct {
 	Lifecycles *Lifecycles
 }
 
-// Params of a query, as Strapi's query builder init() takes them. Where,
-// Filters and OrderBy are decoded JSON (objects, arrays and scalars).
-type Params struct {
-	Select  []string
-	Where   any
-	Filters any
-	OrderBy any
-	Limit   *int
-	Offset  *int
-	Search  string
-	// Populate is Strapi's populate: true, a list of paths, or an object
-	// mapping relations to true or to their own params.
-	Populate any
-}
+// Params are the public query.Params.
+type Params = pquery.Params
 
 // FilterFunc gives the filters of a model: Strapi's query `filters` function,
 // applied to the root model and to every populated one (status filters).

@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/schemasync"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // dbSync is `grapi db:sync --dry-run`: what the start-up sync would do on
@@ -23,7 +23,7 @@ func dbSync(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	if *printSchema {
-		p, err := grapi.LoadProject(*dir, *configDir, stderr)
+		p, err := project.Load(*dir, *configDir, stderr)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func dbSync(args []string, stdout, stderr io.Writer) error {
 	if !*dry {
 		return fmt.Errorf("db:sync only runs with --dry-run; grapi start applies the sync")
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func dbCheck(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}

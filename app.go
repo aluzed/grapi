@@ -28,7 +28,6 @@ import (
 	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/cron"
 	"github.com/aluzed/grapi/internal/db"
-	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/migrate"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/schemasync"
@@ -39,8 +38,8 @@ import (
 	"github.com/aluzed/grapi/internal/media/provider"
 	"github.com/aluzed/grapi/internal/openapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/project"
 	"github.com/aluzed/grapi/internal/ratelimit"
-	"github.com/aluzed/grapi/internal/registry"
 	"github.com/aluzed/grapi/internal/webhooks"
 )
 
@@ -474,20 +473,16 @@ func generateSecret(c *config.Config, dir, key string) (string, error) {
 	return secret, nil
 }
 
-// Project is a loaded Strapi project: its config, schemas and database.
-type Project struct {
-	Dir     string
-	Conf    *config.Config
-	Res     *registry.Result
-	MD      *metadata.Metadata
-	Desired *metadata.Schema
-	DB      *db.DB
-	Log     *slog.Logger
+func init() {
+	project.Loader = loadProject
+	project.OpenAPIOf = projectOpenAPI
+	project.GraphQLOf = func(p *project.Project) bool { return graphQLConfig(p.Conf, p.Dir) != nil }
+	project.RoutesOf = projectRoutes
 }
 
-// LoadProject reads the config and the schemas of dir and opens its
+// loadProject reads the config and the schemas of dir and opens its
 // database, without writing anything.
-func LoadProject(dir, configDir string, stderr io.Writer) (*Project, error) {
+func loadProject(dir, configDir string, stderr io.Writer) (*project.Project, error) {
 	level := new(slog.LevelVar)
 	level.Set(logging.DefaultLevel)
 	log := logging.New(stderr, logging.Text, level)
@@ -526,12 +521,12 @@ func LoadProject(dir, configDir string, stderr io.Writer) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Project{Dir: dir, Conf: conf, Res: res, MD: md, Desired: desired, DB: d, Log: log}, nil
+	return &project.Project{Dir: dir, Conf: conf, Res: res, MD: md, Desired: desired, DB: d, Log: log}, nil
 }
 
-// OpenAPI is the project's content API document, with the routes grapi
-// serves. It writes nothing to the database.
-func (p *Project) OpenAPI() ([]byte, error) {
+// projectOpenAPI is the project's content API document, with the routes
+// grapi serves. It writes nothing to the database.
+func projectOpenAPI(p *project.Project) ([]byte, error) {
 	cfg := apiConfig(p.Conf, p.Dir)
 	pkg := readPackage(p.Dir)
 	engine := &query.Engine{DB: p.DB, MD: p.MD}
@@ -539,11 +534,7 @@ func (p *Project) OpenAPI() ([]byte, error) {
 	return openapi.JSON(openapi.Generate(p.Res.Set, openapi.Options{Info: openapi.Info{Name: pkg.Name, Version: pkg.Version}, Served: api.Serves}))
 }
 
-// GraphQLEnabled reports whether the graphql plugin is on.
-func (p *Project) GraphQLEnabled() bool { return graphQLConfig(p.Conf, p.Dir) != nil }
-
-// Routes is the project's route table, without starting anything.
-func (p *Project) Routes() []httpapi.RouteInfo {
+func projectRoutes(p *project.Project) []httpapi.RouteInfo {
 	engine := &query.Engine{DB: p.DB, MD: p.MD}
 	cfg := apiConfig(p.Conf, p.Dir)
 	return httpapi.New(cfg, p.DB, p.Res.Set, document.New(engine, p.Res.Set), p.Log).Routes()
@@ -554,7 +545,7 @@ func (p *Project) Routes() []httpapi.RouteInfo {
 type Server struct {
 	Handler http.Handler
 	Addr    string
-	project *Project
+	project *project.Project
 	stop    func()
 }
 
@@ -569,7 +560,7 @@ func (s *Server) Close() error {
 // Setup loads the project, syncs its database and runs the bootstrap; the
 // returned handler serves the API (to embed grapi in another server).
 func (a *App) Setup() (*Server, error) {
-	p, err := LoadProject(a.opts.Dir, a.opts.ConfigDir, a.stderr())
+	p, err := loadProject(a.opts.Dir, a.opts.ConfigDir, a.stderr())
 	if err != nil {
 		return nil, err
 	}
@@ -581,7 +572,7 @@ func (a *App) Setup() (*Server, error) {
 	return srv, nil
 }
 
-func (a *App) setup(p *Project) (*Server, error) {
+func (a *App) setup(p *project.Project) (*Server, error) {
 	dir, conf, res, md, desired, d, log := &p.Dir, p.Conf, p.Res, p.MD, p.Desired, p.DB, p.Log
 	ctx := context.Background()
 	for _, fn := range a.onRegister {

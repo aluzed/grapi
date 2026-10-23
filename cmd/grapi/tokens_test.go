@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // A project managed from the CLI only: grant a permission, create a
@@ -24,15 +25,15 @@ func TestTokensAndPermissions(t *testing.T) {
 	if code := run([]string{"new", "demo"}, &out, &out); code != 0 {
 		t.Fatalf("new: %s", out.String())
 	}
-	project := filepath.Join(dir, "demo")
+	projectDir := filepath.Join(dir, "demo")
 	schema := `{"kind":"collectionType","collectionName":"notes","info":{"singularName":"note","pluralName":"notes","displayName":"Note"},"options":{},"attributes":{"text":{"type":"string"}}}`
-	if err := os.MkdirAll(filepath.Join(project, "src/api/note/content-types/note"), 0o750); err != nil {
+	if err := os.MkdirAll(filepath.Join(projectDir, "src/api/note/content-types/note"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(project, "src/api/note/content-types/note/schema.json"), []byte(schema), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(projectDir, "src/api/note/content-types/note/schema.json"), []byte(schema), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	srv, err := grapi.New(grapi.Options{Dir: project, Stderr: &out}).Setup()
+	srv, err := grapi.New(grapi.Options{Dir: projectDir, Stderr: &out}).Setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,14 +56,14 @@ func TestTokensAndPermissions(t *testing.T) {
 		t.Fatalf("public before grant: %d", c)
 	}
 	out.Reset()
-	if code := run([]string{"permissions:grant", "public", "api::note.note.find", "-dir", project}, &out, &out); code != 0 {
+	if code := run([]string{"permissions:grant", "public", "api::note.note.find", "-dir", projectDir}, &out, &out); code != 0 {
 		t.Fatalf("grant: %s", out.String())
 	}
 	if c := get(""); c != 200 {
 		t.Fatalf("public after grant: %d", c)
 	}
 	out.Reset()
-	if code := run([]string{"api-token:create", "-dir", project, "--name", "ci", "--type", "custom", "--permissions", "api::note.note.find"}, &out, &out); code != 0 {
+	if code := run([]string{"api-token:create", "-dir", projectDir, "--name", "ci", "--type", "custom", "--permissions", "api::note.note.find"}, &out, &out); code != 0 {
 		t.Fatalf("token: %s", out.String())
 	}
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
@@ -70,14 +71,14 @@ func TestTokensAndPermissions(t *testing.T) {
 	if len(token) != 256 {
 		t.Fatalf("token %q", token)
 	}
-	run([]string{"permissions:revoke", "public", "api::note.note.find", "-dir", project}, &out, &out)
+	run([]string{"permissions:revoke", "public", "api::note.note.find", "-dir", projectDir}, &out, &out)
 	if c := get(""); c != 403 {
 		t.Fatalf("public after revoke: %d", c)
 	}
 	if c := get(token); c != 200 {
 		t.Fatalf("custom token: %d", c)
 	}
-	p, err := grapi.LoadProject(project, "", io.Discard)
+	p, err := project.Load(projectDir, "", io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +89,7 @@ func TestTokensAndPermissions(t *testing.T) {
 		t.Fatalf("lastUsedAt is set on use: %v %v", last, err)
 	}
 	out.Reset()
-	if code := run([]string{"api-token:regenerate", "-dir", project, "--id", "1"}, &out, &out); code != 0 {
+	if code := run([]string{"api-token:regenerate", "-dir", projectDir, "--id", "1"}, &out, &out); code != 0 {
 		t.Fatalf("regenerate: %s", out.String())
 	}
 	lines = strings.Split(strings.TrimSpace(out.String()), "\n")
@@ -100,7 +101,7 @@ func TestTokensAndPermissions(t *testing.T) {
 		t.Fatalf("the new key: %d", c)
 	}
 	out.Reset()
-	run([]string{"api-token:list", "-dir", project}, &out, &out)
+	run([]string{"api-token:list", "-dir", projectDir}, &out, &out)
 	if !strings.Contains(out.String(), "ci") || strings.Contains(out.String(), token) {
 		t.Fatalf("list: %s", out.String())
 	}

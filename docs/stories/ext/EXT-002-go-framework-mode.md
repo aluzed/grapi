@@ -76,7 +76,7 @@ func main() {
 ## Critères d'acceptation
 - [ ] Le projet d'exemple `examples/dev-freelance` reproduit les règles de slug, de hash, le middleware IA (avec un faux LLM) et l'invalidation du cache, et passe les 21 cas de caractérisation x 3 chemins (admin, REST, documents) avec le même résultat que la prod Strapi actuelle.
 - [x] Les API publiques sont documentées (godoc) et couvertes par un test d'exemple (`Example*`).
-- [ ] Aucun type de `internal/` n'apparaît dans les signatures publiques.
+- [x] Aucun type de `internal/` n'apparaît dans les signatures publiques.
 
 ## Avancement
 - Fait : paquet racine `grapi` (`New`, `Setup` qui renvoie le `http.Handler`, `Start`, `UseDocuments`, `OnRow*` ... `Bind`), paquets publics `document` et `hook`. Le binaire `cmd/grapi` n'est plus qu'un `main` qui appelle `grapi.New(...).Start()`. Test de bout en bout : `hooks_test.go` (base neuve, bootstrap, inscription par HTTP, hook de ligne et middleware appliqués).
@@ -89,6 +89,7 @@ func main() {
 - Types internes encore visibles dans l'API publique (relevé du 2026-10-23, `go doc -all`) : `App.Documents()` renvoie le `*document.Service` interne, dont les méthodes renvoient des `query.Row` ; `Project` expose `Conf`, `Res`, `MD`, `Desired` et `DB`, et `Project.Routes()` des `httpapi.RouteInfo`. Les alias (`document.Context`, `EmailProvider`, `GraphQL*`, `Upload*`) sont le motif retenu. Pour le critère 3, il faut un `document.Service` et une ligne publics, et sortir `Project` de l'API (il sert à `cmd/grapi`).
 - Exemple réel : `compat/fixtures/devfreelance/framework`, le backend de dev-freelance sur grapi (règles de ligne, middlewares de documents avec un faux LLM, port de `slugify` 1.6.6). Le banc le compile et le sert à la place de `grapi` : 21 cas de caractérisation et toggles IA identiques à Strapi par REST. Restent l'invalidation de cache et les chemins admin et documents.
 
+- API publique sans type interne (`TestNoInternalTypesInPublicAPI`, par `go/types` sur `grapi`, `admin`, `document`, `hook`, `schema`) : les types du Document Service (`Params`, `Action`, `Context`, `Middleware`, `DeleteResult`) sont définis dans `document` et repris par le paquet interne ; `app.Documents()` rend un `*grapi.DocumentService` ; nouveaux `app.Query(uid)` (`strapi.db.query`, paramètres dans le paquet public `query`), `app.SQL()` (`strapi.db.connection` et `transaction`, dans la transaction du ctx) et `app.Events()` (`strapi.eventHub`). Le chargement de projet du CLI passe dans `internal/project`. La fixture dev-freelance n'importe plus de paquet interne, comme un vrai projet hors du module.
 ## Notes techniques
 - Les paquets publics (`grapi`, `schema`, `document`, `hook`, `errors`) suivent SemVer dès la v1. Avant la v1, les changements cassants sont signalés dans le CHANGELOG.
 - Les hooks Go reçoivent `context.Context` pour la transaction et l'annulation.

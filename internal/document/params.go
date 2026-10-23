@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/internal/db/metadata"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/schema"
@@ -30,9 +31,8 @@ func validation(format string, args ...any) error {
 	return &ValidationError{Msg: fmt.Sprintf(format, args...)}
 }
 
-// Params are the document service params: Strapi's REST-shaped query
-// (sort, filters, fields, populate, pagination) plus status and locale.
-type Params map[string]any
+// Params are the public document.Params.
+type Params = document.Params
 
 // model is a content type or a component, as the param conversion sees it.
 type model struct {

@@ -5,43 +5,36 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/aluzed/grapi/document"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/schema"
 )
 
-// Action is a document service method, as strapi.documents.use sees it.
-type Action string
+// The types hooks see are defined by the public document package.
+type (
+	// Action is document.Action.
+	Action = document.Action
+	// Context is document.Context.
+	Context = document.Context
+	// Next is document.Next.
+	Next = document.Next
+	// Middleware is document.Middleware.
+	Middleware = document.Middleware
+)
 
 // Actions.
 const (
-	FindOne      Action = "findOne"
-	FindFirst    Action = "findFirst"
-	FindMany     Action = "findMany"
-	Count        Action = "count"
-	Create       Action = "create"
-	Update       Action = "update"
-	Delete       Action = "delete"
-	Publish      Action = "publish"
-	Unpublish    Action = "unpublish"
-	DiscardDraft Action = "discardDraft"
+	FindOne      = document.FindOne
+	FindFirst    = document.FindFirst
+	FindMany     = document.FindMany
+	Count        = document.Count
+	Create       = document.Create
+	Update       = document.Update
+	Delete       = document.Delete
+	Publish      = document.Publish
+	Unpublish    = document.Unpublish
+	DiscardDraft = document.DiscardDraft
 )
-
-// Context is a document service call going through the middlewares. Params
-// may be changed before next; the documentId is Params["documentId"].
-type Context struct {
-	Ctx         context.Context
-	UID         string
-	ContentType *schema.ContentType
-	Action      Action
-	Params      Params
-}
-
-// Next runs the rest of the chain and the action.
-type Next func() (any, error)
-
-// Middleware is strapi.documents.use: registration order is execution
-// order, Koa style.
-type Middleware func(c *Context, next Next) (any, error)
 
 type middlewares struct {
 	mu   sync.RWMutex

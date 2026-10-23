@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"github.com/aluzed/grapi"
-	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/query"
 )
 
 func pngBody(t *testing.T, w, h int, fileInfo string) (*bytes.Buffer, string) {
@@ -53,16 +53,15 @@ func TestUploadReplaceUpdateDelete(t *testing.T) {
 	}
 	defer func() { _ = srv.Close() }()
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
 	for _, a := range []string{"upload", "findOne", "destroy"} {
-		if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{}); err != nil {
+		if _, err := app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api." + a, "role": roleID}, query.Params{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	var events []string
-	app.Documents().Events.Subscribe(func(name string, _ map[string]any) { events = append(events, name) })
+	app.Events().Subscribe(func(name string, _ map[string]any) { events = append(events, name) })
 	ts := httptest.NewServer(srv.Handler)
 	defer ts.Close()
 	send := func(method, url, ct string, body *bytes.Buffer) (int, any) {
@@ -154,10 +153,9 @@ func TestUploadLimitInputPixels(t *testing.T) {
 	}
 	defer func() { _ = srv.Close() }()
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
-	if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
+	if _, err := app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
 		t.Fatal(err)
 	}
 	ts := httptest.NewServer(srv.Handler)
@@ -206,10 +204,9 @@ func TestUploadSizeLimitLeavesNoTempFile(t *testing.T) {
 	}
 	defer func() { _ = srv.Close() }()
 	ctx := context.Background()
-	e := app.Documents().E
-	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	public, _ := app.Query("plugin::users-permissions.role").FindOne(ctx, query.Params{Where: map[string]any{"type": "public"}})
 	roleID, _ := public.Get("id")
-	if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
+	if _, err := app.Query("plugin::users-permissions.permission").Create(ctx, query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
 		t.Fatal(err)
 	}
 	ts := httptest.NewServer(srv.Handler)

@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 const coreStoreUID = "strapi::core-store"
@@ -24,7 +24,7 @@ type storeEntry struct {
 	Tag         any `json:"tag"`
 }
 
-func engineOf(p *grapi.Project) *query.Engine { return &query.Engine{DB: p.DB, MD: p.MD} }
+func engineOf(p *project.Project) *query.Engine { return &query.Engine{DB: p.DB, MD: p.MD} }
 
 // configurationDump is `grapi configuration:dump [-f file] [-p]`: the
 // plugin_ entries of the core store, as Strapi writes them.
@@ -35,7 +35,7 @@ func configurationDump(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func configurationRestore(args []string, stdin io.Reader, stdout, stderr io.Writ
 	if err := json.Unmarshal(raw, &entries); err != nil {
 		return fmt.Errorf("invalid input data: %w. Expected a valid JSON array", err)
 	}
-	p, err := grapi.LoadProject(*dir, *configDir, stderr)
+	p, err := project.Load(*dir, *configDir, stderr)
 	if err != nil {
 		return err
 	}

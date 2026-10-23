@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // report is `grapi report`: versions and project facts, never a secret.
@@ -17,7 +17,7 @@ func report(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	fmt.Fprintf(stdout, "grapi: %s\ngo: %s\nos: %s/%s\n", version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	p, err := grapi.LoadProject(*dir, *configDir, io.Discard)
+	p, err := project.Load(*dir, *configDir, io.Discard)
 	if err != nil {
 		fmt.Fprintf(stdout, "project: %v\n", err)
 		return nil

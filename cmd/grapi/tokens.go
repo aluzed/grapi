@@ -11,9 +11,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/internal/auth/apitoken"
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 const (
@@ -23,8 +23,8 @@ const (
 	upPermissionUID = "plugin::users-permissions.permission"
 )
 
-func openEngine(dir, configDir string, stderr io.Writer) (*grapi.Project, *query.Engine, error) {
-	p, err := grapi.LoadProject(dir, configDir, stderr)
+func openEngine(dir, configDir string, stderr io.Writer) (*project.Project, *query.Engine, error) {
+	p, err := project.Load(dir, configDir, stderr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -145,7 +145,7 @@ func apiTokenList(args []string, stdout, stderr io.Writer) error {
 }
 
 // newAccessKey is the api-token service's key, see apitoken.New.
-func newAccessKey(p *grapi.Project, salt string) (string, query.Data, error) {
+func newAccessKey(p *project.Project, salt string) (string, query.Data, error) {
 	secret, _ := p.Conf.String("admin.secrets.encryptionKey")
 	key, cols, err := apitoken.New(salt, secret)
 	return key, query.Data(cols), err

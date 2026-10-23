@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/internal/project"
 )
 
 // The project's database/migrations run at start, once.
@@ -32,7 +33,7 @@ func TestProjectMigrationsRun(t *testing.T) {
 		}
 		_ = srv.Close()
 	}
-	p, err := grapi.LoadProject(dir, "", &bytes.Buffer{})
+	p, err := project.Load(dir, "", &bytes.Buffer{})
 	if err != nil {
 		t.Fatal(err)
 	}
