@@ -492,5 +492,7 @@
   "filters.op.$null": "est vide",
   "filters.op.$notNull": "n'est pas vide",
   "filters.true": "vrai",
-  "filters.false": "faux"
+  "filters.false": "faux",
+  "cm.duplicate": "Dupliquer",
+  "cm.duplicateOf": "Copie de {name}"
 }

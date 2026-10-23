@@ -468,3 +468,15 @@ export function FieldsGrid({
     </div>
   )
 }
+
+// withoutIDs drops the component ids of a form value, so that saving a
+// copy creates new components instead of moving the original ones.
+export function withoutIDs(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(withoutIDs)
+  if (v && typeof v === 'object' && !(v instanceof Date)) {
+    const o = v as Record<string, unknown>
+    if ('documentId' in o) return o
+    return Object.fromEntries(Object.entries(o).filter(([k]) => k !== 'id').map(([k, x]) => [k, withoutIDs(x)]))
+  }
+  return v
+}

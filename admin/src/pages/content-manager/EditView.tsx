@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { ArrowLeft, Copy, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
-import { fromInput, isEditable, JSONError, LayoutGrid, toInput, type FieldContext, type Values } from './fields'
+import { fromInput, isEditable, JSONError, LayoutGrid, toInput, withoutIDs, type FieldContext, type Values } from './fields'
 import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
@@ -63,6 +63,12 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     enabled: single || documentId !== undefined,
     retry: false,
   })
+  const from = !single && documentId === undefined ? params.get('from') : null
+  const original = useQuery({
+    queryKey: ['cm', 'entry', model.uid, from, locale],
+    queryFn: () => api.get<Entry>(`${entryPath(model.uid, from!)}${loc}`),
+    enabled: from !== null,
+  })
   const missingLocale = !single && documentId !== undefined && entry.isSuccess && entry.data === null
   // A new locale version shares the non localized fields of the others:
   // they come from the default locale, never from the defaults.
@@ -83,6 +89,18 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   useEffect(() => {
     if (single ? !entry.isSuccess : !creating && !entry.data) return
     if (missingLocale && source.isPending && source.fetchStatus !== 'idle') return
+    if (from !== null) {
+      if (!original.data) return
+      // A copy: unique values cannot be duplicated, they stay empty.
+      const next: Values = {}
+      for (const name of fields) {
+        const attr = model.attributes[name]
+        if (!attr || !isEditable(attr) || attr.type === 'password') continue
+        next[name] = attr.unique || attr.type === 'uid' ? toInput(attr, null, ctx) : withoutIDs(toInput(attr, original.data[name], ctx))
+      }
+      setValues(next)
+      return
+    }
     const src: Values = entry.data ?? {}
     const shared: Values = source.data ?? {}
     const next: Values = {}
@@ -94,7 +112,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     }
     setValues(next)
     // ctx and fields derive from props that key this component.
-  }, [entry.data, entry.isSuccess, creating, source.data, source.isPending])
+  }, [entry.data, entry.isSuccess, creating, source.data, source.isPending, original.data])
 
   const payload = (): Values | null => {
     const out: Values = {}
@@ -163,7 +181,14 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     if (data) save.mutate(data)
   }
 
-  const title = single ? model.info.displayName : creating ? t('cm.newEntry') : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
+  const originalTitle = original.data ? String(original.data[model.mainField] ?? original.data.documentId) : ''
+  const title = single
+    ? model.info.displayName
+    : from !== null
+      ? t('cm.duplicateOf', { name: originalTitle })
+      : creating
+        ? t('cm.newEntry')
+        : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
   const canSave = creating ? model.permissions.create : model.permissions.update
 
   return (
@@ -210,6 +235,17 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
             {canSave && (
               <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full md:w-auto">
                 {t('common.save')}
+              </Button>
+            )}
+            {!creating && !single && model.permissions.create && (
+              <Button
+                variant="outline"
+                title={t('cm.duplicate')}
+                icon={<Copy className="h-4 w-4" />}
+                onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(documentId!)}${locale ? `&locale=${locale}` : ''}`)}
+                className="w-full md:w-auto"
+              >
+                {t('cm.duplicate')}
               </Button>
             )}
             {!creating && model.draftAndPublish && model.permissions.publish && (

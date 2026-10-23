@@ -492,5 +492,7 @@
   "filters.op.$null": "is empty",
   "filters.op.$notNull": "is not empty",
   "filters.true": "true",
-  "filters.false": "false"
+  "filters.false": "false",
+  "cm.duplicate": "Duplicate",
+  "cm.duplicateOf": "Copy of {name}"
 }

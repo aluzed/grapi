@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
@@ -124,6 +124,12 @@ function List({ model }: { model: Model }) {
 
   const rowActions = (e: Entry): EntityAction[] => {
     const out: EntityAction[] = [{ label: t('cm.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => navigate(editPath(e)) }]
+    if (model.permissions.create)
+      out.push({
+        label: t('cm.duplicate'),
+        icon: <Copy className="h-4 w-4" />,
+        onSelect: () => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(e.documentId)}${locale ? `&locale=${locale}` : ''}`),
+      })
     if (model.draftAndPublish && model.permissions.publish) {
       out.push({ label: t('cm.publish'), icon: <Send className="h-4 w-4" />, onSelect: () => void runBulk('publish', [e.documentId]) })
       if (e.status !== 'draft') out.push({ label: t('cm.unpublish'), icon: <Undo2 className="h-4 w-4" />, onSelect: () => void runBulk('unpublish', [e.documentId]) })

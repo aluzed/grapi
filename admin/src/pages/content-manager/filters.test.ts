@@ -34,3 +34,8 @@ test('parseFilters ignores garbage', () => {
   expect(parseFilters('nope')).toEqual([])
   expect(parseFilters('[{"field":"a","op":"$eq","value":"1"},{"x":1}]')).toEqual([{ field: 'a', op: '$eq', value: '1' }])
 })
+
+test('withoutIDs keeps relations, drops component ids', async () => {
+  const { withoutIDs } = await import('./fields')
+  expect(withoutIDs({ id: 3, text: 'a', cell: { id: 4, x: 1 }, rel: [{ documentId: 'd', label: 'l' }] })).toEqual({ text: 'a', cell: { x: 1 }, rel: [{ documentId: 'd', label: 'l' }] })
+})

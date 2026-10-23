@@ -44,6 +44,7 @@ export type Information = {
 export type Attribute = {
   type: string
   required?: boolean
+  unique?: boolean
   enum?: string[]
   relation?: string
   target?: string
