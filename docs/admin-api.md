@@ -4,6 +4,10 @@ L'API de l'admin de grapi (décision D1, option B : `docs/decisions/D1-admin.md`
 
 Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert la SPA (`admin/`), ou une page d'attente si le binaire a été compilé sans elle.
 
+## Tests
+
+`admin_test.go` couvre l'API de bout en bout, dont un test de fumée sur tous les fixtures du banc (`TestAdminSmokeFixtures`). Avec le tag `integration` et `GRAPI_TEST_PG_DSN` (`make ci`, Postgres du homelab), la même suite tourne aussi sur Postgres.
+
 ## Format
 - Succès : `{"data": ...}`.
 - Erreur : `{"data": null, "error": {"status", "name", "message", "details"}}`. Une erreur de validation porte `details.errors: [{path: [...], message}]`.

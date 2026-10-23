@@ -3,6 +3,7 @@ package grapi_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -21,6 +22,9 @@ import (
 
 	"github.com/aluzed/grapi"
 )
+
+// adminDatabase, when set, points the admin tests at another database.
+var adminDatabase func(t *testing.T)
 
 type adminClient struct {
 	t      *testing.T
@@ -78,6 +82,9 @@ func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, 
 	}
 	t.Setenv("DATABASE_CLIENT", "sqlite")
 	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	if adminDatabase != nil {
+		adminDatabase(t)
+	}
 	t.Setenv("JWT_SECRET", "test")
 	t.Setenv("ADMIN_JWT_SECRET", "admin-test")
 	t.Setenv("API_TOKEN_SALT", "salt-test")
@@ -1150,5 +1157,73 @@ func TestAdminViewConfiguration(t *testing.T) {
 	body, _ = json.Marshal(cfg)
 	if s, _, _ := c.do("PUT", path, string(body)); s != 400 {
 		t.Fatalf("blocks take a full row: %d", s)
+	}
+}
+
+// Every admin read of every fixture answers: a smoke test over the
+// schemas of the compat bench, devfreelance included.
+func TestAdminSmokeFixtures(t *testing.T) {
+	for _, fx := range []string{"basic", "relations", "components", "i18n-dp", "devfreelance", "naming"} {
+		t.Run(fx, func(t *testing.T) {
+			ts, _, stop := newAdminFixture(t, fx)
+			defer stop()
+			c := newAdminClient(t, ts.URL)
+			_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+			c.token = dataOf(b)["token"].(string)
+			for _, path := range []string{"/homepage", "/content-manager/components", "/content-type-builder/schema", "/permissions", "/users-permissions/roles", "/upload/files"} {
+				if s, b, _ := c.do("GET", path, ""); s != 200 {
+					t.Errorf("%s: %d %v", path, s, b)
+				}
+			}
+			s, b, _ := c.do("GET", "/content-manager/models", "")
+			if s != 200 {
+				t.Fatalf("models: %d %v", s, b)
+			}
+			read := 0
+			defer func() {
+				if read == 0 {
+					t.Error("no entry was read")
+				}
+				t.Logf("%d entries read", read)
+			}()
+			for _, x := range b["data"].([]any) {
+				m := x.(map[string]any)
+				uid := m["uid"].(string)
+				if s, b, _ := c.do("GET", "/content-manager/configuration/"+uid, ""); s != 200 {
+					t.Errorf("configuration %s: %d %v", uid, s, b)
+				}
+				if m["kind"] == "singleType" {
+					if s, b, _ := c.do("GET", "/content-manager/single-types/"+uid, ""); s != 200 {
+						t.Errorf("single type %s: %d %v", uid, s, b)
+					}
+					continue
+				}
+				// A draft takes empty data; a type without draft and publish
+				// may refuse it (required fields), which is fine here.
+				if s, b, _ := c.do("POST", "/content-manager/collection-types/"+uid, `{"data":{}}`); s != 201 && s != 400 {
+					t.Errorf("create %s: %d %v", uid, s, b)
+				}
+				s, b, _ := c.do("GET", "/content-manager/collection-types/"+uid+"?pageSize=5", "")
+				if s != 200 {
+					t.Errorf("list %s: %d %v", uid, s, b)
+					continue
+				}
+				if list := b["data"].([]any); len(list) > 0 {
+					id := list[0].(map[string]any)["documentId"].(string)
+					if s, b, _ := c.do("GET", "/content-manager/collection-types/"+uid+"/"+id, ""); s != 200 {
+						t.Errorf("entry %s: %d %v", uid, s, b)
+					}
+					read++
+				}
+				for name, a := range m["attributes"].(map[string]any) {
+					attr := a.(map[string]any)
+					if attr["type"] == "relation" && attr["target"] != nil && !strings.HasPrefix(fmt.Sprint(attr["relation"]), "morph") {
+						if s, b, _ := c.do("GET", "/content-manager/relations/"+uid+"/"+name, ""); s != 200 {
+							t.Errorf("relation %s.%s: %d %v", uid, name, s, b)
+						}
+					}
+				}
+			}
+		})
 	}
 }
