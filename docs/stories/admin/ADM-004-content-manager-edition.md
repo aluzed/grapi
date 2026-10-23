@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # ADM-004 : Content Manager : vue édition (champs, composants, zones dynamiques, relations, D&P, i18n)
@@ -57,7 +57,8 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - « Remplir depuis une autre locale » : modale avec la locale source, copie des seuls champs localisés et modifiables, rien n'est enregistré avant « Enregistrer » (`admin/src/pages/content-manager/fill.ts`, testé, vérifié dans Chrome). La règle « localisé » est celle du serveur (option, relation ou uid) : un champ sans option est partagé, et le formulaire d'une nouvelle locale l'affiche avec sa valeur au lieu d'un champ vide (le serveur gardait déjà la valeur partagée).
 - Aller-retour par type : le formulaire rend chaque type à l'identique (`roundtrip.test.ts`, fuseau Europe/Paris) et l'API admin relit ce qu'elle a écrit (`TestAdminAttributeRoundTrip`). Les dates sont affichées en heure locale et renvoyées au même instant, à la milliseconde (avant : décalage du fuseau à chaque enregistrement et secondes perdues). `timestamp`, lu en millisecondes comme dans Strapi, est éditable. Vérifié dans Chrome : enregistrer sans rien changer garde les valeurs.
 - Composants et zones dynamiques : ajout, déplacement et retrait persistent avec les charges de l'EditView (ids conservés) ; `max` refuse l'enregistrement sans draft & publish et la publication avec, un brouillon au-delà s'enregistre, et l'erreur s'affiche sous la zone (`TestAdminComponentEditing`).
-- Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, mise en page configurée (`ADM-005`).
+- 375 px (Chrome, iframe de 375 px sur le binaire, page avec composants et zone dynamique) : en-tête et actions empilés en pleine largeur, champs en une colonne, outils des éléments en icône avec `title`, aucun scroll horizontal.
+- Reste, hors critères : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.
@@ -70,7 +71,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - [x] Un UID déjà pris est signalé avant l'enregistrement.
 - [x] « Remplir depuis une autre locale » copie uniquement les champs localisés.
 - [x] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
-- [ ] À 375 px, tous les champs, composants et actions sont empilés, avec des boutons en pleine largeur.
+- [x] À 375 px, tous les champs, composants et actions sont empilés, avec des boutons en pleine largeur.
 
 ## Notes techniques
 - Endpoints admin dédiés : get/create/update/publish/unpublish/discard/clone, recherche de relations, génération et disponibilité des UID. Ils réutilisent le Document Service, la validation (`DOC-003`) et le RBAC (`AUTH-001`).
