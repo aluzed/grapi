@@ -57,11 +57,14 @@ func writeJSONFile(path string, v any) error {
 // the file is removed when it does not load.
 func generate(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: grapi generate content-type|component [flags]")
+		return errors.New("usage: grapi generate content-type|component|migration|policy|route|document-middleware|lifecycle [flags]")
 	}
 	kind, args := args[0], args[1:]
 	if kind == "migration" {
 		return generateMigration(args, stdout, time.Now())
+	}
+	if goKinds[kind] {
+		return generateGo(kind, args, stdout)
 	}
 	fs := flag.NewFlagSet("generate "+kind, flag.ContinueOnError)
 	dir := fs.String("dir", ".", "project directory")

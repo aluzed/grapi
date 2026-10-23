@@ -106,6 +106,9 @@ func newProject(args []string, stdout io.Writer) error {
 		if err := write("main.go", tpl("main.go.tmpl")); err != nil {
 			return err
 		}
+		if err := write("go.mod", []byte("module "+name+"\n\ngo 1.26\n")); err != nil {
+			return err
+		}
 	}
 	env := []envEntry{
 		{"HOST", "0.0.0.0"},
@@ -134,6 +137,10 @@ func newProject(args []string, stdout io.Writer) error {
 		if out, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("git init: %w: %s", err, out)
 		}
+	}
+	if *framework {
+		fmt.Fprintf(stdout, "Created %s. Next: cd %s && go get github.com/aluzed/grapi && grapi develop\n", name, name)
+		return nil
 	}
 	fmt.Fprintf(stdout, "Created %s. Next: cd %s && grapi develop\n", name, name)
 	return nil

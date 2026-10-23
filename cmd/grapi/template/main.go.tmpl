@@ -7,8 +7,15 @@ import (
 	"github.com/aluzed/grapi"
 )
 
+// setups are the parts grapi generate writes (policy, route,
+// document-middleware, lifecycle): each file adds its own in init.
+var setups []func(app *grapi.App)
+
 func main() {
 	app := grapi.New(grapi.Options{Dir: "."})
+	for _, setup := range setups {
+		setup(app)
+	}
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

@@ -17,7 +17,7 @@ import (
 // sits next to src/ (grapi new --framework).
 func isFramework(dir string) bool {
 	for _, f := range []string{"go.mod", "main.go"} {
-		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
+		if _, err := os.Stat(filepath.Join(dir, f)); err != nil { //nolint:gosec // the project directory the user named
 			return false
 		}
 	}

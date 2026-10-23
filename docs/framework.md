@@ -10,6 +10,15 @@ if err := app.Start(); err != nil {
 }
 ```
 
+`grapi generate` writes the Go skeletons, each in a file of its own that adds a setup function in `init`; the generated `main.go` applies them to the App before `Start`:
+
+- `grapi generate policy --name is-owner` (`global::is-owner`, or a full uid),
+- `grapi generate route --method POST --path /account/anonymize --action api::account.account.anonymize` (`--public` for `config.auth: false`),
+- `grapi generate document-middleware --name audit [--uid api::post.post]`,
+- `grapi generate lifecycle --model api::post.post --event create|update|write|delete`.
+
+The files are gofmt'ed and pass `go vet`; an existing file is never overwritten. `grapi new <name> --framework` also writes the `go.mod`; run `go get github.com/aluzed/grapi` once.
+
 Everything below is registered before `Start` (or `Setup`, which returns the HTTP handler without listening, for tests).
 
 ## Phases (`src/index.js` register, bootstrap, destroy)
