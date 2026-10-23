@@ -1,6 +1,7 @@
 package grapi_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/csv"
@@ -18,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -2176,5 +2178,72 @@ func TestAdminAuditDetails(t *testing.T) {
 	}
 	if s, _, _ := auditor.do("GET", "/audit-logs/export.csv", ""); s != 403 {
 		t.Fatalf("export needs its permission: %d", s)
+	}
+}
+
+func TestAdminAuditExportStreams(t *testing.T) {
+	if testing.Short() || adminDatabase != nil {
+		t.Skip("200 000 rows, inserted one by one")
+	}
+	const rows = 200_000
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) {
+		a.OnBootstrap(func(ctx context.Context) error {
+			d := a.Documents().E.DB
+			return d.Tx(ctx, func(ctx context.Context) error {
+				payload := `{"uid":"api::article.article","documentId":"abc","fields":["title","summary","body"],"ip":"127.0.0.1","userAgent":"Mozilla/5.0"}`
+				for i := 0; i < rows; i++ {
+					if _, err := d.Exec(ctx, `insert into grapi_audit_logs (action, date, origin, payload) values ('entry.update', '2999-01-01T00:00:00Z', 'admin-panel', '`+payload+`')`); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+		})
+	})
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+
+	runtime.GC()
+	var base runtime.MemStats
+	runtime.ReadMemStats(&base)
+	var peak atomic.Uint64
+	done := make(chan struct{})
+	go func() {
+		var m runtime.MemStats
+		for {
+			select {
+			case <-done:
+				return
+			case <-time.After(5 * time.Millisecond):
+				runtime.ReadMemStats(&m)
+				if m.HeapInuse > peak.Load() {
+					peak.Store(m.HeapInuse)
+				}
+			}
+		}
+	}()
+	req, _ := http.NewRequest("GET", ts.URL+"/admin/api/v1/audit-logs/export.csv", nil)
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := 0
+	sc := bufio.NewScanner(res.Body)
+	sc.Buffer(make([]byte, 64*1024), 1<<20)
+	for sc.Scan() {
+		lines++
+	}
+	_ = res.Body.Close()
+	close(done)
+	if lines < rows+1 {
+		t.Fatalf("exported %d lines", lines)
+	}
+	if grew := int64(peak.Load()) - int64(base.HeapInuse); grew > 64<<20 {
+		t.Fatalf("the export streams: the heap grew by %d MB", grew>>20)
+	} else {
+		t.Logf("heap growth during the export: %d MB", grew>>20)
 	}
 }

@@ -50,7 +50,7 @@ Un journal d'audit immuable des actions d'administration, consultable, filtrable
 - [x] Publication planifiée d'une release : entrée `release.trigger` avec `origin: scheduler` et sans utilisateur.
 - [x] `retentionDays: 1` : une entrée datée de J-2 est purgée au passage du cron.
 - [x] Filtres combinés (action + utilisateur + plage) renvoient le même ensemble en liste et en CSV.
-- [ ] Export de 200 000 lignes sous 64 Mo de RSS supplémentaire ; l'export apparaît dans le CSV suivant.
+- [x] Export de 200 000 lignes sous 64 Mo de RSS supplémentaire ; l'export apparaît dans le CSV suivant.
 - [x] Sans `export`, la route CSV renvoie 403 et le bouton est masqué. Écran conforme aux conventions de `ADM-002`.
 
 ## Avancement
@@ -60,8 +60,8 @@ Un journal d'audit immuable des actions d'administration, consultable, filtrable
 - Testé (`TestAdminAuditLogs` : événements attendus, aucune lecture, webhook sans secret ni chemin, aucun mot de passe ni hash dans tout le journal, export filtré).
 - `entry.update` : champs modifiés avec valeurs avant et après (`changes: [{path, before, after}]`, même comparaison que l'historique), sans champs privés ni mots de passe. Releases : `release.*`, `release-action.*`, `release-settings.update`, et `release.trigger` du planificateur (origine `scheduler`, sans utilisateur, statut `done` ou `failed`). Origine `cli` pour `admin:create-user` et `admin:reset-user-password`.
 - Colonnes `uid`, `document_id`, `locale` (ajoutées au démarrage sur une table existante), filtres `origin`, `uid`, `documentId`, `locale` ; filtre d'origine dans l'écran. Plafond `admin.auditLogs.exportMaxRows` (1 000 000). Purge par le planificateur du serveur (au démarrage puis au plus une fois par heure).
-- Testé : `TestAdminAuditDetails` (avant/après, champ privé absent, purge, liste et CSV identiques, export sans permission refusé), `TestAdminReleases`, `TestAdminCommands`.
-- Reste : le test table-driven de chaque événement, la mesure mémoire d'un export de 200 000 lignes, l'origine `admin-token` (l'API admin n'accepte aujourd'hui que des sessions).
+- Testé : `TestAdminAuditDetails` (avant/après, champ privé absent, purge, liste et CSV identiques, export sans permission refusé), `TestAdminAuditExportStreams` (200 000 lignes exportées, tas +1 Mo sur SQLite), `TestAdminReleases`, `TestAdminCommands`.
+- Reste : le test table-driven de chaque événement, l'origine `admin-token` (l'API admin n'accepte aujourd'hui que des sessions).
 
 ## Notes techniques
 - Abonnement à l'event hub (`DOC-005`) et aux hooks des services admin ; l'acteur et l'origine viennent du contexte de requête (`API-001`).
