@@ -34,7 +34,8 @@ Les endpoints admin du Media Library, au-delà de l'upload de base (`MEDIA-001`)
 - Upload depuis des URL (`POST /upload/actions/upload-from-urls`, 20 URL au plus) : téléchargement sur fichier temporaire, taille (`plugins.upload.config.uploadFromUrls.maxSize`, 200 Mo) et durée (60 s) bornées, http et https seulement, 3 redirections, pages HTML refusées ; adresses privées, loopback, link-local, CGNAT et non spécifiées refusées à la connexion (redirections et rebinding DNS compris) sauf `uploadFromUrls.allowPrivateNetworks`. Les fichiers passent ensuite par l'upload normal. Bouton « Importer depuis des URL » dans la médiathèque.
 - Réglages `GET|PUT /upload/settings` (core store `plugin_upload_settings`, lus à chaque upload) et page Paramètres > Médiathèque ; configuration `GET|PUT /upload/configuration` (`plugin_upload_view_configuration`, pageSize 10/20/50/100, tri validé).
 - Testé : `TestAdminUploadFromURLs`, `TestAdminUploadFromPrivateURLs`, `TestPublicOnly`.
-- Reste : l'écran de la médiathèque n'utilise pas encore la configuration d'affichage ; le critère de compatibilité D3 (arborescence d'une base Strapi) à vérifier au banc.
+- La médiathèque applique la configuration d'affichage (taille de page, tri par défaut) et propose un tri ; la direction du tri accepte `ASC`/`DESC` comme Strapi.
+- Reste : le critère de compatibilité D3 (arborescence d'une base Strapi) à vérifier au banc.
 
 ## Critères d'acceptation
 - [x] Déplacer un dossier qui contient 3 niveaux recalcule `path` et `folderPath` partout (intégration).

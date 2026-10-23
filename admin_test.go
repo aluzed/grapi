@@ -2510,6 +2510,20 @@ func TestAdminUploadFromPrivateURLs(t *testing.T) {
 	if n := formats("second.png"); n != 1 {
 		t.Fatalf("the settings apply to the next upload: %d formats", n)
 	}
+	names := func(sort string) string {
+		_, b, _ := c.do("GET", "/upload/files?sort="+sort, "")
+		out := []string{}
+		for _, f := range b["data"].([]any) {
+			out = append(out, f.(map[string]any)["name"].(string))
+		}
+		return strings.Join(out, ",")
+	}
+	if got := names("name:ASC"); got != "first.png,second.png" {
+		t.Fatalf("sort name:ASC: %s", got)
+	}
+	if got := names("name:DESC"); got != "second.png,first.png" {
+		t.Fatalf("sort name:DESC: %s", got)
+	}
 	if s, _, _ := c.do("PUT", "/upload/configuration", `{"pageSize":7,"sort":"createdAt:DESC"}`); s != 400 {
 		t.Fatalf("configuration validation: %d", s)
 	}

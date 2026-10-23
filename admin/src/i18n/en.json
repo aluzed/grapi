@@ -622,5 +622,12 @@
   "mediaSettings.sizeOptimization": "Size optimization",
   "mediaSettings.sizeOptimizationHelp": "Re-encodes images to reduce their size, without visible quality loss.",
   "mediaSettings.autoOrientation": "Auto orientation",
-  "mediaSettings.autoOrientationHelp": "Rotates images according to their EXIF orientation."
+  "mediaSettings.autoOrientationHelp": "Rotates images according to their EXIF orientation.",
+  "media.sort": "Sort",
+  "media.sort.createdAt:DESC": "Most recent uploads",
+  "media.sort.createdAt:ASC": "Oldest uploads",
+  "media.sort.name:ASC": "Alphabetical order (A to Z)",
+  "media.sort.name:DESC": "Reverse alphabetical order (Z to A)",
+  "media.sort.updatedAt:DESC": "Most recent updates",
+  "media.sort.updatedAt:ASC": "Oldest updates"
 }

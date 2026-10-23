@@ -199,7 +199,10 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const input = useRef<HTMLInputElement>(null)
   const folder = path[path.length - 1]!.id
   const folderParam = folder === null ? 'root' : String(folder)
-  const params = new URLSearchParams({ folder: folderParam, page: String(page), pageSize: '24' })
+  const config = useQuery({ queryKey: ['media', 'configuration'], queryFn: () => api.get<{ pageSize: number; sort: string }>('/upload/configuration'), staleTime: 60_000 })
+  const [sort, setSort] = useState<string | null>(null)
+  const sortBy = sort ?? config.data?.sort ?? 'createdAt:DESC'
+  const params = new URLSearchParams({ folder: folderParam, page: String(page), pageSize: String(config.data?.pageSize ?? 10), sort: sortBy })
   if (q) params.set('_q', q)
   if (type) params.set('type', type)
   const files = useQuery({
@@ -295,6 +298,21 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             }}
             className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none md:w-64"
           />
+          <SelectField
+            label={t('media.sort')}
+            value={sortBy}
+            onChange={(e) => {
+              setSort(e.target.value)
+              setPage(1)
+            }}
+            className="md:w-48"
+          >
+            {(['createdAt:DESC', 'createdAt:ASC', 'name:ASC', 'name:DESC', 'updatedAt:DESC', 'updatedAt:ASC'] as const).map((k) => (
+              <option key={k} value={k}>
+                {t(`media.sort.${k}`)}
+              </option>
+            ))}
+          </SelectField>
           <SelectField label={t('media.type')} value={type} onChange={(e) => setType(e.target.value)} className="md:w-40">
             <option value="">{t('media.type.all')}</option>
             {(['image', 'video', 'audio', 'file'] as const).map((k) => (

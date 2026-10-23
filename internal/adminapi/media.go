@@ -103,7 +103,7 @@ func (s *Server) listFiles(w http.ResponseWriter, r *http.Request, _ *User, a *p
 		sortBy = "createdAt"
 		dir = "desc"
 	}
-	if dir != "asc" {
+	if dir = strings.ToLower(dir); dir != "asc" {
 		dir = "desc"
 	}
 	ctx := r.Context()
