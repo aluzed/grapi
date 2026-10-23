@@ -1,6 +1,6 @@
 #!/bin/sh
 # Runs the compat bench on the homelab: nothing is started on this machine.
-# usage: bench.sh <fixture> [self|roundtrip|grapi] [sqlite|postgres]
+# usage: bench.sh <fixture> [self|roundtrip|grapi|toggle] [sqlite|postgres]
 # roundtrip: grapi's schema sync must find nothing to do on a database Strapi
 # created, and Strapi on a database grapi created must answer the corpus like
 # Strapi on its own.

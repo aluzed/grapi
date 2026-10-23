@@ -106,6 +106,70 @@ wait_up() {
 }
 
 case "$mode" in
+toggle)
+  # Draft and publish turned around on every api:: type of the fixture:
+  # grapi migrates the database Strapi filled, then Strapi restarts on it
+  # with the same schemas and must find nothing to replay.
+  start_ref a
+  wait_up a
+  "$here/bin/compat" run -corpus "$here/corpus" -fixture "$fixture" -url "http://127.0.0.1:$(port_of a)" -tokens "$work/a/tokens.json" -out "$work/out/a" >/dev/null || true
+  docker stop "$run_id-a" >/dev/null
+  tfx=$work/fixture-toggled
+  cp -r "$here/fixtures/$fx" "$tfx"
+  python3 - "$tfx" <<'PY'
+import glob, json, sys
+for p in glob.glob(sys.argv[1] + "/src/api/*/content-types/*/schema.json"):
+    s = json.load(open(p))
+    o = s.setdefault("options", {})
+    o["draftAndPublish"] = not o.get("draftAndPublish", False)
+    json.dump(s, open(p, "w"), indent=2)
+PY
+  chmod -R a+rX "$tfx"
+  mkdir -p "$work/snap"
+  "$here/bin/compat" snapshot -fixture-dir "$tfx" -name "$fixture-snapshot" -out "$work/snap/snapshot.yaml"
+  toggle_grapi() {
+    if [ "$db" = postgres ]; then
+      set -- DATABASE_CLIENT=postgres DATABASE_HOST=127.0.0.1 DATABASE_PORT="$(docker port "$run_id-a-pg" 5432/tcp | head -1 | sed 's/.*://')" \
+        DATABASE_NAME=strapi DATABASE_USERNAME=strapi DATABASE_PASSWORD=strapi
+    else
+      set -- DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/a/data.db"
+    fi
+    port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+    env "$@" HOST=127.0.0.1 PORT="$port" "$serve_bin" start -dir "$tfx" -config "$here/reference/grapi-config" >"$work/grapi-toggle.log" 2>&1 &
+    pid=$!
+    i=0
+    until [ "$(curl -s -o /dev/null -w '%{http_code}' "127.0.0.1:$port/_health")" = 204 ]; do
+      i=$((i + 1))
+      if [ $i -gt 60 ] || ! kill -0 "$pid" 2>/dev/null; then
+        tail -30 "$work/grapi-toggle.log"
+        echo "error: grapi did not start on the toggled schemas" >&2
+        exit 1
+      fi
+      sleep 1
+    done
+    "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "http://127.0.0.1:$port" -tokens "$work/a/tokens.json" -out "$work/out/toggle-grapi"
+    kill "$pid"
+    wait "$pid" 2>/dev/null || true
+  }
+  toggle_grapi
+  grep -iE "draft and publish|localization" "$work/grapi-toggle.log" | head -5 || true
+  if [ "$db" = postgres ]; then
+    set -- -e DATABASE_CLIENT=postgres -e DATABASE_HOST="$run_id-a-pg" -e DATABASE_NAME=strapi -e DATABASE_USERNAME=strapi -e DATABASE_PASSWORD=strapi
+  else
+    set -- -e DATABASE_CLIENT=sqlite
+  fi
+  docker run -d --label "grapi-compat=$run_id" --network "$run_id" --name "$run_id-a3" -p 127.0.0.1::1337 "$@" -e COMPAT_ROW_RULES="$COMPAT_ROW_RULES" \
+    -v "$tfx:/fixture:ro" -v "$work/a:/data" "$image" >/dev/null
+  wait_up a3
+  "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "http://127.0.0.1:$(port_of a3)" -tokens "$work/a/tokens.json" -out "$work/out/toggle-strapi"
+  mkdir -p "$here/report"
+  report="$here/report/$(date +%F)-$fixture-toggle-$db.md"
+  "$here/bin/compat" diff -a "$work/out/toggle-strapi" -b "$work/out/toggle-grapi" -report "$report" \
+    -title "Toggle $fixture ($db): Strapi restarted after grapi migrated vs grapi"
+  status=$?
+  sed -n 5p "$report"
+  exit $status
+  ;;
 self)
   start_ref a
   start_ref b

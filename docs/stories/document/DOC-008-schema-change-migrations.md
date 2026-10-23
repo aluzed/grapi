@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # DOC-008 : Migrations au changement de schéma (D&P, i18n) et schéma stocké
@@ -26,13 +26,14 @@ Faire les mêmes migrations que Strapi au changement de schéma, et laisser le s
 - [x] Activer D&P sous grapi sur une base existante : chaque ligne publiée a son brouillon, comme Strapi.
 - [x] Désactiver D&P : les brouillons sont supprimés, comme Strapi.
 - [x] Désactiver i18n : seules les lignes de la locale par défaut restent, comme Strapi.
-- [ ] Banc : schéma changé sous grapi, puis Strapi redémarré sur la base : aucune donnée en double ni perdue.
+- [x] Banc : schéma changé sous grapi, puis Strapi redémarré sur la base : aucune donnée en double ni perdue.
 
 ## Avancement
 - `schema_migrations.go` : les migrations de `@strapi/core` (`draft-publish`, `i18n`), aux mêmes moments que Strapi. Avant la synchro : i18n coupé garde les lignes de la locale par défaut (`locale` remise à `null`), D&P coupé supprime les brouillons. Après la synchro, services prêts : i18n activé pose la locale par défaut sur les lignes sans locale, D&P activé donne à chaque entrée publiée son brouillon par `discardDraft`, comme Strapi.
 - Schéma stocké : grapi ne réécrit pas le `strapi.contentTypes` de Strapi. Il garde seulement ses drapeaux (`options.draftAndPublish`, `pluginOptions.i18n.localized`, aussi dans `__schema__`) en phase avec les types, avec une entrée minimale pour un type que Strapi ne connaît pas, et n'écrit rien quand rien n'a changé : une base Strapi ouverte telle quelle reste intacte, et Strapi ne rejoue pas une migration déjà faite par grapi.
 - Tests : `TestDraftAndPublishMigrations` (D&P coupé puis activé sur la même base, drapeaux stockés, aucun rejeu au démarrage suivant), `TestI18nOffMigration`.
-- Reste : `first-published-at` (expérimental chez Strapi), le banc avec Strapi redémarré après un changement de schéma sous grapi.
+- Banc, mode `toggle` : Strapi remplit la base avec le corpus, D&P est inversé sur tous les types `api::` de la fixture, grapi migre, puis Strapi redémarre sur la même base avec les mêmes schémas : instantanés identiques (relations, SQLite et Postgres : 12/12 ; i18n-dp : 8/8). Contre-épreuve : sans la mise à jour des drapeaux stockés, Strapi rejoue l'activation et 9 instantanés sur 12 divergent.
+- Hors périmètre : `first-published-at`, expérimental chez Strapi (derrière un flag).
 
 ## Référence Strapi
 - `core/core/src/Strapi.ts` (`bootstrap`), `core/core/src/migrations/draft-publish.ts`, `i18n.ts`, `first-published-at.ts`
