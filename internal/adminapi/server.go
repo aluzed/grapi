@@ -108,8 +108,9 @@ type Server struct {
 	now        func() time.Time
 	wake       chan struct{}
 	// historyPurgedAt is only touched by the scheduler goroutine.
-	historyPurgedAt time.Time
-	auditPurgedAt   time.Time
+	historyPurgedAt  time.Time
+	auditPurgedAt    time.Time
+	sessionsPurgedAt time.Time
 }
 
 // New builds the admin server on the Document Service of the content API.

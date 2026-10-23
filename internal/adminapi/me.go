@@ -16,6 +16,7 @@ func (s *Server) meRoutes() {
 	s.authed("GET /users/me", func(w http.ResponseWriter, _ *http.Request, u *User) error { return data(w, u) })
 	s.authed("PUT /users/me", s.updateMe)
 	s.authed("GET /users/me/permissions", s.myPermissions)
+	s.authed("POST /permissions/check", s.checkPermissions)
 	s.authed("GET /users/me/sessions", s.mySessions)
 	s.authed("DELETE /users/me/sessions/{id}", s.revokeSession)
 	s.authed("DELETE /users/me/sessions", s.revokeOtherSessions)
@@ -128,6 +129,34 @@ func (s *Server) myPermissions(w http.ResponseWriter, r *http.Request, u *User) 
 		perms = []Permission{}
 	}
 	return data(w, perms)
+}
+
+// checkPermissions answers, for each {action, subject, field}, whether the
+// current admin may do it.
+func (s *Server) checkPermissions(w http.ResponseWriter, r *http.Request, u *User) error {
+	var b struct {
+		Permissions []struct {
+			Action  string  `json:"action"`
+			Subject *string `json:"subject"`
+			Field   string  `json:"field"`
+		} `json:"permissions"`
+	}
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	a, err := s.Ability(r.Context(), u)
+	if err != nil {
+		return err
+	}
+	out := make([]bool, len(b.Permissions))
+	for i, p := range b.Permissions {
+		subject := ""
+		if p.Subject != nil {
+			subject = *p.Subject
+		}
+		out[i] = a.Can(p.Action, subject, p.Field)
+	}
+	return data(w, out)
 }
 
 func (s *Server) mySessions(w http.ResponseWriter, r *http.Request, u *User) error {

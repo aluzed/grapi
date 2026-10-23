@@ -708,8 +708,20 @@ func (s *Server) forgetDeleted(ctx context.Context, payload map[string]any) {
 	s.forgetDocument(ctx, uid, id, locale)
 }
 
+// purgeSessions deletes the expired sessions, at most once an hour.
+func (s *Server) purgeSessions(ctx context.Context) {
+	now := s.now().UTC()
+	if now.Sub(s.sessionsPurgedAt) < time.Hour {
+		return
+	}
+	s.sessionsPurgedAt = now
+	if err := s.sessions.PurgeExpired(ctx); err != nil {
+		s.log.Error("sessions purge", "error", err)
+	}
+}
+
 // StartScheduler checks the scheduled releases (and purges the content
-// history and the audit log) every interval until ctx ends; a time passed while the server
+// history, the audit log and the expired sessions) every interval until ctx ends; a time passed while the server
 // was down runs at once.
 func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 	if len(s.cfg.HistoryOrigins) > 0 {
@@ -734,6 +746,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 		s.runScheduled(ctx)
 		s.purgeHistory(ctx)
 		s.purgeAudit(ctx)
+		s.purgeSessions(ctx)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -744,6 +757,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 				s.runScheduled(ctx)
 				s.purgeHistory(ctx)
 				s.purgeAudit(ctx)
+				s.purgeSessions(ctx)
 			case <-s.wake:
 				s.runScheduled(ctx)
 			}

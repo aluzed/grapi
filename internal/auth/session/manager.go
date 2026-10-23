@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/aluzed/grapi/internal/auth/users"
@@ -100,7 +101,7 @@ type Manager struct {
 	cfg    Config
 	// Now is the clock, time.Now by default.
 	Now     func() time.Time
-	cleanup int
+	cleanup atomic.Int64
 }
 
 // New returns the manager of origin.
@@ -133,16 +134,19 @@ func (m *Manager) sign(s *Session) (string, error) {
 	return users.Sign([]users.KV{{Key: "userId", Value: s.UserID}, {Key: "sessionId", Value: s.SessionID}, {Key: "type", Value: "refresh"}}, m.cfg.Secret, m.cfg.Algorithm, fmt.Sprint(exp), m.Now())
 }
 
+// PurgeExpired deletes the sessions past their absolute lifespan.
+func (m *Manager) PurgeExpired(ctx context.Context) error {
+	return m.store.DeleteExpired(ctx, m.Now())
+}
+
 // Login opens a session of typ for userID on deviceID (a new device id when
 // empty) and returns its refresh token.
 func (m *Manager) Login(ctx context.Context, userID, deviceID, typ string, metadata map[string]any) (string, *Session, error) {
 	if m.cfg.Secret == "" {
 		return "", nil, errors.New("session: missing secret")
 	}
-	m.cleanup++
-	if m.cleanup >= 50 {
-		m.cleanup = 0
-		if err := m.store.DeleteExpired(ctx, m.Now()); err != nil {
+	if m.cleanup.Add(1)%50 == 0 {
+		if err := m.PurgeExpired(ctx); err != nil {
 			return "", nil, err
 		}
 	}

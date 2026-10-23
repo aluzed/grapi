@@ -39,6 +39,7 @@ Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert l
 | `GET /users/me` | oui | L'admin connecté, avec ses rôles |
 | `PUT /users/me` | oui | `firstname`, `lastname`, `username`, `email`, `preferedLanguage` (`en`, `fr`), `currentPassword` + `password`. Changer le mot de passe ferme les sessions des autres appareils. |
 | `GET /users/me/permissions` | oui | `[{action, subject, properties, conditions}]`. Le Super Admin reçoit toutes les actions enregistrées. |
+| `POST /permissions/check` | oui | `{permissions: [{action, subject, field}]}` : `data` est un booléen par entrée, pour l'admin connecté |
 | `GET /users/me/sessions` | oui | Sessions actives, `isCurrent` pour celle de la requête |
 | `DELETE /users/me/sessions/{id}` | oui | Révoque une session (et son appareil) |
 | `DELETE /users/me/sessions` | oui | Révoque toutes les sessions des autres appareils |

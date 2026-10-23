@@ -30,6 +30,7 @@ import (
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
+	"github.com/aluzed/grapi/internal/db/query"
 )
 
 // adminDatabase, when set, points the admin tests at another database.
@@ -2530,5 +2531,70 @@ func TestAdminUploadFromPrivateURLs(t *testing.T) {
 	c.do("PUT", "/upload/configuration", `{"pageSize":50,"sort":"name:ASC"}`)
 	if _, b, _ := c.do("GET", "/upload/configuration", ""); dataOf(b)["pageSize"].(float64) != 50 {
 		t.Fatalf("configuration: %v", b)
+	}
+}
+
+func TestAdminPurgesExpiredSessions(t *testing.T) {
+	var app *grapi.App
+	_, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) {
+		app = a
+		a.OnBootstrap(func(ctx context.Context) error {
+			old := time.Now().Add(-48 * time.Hour).UTC()
+			_, err := a.Documents().E.Create(ctx, "admin::session", map[string]any{
+				"userId": "1", "sessionId": "expired", "deviceId": "d", "origin": "admin", "type": "refresh", "status": "active",
+				"expiresAt": old, "absoluteExpiresAt": old,
+			}, query.Params{})
+			return err
+		})
+	})
+	defer stop()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		n, err := app.Documents().E.Count(context.Background(), "admin::session", query.Params{Where: map[string]any{"sessionId": "expired"}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the scheduler purges the expired sessions")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+func TestAdminPermissionsCheck(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("POST", "/roles", `{"name":"Titles"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{"fields":["title"]},"conditions":[]}]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Ti","email":"ti@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	ti := newAdminClient(t, ts.URL)
+	_, b, _ = ti.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Ti","password":"T1tlesPass"}}`)
+	ti.token = dataOf(b)["token"].(string)
+	body := `{"permissions":[
+		{"action":"plugin::content-manager.explorer.read","subject":"api::article.article"},
+		{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","field":"title"},
+		{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","field":"summary"},
+		{"action":"plugin::content-manager.explorer.delete","subject":"api::article.article"},
+		{"action":"admin::webhooks.read","subject":null}]}`
+	check := func(c *adminClient) string {
+		s, b, _ := c.do("POST", "/permissions/check", body)
+		if s != 200 {
+			t.Fatalf("check: %d %v", s, b)
+		}
+		return fmt.Sprint(b["data"])
+	}
+	if got := check(c); got != "[true true true true true]" {
+		t.Fatalf("super admin: %s", got)
+	}
+	if got := check(ti); got != "[true true false false false]" {
+		t.Fatalf("limited role: %s", got)
 	}
 }

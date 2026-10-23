@@ -45,7 +45,8 @@ Le backend de l'administration des admins : création du premier admin, connexio
 - Rôles Super Admin, Editor et Author créés sur une base sans rôle, avec les permissions Content Manager et médiathèque par défaut (`is-creator` pour Author).
 - Banc en mode grapi : un admin enregistré par Strapi 5.59 (`/admin/register-admin`) se connecte sur grapi (`/admin/api/v1/auth/login`), SQLite et Postgres.
 - CRUD des admins (invitation par e-mail avec `registrationToken`, recherche, pagination, batch-delete) et des rôles, permissions d'un rôle validées contre le catalogue, catalogue groupé par section, règle du dernier Super Admin actif. Chaque route exige son action admin. Testé de bout en bout (`admin_test.go`, e-mails capturés par un provider de test).
-- Reste : `permissions/check`, l'invitation testée sur Mailpit.
+- `POST /permissions/check` : `{permissions: [{action, subject, field}]}` renvoie un booléen par entrée (`TestAdminPermissionsCheck`, permissions par champ comprises).
+- Reste : l'invitation testée sur Mailpit.
 
 ## Notes techniques
 - Mémoire projet : **ne jamais vider ni réinitialiser la table des admins** sur un serveur (migrations et `DB-011` comprises).
