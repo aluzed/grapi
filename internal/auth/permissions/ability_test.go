@@ -103,7 +103,7 @@ func TestLocales(t *testing.T) {
 		t.Error("only fr is allowed")
 	}
 	f, _ := a.Filter(read, post)
-	want := map[string]any{"locale": map[string]any{"$in": []string{"fr"}}}
+	want := map[string]any{"locale": map[string]any{"$in": []any{"fr"}}}
 	if !reflect.DeepEqual(f, want) {
 		t.Errorf("Filter = %v, want %v", f, want)
 	}

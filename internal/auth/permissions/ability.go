@@ -171,7 +171,12 @@ func (a *Ability) Filter(action, subject string) (filter any, allowed bool) {
 			parts = append(parts, r.filter)
 		}
 		if r.locales != nil {
-			parts = append(parts, map[string]any{"locale": map[string]any{"$in": r.locales}})
+			// The query engine reads lists as []any, like decoded JSON.
+			in := make([]any, len(r.locales))
+			for i, l := range r.locales {
+				in[i] = l
+			}
+			parts = append(parts, map[string]any{"locale": map[string]any{"$in": in}})
 		}
 		switch len(parts) {
 		case 0:

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # AUTH-001 : Moteur de permissions (actions, sujets, champs, locales, conditions traduites en filtres)
@@ -26,13 +26,13 @@ Fournir un moteur de permissions générique, sans dépendance HTTP, réutilisé
 - [x] `Can("plugin::content-manager.explorer.update", "api::post.post", "title")` est faux si `title` est absent de `fields`.
 - [x] Une permission avec `is-creator` renvoie un filtre `{createdBy: {id: {$eq: <id>}}}` combinable avec les filtres utilisateur (TU).
 - [x] Deux permissions sur la même action combinent leurs conditions en `$or` (TU).
-- [ ] Une permission avec `locales: ["fr"]` empêche la lecture des documents `en` (test d'intégration avec `PLG-001`).
+- [x] Une permission avec `locales: ["fr"]` empêche la lecture des documents `en` (test d'intégration avec `PLG-001`).
 - [x] Le moteur ne fait aucun accès DB (il reçoit les permissions déjà chargées) : il est testé en pur unitaire.
 
 ## Avancement
 - `internal/auth/permissions` : registres d'actions et de conditions (`is-creator`, `has-same-role-as-creator`), `Build`, `Can`, `CanLocale`, `Filter`, `Fields`, super admin. Motifs de champs à la CASL (sous-chemins, `*` pour un segment). Tests unitaires purs.
 - Branché sur l'API du Content Manager admin : filtre `is-creator` et champs lisibles testés de bout en bout.
-- Reste : le test d'intégration des locales avec i18n.
+- Test d'intégration des locales avec i18n (`TestAdminLocaleRestrictedRead`) : il a révélé deux bugs, corrigés. Le filtre `locale $in` était passé en `[]string`, que le moteur de requêtes ne lit pas (aucun document ne passait) ; et, en filtre de premier niveau, il remplaçait la locale demandée (comme le `{...lookup, ...where}` du Document Service de Strapi), si bien qu'une liste en `en` montrait le `fr`. Les filtres de permission passent maintenant sous un `$and`, comme dans le Content Manager de Strapi.
 
 ## Notes techniques
 - Pas de port de CASL : un évaluateur simple suffit (map `action -> subject -> []rule`). Les conditions produisent des arbres de filtres au format interne de `DB-005`, jamais du SQL.

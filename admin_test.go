@@ -2813,3 +2813,37 @@ func TestAdminMediaBatchAndReplace(t *testing.T) {
 		t.Fatalf("the entry points to the new content: %v", pic)
 	}
 }
+
+func TestAdminLocaleRestrictedRead(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "i18n-dp")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	c.do("POST", "/i18n/locales", `{"code":"fr"}`)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Hello"}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id+"?locale=fr", `{"data":{"title":"Bonjour"}}`)
+	_, b, _ = c.do("POST", "/roles", `{"name":"French reader"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{"locales":["fr"]},"conditions":[]}]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Fr","email":"fr@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	fr := newAdminClient(t, ts.URL)
+	_, b, _ = fr.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Fr","password":"Fr3nchPass"}}`)
+	fr.token = dataOf(b)["token"].(string)
+	if s, b, _ := fr.do("GET", base+"/"+id+"?locale=fr", ""); s != 200 || dataOf(b)["title"] != "Bonjour" {
+		t.Fatalf("fr is readable: %d %v", s, b)
+	}
+	if s, _, _ := fr.do("GET", base+"/"+id+"?locale=en", ""); s != 403 && s != 404 {
+		t.Fatalf("en is not: %d", s)
+	}
+	s, b, _ := fr.do("GET", base+"?locale=en", "")
+	if s == 200 && len(b["data"].([]any)) != 0 {
+		t.Fatalf("the en list shows nothing: %v", b)
+	}
+	if s != 200 && s != 403 {
+		t.Fatalf("en list: %d", s)
+	}
+}

@@ -224,6 +224,15 @@ func (s *Server) cmAccess(r *http.Request, u *User, action string) (*schema.Cont
 	return ct, a, filter, nil
 }
 
+// scoped wraps permission filters in $and: as top-level keys they would
+// replace the Document Service's own locale or status lookup.
+func scoped(f any) any {
+	if f == nil {
+		return nil
+	}
+	return map[string]any{"$and": []any{f}}
+}
+
 func and(filters ...any) any {
 	var parts []any
 	for _, f := range filters {
@@ -291,7 +300,7 @@ func (s *Server) cmList(w http.ResponseWriter, r *http.Request, u *User) error {
 		}
 	}
 	if f := and(userFilters, rbac); f != nil {
-		p["filters"] = f
+		p["filters"] = scoped(f)
 	}
 	if v := strings.TrimSpace(q.Get("_q")); v != "" {
 		p["_q"] = v
@@ -758,7 +767,7 @@ func (s *Server) singleAccess(r *http.Request, u *User, action, locale string) (
 	}
 	p := localeParam(ct, locale)
 	if f := and(filter); f != nil {
-		p["filters"] = f
+		p["filters"] = scoped(f)
 	}
 	p["fields"] = []any{schema.AttrDocumentID}
 	row, err := s.docs.FindFirst(r.Context(), uid, p)

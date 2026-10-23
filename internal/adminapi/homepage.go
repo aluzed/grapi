@@ -53,7 +53,7 @@ func (s *Server) homepage(w http.ResponseWriter, r *http.Request, u *User) error
 		}
 		base := document.Params{}
 		if filter != nil {
-			base["filters"] = filter
+			base["filters"] = scoped(filter)
 		}
 		if ct.Localized() {
 			base["locale"] = "*"
