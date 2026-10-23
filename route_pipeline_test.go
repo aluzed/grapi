@@ -24,7 +24,7 @@ func TestRoutePipelineOrder(t *testing.T) {
 		return func(*grapi.PolicyContext, any) (bool, error) { steps = append(steps, name); return true, nil }
 	}
 	mw := func(name string) grapi.RouteMiddleware {
-		return func(c *grapi.Request, next func() error) error {
+		return func(_ *grapi.Request, next func() error) error {
 			steps = append(steps, name+">")
 			err := next()
 			steps = append(steps, "<"+name)
