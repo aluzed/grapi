@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/aluzed/grapi/internal/db"
-	"github.com/aluzed/grapi/internal/db/store"
 
 	"github.com/aluzed/grapi/hook"
 	"github.com/aluzed/grapi/schema"
@@ -42,8 +41,7 @@ func (a *App) syncHook(ctx context.Context, name string, set *schema.Set, d *db.
 	for uid := range set.ContentTypes.All() {
 		ev.ContentTypes = append(ev.ContentTypes, uid)
 	}
-	var old map[string]any
-	if found, err := (store.Store{DB: d}).Get(ctx, store.Scope{Type: "strapi"}, "content_types_schema", &old); err == nil && found {
+	if old, err := readStoredSchema(ctx, d); err == nil && old != nil {
 		for uid := range old {
 			ev.OldContentTypes = append(ev.OldContentTypes, uid)
 		}
