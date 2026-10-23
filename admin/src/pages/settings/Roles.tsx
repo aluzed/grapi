@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Copy, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import { EntityActionsMenu } from '@/components/ui/entity-actions-menu'
+import { EntityActionsMenu, type EntityAction } from '@/components/ui/entity-actions-menu'
 import { TextField } from '@/components/ui/field'
 import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { api, ApiError } from '@/lib/api'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
-import type { RoleWithCount } from '@/lib/types'
+import type { Permission, RoleWithCount } from '@/lib/types'
 import { useAuth } from '@/providers/AuthProvider'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
@@ -77,12 +77,29 @@ export function Roles() {
     },
     onError: (err) => showError(err, undefined, t('common.error')),
   })
+  const duplicate = useMutation({
+    mutationFn: async (r: RoleWithCount) => {
+      const perms = await api.get<Permission[]>(`/roles/${r.id}/permissions`)
+      const copy = await api.post<RoleWithCount>('/roles', { name: t('roles.copyName', { name: r.name }), description: r.description ?? '' })
+      await api.put(`/roles/${copy.id}/permissions`, { permissions: perms.map(({ action, subject, properties, conditions }) => ({ action, subject, properties, conditions })) })
+      return copy
+    },
+    onSuccess: (copy) => {
+      toast.success(t('roles.duplicated', { name: copy.name }))
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'roles'] })
+      navigate(`/settings/roles/${copy.id}`)
+    },
+    onError: (err) => showError(err, undefined, t('common.error')),
+  })
   const actions = (r: RoleWithCount) => {
-    const out = [{ label: t('roles.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => navigate(`/settings/roles/${r.id}`) }]
+    const out: EntityAction[] = [{ label: t('roles.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => navigate(`/settings/roles/${r.id}`) }]
+    if (can(permissions, 'admin::roles.create') && r.code !== 'strapi-super-admin')
+      out.push({ label: t('roles.duplicate'), icon: <Copy className="h-4 w-4" />, onSelect: () => duplicate.mutate(r) })
     if (can(permissions, 'admin::roles.delete') && r.code !== 'strapi-super-admin' && r.usersCount === 0)
       out.push({
         label: t('roles.delete'),
         icon: <Trash2 className="h-4 w-4" />,
+        destructive: true,
         onSelect: async () => {
           if (await confirm({ title: t('roles.delete'), message: t('roles.deleteConfirm', { name: r.name }), confirmLabel: t('roles.delete'), destructive: true })) remove.mutate(r)
         },

@@ -652,5 +652,8 @@
   "roles.locales": "Locales allowed",
   "roles.restrictHelp": "Everything checked means no restriction. Save the role to apply.",
   "roles.someFields": "some fields",
-  "roles.someLocales": "some locales"
+  "roles.someLocales": "some locales",
+  "roles.duplicate": "Duplicate",
+  "roles.copyName": "{name} (copy)",
+  "roles.duplicated": "Role {name} created"
 }

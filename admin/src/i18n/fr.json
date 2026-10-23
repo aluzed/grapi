@@ -652,5 +652,8 @@
   "roles.locales": "Locales autorisées",
   "roles.restrictHelp": "Tout coché signifie aucune restriction. Enregistrez le rôle pour appliquer.",
   "roles.someFields": "certains champs",
-  "roles.someLocales": "certaines locales"
+  "roles.someLocales": "certaines locales",
+  "roles.duplicate": "Dupliquer",
+  "roles.copyName": "{name} (copie)",
+  "roles.duplicated": "Rôle {name} créé"
 }

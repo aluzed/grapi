@@ -61,7 +61,8 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - Vérifié dans Chrome sur le binaire.
 - Critères prouvés : webhook limité aux événements cochés (`TestAdminWebhooks`), token `find` sans écriture (`TestAdminAPITokens`), rôle modifié appliqué aux sessions ouvertes (`TestAdminRoleChangeAppliesAtOnce`), Super Admin protégé et dernier actif non désactivable (`TestAdminUsersAndRoles`), e-mail de test reçu dans Mailpit (`make e2e-invite`), et toutes les suppressions confirmées, y compris le retrait d'un élément de composant, de bloc, de relation ou de média dans un formulaire.
 - Éditeur de rôle : bouton « Restreindre » par content type, champs autorisés pour créer, lire et modifier, et locales autorisées pour un type localisé (tout coché : pas de restriction, `fields`/`locales` absents). Sections masquées sans permission vérifiées dans Chrome avec un Author (seule « Vue d'ensemble », URL directe sur la page « Accès refusé », API en 403). Vérifié dans Chrome sur la fixture `i18n-dp` : `update` limité à `title` et `body` et à la locale `en`, enregistré tel quel par le serveur.
-- Reste : `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (événements par content type des webhooks, suppression groupée, admin et transfer tokens, liste des routes d'un rôle users-permissions, e-mail, médias, projet).
+- Duplication de rôle (action « Dupliquer » : nouveau rôle « … (copie) » avec les mêmes permissions, restrictions comprises, puis ouverture de son éditeur), vérifiée dans Chrome.
+- Reste : `has-same-role-as-creator` dans l'éditeur, et toutes les autres sections (événements par content type des webhooks, suppression groupée, admin et transfer tokens, liste des routes d'un rôle users-permissions, e-mail, médias, projet).
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.
