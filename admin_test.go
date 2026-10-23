@@ -2694,3 +2694,38 @@ func TestAdminUPRoutes(t *testing.T) {
 		t.Fatalf("routes of find: %v", find)
 	}
 }
+
+func TestAdminFileRelatedThroughComponent(t *testing.T) {
+	ts, _, stop, _ := newAdminAppWith(t, "components", false, func(_ *grapi.App, dir string) {
+		file := filepath.Join(dir, "src", "components", "shared", "seo.json")
+		var c map[string]any
+		raw, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(raw, &c); err != nil {
+			t.Fatal(err)
+		}
+		c["attributes"].(map[string]any)["image"] = map[string]any{"type": "media", "multiple": false}
+		out, _ := json.Marshal(c)
+		if err := os.WriteFile(file, out, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	})
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, up := c.upload("/upload", "og.png", pngBytes(t))
+	file := strconv.Itoa(int(up["list"].([]any)[0].(map[string]any)["id"].(float64)))
+	s, b, _ := c.do("POST", "/content-manager/collection-types/api::page.page", `{"data":{"title":"Home","seo":{"metaTitle":"Home","image":`+file+`}}}`)
+	if s != 201 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	page := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("GET", "/upload/files/"+file+"/related", "")
+	list, _ := b["data"].([]any)
+	if len(list) != 1 || list[0].(map[string]any)["documentId"] != page || list[0].(map[string]any)["uid"] != "api::page.page" {
+		t.Fatalf("the use inside the seo component leads to the page: %v", b)
+	}
+}

@@ -189,7 +189,13 @@ func (s *Server) fileRelated(w http.ResponseWriter, r *http.Request, _ *User, a 
 	_ = rows.Close()
 	out := []map[string]any{}
 	seen := map[string]bool{}
-	for _, x := range uses {
+	for i, x := range uses {
+		if _, isComponent := s.set.Component(schema.UID(x.uid)); isComponent {
+			if uid, id, ok := s.entryOfComponent(ctx, x.uid, x.id, 0); ok {
+				uses[i].uid, uses[i].id = uid, id
+				x = uses[i]
+			}
+		}
 		ct, ok := s.set.ContentType(schema.UID(x.uid))
 		if !ok || !contains(s.ContentManagerTypes(), x.uid) || !a.Can(actionRead, x.uid, "") {
 			continue
@@ -217,6 +223,36 @@ func (s *Server) fileRelated(w http.ResponseWriter, r *http.Request, _ *User, a 
 		})
 	}
 	return data(w, out)
+}
+
+// entryOfComponent climbs from a component row to the entry holding it,
+// through the component link tables, nested components included.
+func (s *Server) entryOfComponent(ctx context.Context, cuid string, id int64, depth int) (string, int64, bool) {
+	if depth > 5 {
+		return "", 0, false
+	}
+	q := s.e.DB.Dialect.Quote
+	for _, m := range s.e.MD.Models() {
+		for name, a := range m.Attributes.All() {
+			jt := a.JoinTable
+			// Components and dynamic zones are relations through a link
+			// table with a component type column.
+			if jt == nil || len(jt.PivotColumns) < 4 || jt.On["field"] != name {
+				continue
+			}
+			var parent int64
+			err := s.e.DB.QueryRow(ctx, fmt.Sprintf(`select %s from %s where %s = %s and %s = %s and field = %s`,
+				q(jt.JoinColumn.Name), q(jt.Name), q(jt.InverseJoinColumn.Name), s.ph(1), q(jt.PivotColumns[3]), s.ph(2), s.ph(3)), id, cuid, name).Scan(&parent)
+			if err != nil {
+				continue
+			}
+			if _, ok := s.set.ContentType(schema.UID(m.UID)); ok {
+				return m.UID, parent, true
+			}
+			return s.entryOfComponent(ctx, m.UID, parent, depth+1)
+		}
+	}
+	return "", 0, false
 }
 
 // writableFile checks the row filter of assets.update (is-creator).

@@ -148,7 +148,7 @@ Routes présentes quand le plugin upload est actif. Les droits sont `plugin::upl
 | `DELETE /upload/folders/{id}` | Supprime le dossier, ses sous-dossiers et leurs fichiers, comme Strapi : `{files, folders}` |
 | `POST /upload/actions/bulk-delete` | `{fileIds, folderIds}` : fichiers (dans les droits) et dossiers avec leur contenu |
 | `POST /upload/actions/bulk-move` | `{fileIds, folderIds, destination}` (`null` : racine). Tout ou rien : un dossier déplacé réécrit le `path` de ses sous-dossiers et le `folderPath` de leurs fichiers ; refusé vers lui-même, un descendant, ou à côté d'un dossier du même nom. Renvoie `{files, folders}`. |
-| `GET /upload/files/{id}/related` | Entrées lisibles qui utilisent le fichier : `[{uid, contentType, kind, documentId, locale, field, title, published}]` (un usage dans un composant n'est pas encore remonté à son entrée) |
+| `GET /upload/files/{id}/related` | Entrées lisibles qui utilisent le fichier : `[{uid, contentType, kind, documentId, locale, field, title, published}]` (un usage dans un composant, même imbriqué, est rattaché à son entrée) |
 | `GET /upload/folder-structure` | Arbre des dossiers `[{id, name, children}]` |
 | `POST /upload/actions/upload-from-urls` | `{urls, folder}` : le serveur télécharge chaque URL (http, https ; 200 Mo et 60 s au plus ; adresses privées refusées sauf `plugins.upload.config.uploadFromUrls.allowPrivateNetworks`) puis les envoie comme un upload. 400 avec l'URL fautive dans `details`. |
 | `GET\|PUT /upload/settings` | `{sizeOptimization, responsiveDimensions, autoOrientation}` (`plugin::upload.settings.read`), appliqués aux uploads suivants |
