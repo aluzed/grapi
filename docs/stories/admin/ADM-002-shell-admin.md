@@ -61,7 +61,7 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 
 ## Critères d'acceptation
 - [x] Sur une base vide, `/admin` affiche la création du premier admin. Une fois créé, cet écran n'est plus accessible.
-- [ ] Connexion, déconnexion, mot de passe oublié et invitation fonctionnent de bout en bout (e-mail capturé par Mailpit en test).
+- [x] Connexion, déconnexion, mot de passe oublié et invitation fonctionnent de bout en bout (e-mail capturé par Mailpit en test).
 - [x] Un access token expiré est renouvelé sans perte de l'action en cours.
 - [x] Sans « Se souvenir de moi », la session meurt avec le navigateur.
 - [x] Les sessions listées dans le profil sont révocables, et une session révoquée ne peut plus renouveler son token.
@@ -78,7 +78,8 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 - Vérifié en navigateur avec un Editor invité : menu sans Content-Type Builder, Paramètres réduits à la vue d'ensemble, page 403 sur `/settings/users`.
 - Renouvellement sur 401 testé dans `admin/src/lib/api.test.ts` (fetch simulé) : trois requêtes en 401 simultanées déclenchent une seule rotation du refresh et sont toutes rejouées ; un refresh refusé ferme la session. Côté serveur, l'expiration et la rotation sont couvertes par `internal/auth/session`.
 - Accueil : nombre de documents par type, cinq derniers modifiés et cinq derniers publiés, sur les types lisibles (`GET /homepage`, `TestAdminHomepage`).
-- Reste : e-mails de bout en bout sur Mailpit, client TS généré depuis l'OpenAPI admin.
+- E-mails de bout en bout : `make e2e-invite` (Mailpit sur le homelab) couvre l'invitation, le mot de passe oublié (lien reçu, nouveau mot de passe accepté), la connexion, la déconnexion (le cookie ne renouvelle plus la session) et l'e-mail de test.
+- Reste : client TS généré depuis l'OpenAPI admin.
 
 ## Notes techniques
 - Endpoints admin grapi versionnés sous `/admin/api/v1`. Schéma OpenAPI généré (voir `PLG-005`) et client TS généré pour la SPA.

@@ -2,7 +2,8 @@
 # End to end admin invitation and settings test e-mail through a real SMTP
 # server: Mailpit runs on the homelab (nothing in Docker locally), grapi runs
 # here on a throwaway copy of the basic fixture. Invite, read the mail in
-# Mailpit, follow the link, register, log in; then send the test e-mail.
+# Mailpit, follow the link, register, log in; reset the password from its
+# e-mail, log out; then send the test e-mail.
 # usage: scripts/e2e-invite-mailpit.sh
 set -eu
 host=${COMPAT_HOST:-homelab}
@@ -99,5 +100,24 @@ until [ "$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages_
 done
 to=$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages"][0]["To"][0]["Address"]')
 [ "$to" = ops@example.test ] || { echo "error: the test e-mail went to $to" >&2; exit 1; }
+curl -sf -X DELETE "http://127.0.0.1:$api/api/v1/messages" >/dev/null
+curl -sf -o /dev/null -H 'Content-Type: application/json' -d '{"email":"ed@example.test"}' "$base/auth/forgot-password"
+i=0
+until [ "$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages_count"]')" -ge 1 ]; do
+  i=$((i + 1))
+  [ $i -gt 20 ] && { echo "error: no reset mail reached Mailpit" >&2; exit 1; }
+  sleep 1
+done
+id=$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages"][0]["ID"]')
+code=$(curl -sf "http://127.0.0.1:$api/api/v1/message/$id" | json '__import__("re").search(r"code=([A-Za-z0-9]+)", d["Text"] + d["HTML"]).group(1)')
+curl -sf -o /dev/null -H 'Content-Type: application/json' -d "{\"resetPasswordToken\":\"$code\",\"password\":\"E2e-Res3tPass\"}" "$base/auth/reset-password"
+jar="$work/cookies"
+login=$(curl -s -c "$jar" -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+  -d '{"email":"ed@example.test","password":"E2e-Res3tPass"}' "$base/auth/login")
+[ "$login" = 200 ] || { echo "error: login after the reset ($login)" >&2; exit 1; }
+curl -sf -b "$jar" -c "$jar" -o /dev/null -X POST "$base/auth/logout"
+refresh=$(curl -s -b "$jar" -o /dev/null -w '%{http_code}' -X POST "$base/auth/access-token")
+[ "$refresh" = 401 ] || { echo "error: the session survives the logout ($refresh)" >&2; exit 1; }
 echo "invitation e2e: mail delivered by SMTP to Mailpit, link followed, invited admin logged in"
+echo "password reset e2e: link received by mail, new password works; logout ends the session"
 echo "test e-mail e2e: Settings > E-mail test delivered to Mailpit"
