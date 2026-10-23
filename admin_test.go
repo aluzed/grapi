@@ -347,3 +347,112 @@ func TestAdminUsersAndRoles(t *testing.T) {
 		t.Fatalf("catalog: %v", b)
 	}
 }
+
+func TestAdminContentManager(t *testing.T) {
+	ts, mail, stop := newAdminProject(t)
+	defer stop()
+	super := newAdminClient(t, ts.URL)
+	_, b, _ := super.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	super.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+
+	_, b, _ = super.do("GET", "/content-manager/models", "")
+	var article map[string]any
+	for _, m := range b["data"].([]any) {
+		if m.(map[string]any)["uid"] == "api::article.article" {
+			article = m.(map[string]any)
+		}
+	}
+	if article == nil || article["mainField"] != "title" || article["permissions"].(map[string]any)["delete"] != true {
+		t.Fatalf("models: %v", b)
+	}
+
+	ids := map[string]string{}
+	for _, title := range []string{"Alpha", "Beta", ""} {
+		body := `{"data":{"title":"` + title + `","views":` + strconv.Itoa(len(title)) + `}}`
+		if title == "" {
+			// required means not null in Strapi: an empty string publishes.
+			body = `{"data":{"views":0}}`
+		}
+		s, b, _ := super.do("POST", base, body)
+		if s != 201 {
+			t.Fatalf("create %q: %d %v", title, s, b)
+		}
+		ids[title] = dataOf(b)["documentId"].(string)
+	}
+	s, b, _ := super.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+ids["Alpha"]+`","`+ids["Beta"]+`","`+ids[""]+`"]}`)
+	res := dataOf(b)
+	if s != 200 || res["count"].(float64) != 2 || len(res["errors"].([]any)) != 1 || res["errors"].([]any)[0].(map[string]any)["documentId"] != ids[""] {
+		t.Fatalf("bulk publish: %d %v", s, b)
+	}
+	if s, b, _ := super.do("PUT", base+"/"+ids["Beta"], `{"data":{"views":99}}`); s != 200 {
+		t.Fatalf("update: %d %v", s, b)
+	}
+	_, b, _ = super.do("GET", base+"?sort=title:asc", "")
+	status := map[string]string{}
+	for _, r := range b["data"].([]any) {
+		m := r.(map[string]any)
+		status[m["documentId"].(string)] = m["status"].(string)
+	}
+	if status[ids["Alpha"]] != "published" || status[ids["Beta"]] != "modified" || status[ids[""]] != "draft" {
+		t.Fatalf("statuses: %v", status)
+	}
+	if total := b["meta"].(map[string]any)["pagination"].(map[string]any)["total"].(float64); total != 3 {
+		t.Fatalf("total: %v", total)
+	}
+	_, b, _ = super.do("GET", base+"?_q=alph", "")
+	if len(b["data"].([]any)) != 1 {
+		t.Fatalf("search: %v", b)
+	}
+	_, b, _ = super.do("GET", base+`?filters={"views":{"$gt":50}}`, "")
+	if list := b["data"].([]any); len(list) != 1 || list[0].(map[string]any)["title"] != "Beta" {
+		t.Fatalf("filters on the draft: %v", b)
+	}
+	_, b, _ = super.do("GET", base+"?status=published", "")
+	if len(b["data"].([]any)) != 2 {
+		t.Fatalf("published list: %v", b)
+	}
+
+	_, b, _ = super.do("GET", "/roles", "")
+	var author string
+	for _, r := range b["data"].([]any) {
+		if m := r.(map[string]any); m["code"] == "strapi-author" {
+			author = strconv.Itoa(int(m["id"].(float64)))
+		}
+	}
+	_, b, _ = super.do("POST", "/users", `{"firstname":"Au","email":"au@example.com","roles":[`+author+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	_ = mail
+	au := newAdminClient(t, ts.URL)
+	_, b, _ = au.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Au","password":"Auth0rPass"}}`)
+	au.token = dataOf(b)["token"].(string)
+	s, b, _ = au.do("POST", base, `{"data":{"title":"Mine"}}`)
+	if s != 201 {
+		t.Fatalf("author create: %d %v", s, b)
+	}
+	mine := dataOf(b)["documentId"].(string)
+	_, b, _ = au.do("GET", base, "")
+	if list := b["data"].([]any); len(list) != 1 || list[0].(map[string]any)["documentId"] != mine {
+		t.Fatalf("an author sees only their entries: %v", b)
+	}
+	if s, _, _ := au.do("GET", base+"/"+ids["Alpha"], ""); s != 404 {
+		t.Fatalf("an author cannot read another's entry: %d", s)
+	}
+	if s, _, _ := au.do("PUT", base+"/"+ids["Alpha"], `{"data":{"title":"Hacked"}}`); s != 404 {
+		t.Fatalf("an author cannot update another's entry: %d", s)
+	}
+	_, b, _ = au.do("POST", base+"/actions/bulk-delete", `{"documentIds":["`+ids["Alpha"]+`","`+mine+`"]}`)
+	if res := dataOf(b); res["count"].(float64) != 1 || len(res["errors"].([]any)) != 1 {
+		t.Fatalf("author bulk delete: %v", b)
+	}
+	if s, _, _ := au.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+mine+`"]}`); s != 403 {
+		t.Fatalf("an author cannot publish: %d", s)
+	}
+	_, b, _ = super.do("GET", base, "")
+	if len(b["data"].([]any)) != 3 {
+		t.Fatalf("the super admin's entries are untouched: %v", b)
+	}
+	if s, _, _ := super.do("DELETE", base+"/"+ids[""], ""); s != 200 {
+		t.Fatalf("delete: %d", s)
+	}
+}

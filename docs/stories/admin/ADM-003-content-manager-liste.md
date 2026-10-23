@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-003 : Content Manager : vue liste
@@ -40,6 +40,10 @@ Offrir pour chaque collection type une vue liste générique pilotée par le sch
   - un champ non lisible n'apparaît pas en colonne ;
   - la condition `is-creator` filtre les lignes.
 - [ ] À 375 px, la liste est en cartes, sans scroll horizontal.
+
+## Avancement
+- API (`docs/admin-api.md`, Content Manager) : modèles lisibles avec colonnes, `mainField` et réglages (configuration de vue Strapi lue dans le core store), liste paginée avec recherche `_q`, filtres JSON, tri, locale et statut, statut draft/published/modified par document, suppression unitaire, actions groupées (supprimer, publier, dépublier) avec rapport partiel. Filtre RBAC des conditions et champs lisibles appliqués. Testé de bout en bout (`TestAdminContentManager`) : publication groupée avec un document invalide, Author limité à ses entrées.
+- Reste : l'interface.
 
 ## Notes techniques
 - La liste s'appuie sur un endpoint admin qui réutilise le Document Service avec la sanitization RBAC (`AUTH-001`), et non sur l'API de contenu publique.

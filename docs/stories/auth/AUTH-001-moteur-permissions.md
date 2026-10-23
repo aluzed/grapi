@@ -31,7 +31,8 @@ Fournir un moteur de permissions générique, sans dépendance HTTP, réutilisé
 
 ## Avancement
 - `internal/auth/permissions` : registres d'actions et de conditions (`is-creator`, `has-same-role-as-creator`), `Build`, `Can`, `CanLocale`, `Filter`, `Fields`, super admin. Motifs de champs à la CASL (sous-chemins, `*` pour un segment). Tests unitaires purs.
-- Reste : le test d'intégration des locales avec i18n, et le branchement sur le Content Manager admin (`ADM-003`).
+- Branché sur l'API du Content Manager admin : filtre `is-creator` et champs lisibles testés de bout en bout.
+- Reste : le test d'intégration des locales avec i18n.
 
 ## Notes techniques
 - Pas de port de CASL : un évaluateur simple suffit (map `action -> subject -> []rule`). Les conditions produisent des arbres de filtres au format interne de `DB-005`, jamais du SQL.

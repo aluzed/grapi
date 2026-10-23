@@ -16,6 +16,8 @@ import (
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/auth/session"
 	"github.com/aluzed/grapi/internal/db/query"
+	"github.com/aluzed/grapi/internal/db/store"
+	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/schema"
 )
@@ -55,6 +57,8 @@ type Config struct {
 // Server serves the admin.
 type Server struct {
 	cfg        Config
+	docs       *document.Service
+	store      store.Store
 	e          *query.Engine
 	set        *schema.Set
 	log        *slog.Logger
@@ -65,8 +69,9 @@ type Server struct {
 	now        func() time.Time
 }
 
-// New builds the admin server.
-func New(cfg Config, e *query.Engine, set *schema.Set, log *slog.Logger) *Server {
+// New builds the admin server on the Document Service of the content API.
+func New(cfg Config, docs *document.Service, log *slog.Logger) *Server {
+	e, set := docs.E, docs.Set
 	if cfg.Path == "" {
 		cfg.Path = "/admin"
 	}
@@ -77,7 +82,7 @@ func New(cfg Config, e *query.Engine, set *schema.Set, log *slog.Logger) *Server
 	if log == nil {
 		log = slog.Default()
 	}
-	s := &Server{cfg: cfg, e: e, set: set, log: log, actions: &permissions.Actions{}, conditions: permissions.NewConditions(), now: time.Now}
+	s := &Server{cfg: cfg, docs: docs, store: store.Store{DB: e.DB}, e: e, set: set, log: log, actions: &permissions.Actions{}, conditions: permissions.NewConditions(), now: time.Now}
 	s.sessions = session.New(session.DB{E: e}, "admin", cfg.Sessions)
 	s.registerActions()
 	s.routes()
@@ -130,6 +135,8 @@ func (s *Server) routes() {
 	s.meRoutes()
 	s.adminRoutes()
 	s.roleRoutes()
+	s.contentManagerRoutes()
+	s.contentManagerEditRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

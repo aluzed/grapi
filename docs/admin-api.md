@@ -67,3 +67,22 @@ Il reste toujours au moins un Super Admin actif : le supprimer, le désactiver, 
 - Mot de passe : 8 caractères au moins, une minuscule, une majuscule, un chiffre, 72 octets au plus (limite de bcrypt). Hash bcrypt de coût 10, comme Strapi.
 - Un admin inactif ou bloqué ne peut ni se connecter ni utiliser un token déjà émis.
 - Au premier démarrage sur une base sans rôle admin, grapi crée Super Admin, Editor et Author (codes `strapi-super-admin`, `strapi-editor`, `strapi-author`). Editor reçoit les permissions du Content Manager sur les content types `api::` et celles de la médiathèque ; Author les mêmes sans `publish`, limitées à ses propres entrées (`admin::is-creator`). Une base qui a déjà des rôles n'est jamais modifiée.
+
+### Content Manager
+
+Les droits viennent des actions `plugin::content-manager.explorer.{read,create,update,delete,publish}` sur le content type. Leurs conditions (par exemple `admin::is-creator` du rôle Author) filtrent les documents : un document hors filtre répond 404. Les champs non lisibles sont retirés des réponses, les champs non modifiables ignorés à l'écriture.
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /content-manager/models` | Content types lisibles : `uid`, `kind`, `info`, `draftAndPublish`, `localized`, `attributes` lisibles, `mainField`, `listColumns`, `labels`, `settings` (taille de page, tri par défaut, recherche, filtres, actions groupées) et `permissions` de l'utilisateur. Lit la configuration de vue de Strapi (`plugin_content_manager_configuration_content_types::<uid>`) quand elle existe. |
+| `GET /content-manager/locales` | Locales i18n, avec `isDefault` |
+| `GET /content-manager/collection-types/{uid}?page=&pageSize=&sort=&_q=&filters=&locale=&status=` | Liste. `filters` est un objet JSON au format des filtres REST, `status` vaut `draft` (défaut) ou `published`. Chaque document porte `status` : `draft`, `published` ou `modified`. |
+| `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document, relations, médias et composants peuplés |
+| `POST /content-manager/collection-types/{uid}` | `{data, locale}`. Renseigne `createdBy` et `updatedBy`. |
+| `PUT /content-manager/collection-types/{uid}/{documentId}` | `{data, locale}`. Renseigne `updatedBy`. |
+| `DELETE /content-manager/collection-types/{uid}/{documentId}?locale=` | Supprime le document (dans la locale) |
+| `POST /content-manager/collection-types/{uid}/actions/bulk-delete` | `{documentIds, locale}` |
+| `POST /content-manager/collection-types/{uid}/actions/bulk-publish` | `{documentIds, locale}` (action `publish`) |
+| `POST /content-manager/collection-types/{uid}/actions/bulk-unpublish` | `{documentIds, locale}` (action `publish`) |
+
+Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message}]}` : un document invalide ou hors des droits n'empêche pas les autres.

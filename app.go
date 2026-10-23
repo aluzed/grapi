@@ -658,7 +658,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		a.stopWebhooks()
 		return nil, err
 	}
-	adm := adminapi.New(adminCfg, engine, res.Set, log)
+	adm := adminapi.New(adminCfg, docs, log)
 	if err := adm.Bootstrap(ctx); err != nil {
 		a.stopWebhooks()
 		return nil, fmt.Errorf("admin bootstrap: %w", err)
