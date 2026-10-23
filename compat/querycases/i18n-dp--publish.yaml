@@ -1,0 +1,21 @@
+fixture: i18n-dp
+isolated: true
+cases:
+  # locale "*" on publish, unpublish and discardDraft: every locale at once.
+  - { name: create-en, uid: api::article.article, op: docCreate, params: { locale: en, data: { title: "Hello", views: 1 } }, save: { a: documentId } }
+  - { name: create-fr, uid: api::article.article, op: docUpdate, params: { documentId: "{{a}}", locale: fr, data: { title: "Bonjour" } } }
+  - { name: create-de, uid: api::article.article, op: docUpdate, params: { documentId: "{{a}}", locale: de, data: { title: "Hallo" } } }
+  - { name: publish-all, uid: api::article.article, op: docPublish, params: { documentId: "{{a}}", locale: "*" } }
+  - { name: published-all, uid: api::article.article, op: docFindMany, params: { status: published, locale: "*", fields: [title, locale], sort: locale } }
+  - { name: edit-fr, uid: api::article.article, op: docUpdate, params: { documentId: "{{a}}", locale: fr, data: { title: "Bonjour !" } } }
+  - { name: edit-de, uid: api::article.article, op: docUpdate, params: { documentId: "{{a}}", locale: de, data: { title: "Hallo !" } } }
+  - { name: discard-all, uid: api::article.article, op: docDiscardDraft, params: { documentId: "{{a}}", locale: "*" } }
+  - { name: drafts-after-discard, uid: api::article.article, op: docFindMany, params: { status: draft, locale: "*", fields: [title, locale], sort: locale } }
+  - { name: unpublish-fr, uid: api::article.article, op: docUnpublish, params: { documentId: "{{a}}", locale: fr } }
+  - { name: published-after-fr, uid: api::article.article, op: docFindMany, params: { status: published, locale: "*", fields: [title, locale], sort: locale } }
+  - { name: unpublish-all, uid: api::article.article, op: docUnpublish, params: { documentId: "{{a}}", locale: "*" } }
+  - { name: published-after-all, uid: api::article.article, op: docFindMany, params: { status: published, locale: "*", fields: [title, locale], sort: locale } }
+  - { name: publish-default, uid: api::article.article, op: docPublish, params: { documentId: "{{a}}" } }
+  - { name: published-default-only, uid: api::article.article, op: docFindMany, params: { status: published, locale: "*", fields: [title, locale], sort: locale } }
+  - { name: publish-list, uid: api::article.article, op: docPublish, params: { documentId: "{{a}}", locale: [fr, de] } }
+  - { name: published-after-list, uid: api::article.article, op: docFindMany, params: { status: published, locale: "*", fields: [title, locale], sort: locale } }
