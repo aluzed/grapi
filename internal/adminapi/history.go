@@ -36,6 +36,7 @@ func (s *Server) ensureHistoryTable(ctx context.Context) error {
 func (s *Server) historyRoutes() {
 	s.authed("GET /content-manager/history/{uid}/{documentId}", s.listVersions)
 	s.authed("GET /content-manager/history/versions/{id}", s.getVersion)
+	s.authed("GET /content-manager/history/versions/{id}/diff", s.diffVersion)
 	s.authed("POST /content-manager/history/versions/{id}/restore", s.restoreVersion)
 }
 
@@ -51,29 +52,37 @@ func schemaFields(ct *schema.ContentType) map[string]string {
 
 // recordVersion snapshots a document after an admin write. A failure is
 // logged: the write itself succeeded.
+// snapshot reads a document populated deep, as a version stores it.
+func (s *Server) snapshot(ctx context.Context, ct *schema.ContentType, documentID string, locale any, published bool) (map[string]any, error) {
+	p := document.Params{"populate": s.deepPopulate(&ct.Attributes, 0)}
+	if ct.Localized() && locale != nil && locale != "" {
+		p["locale"] = locale
+	}
+	if published {
+		p["status"] = "published"
+	}
+	row, err := s.docs.FindOne(ctx, string(ct.UID), documentID, p)
+	if err != nil || row == nil {
+		return nil, err
+	}
+	return toMap(row), nil
+}
+
 func (s *Server) recordVersion(ctx context.Context, ct *schema.ContentType, documentID string, locale any, status string, userID any) {
 	if !s.cfg.HistoryEnabled {
 		return
 	}
 	uid := string(ct.UID)
-	p := document.Params{"populate": s.deepPopulate(&ct.Attributes, 0)}
-	if ct.Localized() && locale != nil && locale != "" {
-		p["locale"] = locale
-	}
-	if status == "published" {
-		p["status"] = "published"
-	}
-	row, err := s.docs.FindOne(ctx, uid, documentID, p)
-	if err != nil || row == nil {
+	m, err := s.snapshot(ctx, ct, documentID, locale, status == "published")
+	if err != nil || m == nil {
 		if err != nil {
 			s.log.Error("history snapshot", "uid", uid, "error", err)
 		}
 		return
 	}
-	m := toMap(row)
 	if status != "published" && ct.DraftAndPublish() {
 		res := []map[string]any{{schema.AttrDocumentID: documentID, "updatedAt": m["updatedAt"]}}
-		if err := s.withStatus(ctx, uid, p["locale"], "draft", res, []any{documentID}); err == nil {
+		if err := s.withStatus(ctx, uid, m["locale"], "draft", res, []any{documentID}); err == nil {
 			status, _ = res[0]["status"].(string)
 		}
 	}
@@ -130,6 +139,9 @@ type HistoryVersion struct {
 	// Missing those added since.
 	Unknown map[string]any `json:"unknownFields,omitempty"`
 	Missing []string       `json:"missingFields,omitempty"`
+	// Dangling are the relations and media the version holds that no
+	// longer exist: a restore leaves them out.
+	Dangling []Reference `json:"danglingReferences,omitempty"`
 }
 
 func (s *Server) versionAccess(r *http.Request, u *User, uid, action string) (*schema.ContentType, error) {
@@ -261,6 +273,7 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request, u *User) err
 	}
 	splitFields(v, ct)
 	v.Data = visible(v.Data, ct, v.UID, a)
+	v.Dangling = s.prune(r.Context(), v.Data, &ct.Attributes, "")
 	return data(w, v)
 }
 
@@ -374,6 +387,7 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request, u *User)
 		return err
 	}
 	splitFields(v, ct)
+	s.prune(ctx, v.Data, &ct.Attributes, "")
 	d := map[string]any{}
 	for name, attr := range ct.Attributes.All() {
 		if !editable(name, attr) || attr.Type == schema.TypePassword || !a.Can(actionUpdate, v.UID, name) {

@@ -596,5 +596,12 @@
   "releases.browserTimezone": "Le fuseau du navigateur",
   "releases.groupBy": "Grouper par",
   "releases.locale": "Locale",
-  "releases.noLocale": "Sans locale"
+  "releases.noLocale": "Sans locale",
+  "history.content": "Contenu",
+  "history.diff": "Différences avec le brouillon",
+  "history.noDiff": "Cette version est identique au brouillon actuel.",
+  "history.thisVersion": "Cette version :",
+  "history.currentDraft": "Brouillon :",
+  "history.dangling": "Ces relations ou médias n'existent plus et ne seront pas restaurés :",
+  "history.danglingConfirm": "{count} relations ou médias supprimés seront ignorés."
 }

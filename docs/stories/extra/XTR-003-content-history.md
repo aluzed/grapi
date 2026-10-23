@@ -38,18 +38,20 @@ Historique de versions par document et par locale, avec comparaison et restaurat
 - [ ] Enregistrer deux fois puis publier depuis l'admin produit 3 versions aux statuts attendus ; une mise à jour via REST n'en produit aucune (configuration par défaut).
 - [x] Restaurer une version remplace le brouillon, met le document en Modified, ne touche pas la version publiée, et ajoute une version.
 - [ ] Après suppression d'un champ `subtitle` dans le CTB, une ancienne version l'affiche sous « Champs inconnus » et la restauration l'ignore sans erreur.
-- [ ] Une relation vers un document supprimé est signalée avant restauration et absente après.
+- [x] Une relation vers un document supprimé est signalée avant restauration et absente après.
 - [ ] Avec deux locales, restaurer la version `fr` modifie le champ non localisé `price` dans `en` aussi, après avertissement.
-- [ ] Le diff signale exactement les champs modifiés (fixtures avec composant répétable et zone dynamique).
+- [x] Le diff signale exactement les champs modifiés (fixtures avec composant répétable et zone dynamique).
 - [ ] Un utilisateur sans `update` voit l'historique mais pas le bouton « Restaurer » ; l'API renvoie 403.
 - [ ] `retentionDays: 1` purge les versions de plus de 24 h au passage du cron.
-- [ ] Écran conforme aux conventions de `ADM-002` : sur mobile, la liste des versions passe au-dessus du contenu, pas à côté.
+- [x] Écran conforme aux conventions de `ADM-002` : sur mobile, la liste des versions passe au-dessus du contenu, pas à côté.
 
 ## Avancement
 - Table `grapi_history_versions` (créée au démarrage, hors registre de schéma : le banc confirme que Strapi redémarre sur la base, SQLite et Postgres). Une version par enregistrement, création ou publication depuis l'admin (collection et single types), avec statut draft, modified ou published, auteur et empreinte des champs. Les écritures REST, GraphQL et Document Service n'en créent pas.
 - API : liste par document et locale, lecture avec champs inconnus et absents, restauration (brouillon remplacé, version publiée intacte, document en Modified, nouvelle version ; relations par `documentId`, médias par id, composants recréés, champs ajoutés depuis à leur défaut). Versions supprimées avec le document. Rétention `admin.history.retentionDays` (90 jours par défaut), `admin.history.enabled`.
 - Interface : bouton « Historique » dans l'édition, liste des versions (au-dessus sur mobile), lecture seule de la version, champs inconnus, restauration confirmée (avertissement sur les locales). Testé (`TestAdminHistory`) et vérifié dans Chrome.
-- Reste : le diff, l'avertissement sur les relations disparues avant restauration, les origines configurables, la purge par cron et `maxVersionsPerDocument`, la suppression des versions avec un content type.
+- Diff (`GET .../versions/{id}/diff?against=current|<id>`) : composants et zones dynamiques par position, relations par ensemble de `documentId`, médias par id ; onglet « Différences avec le brouillon » dans l'interface (`TestAdminHistoryDiff`).
+- Relations et médias disparus : listés dans `danglingReferences` à la lecture, avertissement avant restauration, ignorés à la restauration (`TestAdminHistoryDanglingRelations`).
+- Reste : les origines configurables, la purge par cron et `maxVersionsPerDocument`, la suppression des versions avec un content type, et les tests des critères i18n, sans `update`, et rétention.
 
 ## Notes techniques
 - Middleware du Document Service (`DOC-004`) qui lit l'origine dans le contexte et enregistre après commit ; la version publiée est capturée après le recâblage de `DOC-002`.

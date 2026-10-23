@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -1821,5 +1822,76 @@ func TestAdminReleaseAcrossTypesAndLocales(t *testing.T) {
 	_, b, _ = c.do("GET", writers+"?status=published", "")
 	if n := len(b["data"].([]any)); n != 0 {
 		t.Fatalf("writer unpublished: %d", n)
+	}
+}
+
+func TestAdminHistoryDiff(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "components")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::page.page"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Home","seo":{"metaTitle":"Home"},"links":[{"label":"A","url":"/a"},{"label":"B","url":"/b"}],
+		"body":[{"__component":"blocks.hero","headline":"Hi"},{"__component":"blocks.gallery","caption":"G","slides":3}]}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"Home","seo":{"metaTitle":"Welcome"},"links":[{"label":"A","url":"/a"},{"label":"B","url":"/bee"}],
+		"body":[{"__component":"blocks.hero","headline":"Hi"},{"__component":"blocks.rich-text"}]}}`)
+	_, b, _ = c.do("GET", "/content-manager/history/api::page.page/"+id, "")
+	versions := b["data"].([]any)
+	first := strconv.Itoa(int(versions[1].(map[string]any)["id"].(float64)))
+	second := strconv.Itoa(int(versions[0].(map[string]any)["id"].(float64)))
+	paths := func(b map[string]any) []string {
+		out := []string{}
+		for _, ch := range dataOf(b)["changes"].([]any) {
+			out = append(out, ch.(map[string]any)["path"].(string))
+		}
+		sort.Strings(out)
+		return out
+	}
+	_, b, _ = c.do("GET", "/content-manager/history/versions/"+first+"/diff", "")
+	if got := strings.Join(paths(b), ","); got != "body.1,links.1.url,seo.metaTitle" {
+		t.Fatalf("diff against the draft: %s %v", got, b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/history/versions/"+first+"/diff?against="+second, "")
+	if got := strings.Join(paths(b), ","); got != "body.1,links.1.url,seo.metaTitle" {
+		t.Fatalf("diff between versions: %s", got)
+	}
+	_, b, _ = c.do("GET", "/content-manager/history/versions/"+second+"/diff", "")
+	if got := paths(b); len(got) != 0 {
+		t.Fatalf("the last version is the draft: %v", got)
+	}
+}
+
+func TestAdminHistoryDanglingRelations(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "relations")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	create := func(uid, data string) string {
+		_, b, _ := c.do("POST", "/content-manager/collection-types/"+uid, `{"data":`+data+`}`)
+		return dataOf(b)["documentId"].(string)
+	}
+	keep, gone := create("api::tag.tag", `{"name":"keep"}`), create("api::tag.tag", `{"name":"gone"}`)
+	post := create("api::post.post", `{"title":"Hello","tags":{"set":[{"documentId":"`+keep+`"},{"documentId":"`+gone+`"}]}}`)
+	c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"title":"Changed","tags":{"set":[]}}}`)
+	c.do("DELETE", "/content-manager/collection-types/api::tag.tag/"+gone, "")
+	_, b, _ = c.do("GET", "/content-manager/history/api::post.post/"+post, "")
+	versions := b["data"].([]any)
+	first := strconv.Itoa(int(versions[len(versions)-1].(map[string]any)["id"].(float64)))
+	_, b, _ = c.do("GET", "/content-manager/history/versions/"+first, "")
+	dangling, _ := dataOf(b)["danglingReferences"].([]any)
+	if len(dangling) != 1 || dangling[0].(map[string]any)["documentId"] != gone || dangling[0].(map[string]any)["path"] != "tags" {
+		t.Fatalf("the deleted tag is reported: %v", dataOf(b))
+	}
+	if s, b, _ := c.do("POST", "/content-manager/history/versions/"+first+"/restore", ""); s != 200 {
+		t.Fatalf("restore: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
+	d := dataOf(b)
+	tags, _ := d["tags"].([]any)
+	if d["title"] != "Hello" || len(tags) != 1 || tags[0].(map[string]any)["documentId"] != keep {
+		t.Fatalf("restored without the deleted tag: %v", d)
 	}
 }

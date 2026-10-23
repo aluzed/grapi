@@ -238,8 +238,9 @@ Conception propre à grapi (la fonction est Enterprise chez Strapi). Une version
 | Méthode et chemin | Rôle |
 |---|---|
 | `GET /content-manager/history/{uid}/{documentId}?locale=` | Versions, de la plus récente à la plus ancienne : `{id, status, locale, createdAt, createdBy}` |
-| `GET /content-manager/history/versions/{id}` | Une version : `data` (champs lisibles), `unknownFields` (disparus du schéma depuis), `missingFields` (ajoutés depuis) |
-| `POST /content-manager/history/versions/{id}/restore` | Remplace le brouillon de la locale par la version, sans toucher la version publiée, et enregistre une nouvelle version |
+| `GET /content-manager/history/versions/{id}` | Une version : `data` (champs lisibles), `unknownFields` (disparus du schéma depuis), `missingFields` (ajoutés depuis), `danglingReferences` (relations et médias supprimés depuis : `{path, target, documentId|fileId}`) |
+| `GET /content-manager/history/versions/{id}/diff?against=current\|<id>` | `{changes: [{path, before, after}]}` contre le brouillon actuel (défaut) ou une autre version du document. Composants et zones dynamiques comparés par position (`links.1.url`), relations par ensemble de `documentId`, médias par id. |
+| `POST /content-manager/history/versions/{id}/restore` | Remplace le brouillon de la locale par la version, sans toucher la version publiée, et enregistre une nouvelle version. Les relations et médias supprimés depuis sont ignorés. |
 
 Réglages : `admin.history.enabled` (vrai par défaut), `admin.history.retentionDays` (90 par défaut, 0 pour tout garder).
 

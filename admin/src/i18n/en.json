@@ -596,5 +596,12 @@
   "releases.browserTimezone": "The browser's timezone",
   "releases.groupBy": "Group by",
   "releases.locale": "Locale",
-  "releases.noLocale": "No locale"
+  "releases.noLocale": "No locale",
+  "history.content": "Content",
+  "history.diff": "Differences with the draft",
+  "history.noDiff": "This version matches the current draft.",
+  "history.thisVersion": "This version:",
+  "history.currentDraft": "Draft:",
+  "history.dangling": "These relations or media no longer exist and will not be restored:",
+  "history.danglingConfirm": "{count} deleted relations or media will be left out."
 }
