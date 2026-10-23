@@ -62,7 +62,7 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 ## Critères d'acceptation
 - [x] Sur une base vide, `/admin` affiche la création du premier admin. Une fois créé, cet écran n'est plus accessible.
 - [ ] Connexion, déconnexion, mot de passe oublié et invitation fonctionnent de bout en bout (e-mail capturé par Mailpit en test).
-- [ ] Un access token expiré est renouvelé sans perte de l'action en cours.
+- [x] Un access token expiré est renouvelé sans perte de l'action en cours.
 - [x] Sans « Se souvenir de moi », la session meurt avec le navigateur.
 - [x] Les sessions listées dans le profil sont révocables, et une session révoquée ne peut plus renouveler son token.
 - [x] Les entrées de menu sans permission ne s'affichent pas. Accéder à leur URL directement mène à une page 403.
@@ -76,7 +76,7 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 - SPA `admin/` (Bun, Vite, React 19, TypeScript strict, Tailwind 4, React Query, React Hook Form + Zod, react-router, sonner) : création du premier admin, connexion avec « Se souvenir de moi », mot de passe oublié, réinitialisation, inscription par invitation, menu latéral (tiroir sur mobile) filtré par permissions avec page 403, profil (infos, langue, mot de passe, sessions révocables), accueil avec raccourcis. Composants de base Button, champs, Card, Dialog, Table, Tabs, EntityActionsMenu, `useConfirm`. Interface fr et en.
 - Vérifié dans Chrome sur le binaire (`make build`) : premier admin, reprise de session au rechargement, deux onglets qui renouvellent en même temps, 375 px sans scroll horizontal avec boutons pleine largeur.
 - Vérifié en navigateur avec un Editor invité : menu sans Content-Type Builder, Paramètres réduits à la vue d'ensemble, page 403 sur `/settings/users`.
-- Écrit mais pas encore vérifié en navigateur : le renouvellement sur 401 avec rejeu de la requête (il faut attendre l'expiration de l'access token, 30 minutes par défaut).
+- Renouvellement sur 401 testé dans `admin/src/lib/api.test.ts` (fetch simulé) : trois requêtes en 401 simultanées déclenchent une seule rotation du refresh et sont toutes rejouées ; un refresh refusé ferme la session. Côté serveur, l'expiration et la rotation sont couvertes par `internal/auth/session`.
 - Accueil : nombre de documents par type, cinq derniers modifiés et cinq derniers publiés, sur les types lisibles (`GET /homepage`, `TestAdminHomepage`).
 - Reste : e-mails de bout en bout sur Mailpit, client TS généré depuis l'OpenAPI admin.
 
