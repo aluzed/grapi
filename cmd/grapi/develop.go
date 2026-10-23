@@ -43,7 +43,7 @@ func develop(args []string, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	opts := grapi.Options{Dir: *dir, ConfigDir: *configDir, Version: version, Stderr: stderr}
+	opts := grapi.Options{Dir: *dir, ConfigDir: *configDir, Version: version, Stderr: stderr, AutoReload: true}
 	srv, err := grapi.New(opts).Setup()
 	if err != nil {
 		return err

@@ -59,7 +59,6 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy b
 		}
 		cfg.ResetPasswordTTL = d
 	}
-	cfg.Develop = c.Environment == "development"
 	if serve, ok := c.Bool("admin.serveAdminPanel"); !ok || serve {
 		cfg.UI = admin.FS
 	}

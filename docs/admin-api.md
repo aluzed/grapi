@@ -181,3 +181,20 @@ Un `PUT` de réglages ne met à jour que les clés connues du core store, en fus
 |---|---|---|
 | `GET /email/settings` | `plugin::email.settings.read` | `{provider, configured, defaultFrom, defaultReplyTo}` (la configuration reste dans `config/plugins`) |
 | `POST /email/test` | `plugin::email.settings.read` | `{to}` : envoie un e-mail de test ; l'erreur du fournisseur est renvoyée telle quelle |
+
+### Content-Type Builder
+
+Lecture avec `plugin::content-type-builder.read`. L'écriture n'est possible que sous `grapi develop`, qui recharge l'application quand `src/` change (403 sinon).
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /content-type-builder/schema` | `contentTypes` et `components` lus depuis leurs fichiers (`attributes` en liste ordonnée avec `name`), plus les types des plugins en lecture seule (`editable: false`), et `develop` |
+| `GET /content-type-builder/status` | `{develop, schemaHash}` : le hash change quand le schéma rechargé change |
+| `POST /content-type-builder/update-schema` | Lot `{contentTypes: [{action, uid, data}], components: [...]}` avec `action` `create`, `update` ou `delete`. |
+
+Règles du lot :
+- Tout ou rien : le lot est appliqué à une copie de `src/` puis chargé ; une erreur (nom réservé ou pas en kebab-case, nom déjà pris, relation vers un type inconnu…) le rejette sans rien écrire.
+- Fichiers au format Strapi, écrits de façon atomique : `src/api/<nom>/content-types/<nom>/schema.json` et `src/components/<catégorie>/<nom>.json`.
+- `singularName` et `pluralName` ne changent pas à la mise à jour : ils font l'uid et la table.
+- Une relation `oneToOne`, `oneToMany`, `manyToOne` ou `manyToMany` avec `targetAttribute` est écrite des deux côtés (`inversedBy` ici, `mappedBy` sur la cible).
+- Supprimer un type retire aussi les relations qui le visent ; supprimer un composant retire ses usages (attributs et zones dynamiques). Les tables restent en base.

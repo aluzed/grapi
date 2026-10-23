@@ -26,6 +26,9 @@ type Options struct {
 	Version string
 	// Stderr receives the logs (os.Stderr by default).
 	Stderr io.Writer
+	// AutoReload is set by `grapi develop`, which reloads the app when src/
+	// changes: the admin's Content-Type Builder writes schemas only then.
+	AutoReload bool
 }
 
 // App is a grapi application.

@@ -62,8 +62,10 @@ type Config struct {
 	Media MediaService
 	// UI is the built SPA; nil serves the API only.
 	UI fs.FS
-	// Develop enables the Content-Type Builder entry.
-	Develop bool
+	// Develop is `grapi develop`: the Content-Type Builder writes the
+	// schemas of ProjectDir, and the reload picks them up.
+	Develop    bool
+	ProjectDir string
 	// Version is grapi's version, Environment the project's (NODE_ENV).
 	Version     string
 	Environment string
@@ -163,6 +165,7 @@ func (s *Server) routes() {
 	s.webhookRoutes()
 	s.usersPermissionsRoutes()
 	s.emailRoutes()
+	s.ctbRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

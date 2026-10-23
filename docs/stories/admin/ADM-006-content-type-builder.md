@@ -41,14 +41,15 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
   - les `schema.json` écrits sont valides au format Strapi, et Strapi 5.59 les charge sans erreur (vérifié par le banc `SETUP-002`) ;
   - grapi expose les routes REST sans redémarrage.
 - [ ] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
-- [ ] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
+- [x] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
 - [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
-- [ ] En mode production, `POST` d'écriture du CTB renvoie 403.
+- [x] En mode production, `POST` d'écriture du CTB renvoie 403.
 - [ ] Toute suppression passe par la modale de confirmation qui liste les impacts.
 
 ## Avancement
 - Content API en lecture seule du plugin (`internal/httpapi/ctb.go`) : `GET /api/content-type-builder/content-types[/:uid]` (`kind`, types invisibles en 404) et `GET /api/content-type-builder/components[/:uid]`, au format de `formatContentType` et `formatComponent`. Corpus `components_ctb`, SQLite et Postgres : identique à Strapi. Les deux listes complètes sont en skip au banc : celle des content types contient les types Enterprise (clean-room), celle des composants suit chez Strapi l'ordre de lecture des fichiers.
-- Reste : tout le côté admin (édition des schémas, écriture des fichiers, redémarrage), sur l'API `/admin/api/v1/*` (option B, `docs/decisions/D1-admin.md`).
+- API admin (`docs/admin-api.md`, Content-Type Builder) : lecture des schémas depuis les fichiers, lot `update-schema` validé sur une copie de `src/` puis écrit atomiquement, relations bidirectionnelles écrites des deux côtés, nettoyage des références à la suppression, statut par hash du schéma. Écriture réservée à `grapi develop`, qui recharge l'application dans le process par bascule atomique (pas de redémarrage du binaire). Testé (`TestAdminContentTypeBuilder`, `TestAdminContentTypeBuilderProduction`).
+- Reste : l'interface, le renommage de champ avec migration, la vérification au banc que Strapi charge les fichiers écrits.
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

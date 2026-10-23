@@ -659,6 +659,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		return nil, err
 	}
 	adminCfg.Version, adminCfg.Environment = a.opts.Version, conf.Environment
+	adminCfg.Develop, adminCfg.ProjectDir = a.opts.AutoReload, *dir
 	adminCfg.Media, adminCfg.Webhooks = api, runner
 	adminCfg.APITokenSalt, adminCfg.ContentActions = apiCfg.APITokenSalt, api.ContentAPIActions
 	adminCfg.EncryptionKey, _ = conf.String("admin.secrets.encryptionKey")

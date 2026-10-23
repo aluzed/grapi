@@ -59,6 +59,13 @@ func newAdminProject(t *testing.T) (*httptest.Server, *captureMail, func()) {
 
 func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMail, func()) {
 	t.Helper()
+	ts, mail, stop, _ := newAdminApp(t, fixture, false)
+	return ts, mail, stop
+}
+
+// newAdminApp also returns the project directory; develop sets AutoReload.
+func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, *captureMail, func(), string) {
+	t.Helper()
 	dir := t.TempDir()
 	if err := copyDir(filepath.Join("compat", "fixtures", fixture, "src"), filepath.Join(dir, "src")); err != nil {
 		t.Fatal(err)
@@ -74,7 +81,7 @@ func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMa
 	t.Setenv("JWT_SECRET", "test")
 	t.Setenv("ADMIN_JWT_SECRET", "admin-test")
 	t.Setenv("API_TOKEN_SALT", "salt-test")
-	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}, AutoReload: develop})
 	mail := &captureMail{}
 	app.UseEmailProvider("capture", mail)
 	srv, err := app.Setup()
@@ -82,7 +89,7 @@ func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMa
 		t.Fatal(err)
 	}
 	ts := httptest.NewServer(srv.Handler)
-	return ts, mail, func() { ts.Close(); _ = srv.Close() }
+	return ts, mail, func() { ts.Close(); _ = srv.Close() }, dir
 }
 
 func newAdminClient(t *testing.T, base string) *adminClient {
@@ -1025,5 +1032,78 @@ func TestAdminEmailTest(t *testing.T) {
 	}
 	if s, b, _ := c.do("POST", "/email/test", `{"to":"ops@example.com"}`); s != 200 || len(mail.sent) != 1 || mail.sent[0].To != "ops@example.com" {
 		t.Fatalf("test mail: %d %v %v", s, b, mail.sent)
+	}
+}
+
+func TestAdminContentTypeBuilder(t *testing.T) {
+	ts, _, stop, dir := newAdminApp(t, "basic", true)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("GET", "/content-type-builder/schema", "")
+	if cts := dataOf(b)["contentTypes"].([]any); len(cts) < 3 {
+		t.Fatalf("schema: %v", b)
+	}
+	tagFile := filepath.Join(dir, "src/api/tag/content-types/tag/schema.json")
+	bad := `{"contentTypes":[{"action":"create","data":{"kind":"collectionType","info":{"displayName":"Book","singularName":"book","pluralName":"books"},"options":{"draftAndPublish":true},
+		"attributes":[{"name":"title","type":"string"},{"name":"tags","type":"relation","relation":"manyToMany","target":"api::nope.nope","targetAttribute":"books"}]}}]}`
+	if s, _, _ := c.do("POST", "/content-type-builder/update-schema", bad); s != 400 {
+		t.Fatalf("invalid batch: %d", s)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "src/api/book")); err == nil {
+		t.Fatal("an invalid batch writes nothing")
+	}
+	good := `{"components":[{"action":"create","data":{"category":"shared","info":{"displayName":"Note"},"attributes":[{"name":"text","type":"text"}]}}],
+		"contentTypes":[{"action":"create","data":{"kind":"collectionType","info":{"displayName":"Book","singularName":"book","pluralName":"books"},"options":{"draftAndPublish":true},
+		"attributes":[{"name":"title","type":"string","required":true},{"name":"pages","type":"integer"},{"name":"note","type":"component","component":"shared.note","repeatable":false},
+		{"name":"tags","type":"relation","relation":"manyToMany","target":"api::tag.tag","targetAttribute":"books"}]}}]}`
+	if s, b, _ := c.do("POST", "/content-type-builder/update-schema", good); s != 200 {
+		t.Fatalf("update-schema: %d %v", s, b)
+	}
+	book, err := os.ReadFile(filepath.Join(dir, "src/api/book/content-types/book/schema.json"))
+	if err != nil || !strings.Contains(string(book), `"inversedBy": "books"`) || !strings.Contains(string(book), `"collectionName": "books"`) {
+		t.Fatalf("book schema: %s %v", book, err)
+	}
+	tag, _ := os.ReadFile(tagFile)
+	if !strings.Contains(string(tag), `"mappedBy": "tags"`) {
+		t.Fatalf("the inverse side: %s", tag)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "src/components/shared/note.json")); err != nil {
+		t.Fatal(err)
+	}
+	// The develop reload: a new app on the same directory serves the type.
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}, AutoReload: true})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatalf("the written schemas load: %v", err)
+	}
+	ts2 := httptest.NewServer(srv.Handler)
+	defer func() { ts2.Close(); _ = srv.Close() }()
+	if res, _ := http.Get(ts2.URL + "/api/books"); res.StatusCode != 403 {
+		t.Fatalf("the new route exists: %d", res.StatusCode)
+	}
+	c2 := newAdminClient(t, ts2.URL)
+	_, b, _ = c2.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd"}`)
+	c2.token = dataOf(b)["token"].(string)
+	if s, b, _ := c2.do("POST", "/content-type-builder/update-schema", `{"contentTypes":[{"action":"delete","uid":"api::book.book"}],"components":[{"action":"delete","uid":"shared.note"}]}`); s != 200 {
+		t.Fatalf("delete: %d %v", s, b)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "src/api/book")); err == nil {
+		t.Fatal("the api folder is removed")
+	}
+	if after, _ := os.ReadFile(tagFile); strings.Contains(string(after), "books") || len(after) == 0 {
+		t.Fatalf("the inverse relation goes with the type: %s", after)
+	}
+}
+
+func TestAdminContentTypeBuilderProduction(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	if s, _, _ := c.do("POST", "/content-type-builder/update-schema", `{"contentTypes":[]}`); s != 403 {
+		t.Fatalf("writes need grapi develop: %d", s)
 	}
 }
