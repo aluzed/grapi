@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -192,4 +193,92 @@ func adminListUsers(args []string, stdout, stderr io.Writer) error {
 		fmt.Fprintf(w, "%v\t%v\t%s\t%v\t%v\t%s\n", get("id"), get("email"), name, get("isActive"), get("blocked"), strings.Join(roles, ", "))
 	}
 	return w.Flush()
+}
+
+// adminChange runs one change on the admin with --email: it closes their
+// sessions, and refuses to leave no active Super Admin.
+func adminChange(name string, args []string, stdout, stderr io.Writer, extra func(*flag.FlagSet) func() (query.Data, string, error)) error {
+	fs, dir, configDir := projectFlags(name)
+	email := fs.String("email", "", "e-mail (required)")
+	build := extra(fs)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *email == "" {
+		return errors.New("--email is required")
+	}
+	set, action, err := build()
+	if err != nil {
+		return err
+	}
+	p, e, err := openEngine(*dir, *configDir, stderr)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = p.DB.Close() }()
+	ctx := context.Background()
+	addr := strings.ToLower(strings.TrimSpace(*email))
+	user, err := e.FindOne(ctx, adminUserUID, query.Params{Where: map[string]any{"email": addr}})
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("no admin with the e-mail %s", *email)
+	}
+	id, _ := user.Get("id")
+	removes := set == nil || set["isActive"] == false || set["blocked"] == true
+	if removes {
+		others, err := e.Count(ctx, adminUserUID, query.Params{Where: map[string]any{
+			"id": map[string]any{"$ne": id}, "isActive": true, "blocked": false,
+			"roles": map[string]any{"code": adminapi.SuperAdminCode},
+		}})
+		if err != nil {
+			return err
+		}
+		isSuper, err := e.Count(ctx, adminUserUID, query.Params{Where: map[string]any{"id": id, "roles": map[string]any{"code": adminapi.SuperAdminCode}}})
+		if err != nil {
+			return err
+		}
+		if isSuper > 0 && others == 0 {
+			return errors.New("this is the last active Super Admin")
+		}
+	}
+	if set == nil {
+		if _, err := e.Delete(ctx, adminUserUID, map[string]any{"id": id}, query.Params{}); err != nil {
+			return err
+		}
+	} else if _, err := e.Update(ctx, adminUserUID, map[string]any{"id": id}, set, query.Params{}); err != nil {
+		return err
+	}
+	if removes {
+		if _, err := e.DeleteMany(ctx, sessionUID, query.Params{Where: map[string]any{"userId": fmt.Sprint(id), "origin": "admin"}}); err != nil {
+			return err
+		}
+	}
+	auditCLI(ctx, e, stderr, action, map[string]any{"id": id, "email": addr})
+	fmt.Fprintf(stdout, "%s: %s\n", addr, strings.TrimPrefix(action, "user."))
+	return nil
+}
+
+// adminDeleteUser is `grapi admin:delete-user`.
+func adminDeleteUser(args []string, stdout, stderr io.Writer) error {
+	return adminChange("admin:delete-user", args, stdout, stderr, func(*flag.FlagSet) func() (query.Data, string, error) {
+		return func() (query.Data, string, error) { return nil, "user.delete", nil }
+	})
+}
+
+// adminActiveUser is `grapi admin:active-user --active=false`.
+func adminActiveUser(args []string, stdout, stderr io.Writer) error {
+	return adminChange("admin:active-user", args, stdout, stderr, func(fs *flag.FlagSet) func() (query.Data, string, error) {
+		active := fs.Bool("active", true, "activate (true) or deactivate (false)")
+		return func() (query.Data, string, error) { return query.Data{"isActive": *active}, "user.update", nil }
+	})
+}
+
+// adminBlockUser is `grapi admin:block-user`, `--unblock` to lift it.
+func adminBlockUser(args []string, stdout, stderr io.Writer) error {
+	return adminChange("admin:block-user", args, stdout, stderr, func(fs *flag.FlagSet) func() (query.Data, string, error) {
+		unblock := fs.Bool("unblock", false, "lift the block")
+		return func() (query.Data, string, error) { return query.Data{"blocked": !*unblock}, "user.update", nil }
+	})
 }

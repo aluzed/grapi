@@ -40,7 +40,8 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `grapi admin:create-user` (Super Admin actif, mot de passe par `--password-stdin` de préférence), `admin:reset-user-password` (seul le mot de passe change, les sessions de l'admin sont fermées) et `admin:list-users`, via la politique de mot de passe et le hash de l'API admin. Test `TestAdminCommands` ; au banc en mode grapi, l'admin créé par Strapi est réinitialisé puis se connecte avec le nouveau mot de passe (SQLite et Postgres).
 - `grapi content-types:list` et `components:list` (tableau `Name` de Strapi), `TestListCommands`.
 - `grapi middlewares:list` et `hooks:list` : les middlewares que grapi implémente (sous les noms de Strapi) et les hooks intégrés. Strapi liste aussi ses middlewares absents de grapi (compression, session, favicon...) et ceux de l'admin.
-- Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, les commandes admin, `rename:field`.
+- Commandes admin complètes : `admin:delete-user`, `admin:active-user` (`--active=false`), `admin:block-user` (`--unblock`) ferment les sessions, refusent de laisser l'instance sans Super Admin actif et s'inscrivent au journal d'audit (origine `cli`) ; testé (`TestAdminCommands`).
+- Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, `rename:field`.
 
 ## Notes techniques
 - Ces commandes démarrent l'application sans serveur HTTP (registres et base seulement).

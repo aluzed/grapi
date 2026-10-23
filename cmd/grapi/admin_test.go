@@ -86,8 +86,37 @@ func TestAdminCommands(t *testing.T) {
 	if len(logs.Data) != 2 || logs.Data[0].Action != "user.password.update" || logs.Data[1].Action != "user.create" {
 		t.Fatalf("CLI audit: %+v", logs.Data)
 	}
+	cli := func(args ...string) (int, string) {
+		var o bytes.Buffer
+		code := run(append(args, "-dir", project), &o, &o)
+		return code, o.String()
+	}
+	if code, msg := cli("admin:block-user", "--email", "ops@example.com"); code == 0 || !strings.Contains(msg, "last active Super Admin") {
+		t.Fatalf("the last Super Admin cannot be blocked: %d %s", code, msg)
+	}
+	if code, msg := cli("admin:create-user", "--email", "ops2@example.com", "--firstname", "Ops", "--password", "Passw0rd"); code != 0 {
+		t.Fatalf("second admin: %s", msg)
+	}
+	if code, msg := cli("admin:block-user", "--email", "ops@example.com"); code != 0 {
+		t.Fatalf("block: %s", msg)
+	}
+	if login("N3wPassword") == 200 {
+		t.Fatal("a blocked admin cannot log in")
+	}
+	if code, _ := cli("admin:active-user", "--email", "ops2@example.com", "--active=false"); code == 0 {
+		t.Fatal("ops2 is now the last active Super Admin")
+	}
+	if code, msg := cli("admin:block-user", "--email", "ops@example.com", "--unblock"); code != 0 || login("N3wPassword") != 200 {
+		t.Fatalf("unblock: %s", msg)
+	}
+	if code, msg := cli("admin:delete-user", "--email", "ops2@example.com"); code != 0 {
+		t.Fatalf("delete: %s", msg)
+	}
 	out.Reset()
 	run([]string{"admin:list-users", "-dir", project}, &out, &out)
+	if strings.Contains(out.String(), "ops2@") {
+		t.Fatalf("deleted: %s", out.String())
+	}
 	if !strings.Contains(out.String(), "ops@example.com") || !strings.Contains(out.String(), "Super Admin") {
 		t.Fatalf("list-users: %s", out.String())
 	}

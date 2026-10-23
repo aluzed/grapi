@@ -22,6 +22,7 @@ grapi db:check -dir <project>                # consistency report: schema, docum
 grapi api-token:create|list|delete|regenerate # content API tokens
 grapi permissions:list|grant|revoke <role>   # users-permissions role permissions
 grapi admin:create-user|reset-user-password|list-users  # admins (--email, --password-stdin)
+grapi admin:delete-user|active-user|block-user  # --email; --active=false, --unblock; never the last active Super Admin
 grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]
 grapi openapi [-o file]                      # the content API's OpenAPI document
 grapi ts:generate-types [-o dir]             # types/generated/*.d.ts for @strapi/strapi
