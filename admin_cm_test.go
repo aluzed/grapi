@@ -250,3 +250,39 @@ func TestAdminRelationReorder(t *testing.T) {
 		t.Fatalf("the content API returns the new order: %v", names)
 	}
 }
+
+// Every attribute type reads back as written through the admin API, the
+// way the edit view sends it.
+func TestAdminAttributeRoundTrip(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	const base = "/content-manager/collection-types/api::article.article"
+	data := `{"title":"Round trip","slug":"round-trip","summary":"Line 1\nLine 2","body":"# Title","contact":"ada@example.com",
+		"content":[{"type":"paragraph","children":[{"type":"text","text":"Hi"}]}],
+		"views":42,"bigCounter":"9007199254740993","rating":3.25,"price":19.99,"releaseDate":"2026-10-23","releaseTime":"12:34:56.000",
+		"scheduledAt":"2026-10-23T15:35:45.385Z","importedAt":"2026-07-01T22:30:00.000Z","featured":true,"meta":{"a":[1,"two"],"b":null},"stage":"review"}`
+	s, b, _ := c.do("POST", base, `{"data":`+data+`}`)
+	if s != 201 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"/"+dataOf(b)["documentId"].(string), "")
+	got := dataOf(b)
+	var want map[string]any
+	if err := json.Unmarshal([]byte(data), &want); err != nil {
+		t.Fatal(err)
+	}
+	// A timestamp reads back as milliseconds since the epoch, as in Strapi.
+	want["importedAt"] = "1782945000000"
+	// Postgres returns a time without its milliseconds, as in Strapi.
+	if got["releaseTime"] == "12:34:56" {
+		want["releaseTime"] = "12:34:56"
+	}
+	for name, w := range want {
+		wj, _ := json.Marshal(w)
+		gj, _ := json.Marshal(got[name])
+		if string(wj) != string(gj) {
+			t.Errorf("%s: wrote %s, read %s", name, wj, gj)
+		}
+	}
+}

@@ -22,7 +22,7 @@ export type FieldContext = {
   labels: Record<string, string>
 }
 
-const scalarTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
+const scalarTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'timestamp', 'json'])
 
 export function isEditable(attr: Attribute): boolean {
   if (scalarTypes.has(attr.type)) return true
@@ -52,9 +52,24 @@ export function toInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown
   }
   if (v === null || v === undefined) return attr.type === 'boolean' ? false : ''
   if (attr.type === 'json') return JSON.stringify(v, null, 2)
-  if (attr.type === 'datetime') return String(v).slice(0, 16)
-  if (attr.type === 'time') return String(v).slice(0, 5)
+  if (attr.type === 'datetime' || attr.type === 'timestamp') return toLocalDateTime(String(v))
+  if (attr.type === 'time') return String(v).replace(/\.0+$/, '').replace(/^(\d\d:\d\d):00$/, '$1')
   return v
+}
+
+const pad = (n: number, size = 2) => String(n).padStart(size, '0')
+
+// A datetime-local input holds local time without a zone: the stored UTC
+// instant is shown in the browser's zone, down to the millisecond when set,
+// so that saving an untouched form writes the same instant back.
+export function toLocalDateTime(value: string): string {
+  // A timestamp attribute reads back as milliseconds since the epoch.
+  const d = new Date(/^\d+$/.test(value) ? Number(value) : value)
+  if (Number.isNaN(d.getTime())) return value
+  let out = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  if (d.getSeconds() || d.getMilliseconds()) out += `:${pad(d.getSeconds())}`
+  if (d.getMilliseconds()) out += `.${pad(d.getMilliseconds(), 3)}`
+  return out
 }
 
 export function toObject(c: ComponentModel, src: Values | null, ctx: FieldContext): Values {
@@ -110,9 +125,12 @@ export function fromInput(attr: Attribute, v: unknown, ctx: FieldContext): unkno
         throw new JSONError()
       }
     case 'datetime':
+    case 'timestamp':
       return new Date(String(v)).toISOString()
-    case 'time':
-      return `${String(v)}:00.000`
+    case 'time': {
+      const t = String(v)
+      return t.length === 5 ? `${t}:00.000` : t.includes('.') ? t : `${t}.000`
+    }
   }
   return v
 }
@@ -165,12 +183,12 @@ function ScalarField({ name, attr, text, value, error, onChange }: { name: strin
         </div>
       )
   }
-  const type = { integer: 'number', float: 'number', decimal: 'number', email: 'email', password: 'password', date: 'date', time: 'time', datetime: 'datetime-local' }[attr.type] ?? 'text'
+  const type = { integer: 'number', float: 'number', decimal: 'number', email: 'email', password: 'password', date: 'date', time: 'time', datetime: 'datetime-local', timestamp: 'datetime-local' }[attr.type] ?? 'text'
   return (
     <TextField
       {...common}
       type={type}
-      step={attr.type === 'integer' ? 1 : attr.type === 'float' || attr.type === 'decimal' ? 'any' : undefined}
+      step={attr.type === 'integer' ? 1 : attr.type === 'float' || attr.type === 'decimal' ? 'any' : attr.type === 'time' || attr.type === 'datetime' || attr.type === 'timestamp' ? 'any' : undefined}
       autoComplete={attr.type === 'password' ? 'new-password' : 'off'}
       value={String(value ?? '')}
       onChange={(e) => onChange(e.target.value)}

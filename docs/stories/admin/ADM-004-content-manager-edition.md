@@ -55,13 +55,14 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Permissions par champ : `/content-manager/models` donne `createFields` et `updateFields` (`null` sans restriction), l'EditView désactive les champs absents de la liste et le serveur ignore leurs valeurs (`TestAdminFieldLevelUpdate`). Vérifié dans Chrome sur le binaire : champs grisés et non modifiables.
 - Brouillon incomplet : il s'enregistre, et l'échec de publication porte `details.errors`, que l'EditView affiche sous le champ fautif (`TestAdminIncompleteDraft`, vérifié dans Chrome). Ordre des relations : envoyé en `set`, relu dans le nouvel ordre par l'API REST (`TestAdminRelationReorder`). UID pris : `check-availability` (`TestAdminUID`), appelé par le champ avant l'enregistrement.
 - « Remplir depuis une autre locale » : modale avec la locale source, copie des seuls champs localisés et modifiables, rien n'est enregistré avant « Enregistrer » (`admin/src/pages/content-manager/fill.ts`, testé, vérifié dans Chrome). La règle « localisé » est celle du serveur (option, relation ou uid) : un champ sans option est partagé, et le formulaire d'une nouvelle locale l'affiche avec sa valeur au lieu d'un champ vide (le serveur gardait déjà la valeur partagée).
+- Aller-retour par type : le formulaire rend chaque type à l'identique (`roundtrip.test.ts`, fuseau Europe/Paris) et l'API admin relit ce qu'elle a écrit (`TestAdminAttributeRoundTrip`). Les dates sont affichées en heure locale et renvoyées au même instant, à la milliseconde (avant : décalage du fuseau à chaque enregistrement et secondes perdues). `timestamp`, lu en millisecondes comme dans Strapi, est éditable. Vérifié dans Chrome : enregistrer sans rien changer garde les valeurs.
 - Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.
 
 ## Critères d'acceptation
-- [ ] Chaque type d'attribut a un test d'aller-retour : saisie, enregistrement, rechargement, valeur identique (y compris biginteger, decimal et blocks).
+- [x] Chaque type d'attribut a un test d'aller-retour : saisie, enregistrement, rechargement, valeur identique (y compris biginteger, decimal et blocks).
 - [x] Un brouillon incomplet (champ requis vide) s'enregistre. La publication échoue avec l'erreur sur le bon champ.
 - [x] Réordonner trois relations envoie des positions correctes, et l'ordre persiste (vérifié via l'API REST).
 - [ ] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
