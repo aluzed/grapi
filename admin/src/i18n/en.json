@@ -605,5 +605,8 @@
   "history.dangling": "These relations or media no longer exist and will not be restored:",
   "history.danglingConfirm": "{count} deleted relations or media will be left out.",
   "audit.allOrigins": "All origins",
-  "audit.origin": "Origin"
+  "audit.origin": "Origin",
+  "media.folderMoved": "Folder {name} moved",
+  "media.moveFolder": "Move the folder {name}",
+  "media.moveFolderAction": "Move the folder"
 }

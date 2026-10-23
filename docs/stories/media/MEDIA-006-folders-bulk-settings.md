@@ -30,11 +30,12 @@ Les endpoints admin du Media Library, au-delà de l'upload de base (`MEDIA-001`)
 
 ## Avancement
 - Côté API admin (`/admin/api/v1/upload/*`, `docs/admin-api.md`) : dossiers (liste par parent ou complète, création numérotée comme Strapi, renommage, suppression récursive), `bulk-delete` (fichiers et dossiers), `bulk-move` de fichiers avec recalcul de `folderPath`, remplacement d'un fichier en gardant son id. Testé (`TestAdminMedia`, `TestAdminMediaBulk`).
-- Reste : déplacement de dossiers (recalcul des chemins, refus dans un descendant), `folder-structure`, upload depuis une URL, réglages et configuration d'affichage du core store.
+- Déplacement de dossiers par `bulk-move` (`folderIds`) dans une transaction : `path` des sous-dossiers et `folderPath` des fichiers réécrits, refus vers lui-même, un descendant ou à côté d'un dossier du même nom ; action « Déplacer le dossier » dans l'écran. `GET /upload/folder-structure` (arbre). Testé (`TestAdminMediaMoveFolders`).
+- Reste : upload depuis une URL, réglages et configuration d'affichage du core store.
 
 ## Critères d'acceptation
-- [ ] Déplacer un dossier qui contient 3 niveaux recalcule `path` et `folderPath` partout (intégration).
-- [ ] Déplacer un dossier dans son propre descendant est refusé (TU).
+- [x] Déplacer un dossier qui contient 3 niveaux recalcule `path` et `folderPath` partout (intégration).
+- [x] Déplacer un dossier dans son propre descendant est refusé (TU).
 - [ ] `upload-from-urls` vers `http://169.254.169.254/` est refusé (TU anti-SSRF).
 - [ ] Les réglages modifiés s'appliquent immédiatement aux uploads suivants.
 - [ ] **Compat DB (D3)** : l'arborescence de dossiers d'une base Strapi s'affiche à l'identique.

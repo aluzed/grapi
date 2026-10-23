@@ -68,15 +68,16 @@ function NewFolder({ parent, folder, onClose }: { parent: number | null; folder?
   )
 }
 
-function MoveDialog({ ids, onClose }: { ids: number[]; onClose: () => void }) {
+function MoveDialog({ ids, folder, onClose }: { ids: number[]; folder?: MediaFolder; onClose: () => void }) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
   const folders = useQuery({ queryKey: ['media', 'folders', 'all'], queryFn: () => api.get<MediaFolder[]>('/upload/folders?all=true') })
   const [dest, setDest] = useState('root')
   const move = useMutation({
-    mutationFn: () => api.post<{ files: number }>('/upload/actions/bulk-move', { fileIds: ids, destination: dest === 'root' ? null : Number(dest) }),
+    mutationFn: () =>
+      api.post<{ files: number; folders: number }>('/upload/actions/bulk-move', { fileIds: ids, folderIds: folder ? [folder.id] : [], destination: dest === 'root' ? null : Number(dest) }),
     onSuccess: (r) => {
-      toast.success(t('media.moved', { count: String(r.files) }))
+      toast.success(folder ? t('media.folderMoved', { name: folder.name }) : t('media.moved', { count: String(r.files) }))
       void queryClient.invalidateQueries({ queryKey: ['media'] })
       onClose()
     },
@@ -85,7 +86,7 @@ function MoveDialog({ ids, onClose }: { ids: number[]; onClose: () => void }) {
   return (
     <Dialog
       open
-      title={t('media.move')}
+      title={folder ? t('media.moveFolder', { name: folder.name }) : t('media.move')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
       footer={
@@ -101,7 +102,7 @@ function MoveDialog({ ids, onClose }: { ids: number[]; onClose: () => void }) {
     >
       <SelectField label={t('media.moveTo')} value={dest} onChange={(e) => setDest(e.target.value)}>
         <option value="root">{t('media.root')}</option>
-        {folders.data?.map((f) => (
+        {folders.data?.filter((f) => !folder || (f.path !== folder.path && !f.path.startsWith(`${folder.path}/`))).map((f) => (
           <option key={f.id} value={f.id}>
             {'· '.repeat(Math.max(0, f.path.split('/').length - 2))}
             {f.name}
@@ -134,6 +135,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const [selecting, setSelecting] = useState(false)
   const [chosen, setChosen] = useState<number[]>([])
   const [moving, setMoving] = useState(false)
+  const [movingFolder, setMovingFolder] = useState<MediaFolder | null>(null)
   const confirm = useConfirm()
   const canUpdate = can(permissions, 'plugin::upload.assets.update')
   const input = useRef<HTMLInputElement>(null)
@@ -321,6 +323,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
                   label={t('cm.actions')}
                   actions={[
                     { label: t('media.renameFolder'), icon: <Pencil className="h-4 w-4" />, onSelect: () => setRenaming(f) },
+                    { label: t('media.moveFolderAction'), icon: <FolderInput className="h-4 w-4" />, onSelect: () => setMovingFolder(f) },
                     {
                       label: t('media.deleteFolder'),
                       icon: <Trash2 className="h-4 w-4" />,
@@ -380,6 +383,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
       )}
       {creating && <NewFolder parent={folder} onClose={() => setCreating(false)} />}
       {renaming && <NewFolder parent={folder} folder={renaming} onClose={() => setRenaming(null)} />}
+      {movingFolder && <MoveDialog ids={[]} folder={movingFolder} onClose={() => setMovingFolder(null)} />}
       {moving && (
         <MoveDialog
           ids={chosen}

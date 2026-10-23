@@ -144,7 +144,8 @@ Routes présentes quand le plugin upload est actif. Les droits sont `plugin::upl
 | `PUT /upload/folders/{id}` | Renomme (`name`, unique dans le dossier parent) |
 | `DELETE /upload/folders/{id}` | Supprime le dossier, ses sous-dossiers et leurs fichiers, comme Strapi : `{files, folders}` |
 | `POST /upload/actions/bulk-delete` | `{fileIds, folderIds}` : fichiers (dans les droits) et dossiers avec leur contenu |
-| `POST /upload/actions/bulk-move` | `{fileIds, destination}` (`null` : racine) |
+| `POST /upload/actions/bulk-move` | `{fileIds, folderIds, destination}` (`null` : racine). Tout ou rien : un dossier déplacé réécrit le `path` de ses sous-dossiers et le `folderPath` de leurs fichiers ; refusé vers lui-même, un descendant, ou à côté d'un dossier du même nom. Renvoie `{files, folders}`. |
+| `GET /upload/folder-structure` | Arbre des dossiers `[{id, name, children}]` |
 | `POST /upload/folders` | `name`, `parent`. Le `pathId` suit le plus grand existant, le `path` est celui du parent plus ce numéro, comme Strapi. Nom unique dans le dossier parent. |
 
 ### Locales (i18n)

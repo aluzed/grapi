@@ -2361,3 +2361,64 @@ func TestAdminAuditEvents(t *testing.T) {
 		t.Fatalf("reads log nothing: %d", n)
 	}
 }
+
+func TestAdminMediaMoveFolders(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	folder := func(name, parent string) (string, string) {
+		body := `{"name":"` + name + `"}`
+		if parent != "" {
+			body = `{"name":"` + name + `","parent":` + parent + `}`
+		}
+		_, b, _ := c.do("POST", "/upload/folders", body)
+		return strconv.Itoa(int(dataOf(b)["id"].(float64))), dataOf(b)["path"].(string)
+	}
+	a, _ := folder("A", "")
+	bID, _ := folder("B", a)
+	cID, _ := folder("C", bID)
+	d, dPath := folder("D", "")
+	_, up := c.upload("/upload?folder="+cID, "deep.png", pngBytes(t))
+	file := strconv.Itoa(int(up["list"].([]any)[0].(map[string]any)["id"].(float64)))
+
+	if s, b, _ := c.do("POST", "/upload/actions/bulk-move", `{"folderIds":[`+bID+`],"destination":`+d+`}`); s != 200 || dataOf(b)["folders"].(float64) != 1 {
+		t.Fatalf("move: %d %v", s, b)
+	}
+	paths := map[string]string{}
+	_, b, _ = c.do("GET", "/upload/folders?all=true", "")
+	for _, f := range b["data"].([]any) {
+		m := f.(map[string]any)
+		paths[m["name"].(string)] = m["path"].(string)
+	}
+	if !strings.HasPrefix(paths["B"], dPath+"/") || !strings.HasPrefix(paths["C"], paths["B"]+"/") || paths["A"] == "" {
+		t.Fatalf("paths: %v (D %s)", paths, dPath)
+	}
+	_, b, _ = c.do("GET", "/upload/files/"+file, "")
+	if fp := dataOf(b)["folderPath"]; fp != paths["C"] {
+		t.Fatalf("the file follows: %v, C is %s", fp, paths["C"])
+	}
+	_, b, _ = c.do("GET", "/upload/folder-structure", "")
+	tree, _ := json.Marshal(b["data"])
+	if !strings.Contains(string(tree), `{"children":[{"children":[{"children":[],"id":`+cID+`,"name":"C"}],"id":`+bID+`,"name":"B"}],"id":`+d+`,"name":"D"}`) {
+		t.Fatalf("folder structure: %s", tree)
+	}
+	if s, _, _ := c.do("POST", "/upload/actions/bulk-move", `{"folderIds":[`+d+`],"destination":`+cID+`}`); s != 400 {
+		t.Fatalf("into a descendant: %d", s)
+	}
+	if s, _, _ := c.do("POST", "/upload/actions/bulk-move", `{"folderIds":[`+bID+`],"destination":`+bID+`}`); s != 400 {
+		t.Fatalf("into itself: %d", s)
+	}
+	folder("B", "")
+	if s, _, _ := c.do("POST", "/upload/actions/bulk-move", `{"folderIds":[`+bID+`],"destination":null}`); s != 400 {
+		t.Fatalf("a sibling has the name: %d", s)
+	}
+	_, b, _ = c.do("GET", "/upload/folders?all=true", "")
+	for _, f := range b["data"].([]any) {
+		m := f.(map[string]any)
+		if m["name"] == "C" && m["path"] != paths["C"] {
+			t.Fatalf("a refused move changes nothing: %v", m)
+		}
+	}
+}

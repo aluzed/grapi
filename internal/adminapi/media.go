@@ -2,7 +2,9 @@ package adminapi
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -37,6 +39,7 @@ func (s *Server) mediaRoutes() {
 	s.allowed("DELETE /upload/files/{id}", uploadUpdate, s.deleteFile)
 	s.allowed("POST /upload", uploadCreate, s.uploadFiles)
 	s.allowed("GET /upload/folders", uploadRead, s.listFolders)
+	s.allowed("GET /upload/folder-structure", uploadRead, s.folderStructure)
 	s.allowed("POST /upload/folders", uploadCreate, s.createFolder)
 }
 
@@ -534,16 +537,119 @@ func (s *Server) bulkMoveFiles(w http.ResponseWriter, r *http.Request, u *User, 
 		}
 		set["folder"], set["folderPath"] = *b.Destination, get(folder, "path")
 	}
-	moved := 0
-	for _, id := range b.FileIDs {
-		if err := s.writableFile(ctx, a, id); err != nil {
-			continue
+	destPath := ""
+	if p, ok := set["folderPath"].(string); ok && p != "/" {
+		destPath = p
+	}
+	moved, movedFolders := 0, 0
+	err := s.e.DB.Tx(ctx, func(ctx context.Context) error {
+		for _, id := range b.FolderIDs {
+			if err := s.moveFolder(ctx, id, b.Destination, destPath, u.ID); err != nil {
+				return err
+			}
+			movedFolders++
 		}
-		if _, err := s.e.Update(ctx, fileUID, map[string]any{"id": id}, set, query.Params{}); err != nil {
+		for _, id := range b.FileIDs {
+			if err := s.writableFile(ctx, a, id); err != nil {
+				continue
+			}
+			if _, err := s.e.Update(ctx, fileUID, map[string]any{"id": id}, set, query.Params{}); err != nil {
+				return err
+			}
+			moved++
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	s.audit(r, u, "media.update", map[string]any{"fileIds": b.FileIDs, "folderIds": b.FolderIDs, "destination": b.Destination})
+	return data(w, map[string]any{"files": moved, "folders": movedFolders})
+}
+
+// FolderNode is a node of the folder tree.
+type FolderNode struct {
+	ID       any           `json:"id"`
+	Name     string        `json:"name"`
+	Children []*FolderNode `json:"children"`
+}
+
+// folderStructure is the folder tree, as Strapi's folder-structure.
+func (s *Server) folderStructure(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+	rows, err := s.e.FindMany(r.Context(), folderUID, query.Params{})
+	if err != nil {
+		return err
+	}
+	// A path sorts after its parent's.
+	sort.Slice(rows, func(i, j int) bool { return getString(rows[i], "path") < getString(rows[j], "path") })
+	byPath := map[string]*FolderNode{}
+	roots := []*FolderNode{}
+	for _, row := range rows {
+		path := getString(row, "path")
+		n := &FolderNode{ID: get(row, "id"), Name: getString(row, "name"), Children: []*FolderNode{}}
+		byPath[path] = n
+		parent := path[:strings.LastIndex(path, "/")]
+		if p, ok := byPath[parent]; ok {
+			p.Children = append(p.Children, n)
+		} else {
+			roots = append(roots, n)
+		}
+	}
+	return data(w, roots)
+}
+
+// moveFolder puts a folder under destination (nil: the root) and rewrites
+// the path of its subfolders and the folderPath of their files.
+func (s *Server) moveFolder(ctx context.Context, id int64, destination *int64, destPath string, by any) error {
+	row, err := s.e.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": id}})
+	if err != nil {
+		return err
+	}
+	if row == nil {
+		return validation([]FieldError{{Path: []string{"folderIds"}, Message: "Folder does not exist"}})
+	}
+	old := getString(row, "path")
+	if destPath == old || strings.HasPrefix(destPath, old+"/") {
+		return validation([]FieldError{{Path: []string{"destination"}, Message: "A folder cannot move into itself or one of its subfolders"}})
+	}
+	parent := map[string]any{"parent": map[string]any{"id": map[string]any{"$null": true}}}
+	if destination != nil {
+		parent = map[string]any{"parent": map[string]any{"id": *destination}}
+	}
+	if n, err := s.e.Count(ctx, folderUID, query.Params{Where: and(parent, map[string]any{"name": get(row, "name")}, map[string]any{"id": map[string]any{"$ne": id}})}); err != nil {
+		return err
+	} else if n > 0 {
+		return validation([]FieldError{{Path: []string{"destination"}, Message: "A folder with this name already exists"}})
+	}
+	newPath := destPath + "/" + fmt.Sprint(get(row, "pathId"))
+	var parentID any
+	if destination != nil {
+		parentID = *destination
+	}
+	if _, err := s.e.Update(ctx, folderUID, map[string]any{"id": id}, query.Data{"parent": parentID, "updatedBy": by}, query.Params{}); err != nil {
+		return err
+	}
+	under := map[string]any{"$or": []any{map[string]any{"path": old}, map[string]any{"path": map[string]any{"$startsWith": old + "/"}}}}
+	folders, err := s.e.FindMany(ctx, folderUID, query.Params{Where: under})
+	if err != nil {
+		return err
+	}
+	for _, f := range folders {
+		p := newPath + strings.TrimPrefix(getString(f, "path"), old)
+		if _, err := s.e.Update(ctx, folderUID, map[string]any{"id": get(f, "id")}, query.Data{"path": p}, query.Params{}); err != nil {
 			return err
 		}
-		moved++
 	}
-	s.audit(r, u, "media.update", map[string]any{"fileIds": b.FileIDs, "destination": b.Destination})
-	return data(w, map[string]any{"files": moved})
+	filesUnder := map[string]any{"$or": []any{map[string]any{"folderPath": old}, map[string]any{"folderPath": map[string]any{"$startsWith": old + "/"}}}}
+	files, err := s.e.FindMany(ctx, fileUID, query.Params{Where: filesUnder})
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		p := newPath + strings.TrimPrefix(getString(f, "folderPath"), old)
+		if _, err := s.e.Update(ctx, fileUID, map[string]any{"id": get(f, "id")}, query.Data{"folderPath": p}, query.Params{}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
