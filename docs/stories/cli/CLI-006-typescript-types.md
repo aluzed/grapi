@@ -25,13 +25,15 @@ Générer des types TypeScript qui décrivent les réponses et les entrées de l
 
 ## Critères d'acceptation
 - [x] Les types générés pour le projet de test compilent avec `tsc --strict` (homelab).
-- [ ] Le JSON réel de l'API valide contre les types (test : conversion des types en zod via ts-to-zod, puis parse des réponses du banc).
+- [x] Le JSON réel de l'API valide contre les types (test : conversion des types en zod via ts-to-zod, puis parse des réponses du banc).
 - [x] La génération est déterministe : deux exécutions donnent des fichiers identiques.
 
 ## Avancement
 - `grapi ts:generate-types [-o dossier]` (`internal/typegen`) écrit les `types/generated/contentTypes.d.ts` et `components.d.ts` de `strapi ts:generate-types` (format `@strapi/strapi`, `Schema.Attribute.*`, modificateurs dans l'ordre de `@strapi/typescript-utils`, clés triées). `TestMatchesStrapi` compare aux fichiers que Strapi 5.59 génère sur les 7 fixtures : identiques aux blancs près (Strapi passe par prettier), hors types Enterprise. `TestDeterministic`.
 - `tsc --strict` (TypeScript de l'image de référence, contre `@strapi/strapi`) passe sur les déclarations de devfreelance, components et i18n-dp, avec un fichier qui instancie `Data.ContentType<K>` et `Data.Component<K>` pour tous les UID (2026-10-22).
-- Reste : les types propres à grapi (réponses `{data, meta}`, relations optionnelles, unions de zones dynamiques), leur validation contre le JSON du banc, l'exécution pendant `develop`.
+- Reste : les types propres à grapi (réponses `{data, meta}`, relations optionnelles, unions de zones dynamiques), l'exécution pendant `develop`.
+
+- `make typecheck-compat` (`compat/scripts/typecheck.sh`) : 30 réponses réelles de Strapi sur devfreelance (posts, catégories, thèmes, pages de thème, médias), typées `Data.ContentType<uid>` avec les types générés par grapi, passent `tsc --strict` dans l'image de référence. `tsc` plutôt que ts-to-zod : le contrôle des propriétés en trop des littéraux suffit ; contre-épreuve faite, un champ inconnu et un mauvais type sont rejetés.
 
 ## Notes techniques
 - Génération pure Go (`text/template`), sans dépendance à Node.
