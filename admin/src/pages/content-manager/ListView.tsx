@@ -17,6 +17,8 @@ import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { Cell, StatusBadge } from './cell'
 import { useModel } from './ContentManager'
+import { FiltersPanel } from './FiltersPanel'
+import { parseFilters, toQuery } from './filters'
 import { entryPath, label, useLocales, useModels } from './hooks'
 
 type BulkOp = 'delete' | 'publish' | 'unpublish'
@@ -29,6 +31,7 @@ function useListParams(model: Model) {
   const q = params.get('q') ?? ''
   const status = params.get('status') === 'published' ? 'published' : 'draft'
   const locale = params.get('locale') ?? ''
+  const filters = parseFilters(params.get('filters'))
   const update = (patch: Record<string, string | number | null>, resetPage = true) => {
     const next = new URLSearchParams(params)
     for (const [k, v] of Object.entries(patch)) {
@@ -38,7 +41,7 @@ function useListParams(model: Model) {
     if (resetPage && !('page' in patch)) next.delete('page')
     setParams(next, { replace: true })
   }
-  return { page, pageSize, sort, q, status, locale, update }
+  return { page, pageSize, sort, q, status, locale, filters, update }
 }
 
 function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -75,13 +78,15 @@ function List({ model }: { model: Model }) {
   const queryClient = useQueryClient()
   const models = useModels().data ?? []
   const locales = useLocales(model.localized)
-  const { page, pageSize, sort, q, status, locale, update } = useListParams(model)
+  const { page, pageSize, sort, q, status, locale, filters, update } = useListParams(model)
   const [selected, setSelected] = useState<string[]>([])
 
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sort })
   if (q) query.set('_q', q)
   if (model.draftAndPublish) query.set('status', status)
   if (model.localized && locale) query.set('locale', locale)
+  const apiFilters = toQuery(filters, model, models)
+  if (apiFilters) query.set('filters', JSON.stringify(apiFilters))
   const listKey = ['cm', 'list', model.uid, query.toString()]
   const list = useQuery({
     queryKey: listKey,
@@ -176,6 +181,8 @@ function List({ model }: { model: Model }) {
           )}
         </div>
       </div>
+
+      {model.settings.filterable && <FiltersPanel model={model} value={filters} onChange={(f) => update({ filters: f.length ? JSON.stringify(f) : null })} />}
 
       {bulkable && selected.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
