@@ -38,6 +38,10 @@ type UploadConfig struct {
 	PublicDir string
 	// SizeLimit in bytes (1 GB by default).
 	SizeLimit int64
+	// LimitInputPixels is sharp's limitInputPixels: past it, an image is
+	// stored as a plain file, without dimensions or formats, as Strapi does
+	// when sharp refuses it. 0 is no limit.
+	LimitInputPixels int64
 	// Breakpoints are the responsive formats, largest first.
 	Breakpoints []Breakpoint
 	// Provider stores the files (the local provider when nil) under
@@ -518,6 +522,14 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 	src := f.path
 	img, imgErr := media.Probe(src)
 	isImage := imgErr == nil && map[string]bool{"jpeg": true, "png": true, "webp": true, "tiff": true, "svg": true, "gif": true, "avif": true}[img.Format]
+	if isImage && s.cfg.Upload.LimitInputPixels > 0 && img.Format != "svg" {
+		// sharp reads the first page of an animated image.
+		h := img.Height
+		if img.PageHeight > 0 {
+			h = img.PageHeight
+		}
+		isImage = int64(img.Width)*int64(h) <= s.cfg.Upload.LimitInputPixels
+	}
 	if isImage && (settings.SizeOptimization || settings.AutoOrientation) {
 		quality := 100
 		if settings.SizeOptimization {

@@ -29,12 +29,15 @@ Produire les mêmes formats, avec les mêmes noms, les mêmes dimensions et les 
 - Génération d'images à la demande (pas fournie par Strapi).
 
 ## Critères d'acceptation
-- [ ] Un JPEG de 2000 x 1500 donne `thumbnail` (208 x 156), `large` (1000 x 750), `medium` et `small`, avec les mêmes dimensions que Strapi 5.59 (banc `SETUP-002`, comparaison des dimensions et non des octets).
-- [ ] Une image de 400 x 300 ne génère que `thumbnail`.
+- [x] Un JPEG de 2000 x 1500 donne `thumbnail` (208 x 156), `large` (1000 x 750), `medium` et `small`, avec les mêmes dimensions que Strapi 5.59 (banc `SETUP-002`, comparaison des dimensions et non des octets).
+- [x] Une image de 400 x 300 ne génère que `thumbnail`.
 - [ ] Un GIF animé reste animé dans tous ses formats.
 - [ ] Une photo avec EXIF orientation 6 sort droite si `autoOrientation` est actif.
-- [ ] `limitInputPixels` rejette une image hors limite avec une erreur explicite (TU).
+- [x] `limitInputPixels` rejette une image hors limite avec une erreur explicite (TU).
 - [ ] Le traitement d'une image de 20 Mpx tient en moins de 300 Mo de RSS (mesure sur le homelab).
+
+- `plugins.upload.config.sharp.limitInputPixels` (booléen ou entier >= 0, défaut de sharp 16383², valeur invalide refusée au démarrage avec le message de Strapi). Correction du critère : Strapi ne rejette pas l'image, ses appels sharp échouent et l'upload la range comme un fichier ordinaire, sans dimensions ni formats ; grapi fait de même (`TestUploadLimitInputPixels`).
+- Banc `devfreelance_formats` (SQLite et Postgres), identique à Strapi : 2000 x 1500 donne `thumbnail` 208 x 156, `small` 500 x 375, `medium` 750 x 563, `large` 1000 x 750 ; 400 x 300 seulement `thumbnail` ; 150 x 150 aucun format ; 1000 x 3000 (portrait) `thumbnail` 52 x 156 à `large` 333 x 1000. Le runner génère des PNG : le calcul des dimensions ne dépend pas du format.
 
 ## Notes techniques
 - Décision **D4** : interface `ImageProcessor`, avec une implémentation `govips` par défaut (libvips, la même bibliothèque que sharp, donc des résultats très proches) et une implémentation Go pure (`disintegration/imaging`) derrière le build tag `novips`, qui ne fait ni WebP ni AVIF en écriture.

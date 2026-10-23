@@ -120,3 +120,63 @@ func jsonNum(f float64) string {
 	b, _ := json.Marshal(f)
 	return string(b)
 }
+
+// Past sharp.limitInputPixels Strapi's sharp calls throw and the upload
+// stores a plain file: no dimensions, no formats.
+func TestUploadLimitInputPixels(t *testing.T) {
+	dir := t.TempDir()
+	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	writeLimit := func(v string) {
+		conf := "upload:\n  config:\n    sharp:\n      limitInputPixels: " + v + "\n"
+		if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte(conf), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	t.Setenv("JWT_SECRET", "test")
+	writeLimit("-1")
+	if _, err := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}}).Setup(); err == nil || !strings.Contains(err.Error(), `"sharp.limitInputPixels" must be a boolean or an integer`) {
+		t.Fatalf("an invalid limit stops the start: %v", err)
+	}
+	writeLimit("300")
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = srv.Close() }()
+	ctx := context.Background()
+	e := app.Documents().E
+	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	roleID, _ := public.Get("id")
+	if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(srv.Handler)
+	defer ts.Close()
+	upload := func(w, h int) map[string]any {
+		body, ct := pngBody(t, w, h, "")
+		res, err := http.Post(ts.URL+"/api/upload", ct, body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = res.Body.Close() }()
+		var out []map[string]any
+		if err := json.NewDecoder(res.Body).Decode(&out); err != nil || len(out) != 1 {
+			t.Fatalf("upload %dx%d: %d %v", w, h, res.StatusCode, err)
+		}
+		return out[0]
+	}
+	if f := upload(10, 10); f["width"] != float64(10) {
+		t.Fatalf("under the limit: %v", f)
+	}
+	if f := upload(20, 20); f["width"] != nil || f["height"] != nil || f["formats"] != nil || f["mime"] != "image/png" {
+		t.Fatalf("over the limit, a plain file: %v", f)
+	}
+}

@@ -623,6 +623,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}
 	apiCfg := apiConfig(conf, *dir)
 	apiCfg.Sanitizers = a.sanitizers
+	if apiCfg.Upload.LimitInputPixels, err = limitInputPixels(conf); err != nil {
+		return nil, err
+	}
 	if list, ok := conf.Get("middlewares").([]any); ok {
 		if err := httpapi.CheckRequiredMiddlewares(list); err != nil {
 			return nil, fmt.Errorf("config middlewares: %w", err)
@@ -793,4 +796,31 @@ func (a *App) Start() error {
 		return srv.Shutdown(shutdown)
 	}
 	return nil
+}
+
+// sharpDefaultPixels is sharp's default limitInputPixels, 0x3FFF squared.
+const sharpDefaultPixels = 0x3FFF * 0x3FFF
+
+// limitInputPixels reads plugins.upload.config.sharp.limitInputPixels as
+// Strapi checks it: a boolean (true is sharp's default, false no limit) or
+// an integer >= 0 (0 is no limit).
+func limitInputPixels(c *config.Config) (int64, error) {
+	switch v := c.Get("plugins.upload.config.sharp.limitInputPixels").(type) {
+	case nil:
+		return sharpDefaultPixels, nil
+	case bool:
+		if v {
+			return sharpDefaultPixels, nil
+		}
+		return 0, nil
+	case int:
+		if v >= 0 {
+			return int64(v), nil
+		}
+	case float64:
+		if v >= 0 && v == float64(int64(v)) {
+			return int64(v), nil
+		}
+	}
+	return 0, errors.New(`upload plugin config: "sharp.limitInputPixels" must be a boolean or an integer greater than or equal to 0 (use env.int() to read it from the environment)`)
 }
