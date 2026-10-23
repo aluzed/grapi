@@ -64,7 +64,8 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - Duplication de rôle (action « Dupliquer » : nouveau rôle « … (copie) » avec les mêmes permissions, restrictions comprises, puis ouverture de son éditeur), vérifiée dans Chrome.
 - Conditions « créées par l'utilisateur » (`admin::is-creator`) et « créées par son rôle » (`admin::has-same-role-as-creator`) dans l'éditeur, communes aux actions d'un type et combinées en OU comme Strapi ; vérifié dans Chrome.
 - Suppression groupée des administrateurs (sélection, confirmation, `batch-delete`), vérifiée dans Chrome.
-- Reste : événements par content type des webhooks, transfer tokens, liste des routes d'un rôle users-permissions, section projet (les sections e-mail et médiathèque sont faites).
+- Rôles users-permissions : la ou les routes ouvertes par chaque action s'affichent sous sa case (`GET /users-permissions/routes`, `TestAdminUPRoutes`).
+- Reste : événements par content type des webhooks, transfer tokens, section projet (les sections e-mail et médiathèque sont faites).
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.

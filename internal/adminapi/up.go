@@ -28,6 +28,7 @@ func (s *Server) usersPermissionsRoutes() {
 	}
 	s.allowed("GET /users-permissions/roles", up+"roles.read", s.upRoles)
 	s.allowed("GET /users-permissions/actions", up+"roles.read", s.tokenActions)
+	s.allowed("GET /users-permissions/routes", up+"roles.read", s.upRoutes)
 	s.allowed("GET /users-permissions/roles/{id}", up+"roles.read", s.upRole)
 	s.allowed("POST /users-permissions/roles", up+"roles.create", s.upCreateRole)
 	s.allowed("PUT /users-permissions/roles/{id}", up+"roles.update", s.upUpdateRole)
@@ -347,4 +348,15 @@ func (s *Server) upSettingsPut(key string) permittedHandler {
 		}
 		return data(w, current)
 	}
+}
+
+// upRoutes maps each content API action to the routes it opens.
+func (s *Server) upRoutes(w http.ResponseWriter, _ *http.Request, _ *User, _ *permissions.Ability) error {
+	out := map[string][]map[string]string{}
+	if s.cfg.Routes != nil {
+		for _, r := range s.cfg.Routes() {
+			out[r.Action] = append(out[r.Action], map[string]string{"method": r.Method, "path": r.Path})
+		}
+	}
+	return data(w, out)
 }

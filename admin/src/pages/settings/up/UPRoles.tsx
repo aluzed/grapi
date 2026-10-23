@@ -121,6 +121,7 @@ export function UPRoleEditor() {
   const { permissions } = useAuth()
   const role = useQuery({ queryKey: ['up', 'roles', id], queryFn: () => api.get<UPRole>(`/users-permissions/roles/${id}`), enabled: !creating })
   const actions = useQuery({ queryKey: ['up', 'actions'], queryFn: () => api.get<string[]>('/users-permissions/actions'), staleTime: 60_000 })
+  const routes = useQuery({ queryKey: ['up', 'routes'], queryFn: () => api.get<Record<string, { method: string; path: string }[]>>('/users-permissions/routes'), staleTime: 60_000 })
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [chosen, setChosen] = useState<Set<string>>(new Set())
@@ -185,7 +186,14 @@ export function UPRoleEditor() {
               <Checkbox label={g} title={t('up.selectGroup', { name: g })} checked={list.every((a) => chosen.has(a))} onChange={(e) => toggle(list, e.target.checked)} className="font-medium" />
               <div className="grid grid-cols-1 pl-6 sm:grid-cols-2">
                 {list.map((a) => (
-                  <Checkbox key={a} label={a.slice(a.lastIndexOf('.') + 1)} checked={chosen.has(a)} onChange={(e) => toggle([a], e.target.checked)} />
+                  <div key={a} className="flex flex-col">
+                    <Checkbox label={a.slice(a.lastIndexOf('.') + 1)} checked={chosen.has(a)} onChange={(e) => toggle([a], e.target.checked)} />
+                    {routes.data?.[a]?.map((r) => (
+                      <span key={`${r.method} ${r.path}`} className="-mt-2 mb-1 pl-6 font-mono text-[11px] break-all text-muted">
+                        {r.method} {r.path}
+                      </span>
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>

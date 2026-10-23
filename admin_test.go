@@ -2681,3 +2681,16 @@ func TestAdminRoleChangeAppliesAtOnce(t *testing.T) {
 		t.Fatalf("and loses read at once: %d", s)
 	}
 }
+
+func TestAdminUPRoutes(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("GET", "/users-permissions/routes", "")
+	find, _ := dataOf(b)["api::article.article.find"].([]any)
+	if len(find) != 1 || fmt.Sprint(find[0]) != "map[method:GET path:/api/articles]" {
+		t.Fatalf("routes of find: %v", find)
+	}
+}

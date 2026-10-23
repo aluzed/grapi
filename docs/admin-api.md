@@ -204,6 +204,7 @@ Les rôles et réglages des utilisateurs finaux (API de contenu). Actions `plugi
 |---|---|
 | `GET /users-permissions/roles` | Rôles avec `usersCount` |
 | `GET /users-permissions/actions` | Actions attribuables (`api::article.article.find`, actions des plugins) |
+| `GET /users-permissions/routes` | Routes de l'API de contenu par action : `{"api::article.article.find": [{method, path}]}` |
 | `GET /users-permissions/roles/{id}` | Un rôle avec ses `permissions` (liste d'actions) |
 | `POST /users-permissions/roles` | `name` (unique), `description`, `permissions`. Le `type` est le nom en snake_case. |
 | `PUT /users-permissions/roles/{id}` | `name`, `description`, `permissions` (remplace la liste) |

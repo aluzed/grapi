@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aluzed/grapi/internal/httpapi"
+
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/auth/session"
 	"github.com/aluzed/grapi/internal/db/query"
@@ -56,6 +58,8 @@ type Config struct {
 	APITokenSalt, EncryptionKey string
 	// ContentActions lists the actions a custom API token can be given.
 	ContentActions func() []string
+	// Routes lists the content API routes, for the users-permissions editor.
+	Routes func() []httpapi.RouteInfo
 	// Webhooks stores and sends the webhooks; nil leaves their routes out.
 	Webhooks *webhooks.Runner
 	// Media is the upload pipeline; nil leaves the media routes out.

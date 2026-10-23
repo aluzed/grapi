@@ -662,6 +662,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 	adminCfg.Develop, adminCfg.ProjectDir = a.opts.AutoReload, *dir
 	adminCfg.Media, adminCfg.Webhooks = api, runner
 	adminCfg.APITokenSalt, adminCfg.ContentActions = apiCfg.APITokenSalt, api.ContentAPIActions
+	adminCfg.Routes = api.Routes
 	adminCfg.EncryptionKey, _ = conf.String("admin.secrets.encryptionKey")
 	if adminCfg.EmailProvider, _ = conf.String("plugins.email.config.provider"); adminCfg.EmailProvider == "" {
 		adminCfg.EmailProvider = "sendmail"
