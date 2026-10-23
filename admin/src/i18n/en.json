@@ -586,5 +586,7 @@
   "releases.added": "Entry added to the release",
   "releases.alreadyIn": "Already in",
   "releases.release": "Release",
-  "releases.choose": "Choose a release"
+  "releases.choose": "Choose a release",
+  "releases.addedMany": "{added} of {total} entries added (the others were already in it)",
+  "releases.addedAll": "{added} entries added"
 }

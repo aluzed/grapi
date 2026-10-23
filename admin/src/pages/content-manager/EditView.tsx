@@ -242,7 +242,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
             {!creating && (entry.data?.documentId || documentId) && (
               <HistoryButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} title={title} />
             )}
-            {!creating && (entry.data?.documentId || documentId) && <ReleaseButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} />}
+            {!creating && (entry.data?.documentId || documentId) && <ReleaseButton model={model} documentIds={[String(entry.data?.documentId ?? documentId)]} locale={locale || undefined} />}
             {!creating && !single && model.permissions.create && (
               <Button
                 variant="outline"

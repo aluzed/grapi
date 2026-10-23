@@ -36,7 +36,7 @@ Publier ou dépublier un lot de documents de façon atomique, à la main ou à u
 ## Critères d'acceptation
 - [ ] Une release avec 2 publish et 1 unpublish sur deux content types et deux locales s'applique entièrement ; les 3 documents ont l'état attendu.
 - [x] Une entrée avec un champ requis vide rend la release `blocked` ; la publication manuelle renvoie 400 avec la liste des entrées fautives.
-- [ ] Panne simulée sur la 3e action : aucune des actions n'est appliquée et la release n'est pas `done`.
+- [x] Panne simulée sur la 3e action : aucune des actions n'est appliquée et la release n'est pas `done`.
 - [x] Planification à 09:00 `Europe/Paris` le jour du passage à l'heure d'hiver : exécution à l'instant UTC correct.
 - [x] Serveur arrêté pendant l'échéance : la release est publiée au redémarrage.
 - [x] Release planifiée devenue `blocked` : passe en `failed` à l'échéance, webhook reçu avec `isPublished: false`.
@@ -46,15 +46,14 @@ Publier ou dépublier un lot de documents de façon atomique, à la main ou à u
 - [x] Payload du webhook `releases.publish` conforme au périmètre (récepteur de test).
 
 ## Avancement
-Fait : tables, API (`internal/adminapi/releases.go`), état par publication d'essai, publication tout ou rien, planificateur (démarrage, 30 s, réveil sur date passée), `failed`, webhook, audit (origine `scheduler`), retrait des documents supprimés, permissions, écrans (liste, détail, « Ajouter à une release » dans l'édition), conversion de fuseau testée sur les deux changements d'heure (`admin/src/lib/tz.test.ts`), test de bout en bout `TestAdminReleases`.
+Fait : tables, API (`internal/adminapi/releases.go`), état par publication d'essai, publication tout ou rien, planificateur (démarrage, 30 s, réveil sur date passée), `failed`, webhook, audit (origine `scheduler`), retrait des documents supprimés, permissions, écrans (liste, détail, « Ajouter à une release » dans l'édition et en lot depuis la liste), atomicité testée par une panne injectée (`TestAdminReleaseIsAtomic`), conversion de fuseau testée sur les deux changements d'heure (`admin/src/lib/tz.test.ts`), test de bout en bout `TestAdminReleases`.
 
 Reste :
-- ajout en lot depuis la vue liste ;
 - réglage `releases.defaultTimezone` (l'écran propose le fuseau du navigateur) et permissions `releases.settings.*` ;
 - détail groupé par content type ou par locale ;
 - permission `publish` vérifiée par locale (aujourd'hui par content type) ;
 - retrait des entrées d'une locale supprimée et des documents supprimés par l'API de contenu (ils apparaissent `not-ready`) ;
-- critères 1 (deux content types, deux locales) et 3 (panne sur la 3e action) à tester explicitement.
+- critère 1 (deux content types, deux locales) à tester explicitement.
 
 ## Notes techniques
 - Tables `grapi_releases` et `grapi_release_actions` (index `(uid, document_id, locale)` pour afficher les releases d'un document).

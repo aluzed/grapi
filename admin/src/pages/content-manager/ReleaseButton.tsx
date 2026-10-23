@@ -16,7 +16,9 @@ import { ReleaseDialog } from '@/pages/releases/Releases'
 
 type Membership = { id: number; name: string; type: 'publish' | 'unpublish'; locale: string | null }
 
-export function ReleaseButton({ model, documentId, locale }: { model: Model; documentId: string; locale?: string }) {
+// documentIds adds a list view selection; memberships are shown for one document only.
+export function ReleaseButton({ model, documentIds, locale }: { model: Model; documentIds: string[]; locale?: string }) {
+  const single = documentIds.length === 1 ? documentIds[0]! : null
   const { t } = useI18n()
   const { permissions } = useAuth()
   const queryClient = useQueryClient()
@@ -25,14 +27,21 @@ export function ReleaseButton({ model, documentId, locale }: { model: Model; doc
   const [releaseID, setReleaseID] = useState('')
   const [type, setType] = useState<'publish' | 'unpublish'>('publish')
   const memberships = useQuery({
-    queryKey: ['releases', 'document', model.uid, documentId],
-    queryFn: () => api.get<Membership[]>(`/releases/document/${encodeURIComponent(model.uid)}/${encodeURIComponent(documentId)}`),
+    queryKey: ['releases', 'document', model.uid, single],
+    queryFn: () => api.get<Membership[]>(`/releases/document/${encodeURIComponent(model.uid)}/${encodeURIComponent(single!)}`),
+    enabled: single !== null,
   })
   const releases = useQuery({ queryKey: ['releases', 'pending'], queryFn: () => api.get<Release[]>('/releases'), enabled: open })
   const add = useMutation({
-    mutationFn: () => api.post(`/releases/${releaseID}/actions`, { type, uid: model.uid, documentId, locale }),
-    onSuccess: () => {
-      toast.success(t('releases.added'))
+    mutationFn: async () => {
+      const results = await Promise.allSettled(documentIds.map((documentId) => api.post(`/releases/${releaseID}/actions`, { type, uid: model.uid, documentId, locale })))
+      const failed = results.filter((r) => r.status === 'rejected')
+      if (failed.length === results.length) throw (failed[0] as PromiseRejectedResult).reason
+      return results.length - failed.length
+    },
+    onSuccess: (added) => {
+      if (documentIds.length === 1) toast.success(t('releases.added'))
+      else toast.success(t(added === documentIds.length ? 'releases.addedAll' : 'releases.addedMany', { added: String(added), total: String(documentIds.length) }))
       void queryClient.invalidateQueries({ queryKey: ['releases'] })
       setOpen(false)
     },

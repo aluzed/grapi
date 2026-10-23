@@ -3,6 +3,7 @@ package grapi_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -17,10 +18,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/aluzed/grapi"
+	"github.com/aluzed/grapi/document"
 )
 
 // adminDatabase, when set, points the admin tests at another database.
@@ -70,6 +74,12 @@ func newAdminFixture(t *testing.T, fixture string) (*httptest.Server, *captureMa
 // newAdminApp also returns the project directory; develop sets AutoReload.
 func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, *captureMail, func(), string) {
 	t.Helper()
+	return newAdminAppWith(t, fixture, develop, nil)
+}
+
+// newAdminAppWith lets setup customize the App before it starts.
+func newAdminAppWith(t *testing.T, fixture string, develop bool, setup func(*grapi.App)) (*httptest.Server, *captureMail, func(), string) {
+	t.Helper()
 	dir := t.TempDir()
 	if err := copyDir(filepath.Join("compat", "fixtures", fixture, "src"), filepath.Join(dir, "src")); err != nil {
 		t.Fatal(err)
@@ -91,6 +101,9 @@ func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, 
 	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}, AutoReload: develop})
 	mail := &captureMail{}
 	app.UseEmailProvider("capture", mail)
+	if setup != nil {
+		setup(app)
+	}
 	srv, err := app.Setup()
 	if err != nil {
 		t.Fatal(err)
@@ -1612,5 +1625,57 @@ func TestAdminReleases(t *testing.T) {
 	}
 	if s, _, _ := c.do("GET", sched, ""); s != 404 {
 		t.Fatalf("deleted: %d", s)
+	}
+}
+
+func TestAdminReleaseIsAtomic(t *testing.T) {
+	var failOn atomic.Value
+	failOn.Store("")
+	calls := map[string]int{}
+	var mu sync.Mutex
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(app *grapi.App) {
+		app.UseDocuments(func(c *document.Context, next document.Next) (any, error) {
+			if c.Action == document.Publish {
+				id, _ := c.Params["documentId"].(string)
+				mu.Lock()
+				calls[id]++
+				n := calls[id]
+				mu.Unlock()
+				// The first call is the trial publication of the assessment.
+				if id == failOn.Load() && n == 2 {
+					return nil, errors.New("disk on fire")
+				}
+			}
+			return next()
+		})
+	})
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", "/releases", `{"name":"Atomic"}`)
+	rel := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	var ids []string
+	for _, title := range []string{"One", "Two", "Three"} {
+		_, b, _ = c.do("POST", base, `{"data":{"title":"`+title+`"}}`)
+		ids = append(ids, dataOf(b)["documentId"].(string))
+	}
+	failOn.Store(ids[2])
+	for _, id := range ids {
+		c.do("POST", rel+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+id+`"}`)
+	}
+	mu.Lock()
+	clear(calls)
+	mu.Unlock()
+	if s, b, _ := c.do("POST", rel+"/publish", ""); s != 500 {
+		t.Fatalf("the third action fails: %v", b)
+	}
+	_, b, _ = c.do("GET", base+"?status=published", "")
+	if n := len(b["data"].([]any)); n != 0 {
+		t.Fatalf("nothing is published: %d", n)
+	}
+	if _, b, _ = c.do("GET", rel, ""); dataOf(b)["releasedAt"] != nil {
+		t.Fatalf("the release is not done: %v", dataOf(b))
 	}
 }

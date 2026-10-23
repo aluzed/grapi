@@ -19,6 +19,7 @@ import { Cell, StatusBadge } from './cell'
 import { useModel } from './ContentManager'
 import { FiltersPanel } from './FiltersPanel'
 import { parseFilters, toQuery } from './filters'
+import { ReleaseButton } from './ReleaseButton'
 import { entryPath, label, useLocales, useModels } from './hooks'
 
 type BulkOp = 'delete' | 'publish' | 'unpublish'
@@ -202,6 +203,7 @@ function List({ model }: { model: Model }) {
                 <Button variant="outline" title={t('cm.unpublish')} icon={<Undo2 className="h-4 w-4" />} className="w-full md:w-auto" onClick={() => void runBulk('unpublish', selected)}>
                   {t('cm.unpublish')}
                 </Button>
+                <ReleaseButton model={model} documentIds={selected} locale={locale || undefined} />
               </>
             )}
             {model.permissions.delete && (
