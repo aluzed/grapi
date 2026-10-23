@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/schema"
 )
@@ -108,6 +109,41 @@ func (s *Server) recordVersion(ctx context.Context, ct *schema.ContentType, docu
 	if n := s.cfg.HistoryMaxVersions; n > 0 {
 		s.trimVersions(ctx, uid, documentID, loc, n)
 	}
+}
+
+// recordFromService records the versions of writes from the other origins
+// listed in admin.history.origins; the admin panel records its own.
+func (s *Server) recordFromService(c *document.Context, next document.Next) (any, error) {
+	res, err := next()
+	origin := document.OriginOf(c.Ctx)
+	if err != nil || origin == "admin-panel" || !contains(s.cfg.HistoryOrigins, origin) || c.ContentType == nil {
+		return res, err
+	}
+	status := ""
+	switch c.Action {
+	case document.Create, document.Update:
+	case document.Publish:
+		status = "published"
+	default:
+		return res, err
+	}
+	ct := c.ContentType
+	if !contains(s.ContentManagerTypes(), string(ct.UID)) {
+		return res, err
+	}
+	row := toMap(res)
+	id, _ := c.Params["documentId"].(string)
+	if id == "" {
+		id, _ = row[schema.AttrDocumentID].(string)
+	}
+	locale := c.Params["locale"]
+	if locale == nil {
+		locale = row["locale"]
+	}
+	if id != "" {
+		db.OnCommit(c.Ctx, func() { s.recordVersion(context.Background(), ct, id, locale, status, nil) })
+	}
+	return res, err
 }
 
 // trimVersions keeps the n latest versions of a document in a locale.

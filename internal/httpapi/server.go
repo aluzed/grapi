@@ -277,6 +277,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 		writeError(w, err, s.log)
 		return
 	}
+	r = r.WithContext(document.WithOrigin(r.Context(), auth.origin()))
 	scope := rt.uid + "." + rt.action
 	if rt.scope != "" {
 		scope = rt.scope
@@ -334,12 +335,12 @@ func (s *Server) respond(w http.ResponseWriter, status int, data any, meta any) 
 	return nil
 }
 
-func (s *Server) find(w http.ResponseWriter, _ *http.Request, rc *requestContext) error {
+func (s *Server) find(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 	q, err := s.sanitizedQuery(rc)
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := context.WithoutCancel(r.Context())
 	fp := fetchParams(q)
 	pag, _ := fp["pagination"].(map[string]any)
 	info, err := s.paginationInfo(pag)
@@ -376,12 +377,12 @@ func (s *Server) find(w http.ResponseWriter, _ *http.Request, rc *requestContext
 	return s.respond(w, http.StatusOK, data, map[string]any{"pagination": paginationResponse(info, total, isPaged)})
 }
 
-func (s *Server) findOne(w http.ResponseWriter, _ *http.Request, rc *requestContext) error {
+func (s *Server) findOne(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 	q, err := s.sanitizedQuery(rc)
 	if err != nil {
 		return err
 	}
-	row, err := s.docs.FindOne(context.Background(), rc.model.uid, rc.params["id"], fetchParams(q))
+	row, err := s.docs.FindOne(context.WithoutCancel(r.Context()), rc.model.uid, rc.params["id"], fetchParams(q))
 	if err != nil {
 		return err
 	}
@@ -457,7 +458,7 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, rc *requestConte
 	if err != nil {
 		return err
 	}
-	row, err := s.docs.Create(context.Background(), rc.model.uid, p)
+	row, err := s.docs.Create(context.WithoutCancel(r.Context()), rc.model.uid, p)
 	if err != nil {
 		return err
 	}
@@ -469,7 +470,7 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request, rc *requestConte
 	if err != nil {
 		return err
 	}
-	row, err := s.docs.Update(context.Background(), rc.model.uid, rc.params["id"], p)
+	row, err := s.docs.Update(context.WithoutCancel(r.Context()), rc.model.uid, rc.params["id"], p)
 	if err != nil {
 		return err
 	}
@@ -479,12 +480,12 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request, rc *requestConte
 	return s.respond(w, http.StatusOK, s.sanitizeOutput(row, rc.model, rc.auth), nil)
 }
 
-func (s *Server) remove(w http.ResponseWriter, _ *http.Request, rc *requestContext) error {
+func (s *Server) remove(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 	q, err := s.sanitizedQuery(rc)
 	if err != nil {
 		return err
 	}
-	if _, err := s.docs.Delete(context.Background(), rc.model.uid, rc.params["id"], fetchParams(q)); err != nil {
+	if _, err := s.docs.Delete(context.WithoutCancel(r.Context()), rc.model.uid, rc.params["id"], fetchParams(q)); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -501,12 +502,12 @@ func (s *Server) singleDocumentID(ctx context.Context, uid string) (string, erro
 	return str, nil
 }
 
-func (s *Server) singleFind(w http.ResponseWriter, _ *http.Request, rc *requestContext) error {
+func (s *Server) singleFind(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 	q, err := s.sanitizedQuery(rc)
 	if err != nil {
 		return err
 	}
-	row, err := s.docs.FindFirst(context.Background(), rc.model.uid, fetchParams(q))
+	row, err := s.docs.FindFirst(context.WithoutCancel(r.Context()), rc.model.uid, fetchParams(q))
 	if err != nil {
 		return err
 	}
@@ -521,7 +522,7 @@ func (s *Server) singleUpdate(w http.ResponseWriter, r *http.Request, rc *reques
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := context.WithoutCancel(r.Context())
 	id, err := s.singleDocumentID(ctx, rc.model.uid)
 	if err != nil {
 		return err
@@ -538,12 +539,12 @@ func (s *Server) singleUpdate(w http.ResponseWriter, r *http.Request, rc *reques
 	return s.respond(w, http.StatusOK, s.sanitizeOutput(row, rc.model, rc.auth), nil)
 }
 
-func (s *Server) singleDelete(w http.ResponseWriter, _ *http.Request, rc *requestContext) error {
+func (s *Server) singleDelete(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
 	q, err := s.sanitizedQuery(rc)
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := context.WithoutCancel(r.Context())
 	id, err := s.singleDocumentID(ctx, rc.model.uid)
 	if err != nil {
 		return err

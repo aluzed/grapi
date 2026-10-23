@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # XTR-003 : Content history
@@ -37,7 +37,7 @@ Historique de versions par document et par locale, avec comparaison et restaurat
 ## Critères d'acceptation
 - [x] Enregistrer deux fois puis publier depuis l'admin produit 3 versions aux statuts attendus ; une mise à jour via REST n'en produit aucune (configuration par défaut).
 - [x] Restaurer une version remplace le brouillon, met le document en Modified, ne touche pas la version publiée, et ajoute une version.
-- [ ] Après suppression d'un champ `subtitle` dans le CTB, une ancienne version l'affiche sous « Champs inconnus » et la restauration l'ignore sans erreur.
+- [x] Après suppression d'un champ `subtitle` dans le CTB, une ancienne version l'affiche sous « Champs inconnus » et la restauration l'ignore sans erreur.
 - [x] Une relation vers un document supprimé est signalée avant restauration et absente après.
 - [x] Avec deux locales, restaurer la version `fr` modifie le champ non localisé `price` dans `en` aussi, après avertissement.
 - [x] Le diff signale exactement les champs modifiés (fixtures avec composant répétable et zone dynamique).
@@ -52,7 +52,7 @@ Historique de versions par document et par locale, avec comparaison et restaurat
 - Diff (`GET .../versions/{id}/diff?against=current|<id>`) : composants et zones dynamiques par position, relations par ensemble de `documentId`, médias par id ; onglet « Différences avec le brouillon » dans l'interface (`TestAdminHistoryDiff`).
 - Relations et médias disparus : listés dans `danglingReferences` à la lecture, avertissement avant restauration, ignorés à la restauration (`TestAdminHistoryDanglingRelations`).
 - Purge par le planificateur du serveur (au démarrage puis au plus une fois par heure), `admin.history.maxVersionsPerDocument`, versions et entrées de releases supprimées avec leur content type (`TestAdminHistoryRetention`, `TestAdminHistoryRules`, `TestAdminHistoryRestoresSharedFields`).
-- Reste : les origines configurables (`admin.history.origins`) et le critère du champ supprimé dans le CTB.
+- Origines configurables `admin.history.origins` (`admin-panel`, `admin-token`, `content-api`, `document-service`) : l'origine est portée par le contexte (`document.WithOrigin`), un middleware du Document Service enregistre les écritures des origines listées (`TestAdminHistoryOrigins`). Champ supprimé du schéma : `TestAdminHistoryAfterFieldRemoval`.
 
 ## Notes techniques
 - Middleware du Document Service (`DOC-004`) qui lit l'origine dans le contexte et enregistre après commit ; la version publiée est capturée après le recâblage de `DOC-002`.

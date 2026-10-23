@@ -712,6 +712,13 @@ func (s *Server) forgetDeleted(ctx context.Context, payload map[string]any) {
 // history) every interval until ctx ends; a time passed while the server
 // was down runs at once.
 func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
+	if len(s.cfg.HistoryOrigins) > 0 {
+		off := s.docs.Use(s.recordFromService)
+		go func() {
+			<-ctx.Done()
+			off()
+		}()
+	}
 	if s.docs.Events != nil {
 		off := s.docs.Events.Subscribe(func(name string, payload map[string]any) {
 			if name == "entry.delete" {

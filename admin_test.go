@@ -2008,3 +2008,86 @@ func TestAdminHistoryRetention(t *testing.T) {
 		t.Fatalf("maxVersionsPerDocument keeps 2: %d", n)
 	}
 }
+
+func TestAdminHistoryAfterFieldRemoval(t *testing.T) {
+	ts, _, stop, dir := newAdminApp(t, "basic", false)
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Hello","summary":"Old summary"}}`)
+	id := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+	vid := strconv.Itoa(int(b["data"].([]any)[0].(map[string]any)["id"].(float64)))
+	stop()
+
+	file := filepath.Join(dir, "src/api/article/content-types/article/schema.json")
+	raw, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	trimmed := regexp.MustCompile(`\s*"summary": \{[^}]*\},`).ReplaceAll(raw, nil)
+	if err := os.WriteFile(file, trimmed, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts2 := httptest.NewServer(srv.Handler)
+	defer func() { ts2.Close(); _ = srv.Close() }()
+	c2 := newAdminClient(t, ts2.URL)
+	_, b, _ = c2.do("POST", "/auth/login", `{"email":"ada@example.com","password":"Passw0rd"}`)
+	c2.token = dataOf(b)["token"].(string)
+	_, b, _ = c2.do("GET", "/content-manager/history/versions/"+vid, "")
+	if u, _ := dataOf(b)["unknownFields"].(map[string]any); u["summary"] != "Old summary" {
+		t.Fatalf("the removed field is unknown: %v", dataOf(b))
+	}
+	if s, b, _ := c2.do("POST", "/content-manager/history/versions/"+vid+"/restore", ""); s != 200 {
+		t.Fatalf("restore ignores it: %d %v", s, b)
+	}
+}
+
+func TestAdminHistoryOrigins(t *testing.T) {
+	var app *grapi.App
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, dir string) {
+		app = a
+		if err := os.WriteFile(filepath.Join(dir, "config", "admin.yaml"), []byte("history:\n  origins: [admin-panel, admin-token]\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	})
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"First"}}`)
+	id := dataOf(b)["documentId"].(string)
+	count := func() int {
+		_, b, _ := c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+		return len(b["data"].([]any))
+	}
+	if n := count(); n != 1 {
+		t.Fatalf("the admin records once: %d", n)
+	}
+	_, b, _ = c.do("POST", "/api-tokens", `{"name":"Writer","type":"full-access"}`)
+	key := dataOf(b)["accessKey"].(string)
+	req, _ := http.NewRequest("PUT", ts.URL+"/api/articles/"+id, strings.NewReader(`{"data":{"title":"From REST"}}`))
+	req.Header.Set("Authorization", "Bearer "+key)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = res.Body.Close()
+	if n := count(); res.StatusCode != 200 || n != 2 {
+		t.Fatalf("an API token write records a version: %d, %d", res.StatusCode, n)
+	}
+	if _, err := app.Documents().Update(context.Background(), "api::article.article", id, document.Params{"data": map[string]any{"title": "From code"}}); err != nil {
+		t.Fatal(err)
+	}
+	if n := count(); n != 2 {
+		t.Fatalf("document-service is not listed: %d", n)
+	}
+}

@@ -79,6 +79,13 @@ func bearer(r *http.Request) string {
 
 // authenticate runs the content API strategies in Strapi's order: API
 // token, then users-permissions (JWT, or the public role without token).
+func (a *Auth) origin() string {
+	if a != nil && a.Strategy == "api-token" {
+		return "admin-token"
+	}
+	return "content-api"
+}
+
 func (a *authenticator) authenticate(ctx context.Context, r *http.Request) (*Auth, error) {
 	token := bearer(r)
 	if token != "" {

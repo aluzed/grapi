@@ -70,6 +70,7 @@ func (s *Server) graphqlHandler(w http.ResponseWriter, r *http.Request, _ *reque
 	if err != nil {
 		return err
 	}
+	r = r.WithContext(document.WithOrigin(r.Context(), auth.origin()))
 	if csrfBlocked(r) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"errors": []any{map[string]any{
 			"message":    "This operation has been blocked as a potential Cross-Site Request Forgery (CSRF). Please either specify a 'content-type' header (with a type that is not one of application/x-www-form-urlencoded, multipart/form-data, text/plain) or provide a non-empty value for one of the following headers: x-apollo-operation-name, apollo-require-preflight\n",

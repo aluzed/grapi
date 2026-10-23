@@ -73,6 +73,9 @@ type Config struct {
 	// HistoryMaxVersions keeps that many versions per document and locale
 	// (0: no limit).
 	HistoryMaxVersions int
+	// HistoryOrigins are the origins whose writes record a version
+	// (admin-panel only when empty).
+	HistoryOrigins []string
 	// Develop is `grapi develop`: the Content-Type Builder writes the
 	// schemas of ProjectDir, and the reload picks them up.
 	Develop    bool
@@ -207,7 +210,9 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 	return s.seedRoles(ctx)
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.ServeHTTP(w, r) }
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r.WithContext(document.WithOrigin(r.Context(), "admin-panel")))
+}
 
 // Error is an API error.
 type Error struct {
