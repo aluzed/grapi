@@ -129,3 +129,52 @@ func TestAdminCommands(t *testing.T) {
 		t.Fatalf("list-users: %s", out.String())
 	}
 }
+
+func TestPasswordNeverPrinted(t *testing.T) {
+	var prompt bytes.Buffer
+	pw, err := readPassword("", false, strings.NewReader("S3cret-from-pipe\n"), &prompt)
+	if err != nil || pw != "" || prompt.Len() != 0 {
+		t.Fatalf("no terminal and no flag: no prompt, no password: %q %q %v", pw, prompt.String(), err)
+	}
+	if pw, _ := readPassword("", true, strings.NewReader("S3cret-from-pipe\r\n"), &prompt); pw != "S3cret-from-pipe" || prompt.Len() != 0 {
+		t.Fatalf("--password-stdin: %q, prompt %q", pw, prompt.String())
+	}
+
+	dir := t.TempDir()
+	t.Chdir(dir)
+	var out bytes.Buffer
+	if code := run([]string{"new", "demo"}, &out, &out); code != 0 {
+		t.Fatalf("new: %s", out.String())
+	}
+	project := filepath.Join(dir, "demo")
+	srv, err := grapi.New(grapi.Options{Dir: project, Stderr: &out}).Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = srv.Close()
+	const secret = "Very-Secret-9"
+	out.Reset()
+	for _, args := range [][]string{
+		{"admin:create-user", "--email", "ops@example.com", "--firstname", "Ops", "--password", secret},
+		{"admin:reset-user-password", "--email", "ops@example.com", "--password", secret + "x"},
+		{"admin:create-user", "--email", "ops@example.com", "--firstname", "Ops", "--password", secret},
+	} {
+		run(append(args, "-dir", project), &out, &out)
+	}
+	if strings.Contains(out.String(), secret) {
+		t.Fatalf("the password is printed: %s", out.String())
+	}
+	files, _ := filepath.Glob(filepath.Join(project, ".tmp", "data.db*"))
+	if len(files) == 0 {
+		t.Fatal("no database file")
+	}
+	for _, f := range files {
+		db, err := os.ReadFile(f) //nolint:gosec // the test's own database
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bytes.Contains(db, []byte(secret)) {
+			t.Fatalf("the password is stored in clear in %s (audit log or elsewhere)", f)
+		}
+	}
+}

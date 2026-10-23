@@ -29,7 +29,7 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - [x] `admin:reset-user-password` fonctionne sur une base Strapi 5.59 existante, sans rien casser d'autre (règle projet : on ne touche jamais à la table des admins en dehors de cette opération ciblée).
 - [x] `configuration:dump` sur une base Strapi produit un fichier que `strapi configuration:restore` accepte, et inversement (banc `SETUP-002`).
 - [ ] `routes:list` affiche méthode, chemin, handler et policies pour toutes les routes, y compris celles des plugins.
-- [ ] Le mot de passe saisi en interactif n'est jamais affiché ni loggé.
+- [x] Le mot de passe saisi en interactif n'est jamais affiché ni loggé.
 
 ## Avancement
 - Fait : `permissions:list|grant|revoke <rôle> [actions]` sur les rôles users-permissions et `api-token:*` (`AUTH-008`), qui suffisent à administrer un projet sans admin. Test : `cmd/grapi/tokens_test.go` (projet neuf, permission accordée puis retirée, token custom).
@@ -42,6 +42,8 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `grapi middlewares:list` et `hooks:list` : les middlewares que grapi implémente (sous les noms de Strapi) et les hooks intégrés. Strapi liste aussi ses middlewares absents de grapi (compression, session, favicon...) et ceux de l'admin.
 - Commandes admin complètes : `admin:delete-user`, `admin:active-user` (`--active=false`), `admin:block-user` (`--unblock`) ferment les sessions, refusent de laisser l'instance sans Super Admin actif et s'inscrivent au journal d'audit (origine `cli`) ; testé (`TestAdminCommands`).
 - Banc (mode `grapi`, SQLite et Postgres) : un dump de grapi est restauré par `strapi configuration:restore`, et un dump de Strapi par `grapi configuration:restore`.
+- Mot de passe des commandes admin : sans `--password` ni `--password-stdin`, un terminal le demande sans écho (`golang.org/x/term`), comme l'invite de Strapi ; hors terminal, rien n'est demandé. `TestPasswordNeverPrinted` : ni la sortie des commandes ni les fichiers de la base (journal d'audit compris) ne contiennent le mot de passe.
+- `routes:list` garde le format de Strapi (méthode et chemin) ; le critère demande aussi handler et policies, qui supposent de nommer les policies jusqu'au routeur, et `grapi routes:list` ne voit pas les routes Go d'un binaire framework.
 - Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, `rename:field`.
 
 ## Notes techniques

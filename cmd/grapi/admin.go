@@ -13,6 +13,7 @@ import (
 
 	"github.com/aluzed/grapi/internal/adminapi"
 	"github.com/aluzed/grapi/internal/db/query"
+	"golang.org/x/term"
 )
 
 const (
@@ -23,9 +24,20 @@ const (
 
 // readPassword takes --password, or the first line of stdin with
 // --password-stdin, so that it stays out of the shell history.
-func readPassword(flag string, fromStdin bool, stdin io.Reader) (string, error) {
-	if !fromStdin {
+func readPassword(flag string, fromStdin bool, stdin io.Reader, prompt io.Writer) (string, error) {
+	if flag != "" {
 		return flag, nil
+	}
+	// Without a password, a terminal is asked for one, as Strapi does, with
+	// the echo off.
+	if f, ok := stdin.(*os.File); ok && !fromStdin && term.IsTerminal(int(f.Fd())) { //nolint:gosec // a file descriptor fits an int
+		fmt.Fprint(prompt, "Password: ")
+		pw, err := term.ReadPassword(int(f.Fd())) //nolint:gosec // a file descriptor fits an int
+		fmt.Fprintln(prompt)
+		return string(pw), err
+	}
+	if !fromStdin {
+		return "", nil
 	}
 	line, err := bufio.NewReader(stdin).ReadString('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -45,7 +57,7 @@ func adminCreateUser(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	pw, err := readPassword(*password, *fromStdin, os.Stdin)
+	pw, err := readPassword(*password, *fromStdin, os.Stdin, stderr)
 	if err != nil {
 		return err
 	}
@@ -103,7 +115,7 @@ func adminResetPassword(args []string, stdout, stderr io.Writer) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	pw, err := readPassword(*password, *fromStdin, os.Stdin)
+	pw, err := readPassword(*password, *fromStdin, os.Stdin, stderr)
 	if err != nil {
 		return err
 	}
