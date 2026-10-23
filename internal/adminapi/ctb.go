@@ -628,6 +628,9 @@ func (s *Server) ctbUpdate(w http.ResponseWriter, r *http.Request, u *User, _ *p
 		}
 	}
 	for _, c := range b.ContentTypes {
+		if c.Action == "delete" {
+			s.forgetContentType(r.Context(), c.UID)
+		}
 		s.audit(r, u, "content-type."+c.Action, map[string]any{"uid": c.UID, "singularName": c.Data.Info["singularName"]})
 	}
 	for _, c := range b.Components {

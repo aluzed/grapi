@@ -242,7 +242,7 @@ Conception propre à grapi (la fonction est Enterprise chez Strapi). Une version
 | `GET /content-manager/history/versions/{id}/diff?against=current\|<id>` | `{changes: [{path, before, after}]}` contre le brouillon actuel (défaut) ou une autre version du document. Composants et zones dynamiques comparés par position (`links.1.url`), relations par ensemble de `documentId`, médias par id. |
 | `POST /content-manager/history/versions/{id}/restore` | Remplace le brouillon de la locale par la version, sans toucher la version publiée, et enregistre une nouvelle version. Les relations et médias supprimés depuis sont ignorés. |
 
-Réglages : `admin.history.enabled` (vrai par défaut), `admin.history.retentionDays` (90 par défaut, 0 pour tout garder).
+Réglages : `admin.history.enabled` (vrai par défaut), `admin.history.retentionDays` (90 par défaut, 0 pour tout garder ; purge au démarrage puis au plus une fois par heure), `admin.history.maxVersionsPerDocument` (par document et locale, 0 par défaut : pas de limite). Supprimer un content type dans le CTB supprime ses versions.
 
 ### Journaux d'audit
 

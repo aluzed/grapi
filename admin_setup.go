@@ -66,6 +66,9 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy b
 	if n, ok := c.Int("admin.history.retentionDays"); ok {
 		cfg.HistoryRetentionDays = n
 	}
+	if n, ok := c.Int("admin.history.maxVersionsPerDocument"); ok {
+		cfg.HistoryMaxVersions = n
+	}
 	if v := c.Get("admin.forgotPassword.expiresIn"); v != nil {
 		d, err := durationOf(v)
 		if err != nil {

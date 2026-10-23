@@ -35,14 +35,14 @@ Historique de versions par document et par locale, avec comparaison et restaurat
 - Journal exhaustif des changements : c'est le rôle de `XTR-002`.
 
 ## Critères d'acceptation
-- [ ] Enregistrer deux fois puis publier depuis l'admin produit 3 versions aux statuts attendus ; une mise à jour via REST n'en produit aucune (configuration par défaut).
+- [x] Enregistrer deux fois puis publier depuis l'admin produit 3 versions aux statuts attendus ; une mise à jour via REST n'en produit aucune (configuration par défaut).
 - [x] Restaurer une version remplace le brouillon, met le document en Modified, ne touche pas la version publiée, et ajoute une version.
 - [ ] Après suppression d'un champ `subtitle` dans le CTB, une ancienne version l'affiche sous « Champs inconnus » et la restauration l'ignore sans erreur.
 - [x] Une relation vers un document supprimé est signalée avant restauration et absente après.
-- [ ] Avec deux locales, restaurer la version `fr` modifie le champ non localisé `price` dans `en` aussi, après avertissement.
+- [x] Avec deux locales, restaurer la version `fr` modifie le champ non localisé `price` dans `en` aussi, après avertissement.
 - [x] Le diff signale exactement les champs modifiés (fixtures avec composant répétable et zone dynamique).
-- [ ] Un utilisateur sans `update` voit l'historique mais pas le bouton « Restaurer » ; l'API renvoie 403.
-- [ ] `retentionDays: 1` purge les versions de plus de 24 h au passage du cron.
+- [x] Un utilisateur sans `update` voit l'historique mais pas le bouton « Restaurer » ; l'API renvoie 403.
+- [x] `retentionDays: 1` purge les versions de plus de 24 h au passage du cron.
 - [x] Écran conforme aux conventions de `ADM-002` : sur mobile, la liste des versions passe au-dessus du contenu, pas à côté.
 
 ## Avancement
@@ -51,7 +51,8 @@ Historique de versions par document et par locale, avec comparaison et restaurat
 - Interface : bouton « Historique » dans l'édition, liste des versions (au-dessus sur mobile), lecture seule de la version, champs inconnus, restauration confirmée (avertissement sur les locales). Testé (`TestAdminHistory`) et vérifié dans Chrome.
 - Diff (`GET .../versions/{id}/diff?against=current|<id>`) : composants et zones dynamiques par position, relations par ensemble de `documentId`, médias par id ; onglet « Différences avec le brouillon » dans l'interface (`TestAdminHistoryDiff`).
 - Relations et médias disparus : listés dans `danglingReferences` à la lecture, avertissement avant restauration, ignorés à la restauration (`TestAdminHistoryDanglingRelations`).
-- Reste : les origines configurables, la purge par cron et `maxVersionsPerDocument`, la suppression des versions avec un content type, et les tests des critères i18n, sans `update`, et rétention.
+- Purge par le planificateur du serveur (au démarrage puis au plus une fois par heure), `admin.history.maxVersionsPerDocument`, versions et entrées de releases supprimées avec leur content type (`TestAdminHistoryRetention`, `TestAdminHistoryRules`, `TestAdminHistoryRestoresSharedFields`).
+- Reste : les origines configurables (`admin.history.origins`) et le critère du champ supprimé dans le CTB.
 
 ## Notes techniques
 - Middleware du Document Service (`DOC-004`) qui lit l'origine dans le contexte et enregistre après commit ; la version publiée est capturée après le recâblage de `DOC-002`.

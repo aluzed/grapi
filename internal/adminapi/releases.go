@@ -708,8 +708,9 @@ func (s *Server) forgetDeleted(ctx context.Context, payload map[string]any) {
 	s.forgetDocument(ctx, uid, id, locale)
 }
 
-// StartScheduler checks the scheduled releases every interval until ctx
-// ends; a time passed while the server was down runs at once.
+// StartScheduler checks the scheduled releases (and purges the content
+// history) every interval until ctx ends; a time passed while the server
+// was down runs at once.
 func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 	if s.docs.Events != nil {
 		off := s.docs.Events.Subscribe(func(name string, payload map[string]any) {
@@ -724,6 +725,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 	}
 	go func() {
 		s.runScheduled(ctx)
+		s.purgeHistory(ctx)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -732,6 +734,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 				return
 			case <-t.C:
 				s.runScheduled(ctx)
+				s.purgeHistory(ctx)
 			case <-s.wake:
 				s.runScheduled(ctx)
 			}

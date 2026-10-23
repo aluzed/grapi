@@ -105,10 +105,62 @@ func (s *Server) recordVersion(ctx context.Context, ct *schema.ContentType, docu
 		s.log.Error("history insert", "uid", uid, "error", err)
 		return
 	}
-	if days := s.cfg.HistoryRetentionDays; days > 0 {
-		cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
-		_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where created_at < %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1)), cut)
+	if n := s.cfg.HistoryMaxVersions; n > 0 {
+		s.trimVersions(ctx, uid, documentID, loc, n)
 	}
+}
+
+// trimVersions keeps the n latest versions of a document in a locale.
+func (s *Server) trimVersions(ctx context.Context, uid, documentID string, locale any, n int) {
+	q := fmt.Sprintf(`select id from %s where uid = %s and document_id = %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1), s.ph(2))
+	args := []any{uid, documentID}
+	if locale != nil {
+		q += " and locale = " + s.ph(3)
+		args = append(args, locale)
+	} else {
+		q += " and locale is null"
+	}
+	rows, err := s.e.DB.Query(ctx, q+" order by created_at desc, id desc", args...)
+	if err != nil {
+		return
+	}
+	var old []any
+	for i := 0; rows.Next(); i++ {
+		var id int64
+		if rows.Scan(&id) == nil && i >= n {
+			old = append(old, id)
+		}
+	}
+	_ = rows.Close()
+	for _, id := range old {
+		_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where id = %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1)), id)
+	}
+}
+
+// purgeHistory drops the versions older than the retention, at most once
+// an hour.
+func (s *Server) purgeHistory(ctx context.Context) {
+	days := s.cfg.HistoryRetentionDays
+	if days <= 0 {
+		return
+	}
+	now := s.now().UTC()
+	if now.Sub(s.historyPurgedAt) < time.Hour {
+		return
+	}
+	s.historyPurgedAt = now
+	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
+	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where created_at < %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1)), cut); err != nil {
+		s.log.Error("history purge", "error", err)
+	}
+}
+
+// forgetContentType drops the versions and pending release entries of a
+// deleted content type.
+func (s *Server) forgetContentType(ctx context.Context, uid string) {
+	_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where uid = %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1)), uid)
+	_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where uid = %s and release_id in (select id from %s where released_at is null)`,
+		s.q(actionsTable), s.ph(1), s.q(releasesTable)), uid)
 }
 
 // forgetDocument drops the versions of a deleted document (in a locale,

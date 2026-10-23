@@ -80,7 +80,7 @@ func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, 
 }
 
 // newAdminAppWith lets setup customize the App before it starts.
-func newAdminAppWith(t *testing.T, fixture string, develop bool, setup func(*grapi.App)) (*httptest.Server, *captureMail, func(), string) {
+func newAdminAppWith(t *testing.T, fixture string, develop bool, setup func(app *grapi.App, dir string)) (*httptest.Server, *captureMail, func(), string) {
 	t.Helper()
 	dir := t.TempDir()
 	if err := copyDir(filepath.Join("compat", "fixtures", fixture, "src"), filepath.Join(dir, "src")); err != nil {
@@ -104,7 +104,7 @@ func newAdminAppWith(t *testing.T, fixture string, develop bool, setup func(*gra
 	mail := &captureMail{}
 	app.UseEmailProvider("capture", mail)
 	if setup != nil {
-		setup(app)
+		setup(app, dir)
 	}
 	srv, err := app.Setup()
 	if err != nil {
@@ -1655,7 +1655,7 @@ func TestAdminReleaseIsAtomic(t *testing.T) {
 	failOn.Store("")
 	calls := map[string]int{}
 	var mu sync.Mutex
-	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(app *grapi.App) {
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(app *grapi.App, _ string) {
 		app.UseDocuments(func(c *document.Context, next document.Next) (any, error) {
 			if c.Action == document.Publish {
 				id, _ := c.Params["documentId"].(string)
@@ -1758,7 +1758,7 @@ func TestAdminReleaseLocalePermissions(t *testing.T) {
 
 func TestAdminReleaseForgetsDeletedDocuments(t *testing.T) {
 	var app *grapi.App
-	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App) { app = a })
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) { app = a })
 	defer stop()
 	c := newAdminClient(t, ts.URL)
 	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
@@ -1893,5 +1893,118 @@ func TestAdminHistoryDanglingRelations(t *testing.T) {
 	tags, _ := d["tags"].([]any)
 	if d["title"] != "Hello" || len(tags) != 1 || tags[0].(map[string]any)["documentId"] != keep {
 		t.Fatalf("restored without the deleted tag: %v", d)
+	}
+}
+
+func TestAdminHistoryRules(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"First"}}`)
+	id := dataOf(b)["documentId"].(string)
+	count := func() int {
+		_, b, _ := c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+		return len(b["data"].([]any))
+	}
+
+	_, b, _ = c.do("POST", "/api-tokens", `{"name":"Writer","type":"full-access"}`)
+	key := dataOf(b)["accessKey"].(string)
+	req, _ := http.NewRequest("PUT", ts.URL+"/api/articles/"+id, strings.NewReader(`{"data":{"title":"From REST"}}`))
+	req.Header.Set("Authorization", "Bearer "+key)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = res.Body.Close()
+	if res.StatusCode != 200 || count() != 1 {
+		t.Fatalf("a REST update records no version: %d, %d versions", res.StatusCode, count())
+	}
+
+	_, b, _ = c.do("POST", "/roles", `{"name":"Reader"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{},"conditions":[]}]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Rea","email":"rea@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	reader := newAdminClient(t, ts.URL)
+	_, b, _ = reader.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Rea","password":"Read3rPass"}}`)
+	reader.token = dataOf(b)["token"].(string)
+	_, b, _ = reader.do("GET", "/content-manager/history/api::article.article/"+id, "")
+	versions, _ := b["data"].([]any)
+	if len(versions) != 1 {
+		t.Fatalf("a reader lists the versions: %v", b)
+	}
+	vid := strconv.Itoa(int(versions[0].(map[string]any)["id"].(float64)))
+	if s, _, _ := reader.do("POST", "/content-manager/history/versions/"+vid+"/restore", ""); s != 403 {
+		t.Fatalf("restoring needs update: %d", s)
+	}
+}
+
+func TestAdminHistoryRestoresSharedFields(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "i18n-dp")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	c.do("POST", "/i18n/locales", `{"code":"fr"}`)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Hello","views":1}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id+"?locale=fr", `{"data":{"title":"Bonjour"}}`)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"Hello","views":5}}`)
+	_, b, _ = c.do("GET", "/content-manager/history/api::article.article/"+id+"?locale=fr", "")
+	versions := b["data"].([]any)
+	if len(versions) != 1 {
+		t.Fatalf("one fr version: %v", versions)
+	}
+	vid := strconv.Itoa(int(versions[0].(map[string]any)["id"].(float64)))
+	if s, b, _ := c.do("POST", "/content-manager/history/versions/"+vid+"/restore", ""); s != 200 {
+		t.Fatalf("restore fr: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"/"+id+"?locale=en", "")
+	if d := dataOf(b); d["views"].(float64) != 1 || d["title"] != "Hello" {
+		t.Fatalf("the shared views follow the fr version, the en title stays: %v", d)
+	}
+}
+
+func TestAdminHistoryRetention(t *testing.T) {
+	var app *grapi.App
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, dir string) {
+		app = a
+		if err := os.WriteFile(filepath.Join(dir, "config", "admin.yaml"), []byte("history:\n  retentionDays: 1\n  maxVersionsPerDocument: 2\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		a.OnBootstrap(func(ctx context.Context) error {
+			_, err := a.Documents().E.DB.Exec(ctx, `insert into grapi_history_versions (uid, document_id, status, data, schema_fields, created_at)
+				values ('api::article.article', 'old', 'draft', '{}', '{}', '2000-01-01T00:00:00Z')`)
+			return err
+		})
+	})
+	defer stop()
+	count := func(doc string) int {
+		var n int
+		_ = app.Documents().E.DB.QueryRow(context.Background(), `select count(*) from grapi_history_versions where document_id = '`+doc+`'`).Scan(&n)
+		return n
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for count("old") != 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("the scheduler purges the versions past the retention")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"v1"}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"v2"}}`)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"v3"}}`)
+	if n := count(id); n != 2 {
+		t.Fatalf("maxVersionsPerDocument keeps 2: %d", n)
 	}
 }

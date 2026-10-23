@@ -70,6 +70,9 @@ type Config struct {
 	// true by default); HistoryRetentionDays purges older versions (0: keep).
 	HistoryEnabled       bool
 	HistoryRetentionDays int
+	// HistoryMaxVersions keeps that many versions per document and locale
+	// (0: no limit).
+	HistoryMaxVersions int
 	// Develop is `grapi develop`: the Content-Type Builder writes the
 	// schemas of ProjectDir, and the reload picks them up.
 	Develop    bool
@@ -93,6 +96,8 @@ type Server struct {
 	mux        *http.ServeMux
 	now        func() time.Time
 	wake       chan struct{}
+	// historyPurgedAt is only touched by the scheduler goroutine.
+	historyPurgedAt time.Time
 }
 
 // New builds the admin server on the Document Service of the content API.
