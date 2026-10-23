@@ -508,5 +508,16 @@
   "media.folderDeleted": "Dossier supprimé",
   "media.replace": "Remplacer le fichier",
   "media.replaced": "Fichier remplacé",
-  "media.cancelSelection": "Annuler la sélection"
+  "media.cancelSelection": "Annuler la sélection",
+  "history.open": "Historique",
+  "history.title": "Historique de {name}",
+  "history.empty": "Aucune version pour l'instant : les versions sont gardées à chaque enregistrement ou publication depuis l'admin.",
+  "history.restore": "Restaurer cette version",
+  "history.restoreConfirm": "Remplacer le brouillon actuel par cette version ? La version publiée ne change pas.",
+  "history.restoreLocales": "Les champs non localisés changent dans toutes les locales.",
+  "history.restored": "Version restaurée",
+  "history.unknown": "Champs inconnus (supprimés ou renommés depuis)",
+  "history.missing": "Absents de cette version : {fields}",
+  "history.by": "par {name}",
+  "history.select": "Choisissez une version"
 }

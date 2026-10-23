@@ -209,3 +209,15 @@ Règles du lot :
 - Un attribut scalaire avec `renamedFrom` est renommé : une migration SQL renomme sa colonne (valeurs conservées) et sa configuration de vue suit. Relations, médias et composants ne se renomment pas.
 - Une relation `oneToOne`, `oneToMany`, `manyToOne` ou `manyToMany` avec `targetAttribute` est écrite des deux côtés (`inversedBy` ici, `mappedBy` sur la cible).
 - Supprimer un type retire aussi les relations qui le visent ; supprimer un composant retire ses usages (attributs et zones dynamiques). Les tables restent en base.
+
+### Historique des contenus
+
+Conception propre à grapi (la fonction est Enterprise chez Strapi). Une version est enregistrée à chaque création, enregistrement ou publication depuis l'admin, dans la table `grapi_history_versions` (hors schéma Strapi). Lire demande `read` sur le content type, restaurer `update`.
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /content-manager/history/{uid}/{documentId}?locale=` | Versions, de la plus récente à la plus ancienne : `{id, status, locale, createdAt, createdBy}` |
+| `GET /content-manager/history/versions/{id}` | Une version : `data` (champs lisibles), `unknownFields` (disparus du schéma depuis), `missingFields` (ajoutés depuis) |
+| `POST /content-manager/history/versions/{id}/restore` | Remplace le brouillon de la locale par la version, sans toucher la version publiée, et enregistre une nouvelle version |
+
+Réglages : `admin.history.enabled` (vrai par défaut), `admin.history.retentionDays` (90 par défaut, 0 pour tout garder).

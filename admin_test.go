@@ -1326,3 +1326,57 @@ func TestAdminMediaBulk(t *testing.T) {
 		t.Fatalf("no file left: %v", b)
 	}
 }
+
+func TestAdminHistory(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"First","views":1}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"Second","views":2}}`)
+	c.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+id+`"]}`)
+	_, b, _ = c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+	versions := b["data"].([]any)
+	if len(versions) != 3 {
+		t.Fatalf("three versions: %v", versions)
+	}
+	statuses := []string{}
+	for _, v := range versions {
+		statuses = append(statuses, v.(map[string]any)["status"].(string))
+	}
+	if strings.Join(statuses, ",") != "published,draft,draft" || versions[0].(map[string]any)["createdBy"].(map[string]any)["firstname"] != "Ada" {
+		t.Fatalf("statuses newest first: %v %v", statuses, versions[0])
+	}
+	first := strconv.Itoa(int(versions[2].(map[string]any)["id"].(float64)))
+	_, b, _ = c.do("GET", "/content-manager/history/versions/"+first, "")
+	if d := dataOf(b)["data"].(map[string]any); d["title"] != "First" {
+		t.Fatalf("version content: %v", d)
+	}
+	if s, b, _ := c.do("POST", "/content-manager/history/versions/"+first+"/restore", ""); s != 200 {
+		t.Fatalf("restore: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"/"+id, "")
+	if d := dataOf(b); d["title"] != "First" || d["views"].(float64) != 1 {
+		t.Fatalf("restored draft: %v", d)
+	}
+	_, b, _ = c.do("GET", base+"?status=published", "")
+	if p := b["data"].([]any)[0].(map[string]any); p["title"] != "Second" {
+		t.Fatalf("the published version is untouched: %v", p)
+	}
+	_, b, _ = c.do("GET", base, "")
+	if st := b["data"].([]any)[0].(map[string]any)["status"]; st != "modified" {
+		t.Fatalf("the document is modified: %v", st)
+	}
+	_, b, _ = c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+	if n := len(b["data"].([]any)); n != 4 {
+		t.Fatalf("the restore adds a version: %d", n)
+	}
+	c.do("DELETE", base+"/"+id, "")
+	_, b, _ = c.do("GET", "/content-manager/history/api::article.article/"+id, "")
+	if n := len(b["data"].([]any)); n != 0 {
+		t.Fatalf("versions go with the document: %d", n)
+	}
+}

@@ -508,5 +508,16 @@
   "media.folderDeleted": "Folder deleted",
   "media.replace": "Replace the file",
   "media.replaced": "File replaced",
-  "media.cancelSelection": "Cancel the selection"
+  "media.cancelSelection": "Cancel the selection",
+  "history.open": "History",
+  "history.title": "History of {name}",
+  "history.empty": "No version yet: versions are kept when saving or publishing from the admin.",
+  "history.restore": "Restore this version",
+  "history.restoreConfirm": "Replace the current draft with this version? The published version does not change.",
+  "history.restoreLocales": "Non localized fields change in every locale.",
+  "history.restored": "Version restored",
+  "history.unknown": "Unknown fields (removed or renamed since)",
+  "history.missing": "Absent from this version: {fields}",
+  "history.by": "by {name}",
+  "history.select": "Choose a version"
 }

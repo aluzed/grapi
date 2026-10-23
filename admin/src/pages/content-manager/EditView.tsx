@@ -14,6 +14,7 @@ import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
 import { fromInput, isEditable, JSONError, LayoutGrid, toInput, withoutIDs, type FieldContext, type Values } from './fields'
+import { HistoryButton } from './HistoryDialog'
 import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
@@ -201,7 +202,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
             </Button>
           </div>
         )}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
             <p className="mt-1 flex items-center gap-2 text-sm text-muted">
@@ -209,7 +210,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
               {status && <StatusBadge status={status} />}
             </p>
           </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-end">
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-end">
             {model.localized && (locales.data?.length ?? 0) > 1 && (
               <SelectField
                 label={t('cm.locale')}
@@ -236,6 +237,9 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
               <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full md:w-auto">
                 {t('common.save')}
               </Button>
+            )}
+            {!creating && (entry.data?.documentId || documentId) && (
+              <HistoryButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} title={title} />
             )}
             {!creating && !single && model.permissions.create && (
               <Button

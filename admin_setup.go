@@ -52,6 +52,13 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy b
 	cfg.Cookie.SameSite, _ = c.String("admin.auth.cookie.sameSite")
 	cfg.Cookie.Domain, _ = c.String("admin.auth.cookie.domain")
 	cfg.ForgotPasswordFrom, _ = c.String("admin.forgotPassword.from")
+	cfg.HistoryEnabled, cfg.HistoryRetentionDays = true, 90
+	if b, ok := c.Bool("admin.history.enabled"); ok {
+		cfg.HistoryEnabled = b
+	}
+	if n, ok := c.Int("admin.history.retentionDays"); ok {
+		cfg.HistoryRetentionDays = n
+	}
 	if v := c.Get("admin.forgotPassword.expiresIn"); v != nil {
 		d, err := durationOf(v)
 		if err != nil {

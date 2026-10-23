@@ -62,6 +62,10 @@ type Config struct {
 	Media MediaService
 	// UI is the built SPA; nil serves the API only.
 	UI fs.FS
+	// HistoryEnabled records the content history (admin.history.enabled,
+	// true by default); HistoryRetentionDays purges older versions (0: keep).
+	HistoryEnabled       bool
+	HistoryRetentionDays int
 	// Develop is `grapi develop`: the Content-Type Builder writes the
 	// schemas of ProjectDir, and the reload picks them up.
 	Develop    bool
@@ -168,6 +172,7 @@ func (s *Server) routes() {
 	s.emailRoutes()
 	s.ctbRoutes()
 	s.viewConfigRoutes()
+	s.historyRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})
@@ -175,8 +180,14 @@ func (s *Server) routes() {
 	s.mux.HandleFunc(s.cfg.Path, s.serveUI)
 }
 
-// Bootstrap seeds the default roles of an empty admin.
-func (s *Server) Bootstrap(ctx context.Context) error { return s.seedRoles(ctx) }
+// Bootstrap seeds the default roles of an empty admin and creates the
+// history table.
+func (s *Server) Bootstrap(ctx context.Context) error {
+	if err := s.ensureHistoryTable(ctx); err != nil {
+		return err
+	}
+	return s.seedRoles(ctx)
+}
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.ServeHTTP(w, r) }
 

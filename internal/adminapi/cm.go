@@ -434,6 +434,7 @@ func (s *Server) cmDelete(w http.ResponseWriter, r *http.Request, u *User) error
 	if _, err := s.docs.Delete(r.Context(), string(ct.UID), id, p); err != nil {
 		return asValidation(err)
 	}
+	s.forgetDocument(r.Context(), string(ct.UID), id, p["locale"])
 	return data(w, map[string]any{"documentId": id})
 }
 
@@ -494,6 +495,12 @@ func (s *Server) cmBulk(op string) authedHandler {
 				}
 				failed = append(failed, BulkError{DocumentID: id, Message: ve.Error()})
 				continue
+			}
+			switch op {
+			case "delete":
+				s.forgetDocument(ctx, uid, id, p["locale"])
+			case "publish":
+				s.recordVersion(ctx, ct, id, p["locale"], "published", u.ID)
 			}
 			done = append(done, id)
 		}
@@ -580,7 +587,11 @@ func (s *Server) cmCreate(w http.ResponseWriter, r *http.Request, u *User) error
 	if err != nil {
 		return asValidation(err)
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"data": visible(toMap(row), ct, string(ct.UID), a)})
+	out := toMap(row)
+	if id, _ := out[schema.AttrDocumentID].(string); id != "" {
+		s.recordVersion(r.Context(), ct, id, p["locale"], "", u.ID)
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"data": visible(out, ct, string(ct.UID), a)})
 	return nil
 }
 
@@ -625,6 +636,7 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 	if err != nil {
 		return asValidation(err)
 	}
+	s.recordVersion(ctx, ct, id, p["locale"], "", u.ID)
 	return data(w, visible(toMap(row), ct, string(ct.UID), a))
 }
 
@@ -815,7 +827,11 @@ func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
 	if err != nil {
 		return asValidation(err)
 	}
-	return data(w, visible(toMap(row), ct, string(ct.UID), a))
+	out := toMap(row)
+	if docID, _ := out[schema.AttrDocumentID].(string); docID != "" {
+		s.recordVersion(r.Context(), ct, docID, p["locale"], "", u.ID)
+	}
+	return data(w, visible(out, ct, string(ct.UID), a))
 }
 
 func (s *Server) stDelete(w http.ResponseWriter, r *http.Request, u *User) error {
@@ -830,6 +846,7 @@ func (s *Server) stDelete(w http.ResponseWriter, r *http.Request, u *User) error
 	if _, err := s.docs.Delete(r.Context(), string(ct.UID), id, localeParam(ct, locale)); err != nil {
 		return asValidation(err)
 	}
+	s.forgetDocument(r.Context(), string(ct.UID), id, locale)
 	return data(w, map[string]any{"documentId": id})
 }
 
@@ -853,7 +870,9 @@ func (s *Server) stAction(op string) authedHandler {
 		}
 		p := localeParam(ct, b.Locale)
 		if op == "publish" {
-			_, err = s.docs.Publish(r.Context(), string(ct.UID), id, p)
+			if _, err = s.docs.Publish(r.Context(), string(ct.UID), id, p); err == nil {
+				s.recordVersion(r.Context(), ct, id, p["locale"], "published", u.ID)
+			}
 		} else {
 			_, err = s.docs.Unpublish(r.Context(), string(ct.UID), id, p)
 		}
