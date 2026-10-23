@@ -603,5 +603,7 @@
   "history.thisVersion": "This version:",
   "history.currentDraft": "Draft:",
   "history.dangling": "These relations or media no longer exist and will not be restored:",
-  "history.danglingConfirm": "{count} deleted relations or media will be left out."
+  "history.danglingConfirm": "{count} deleted relations or media will be left out.",
+  "audit.allOrigins": "All origins",
+  "audit.origin": "Origin"
 }

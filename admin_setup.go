@@ -60,6 +60,9 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, trustProxy b
 	if n, ok := c.Int("admin.auditLogs.retentionDays"); ok {
 		cfg.AuditRetentionDays = n
 	}
+	if n, ok := c.Int("admin.auditLogs.exportMaxRows"); ok {
+		cfg.AuditExportMaxRows = n
+	}
 	if b, ok := c.Bool("admin.history.enabled"); ok {
 		cfg.HistoryEnabled = b
 	}

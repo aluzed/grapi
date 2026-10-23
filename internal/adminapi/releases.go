@@ -656,7 +656,7 @@ func (s *Server) runScheduled(ctx context.Context) {
 		}
 		blocking, err := s.publishRelease(ctx, rel)
 		if err == nil && len(blocking) == 0 {
-			s.writeAudit(ctx, nil, "scheduler", "release.publish", map[string]any{"id": id, "actions": releaseAudit(rel)})
+			s.writeAudit(ctx, nil, "scheduler", "release.trigger", map[string]any{"id": id, "status": "done", "actions": releaseAudit(rel)})
 			s.emitRelease(ctx, id, true)
 			continue
 		}
@@ -671,7 +671,7 @@ func (s *Server) runScheduled(ctx context.Context) {
 			msg = strings.Join(parts, "; ")
 		}
 		_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`update %s set status = 'failed', error = %s where id = %s and released_at is null`, s.q(releasesTable), s.ph(1), s.ph(2)), msg, id)
-		s.writeAudit(ctx, nil, "scheduler", "release.fail", map[string]any{"id": id, "error": msg})
+		s.writeAudit(ctx, nil, "scheduler", "release.trigger", map[string]any{"id": id, "status": "failed", "error": msg})
 		s.emitRelease(ctx, id, false)
 	}
 }
@@ -709,7 +709,7 @@ func (s *Server) forgetDeleted(ctx context.Context, payload map[string]any) {
 }
 
 // StartScheduler checks the scheduled releases (and purges the content
-// history) every interval until ctx ends; a time passed while the server
+// history and the audit log) every interval until ctx ends; a time passed while the server
 // was down runs at once.
 func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 	if len(s.cfg.HistoryOrigins) > 0 {
@@ -733,6 +733,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 	go func() {
 		s.runScheduled(ctx)
 		s.purgeHistory(ctx)
+		s.purgeAudit(ctx)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -742,6 +743,7 @@ func (s *Server) StartScheduler(ctx context.Context, interval time.Duration) {
 			case <-t.C:
 				s.runScheduled(ctx)
 				s.purgeHistory(ctx)
+				s.purgeAudit(ctx)
 			case <-s.wake:
 				s.runScheduled(ctx)
 			}

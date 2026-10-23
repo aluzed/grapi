@@ -44,21 +44,24 @@ Un journal d'audit immuable des actions d'administration, consultable, filtrable
 ## Critères d'acceptation
 - [ ] Chaque événement du périmètre produit exactement une entrée avec la bonne action et l'origine attendue (test table-driven).
 - [x] Une lecture (`GET` admin) ne produit aucune entrée.
-- [ ] `entry.update` ne contient que les champs modifiés, avec valeurs avant et après.
+- [x] `entry.update` ne contient que les champs modifiés, avec valeurs avant et après.
 - [x] Création d'un webhook avec en-tête `Authorization` : le payload ne contient ni la valeur de l'en-tête ni le chemin de l'URL.
 - [x] Changement de mot de passe : aucune trace du mot de passe ni de son hash dans la base d'audit (grep sur un dump).
-- [ ] Publication planifiée d'une release : entrée `release.trigger` avec `origin: scheduler` et sans utilisateur.
-- [ ] `retentionDays: 1` : une entrée datée de J-2 est purgée au passage du cron.
-- [ ] Filtres combinés (action + utilisateur + plage) renvoient le même ensemble en liste et en CSV.
+- [x] Publication planifiée d'une release : entrée `release.trigger` avec `origin: scheduler` et sans utilisateur.
+- [x] `retentionDays: 1` : une entrée datée de J-2 est purgée au passage du cron.
+- [x] Filtres combinés (action + utilisateur + plage) renvoient le même ensemble en liste et en CSV.
 - [ ] Export de 200 000 lignes sous 64 Mo de RSS supplémentaire ; l'export apparaît dans le CSV suivant.
-- [ ] Sans `export`, la route CSV renvoie 403 et le bouton est masqué. Écran conforme aux conventions de `ADM-002`.
+- [x] Sans `export`, la route CSV renvoie 403 et le bouton est masqué. Écran conforme aux conventions de `ADM-002`.
 
 ## Avancement
 - Table `grapi_audit_logs` (hors schéma Strapi), une ligne immuable par écriture de l'admin, utilisateur figé (id, nom, e-mail), origine `admin-panel`, IP, user agent, méthode et route. Événements : connexion réussie ou échouée, déconnexion, création, mise à jour (noms des champs modifiés) et suppression d'admin, changement et réinitialisation de mot de passe, acceptation d'invitation, rôles et permissions, entrées (création, mise à jour, suppression, publication, dépublication, restauration d'historique), médias et dossiers, locales et locale par défaut, tokens, webhooks (URL réduite au schéma et à l'hôte, en-têtes omis), content types et composants du CTB, export du journal.
 - API : liste paginée filtrable (actions, utilisateur, plage de dates), détail, export CSV en flux qui s'audite lui-même. Rétention `admin.auditLogs.retentionDays` (90 jours par défaut), `admin.auditLogs.enabled`. Permissions `admin::audit-logs.read` et `export`.
 - Écran Paramètres > Journaux d'audit : table, filtres, détail JSON, export.
 - Testé (`TestAdminAuditLogs` : événements attendus, aucune lecture, webhook sans secret ni chemin, aucun mot de passe ni hash dans tout le journal, export filtré).
-- Reste : valeurs avant et après des `*.update`, origines `cli` et `admin-token`, purge par cron, filtres par `uid` et `documentId`, plafond d'export configurable.
+- `entry.update` : champs modifiés avec valeurs avant et après (`changes: [{path, before, after}]`, même comparaison que l'historique), sans champs privés ni mots de passe. Releases : `release.*`, `release-action.*`, `release-settings.update`, et `release.trigger` du planificateur (origine `scheduler`, sans utilisateur, statut `done` ou `failed`). Origine `cli` pour `admin:create-user` et `admin:reset-user-password`.
+- Colonnes `uid`, `document_id`, `locale` (ajoutées au démarrage sur une table existante), filtres `origin`, `uid`, `documentId`, `locale` ; filtre d'origine dans l'écran. Plafond `admin.auditLogs.exportMaxRows` (1 000 000). Purge par le planificateur du serveur (au démarrage puis au plus une fois par heure).
+- Testé : `TestAdminAuditDetails` (avant/après, champ privé absent, purge, liste et CSV identiques, export sans permission refusé), `TestAdminReleases`, `TestAdminCommands`.
+- Reste : le test table-driven de chaque événement, la mesure mémoire d'un export de 200 000 lignes, l'origine `admin-token` (l'API admin n'accepte aujourd'hui que des sessions).
 
 ## Notes techniques
 - Abonnement à l'event hub (`DOC-005`) et aux hooks des services admin ; l'acteur et l'origine viennent du contexte de requête (`API-001`).

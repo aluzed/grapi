@@ -87,6 +87,7 @@ func adminCreateUser(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	id, _ := row.Get("id")
+	auditCLI(ctx, e, stderr, "user.create", map[string]any{"id": id, "email": *email, "roles": []string{adminapi.SuperAdminCode}})
 	fmt.Fprintf(stdout, "Super Admin %s created (id %v).\n", *email, id)
 	return nil
 }
@@ -135,8 +136,16 @@ func adminResetPassword(args []string, stdout, stderr io.Writer) error {
 	if _, err := e.DeleteMany(ctx, sessionUID, query.Params{Where: map[string]any{"userId": fmt.Sprint(id), "origin": "admin"}}); err != nil {
 		return err
 	}
+	auditCLI(ctx, e, stderr, "user.password.update", map[string]any{"id": id, "email": *email})
 	fmt.Fprintf(stdout, "Password of %s reset; their sessions were closed.\n", *email)
 	return nil
+}
+
+// auditCLI warns instead of failing: the change itself is done.
+func auditCLI(ctx context.Context, e *query.Engine, stderr io.Writer, action string, payload map[string]any) {
+	if err := adminapi.AuditCLI(ctx, e.DB, action, payload); err != nil {
+		fmt.Fprintf(stderr, "warning: not written to the audit log: %v\n", err)
+	}
 }
 
 // adminListUsers is `grapi admin:list-users`.

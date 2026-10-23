@@ -638,16 +638,20 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 		d[schema.AttrCreatedBy] = u.ID
 	}
 	p["data"] = d
+	var before map[string]any
+	if action == actionUpdate && s.cfg.AuditEnabled {
+		before, _ = s.snapshot(ctx, ct, id, p["locale"], false)
+	}
 	row, err := s.docs.Update(ctx, string(ct.UID), id, p)
 	if err != nil {
 		return asValidation(err)
 	}
 	s.recordVersion(ctx, ct, id, p["locale"], "", u.ID)
-	event := "entry.update"
 	if action == actionCreate {
-		event = "entry.create"
+		s.audit(r, u, "entry.create", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"], "fields": changedFields(b.Data)})
+	} else {
+		s.auditEntryUpdate(r, u, ct, id, p["locale"], before)
 	}
-	s.audit(r, u, event, map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"], "fields": changedFields(b.Data)})
 	return data(w, visible(toMap(row), ct, string(ct.UID), a))
 }
 
@@ -827,6 +831,10 @@ func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
 	d[schema.AttrUpdatedBy] = u.ID
 	p := localeParam(ct, b.Locale)
 	var row any
+	var before map[string]any
+	if id != "" && s.cfg.AuditEnabled {
+		before, _ = s.snapshot(r.Context(), ct, id, p["locale"], false)
+	}
 	if id == "" {
 		d[schema.AttrCreatedBy] = u.ID
 		p["data"] = d
@@ -841,11 +849,11 @@ func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
 	out := toMap(row)
 	if docID, _ := out[schema.AttrDocumentID].(string); docID != "" {
 		s.recordVersion(r.Context(), ct, docID, p["locale"], "", u.ID)
-		event := "entry.update"
-		if action == actionCreate {
-			event = "entry.create"
+		if before == nil {
+			s.audit(r, u, "entry.create", map[string]any{"uid": string(ct.UID), "documentId": docID, "locale": p["locale"], "fields": changedFields(b.Data)})
+		} else {
+			s.auditEntryUpdate(r, u, ct, docID, p["locale"], before)
 		}
-		s.audit(r, u, event, map[string]any{"uid": string(ct.UID), "documentId": docID, "locale": p["locale"], "fields": changedFields(b.Data)})
 	}
 	return data(w, visible(out, ct, string(ct.UID), a))
 }

@@ -73,6 +73,8 @@ type Config struct {
 	// HistoryMaxVersions keeps that many versions per document and locale
 	// (0: no limit).
 	HistoryMaxVersions int
+	// AuditExportMaxRows caps a CSV export (1 000 000 by default).
+	AuditExportMaxRows int
 	// HistoryOrigins are the origins whose writes record a version
 	// (admin-panel only when empty).
 	HistoryOrigins []string
@@ -101,6 +103,7 @@ type Server struct {
 	wake       chan struct{}
 	// historyPurgedAt is only touched by the scheduler goroutine.
 	historyPurgedAt time.Time
+	auditPurgedAt   time.Time
 }
 
 // New builds the admin server on the Document Service of the content API.
@@ -112,6 +115,9 @@ func New(cfg Config, docs *document.Service, log *slog.Logger) *Server {
 	cfg.Path = "/" + strings.Trim(cfg.Path, "/")
 	if cfg.ResetPasswordTTL <= 0 {
 		cfg.ResetPasswordTTL = time.Hour
+	}
+	if cfg.AuditExportMaxRows <= 0 {
+		cfg.AuditExportMaxRows = 1_000_000
 	}
 	if log == nil {
 		log = slog.Default()

@@ -603,5 +603,7 @@
   "history.thisVersion": "Cette version :",
   "history.currentDraft": "Brouillon :",
   "history.dangling": "Ces relations ou médias n'existent plus et ne seront pas restaurés :",
-  "history.danglingConfirm": "{count} relations ou médias supprimés seront ignorés."
+  "history.danglingConfirm": "{count} relations ou médias supprimés seront ignorés.",
+  "audit.allOrigins": "Toutes les origines",
+  "audit.origin": "Origine"
 }

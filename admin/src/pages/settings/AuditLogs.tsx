@@ -22,8 +22,11 @@ const actions = [
   'user.delete', 'user.password.update', 'user.password-reset.create', 'user.password-reset.confirm', 'user.invite.accept', 'role.create', 'role.update',
   'role.delete', 'permission.update', 'token.create', 'token.update', 'token.regenerate', 'token.delete', 'webhook.create', 'webhook.update',
   'webhook.delete', 'locale.create', 'locale.update', 'locale.delete', 'locale.default.update', 'content-type.create', 'content-type.update',
-  'content-type.delete', 'component.create', 'component.update', 'component.delete', 'audit-log.export',
+  'content-type.delete', 'component.create', 'component.update', 'component.delete', 'release.create', 'release.update', 'release.delete',
+  'release.publish', 'release.trigger', 'release-action.add', 'release-action.remove', 'release-settings.update', 'audit-log.export',
 ]
+
+const origins = ['admin-panel', 'scheduler', 'cli']
 
 function Detail({ id, onClose }: { id: number; onClose: () => void }) {
   const { t } = useI18n()
@@ -39,12 +42,14 @@ export function AuditLogs() {
   const { t, language } = useI18n()
   const { permissions } = useAuth()
   const [action, setAction] = useState('')
+  const [origin, setOrigin] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<number | null>(null)
   const params = new URLSearchParams({ page: String(page), pageSize: '25' })
   if (action) params.set('action', action)
+  if (origin) params.set('origin', origin)
   if (from) params.set('from', new Date(from).toISOString())
   if (to) params.set('to', new Date(to).toISOString())
   const logs = useQuery({ queryKey: ['audit', 'list', params.toString()], queryFn: () => requestWithMeta<Entry[], { pagination: Pagination }>(`/audit-logs?${params}`), placeholderData: (p) => p })
@@ -74,7 +79,7 @@ export function AuditLogs() {
           )
         }
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SelectField
           label={t('audit.action')}
           value={action}
@@ -87,6 +92,21 @@ export function AuditLogs() {
           {actions.map((a) => (
             <option key={a} value={a}>
               {a}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField
+          label={t('audit.origin')}
+          value={origin}
+          onChange={(e) => {
+            setOrigin(e.target.value)
+            setPage(1)
+          }}
+        >
+          <option value="">{t('audit.allOrigins')}</option>
+          {origins.map((o) => (
+            <option key={o} value={o}>
+              {o}
             </option>
           ))}
         </SelectField>

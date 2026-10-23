@@ -3,6 +3,7 @@ package grapi_test
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1638,9 +1639,13 @@ func TestAdminReleases(t *testing.T) {
 	if _, b, _ = c.do("GET", doomed, ""); dataOf(b)["count"].(float64) != 0 {
 		t.Fatalf("a deleted document leaves the pending releases: %v", dataOf(b))
 	}
-	_, b, _ = c.do("GET", "/audit-logs?action=release.fail", "")
-	if l, _ := b["data"].([]any); len(l) != 1 || l[0].(map[string]any)["origin"] != "scheduler" {
-		t.Fatalf("the scheduler is audited: %v", b)
+	_, b, _ = c.do("GET", "/audit-logs?action=release.trigger&origin=scheduler", "")
+	if l, _ := b["data"].([]any); len(l) != 2 || l[0].(map[string]any)["user"] != nil {
+		t.Fatalf("the scheduler is audited, without a user: %v", b)
+	}
+	_, b, _ = c.do("GET", "/audit-logs/"+strconv.Itoa(int(b["data"].([]any)[0].(map[string]any)["id"].(float64))), "")
+	if p, _ := dataOf(b)["payload"].(map[string]any); p["status"] != "failed" {
+		t.Fatalf("the last trigger failed: %v", dataOf(b))
 	}
 	if s, _, _ := c.do("DELETE", sched, ""); s != 200 {
 		t.Fatalf("delete: %d", s)
@@ -2089,5 +2094,87 @@ func TestAdminHistoryOrigins(t *testing.T) {
 	}
 	if n := count(); n != 2 {
 		t.Fatalf("document-service is not listed: %d", n)
+	}
+}
+
+func TestAdminAuditDetails(t *testing.T) {
+	var app *grapi.App
+	ts, _, stop, _ := newAdminAppWith(t, "basic", false, func(a *grapi.App, _ string) {
+		app = a
+		a.OnBootstrap(func(ctx context.Context) error {
+			_, err := a.Documents().E.DB.Exec(ctx, `insert into grapi_audit_logs (action, date, origin, payload) values ('admin.logout', '2000-01-01T00:00:00Z', 'admin-panel', '{}')`)
+			return err
+		})
+	})
+	defer stop()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		var n int
+		_ = app.Documents().E.DB.QueryRow(context.Background(), `select count(*) from grapi_audit_logs where date < '2001'`).Scan(&n)
+		if n == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the scheduler purges the entries past the retention")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Before","views":1,"internalNote":"secret"}}`)
+	id := dataOf(b)["documentId"].(string)
+	c.do("PUT", base+"/"+id, `{"data":{"title":"After","views":1,"internalNote":"still secret"}}`)
+	c.do("POST", base, `{"data":{"title":"Other"}}`)
+
+	_, b, _ = c.do("GET", "/audit-logs?action=entry.update&uid=api::article.article&documentId="+id, "")
+	list := b["data"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("filtered by document: %v", b)
+	}
+	_, b, _ = c.do("GET", "/audit-logs/"+strconv.Itoa(int(list[0].(map[string]any)["id"].(float64))), "")
+	p := dataOf(b)["payload"].(map[string]any)
+	changes, _ := p["changes"].([]any)
+	if len(changes) != 1 {
+		t.Fatalf("only the changed field: %v", p)
+	}
+	ch := changes[0].(map[string]any)
+	if ch["path"] != "title" || ch["before"] != "Before" || ch["after"] != "After" {
+		t.Fatalf("before and after: %v", ch)
+	}
+	raw, _ := json.Marshal(p)
+	if strings.Contains(string(raw), "secret") {
+		t.Fatalf("a private field never reaches the log: %s", raw)
+	}
+
+	filters := "?action=entry.create&action=entry.update&user=1&from=2001-01-01T00:00:00Z&to=2999-01-01T00:00:00Z"
+	_, b, _ = c.do("GET", "/audit-logs"+filters+"&pageSize=100", "")
+	listed := len(b["data"].([]any))
+	req, _ := http.NewRequest("GET", ts.URL+"/admin/api/v1/audit-logs/export.csv"+filters, nil)
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	records, err := csv.NewReader(res.Body).ReadAll()
+	_ = res.Body.Close()
+	if err != nil || listed != 3 || len(records)-1 != listed {
+		t.Fatalf("the list and the CSV agree: %d listed, %d exported, %v", listed, len(records)-1, err)
+	}
+
+	_, b, _ = c.do("POST", "/roles", `{"name":"Auditor"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[{"action":"admin::audit-logs.read","subject":null,"properties":{},"conditions":[]}]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Au","email":"auditor@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	auditor := newAdminClient(t, ts.URL)
+	_, b, _ = auditor.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Au","password":"Aud1torPass"}}`)
+	auditor.token = dataOf(b)["token"].(string)
+	if s, _, _ := auditor.do("GET", "/audit-logs", ""); s != 200 {
+		t.Fatalf("read: %d", s)
+	}
+	if s, _, _ := auditor.do("GET", "/audit-logs/export.csv", ""); s != 403 {
+		t.Fatalf("export needs its permission: %d", s)
 	}
 }

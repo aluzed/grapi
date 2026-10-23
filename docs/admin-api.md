@@ -250,8 +250,8 @@ Conception propre à grapi (la fonction est Enterprise chez Strapi). Une ligne i
 
 | Méthode et chemin | Action | Rôle |
 |---|---|---|
-| `GET /audit-logs?page=&pageSize=&action=&user=&from=&to=` | `admin::audit-logs.read` | Entrées, de la plus récente à la plus ancienne (`action` répétable, dates ISO) |
+| `GET /audit-logs?page=&pageSize=&action=&user=&from=&to=&origin=&uid=&documentId=&locale=` | `admin::audit-logs.read` | Entrées, de la plus récente à la plus ancienne (`action` répétable, dates ISO). Origines : `admin-panel`, `scheduler`, `cli`. `entry.update` porte `changes: [{path, before, after}]` (sans champs privés ni mots de passe). |
 | `GET /audit-logs/{id}` | `admin::audit-logs.read` | Une entrée avec son `payload` |
-| `GET /audit-logs/export.csv` | `admin::audit-logs.export` | Export CSV en flux des entrées filtrées ; l'export est lui-même journalisé |
+| `GET /audit-logs/export.csv` | `admin::audit-logs.export` | Export CSV en flux des entrées filtrées (au plus `admin.auditLogs.exportMaxRows`, 1 000 000 par défaut) ; l'export est lui-même journalisé |
 
 Réglages : `admin.auditLogs.enabled` (vrai par défaut), `admin.auditLogs.retentionDays` (90 par défaut, 0 pour tout garder).

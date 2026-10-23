@@ -11,10 +11,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
+
+	"github.com/aluzed/grapi/internal/db"
+	"github.com/aluzed/grapi/schema"
 )
 
 // The audit log (a grapi design, Strapi's is Enterprise): one immutable
@@ -31,13 +33,22 @@ func (s *Server) ensureAuditTable(ctx context.Context) error {
 		user_id integer, user_name varchar(255), user_email varchar(255), origin varchar(64) not null, payload text not null)`, q(auditTable), id)); err != nil {
 		return err
 	}
-	_, err := s.e.DB.Exec(ctx, fmt.Sprintf(`create index if not exists %s on %s (date)`, q("grapi_audit_logs_date_idx"), q(auditTable)))
-	return err
-}
-
-var lastAuditPurge struct {
-	sync.Mutex
-	at time.Time
+	// Tables from before these columns get them on start.
+	for _, col := range []string{"uid", "document_id", "locale"} {
+		if rows, err := s.e.DB.Query(ctx, fmt.Sprintf(`select %s from %s where 1 = 0`, col, q(auditTable))); err == nil {
+			_ = rows.Close()
+			continue
+		}
+		if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`alter table %s add column %s varchar(255)`, q(auditTable), col)); err != nil {
+			return err
+		}
+	}
+	for name, cols := range map[string]string{"grapi_audit_logs_date_idx": "date", "grapi_audit_logs_document_idx": "uid, document_id"} {
+		if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`create index if not exists %s on %s (%s)`, q(name), q(auditTable), cols)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func clientIP(r *http.Request, trustProxy bool) string {
@@ -77,23 +88,46 @@ func (s *Server) writeAudit(ctx context.Context, u *User, origin, action string,
 		id, email = u.ID, u.Email
 		name = strings.TrimSpace(u.Firstname + " " + u.Lastname)
 	}
-	q := fmt.Sprintf(`insert into %s (action, date, user_id, user_name, user_email, origin, payload) values (%s, %s, %s, %s, %s, %s, %s)`,
-		s.e.DB.Dialect.Quote(auditTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6), s.ph(7))
+	str := func(k string) any {
+		if v, ok := payload[k]; ok && v != nil && v != "" {
+			return fmt.Sprint(v)
+		}
+		return nil
+	}
+	q := fmt.Sprintf(`insert into %s (action, date, user_id, user_name, user_email, origin, payload, uid, document_id, locale) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)`,
+		s.e.DB.Dialect.Quote(auditTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6), s.ph(7), s.ph(8), s.ph(9), s.ph(10))
 	now := s.now().UTC()
 	// The write itself succeeded: an audit failure is logged, not returned.
-	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(time.RFC3339Nano), id, name, email, origin, string(b)); err != nil {
+	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(time.RFC3339Nano), id, name, email, origin, string(b), str("uid"), str("documentId"), str("locale")); err != nil {
 		s.log.Error("audit log", "action", action, "error", err)
 	}
+}
+
+// AuditCLI logs an action of the grapi CLI (origin cli, no user) in the
+// audit table the server created.
+func AuditCLI(ctx context.Context, d *db.DB, action string, payload map[string]any) error {
+	b, _ := json.Marshal(payload)
+	ph := d.Dialect.Placeholder
+	_, err := d.Exec(ctx, fmt.Sprintf(`insert into %s (action, date, origin, payload) values (%s, %s, 'cli', %s)`, d.Dialect.Quote(auditTable), ph(1), ph(2), ph(3)),
+		action, time.Now().UTC().Format(time.RFC3339Nano), string(b))
+	return err
+}
+
+// purgeAudit drops the entries older than the retention, at most once an
+// hour; it is the only deletion of the audit log.
+func (s *Server) purgeAudit(ctx context.Context) {
 	days := s.cfg.AuditRetentionDays
-	lastAuditPurge.Lock()
-	due := days > 0 && now.Sub(lastAuditPurge.at) > time.Hour
-	if due {
-		lastAuditPurge.at = now
+	if days <= 0 {
+		return
 	}
-	lastAuditPurge.Unlock()
-	if due {
-		cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
-		_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where date < %s`, s.e.DB.Dialect.Quote(auditTable), s.ph(1)), cut)
+	now := s.now().UTC()
+	if now.Sub(s.auditPurgedAt) < time.Hour {
+		return
+	}
+	s.auditPurgedAt = now
+	cut := now.Add(-time.Duration(days) * 24 * time.Hour).Format(time.RFC3339Nano)
+	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where date < %s`, s.e.DB.Dialect.Quote(auditTable), s.ph(1)), cut); err != nil {
+		s.log.Error("audit purge", "error", err)
 	}
 }
 
@@ -105,6 +139,32 @@ func urlHost(raw string) string {
 		return ""
 	}
 	return u.Scheme + "://" + u.Host
+}
+
+// auditEntryUpdate logs the fields an update changed, with their values
+// before and after; private and password attributes are left out.
+func (s *Server) auditEntryUpdate(r *http.Request, u *User, ct *schema.ContentType, documentID string, locale any, before map[string]any) {
+	if !s.cfg.AuditEnabled {
+		return
+	}
+	after, _ := s.snapshot(r.Context(), ct, documentID, locale, false)
+	for name, a := range ct.Attributes.All() {
+		if a.IsPrivate() || a.Type == schema.TypePassword {
+			delete(before, name)
+			delete(after, name)
+		}
+	}
+	changes := s.diff(before, after, &ct.Attributes, "")
+	fields := []string{}
+	seen := map[string]bool{}
+	for _, c := range changes {
+		top, _, _ := strings.Cut(c.Path, ".")
+		if !seen[top] {
+			seen[top] = true
+			fields = append(fields, top)
+		}
+	}
+	s.audit(r, u, "entry.update", map[string]any{"uid": string(ct.UID), "documentId": documentID, "locale": locale, "fields": fields, "changes": changes})
 }
 
 // changedFields lists the keys of an update body, never their values.
@@ -153,6 +213,11 @@ func (s *Server) auditWhere(r *http.Request) (string, []any) {
 	if u := q.Get("user"); u != "" {
 		if n, err := strconv.ParseInt(u, 10, 64); err == nil {
 			add("user_id = %s", n)
+		}
+	}
+	for param, col := range map[string]string{"origin": "origin", "uid": "uid", "documentId": "document_id", "locale": "locale"} {
+		if v := q.Get(param); v != "" {
+			add(col+" = %s", v)
 		}
 	}
 	if from := q.Get("from"); from != "" {
@@ -239,7 +304,7 @@ func (s *Server) getAuditLog(w http.ResponseWriter, r *http.Request, _ *User, _ 
 // exportAuditLogs streams the filtered rows as CSV, and is audited itself.
 func (s *Server) exportAuditLogs(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
 	where, args := s.auditWhere(r)
-	q := fmt.Sprintf(`select %s from %s%s order by date desc, id desc limit 1000000`, auditColumns, s.e.DB.Dialect.Quote(auditTable), where)
+	q := fmt.Sprintf(`select %s from %s%s order by date desc, id desc limit %d`, auditColumns, s.e.DB.Dialect.Quote(auditTable), where, s.cfg.AuditExportMaxRows)
 	rows, err := s.e.DB.Query(r.Context(), q, args...)
 	if err != nil {
 		return err
