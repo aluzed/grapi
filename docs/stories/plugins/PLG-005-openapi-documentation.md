@@ -24,8 +24,8 @@ Un générateur OpenAPI 3 unique, qui part du registre des routes et des schéma
 - Le versionnage de la doc sur disque façon plugin documentation : la spec est générée à la demande, avec un cache invalidé au rechargement.
 
 ## Critères d'acceptation
-- [ ] La spec du projet de test est valide (validation `kin-openapi`) et générer un client depuis elle fonctionne (openapi-generator ou orval, sur le homelab).
-- [ ] Les chemins et opérations du Content API correspondent à ceux du `full_documentation.json` de Strapi pour le même projet (diff des chemins et méthodes dans le banc `SETUP-002`).
+- [x] La spec du projet de test est valide (validation `kin-openapi`) et générer un client depuis elle fonctionne (openapi-generator ou orval, sur le homelab).
+- [x] Les chemins et opérations du Content API correspondent à ceux du `full_documentation.json` de Strapi pour le même projet (diff des chemins et méthodes dans le banc `SETUP-002`).
 - [ ] `/documentation` avec `restrictedAccess` demande le mot de passe.
 - [x] Une route custom avec schémas apparaît dans la spec.
 
@@ -34,7 +34,9 @@ Un générateur OpenAPI 3 unique, qui part du registre des routes et des schéma
 - `app.MutateOpenAPI(fn)` retouche le document avant de le servir (`mutateDocumentation`).
 - Routes custom du mode framework : `app.Route(...).OpenAPI(operation)` ajoute l'opération au document (`TestOpenAPIRoute`).
 - `GET <prefix>/openapi.json` avec `server.openapi['content-api'].access: public` (test `TestOpenAPIRoute`), `grapi openapi [-o fichier]` sans démarrer le serveur.
-- Reste : Swagger UI et `restrictedAccess` (plugin documentation), `RegisterOverride`, document admin (avec l'admin), validation par kin-openapi (son support d'OpenAPI 3.1 est partiel) et génération d'un client.
+- `make openapi-client` : le document de devfreelance est valide pour Redocly (jeu `minimal` ; il ne reste que des avertissements de style comme les `summary` absents, qui sont aussi dans le document de Strapi), et openapi-typescript en tire des types dont un client openapi-fetch compile en `--strict`. kin-openapi et openapi-generator ont été écartés : leur support d'OpenAPI 3.1 est partiel, et le client typescript-fetch d'openapi-generator ne compile pas (énumérations de paramètres de requête manquantes).
+- Chemins et opérations : le document est celui que Strapi 5.59 sert lui-même (`@strapi/openapi`, `TestDocumentMatchesStrapi`), qui remplace le `full_documentation.json` du plugin documentation pour le Content API.
+- Reste : Swagger UI et `restrictedAccess` (plugin documentation), `RegisterOverride`, document admin (avec l'admin).
 
 ## Notes techniques
 - `getkin/kin-openapi/openapi3`. Swagger UI embarqué en statique (`embed`), version figée.

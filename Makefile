@@ -4,7 +4,7 @@ GOBIN := $(shell go env GOPATH)/bin
 GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
 GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: test-integration-s3 typecheck-compat e2e-invite docker ci admin admin-check build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: openapi-client test-integration-s3 typecheck-compat e2e-invite docker ci admin admin-check build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 # What GitHub Actions used to run, locally (Actions is off on the repo).
 ci: lint licenses admin-check test test-integration-homelab
@@ -57,6 +57,9 @@ MODE ?= self
 DB ?= sqlite
 
 # Mailpit runs on the homelab; grapi runs here.
+openapi-client:
+	./compat/scripts/openapi-client.sh
+
 typecheck-compat:
 	./compat/scripts/typecheck.sh
 
