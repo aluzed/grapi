@@ -512,3 +512,34 @@ func TestAdminRelations(t *testing.T) {
 		t.Fatalf("after update: writer %v tags %v", got["writer"], got["tags"])
 	}
 }
+
+func TestAdminSingleType(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const st = "/content-manager/single-types/api::homepage.homepage"
+	if s, b, _ := c.do("GET", st, ""); s != 200 || b["data"] != nil {
+		t.Fatalf("empty single type: %d %v", s, b)
+	}
+	if s, b, _ := c.do("PUT", st, `{"data":{"title":"Welcome"}}`); s != 200 || dataOf(b)["title"] != "Welcome" {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	if s, b, _ := c.do("PUT", st, `{"data":{"tagline":"Hi"}}`); s != 200 || dataOf(b)["title"] != "Welcome" || dataOf(b)["tagline"] != "Hi" {
+		t.Fatalf("update: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::homepage.homepage", "")
+	if s, _, _ := c.do("GET", "/content-manager/collection-types/api::homepage.homepage", ""); s != 404 {
+		t.Fatalf("a single type has no list: %d %v", s, b)
+	}
+	if s, _, _ := c.do("POST", st+"/actions/publish", `{}`); s != 400 {
+		t.Fatalf("no draft and publish: %d", s)
+	}
+	if s, _, _ := c.do("DELETE", st, ""); s != 200 {
+		t.Fatalf("delete: %d", s)
+	}
+	if _, b, _ := c.do("GET", st, ""); b["data"] != nil {
+		t.Fatalf("deleted: %v", b)
+	}
+}

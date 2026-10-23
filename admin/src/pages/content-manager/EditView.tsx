@@ -110,10 +110,13 @@ export function EditView() {
   const model = useModel()
   const { documentId } = useParams()
   if (!model) return null
-  return <Edit key={`${model.uid}/${documentId ?? 'create'}`} model={model} documentId={documentId} />
+  const single = model.kind === 'singleType'
+  return <Edit key={`${model.uid}/${documentId ?? 'create'}`} model={model} documentId={documentId} single={single} />
 }
 
-function Edit({ model, documentId }: { model: Model; documentId?: string }) {
+const singlePath = (uid: string) => `/content-manager/single-types/${encodeURIComponent(uid)}`
+
+function Edit({ model, documentId, single }: { model: Model; documentId?: string; single: boolean }) {
   const { t } = useI18n()
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -121,7 +124,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
   const models = useModels().data ?? []
   const [params] = useSearchParams()
   const locale = params.get('locale') ?? ''
-  const creating = documentId === undefined
+  const loc = locale ? `?locale=${locale}` : ''
   const fields = model.fields.filter((f) => !readOnlyFields.has(f)).map((f) => [f, model.attributes[f]!] as const)
   const [values, setValues] = useState<Values>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -129,19 +132,20 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
 
   const entry = useQuery({
     queryKey: ['cm', 'entry', model.uid, documentId, locale],
-    queryFn: () => api.get<Entry>(`${entryPath(model.uid, documentId)}${locale ? `?locale=${locale}` : ''}`),
-    enabled: !creating,
+    queryFn: () => api.get<Entry | null>(single ? `${singlePath(model.uid)}${loc}` : `${entryPath(model.uid, documentId)}${loc}`),
+    enabled: single || documentId !== undefined,
   })
+  const creating = single ? entry.isSuccess && entry.data === null : documentId === undefined
   const listStatus = useQuery({
     queryKey: ['cm', 'entry-status', model.uid, documentId, locale],
     queryFn: () => api.get<Entry[]>(`${entryPath(model.uid)}?pageSize=1&filters=${encodeURIComponent(JSON.stringify({ documentId: { $eq: documentId } }))}${locale ? `&locale=${locale}` : ''}`),
-    enabled: !creating && model.draftAndPublish,
+    enabled: !single && documentId !== undefined && model.draftAndPublish,
   })
-  const status = listStatus.data?.[0]?.status
+  const status = single ? entry.data?.status : listStatus.data?.[0]?.status
 
   useEffect(() => {
-    const src: Values = creating ? {} : (entry.data ?? {})
-    if (!creating && !entry.data) return
+    if (single ? !entry.isSuccess : !creating && !entry.data) return
+    const src: Values = entry.data ?? {}
     const next: Values = {}
     for (const [name, attr] of fields) {
       if (!editable(attr)) continue
@@ -149,7 +153,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
     }
     setValues(next)
     // fields derive from model, which keys this component.
-  }, [entry.data, creating])
+  }, [entry.data, entry.isSuccess, creating])
 
   const payload = (): Values | null => {
     const out: Values = {}
@@ -180,17 +184,26 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
 
   const save = useMutation({
     mutationFn: (data: Values) =>
-      creating ? api.post<Entry>(entryPath(model.uid), { data, locale: locale || undefined }) : api.put<Entry>(entryPath(model.uid, documentId), { data, locale: locale || undefined }),
+      single
+        ? api.put<Entry>(singlePath(model.uid), { data, locale: locale || undefined })
+        : creating
+          ? api.post<Entry>(entryPath(model.uid), { data, locale: locale || undefined })
+          : api.put<Entry>(entryPath(model.uid, documentId), { data, locale: locale || undefined }),
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
       void refreshAll()
-      if (creating) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${locale ? `?locale=${locale}` : ''}`, { replace: true })
+      if (creating && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${locale ? `?locale=${locale}` : ''}`, { replace: true })
     },
     onError: fail,
   })
 
   const action = useMutation({
-    mutationFn: (op: 'publish' | 'unpublish' | 'delete') => api.post<BulkResult>(`${entryPath(model.uid)}/actions/bulk-${op}`, { documentIds: [documentId], locale: locale || undefined }).then((r) => ({ r, op })),
+    mutationFn: async (op: 'publish' | 'unpublish' | 'delete') => {
+      if (!single) return { r: await api.post<BulkResult>(`${entryPath(model.uid)}/actions/bulk-${op}`, { documentIds: [documentId], locale: locale || undefined }), op }
+      if (op === 'delete') await api.del(`${singlePath(model.uid)}${loc}`)
+      else await api.post(`${singlePath(model.uid)}/actions/${op}`, { locale: locale || undefined })
+      return { r: { count: 1, documentIds: [], errors: [] } as BulkResult, op }
+    },
     onSuccess: ({ r, op }) => {
       if (r.errors.length > 0) {
         toast.error(r.errors.map((e) => e.message).join(', '))
@@ -198,7 +211,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
       }
       toast.success(t(op === 'publish' ? 'cm.published' : op === 'unpublish' ? 'cm.unpublished' : 'cm.deleted'))
       void refreshAll()
-      if (op === 'delete') navigate(listPath)
+      if (op === 'delete' && !single) navigate(listPath)
     },
     onError: fail,
   })
@@ -209,17 +222,19 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
     if (data) save.mutate(data)
   }
 
-  const title = creating ? t('cm.newEntry') : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
+  const title = single ? model.info.displayName : creating ? t('cm.newEntry') : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
   const canSave = creating ? model.permissions.create : model.permissions.update
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
       <div className="space-y-4">
-        <div>
+        {!single && (
+          <div>
           <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
             {t('cm.backToList')}
           </Button>
-        </div>
+          </div>
+        )}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
@@ -261,7 +276,7 @@ function Edit({ model, documentId }: { model: Model; documentId?: string }) {
         </div>
       </div>
 
-      {!creating && entry.isPending ? (
+      {(single || !creating) && entry.isPending ? (
         <p className="text-sm text-muted">{t('common.loading')}</p>
       ) : (
         <Card>

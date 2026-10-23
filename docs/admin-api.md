@@ -86,4 +86,9 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | `POST /content-manager/collection-types/{uid}/actions/bulk-publish` | `{documentIds, locale}` (action `publish`) |
 | `POST /content-manager/collection-types/{uid}/actions/bulk-unpublish` | `{documentIds, locale}` (action `publish`) |
 
+| `GET /content-manager/single-types/{uid}?locale=&status=` | Le document du single type, `null` s'il n'existe pas encore |
+| `PUT /content-manager/single-types/{uid}` | `{data, locale}` : crée le document (action `create`) ou le met à jour (`update`) |
+| `DELETE /content-manager/single-types/{uid}?locale=` | Supprime le document |
+| `POST /content-manager/single-types/{uid}/actions/publish` et `unpublish` | `{locale}` |
+
 Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message}]}` : un document invalide ou hors des droits n'empêche pas les autres.

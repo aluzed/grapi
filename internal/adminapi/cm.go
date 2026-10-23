@@ -713,3 +713,162 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 	writeJSON(w, http.StatusOK, map[string]any{"data": out, "meta": map[string]any{"pagination": Pagination{Page: page, PageSize: size, PageCount: pages, Total: total}, "mainField": mainField}})
 	return nil
 }
+
+func (s *Server) singleTypeRoutes() {
+	s.authed("GET /content-manager/single-types/{uid}", s.stFind)
+	s.authed("PUT /content-manager/single-types/{uid}", s.stSave)
+	s.authed("DELETE /content-manager/single-types/{uid}", s.stDelete)
+	s.authed("POST /content-manager/single-types/{uid}/actions/publish", s.stAction("publish"))
+	s.authed("POST /content-manager/single-types/{uid}/actions/unpublish", s.stAction("unpublish"))
+}
+
+// singleAccess is cmAccess for a single type: its document id, empty when
+// it has none yet (in that locale), or when the row filter hides it.
+func (s *Server) singleAccess(r *http.Request, u *User, action, locale string) (*schema.ContentType, *permissions.Ability, string, error) {
+	uid := r.PathValue("uid")
+	ct, ok := s.set.ContentType(schema.UID(uid))
+	if !ok || !ct.IsSingleType() || !contains(s.ContentManagerTypes(), uid) {
+		return nil, nil, "", errNotFound
+	}
+	a, err := s.Ability(r.Context(), u)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	filter, allowed := a.Filter(action, uid)
+	if !allowed {
+		return nil, nil, "", errForbidden
+	}
+	p := localeParam(ct, locale)
+	if f := and(filter); f != nil {
+		p["filters"] = f
+	}
+	p["fields"] = []any{schema.AttrDocumentID}
+	row, err := s.docs.FindFirst(r.Context(), uid, p)
+	if err != nil {
+		return nil, nil, "", asValidation(err)
+	}
+	id := ""
+	if row != nil {
+		id, _ = toMap(row)[schema.AttrDocumentID].(string)
+	}
+	return ct, a, id, nil
+}
+
+func (s *Server) stFind(w http.ResponseWriter, r *http.Request, u *User) error {
+	q := r.URL.Query()
+	ct, a, id, err := s.singleAccess(r, u, actionRead, q.Get("locale"))
+	if err != nil {
+		return err
+	}
+	if id == "" {
+		return data(w, nil)
+	}
+	p := localeParam(ct, q.Get("locale"))
+	p["populate"] = "*"
+	if ct.DraftAndPublish() && q.Get("status") == "published" {
+		p["status"] = "published"
+	}
+	row, err := s.docs.FindOne(r.Context(), string(ct.UID), id, p)
+	if err != nil {
+		return asValidation(err)
+	}
+	if row == nil {
+		return data(w, nil)
+	}
+	out := visible(toMap(row), ct, string(ct.UID), a)
+	if ct.DraftAndPublish() {
+		if err := s.withStatus(r.Context(), string(ct.UID), p["locale"], "draft", []map[string]any{out}, []any{id}); err != nil {
+			return err
+		}
+	}
+	return data(w, out)
+}
+
+// stSave creates the document of a single type, or updates it.
+func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
+	var b writeBody
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	ct, a, id, err := s.singleAccess(r, u, actionRead, b.Locale)
+	if err != nil {
+		return err
+	}
+	action := actionUpdate
+	if id == "" {
+		action = actionCreate
+	}
+	if _, allowed := a.Filter(action, string(ct.UID)); !allowed {
+		return errForbidden
+	}
+	if id != "" {
+		if _, _, id, err = s.singleAccess(r, u, actionUpdate, b.Locale); err != nil {
+			return err
+		}
+		if id == "" {
+			return errNotFound
+		}
+	}
+	d := writable(b.Data, ct, action, a)
+	d[schema.AttrUpdatedBy] = u.ID
+	p := localeParam(ct, b.Locale)
+	var row any
+	if id == "" {
+		d[schema.AttrCreatedBy] = u.ID
+		p["data"] = d
+		row, err = s.docs.Create(r.Context(), string(ct.UID), p)
+	} else {
+		p["data"] = d
+		row, err = s.docs.Update(r.Context(), string(ct.UID), id, p)
+	}
+	if err != nil {
+		return asValidation(err)
+	}
+	return data(w, visible(toMap(row), ct, string(ct.UID), a))
+}
+
+func (s *Server) stDelete(w http.ResponseWriter, r *http.Request, u *User) error {
+	locale := r.URL.Query().Get("locale")
+	ct, _, id, err := s.singleAccess(r, u, actionDelete, locale)
+	if err != nil {
+		return err
+	}
+	if id == "" {
+		return errNotFound
+	}
+	if _, err := s.docs.Delete(r.Context(), string(ct.UID), id, localeParam(ct, locale)); err != nil {
+		return asValidation(err)
+	}
+	return data(w, map[string]any{"documentId": id})
+}
+
+func (s *Server) stAction(op string) authedHandler {
+	return func(w http.ResponseWriter, r *http.Request, u *User) error {
+		var b struct {
+			Locale string `json:"locale"`
+		}
+		if err := decode(r, &b); err != nil {
+			return err
+		}
+		ct, _, id, err := s.singleAccess(r, u, actionPublish, b.Locale)
+		if err != nil {
+			return err
+		}
+		if !ct.DraftAndPublish() {
+			return appError("This content type has no draft and publish")
+		}
+		if id == "" {
+			return errNotFound
+		}
+		p := localeParam(ct, b.Locale)
+		if op == "publish" {
+			_, err = s.docs.Publish(r.Context(), string(ct.UID), id, p)
+		} else {
+			_, err = s.docs.Unpublish(r.Context(), string(ct.UID), id, p)
+		}
+		if err != nil {
+			return asValidation(err)
+		}
+		return data(w, map[string]any{"documentId": id})
+	}
+}

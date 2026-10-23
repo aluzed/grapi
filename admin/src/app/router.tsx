@@ -59,7 +59,7 @@ export const router = createBrowserRouter(
             { path: 'collection-types/:uid', element: <ListView /> },
             { path: 'collection-types/:uid/create', element: <EditView /> },
             { path: 'collection-types/:uid/:documentId', element: <EditView /> },
-            { path: 'single-types/:uid', element: <Soon title="nav.contentManager" /> },
+            { path: 'single-types/:uid', element: <EditView /> },
           ],
         },
         section('/content-type-builder'),
