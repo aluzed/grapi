@@ -504,7 +504,7 @@
   "media.bulkDeleted": "{count} fichier(s) supprimé(s)",
   "media.renameFolder": "Renommer",
   "media.deleteFolder": "Supprimer",
-  "media.deleteFolderConfirm": "Supprimer le dossier {name} avec tous ses fichiers et sous-dossiers ?",
+  "media.deleteFolderConfirm": "Supprimer le dossier {name} ? Il contient {files} fichiers et {folders} sous-dossiers, supprimés avec lui.",
   "media.folderDeleted": "Dossier supprimé",
   "media.replace": "Remplacer le fichier",
   "media.replaced": "Fichier remplacé",
@@ -671,5 +671,6 @@
   "media.cropFailed": "L'image n'a pas pu être recadrée",
   "media.focalHelp": "Cliquez sur l'image pour placer son point focal.",
   "media.focalSet": "Point focal : {x} %, {y} %",
-  "media.focalClear": "Retirer le point focal"
+  "media.focalClear": "Retirer le point focal",
+  "media.notAllowedType": "Ce champ n'accepte pas ce type de fichier"
 }

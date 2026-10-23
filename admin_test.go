@@ -2424,6 +2424,13 @@ func TestAdminMediaMoveFolders(t *testing.T) {
 	if !strings.Contains(string(tree), `{"children":[{"children":[{"children":[],"id":`+cID+`,"name":"C"}],"id":`+bID+`,"name":"B"}],"id":`+d+`,"name":"D"}`) {
 		t.Fatalf("folder structure: %s", tree)
 	}
+	_, b, _ = c.do("GET", "/upload/folders?all=true", "")
+	for _, f := range b["data"].([]any) {
+		m := f.(map[string]any)
+		if m["name"] == "D" && (m["totalFiles"].(float64) != 1 || m["totalFolders"].(float64) != 2) {
+			t.Fatalf("D holds B, C and the file, all levels down: %v", m)
+		}
+	}
 	if s, _, _ := c.do("POST", "/upload/actions/bulk-move", `{"folderIds":[`+d+`],"destination":`+cID+`}`); s != 400 {
 		t.Fatalf("into a descendant: %d", s)
 	}
@@ -2749,5 +2756,60 @@ func TestAdminFocalPoint(t *testing.T) {
 	}
 	if _, b, _ := c.do("PUT", "/upload/files/"+id, `{"focalPoint":null}`); dataOf(b)["focalPoint"] != nil {
 		t.Fatalf("null clears it: %v", dataOf(b)["focalPoint"])
+	}
+}
+
+func TestAdminMediaBatchAndReplace(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "devfreelance")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	big := bigPNG(t)
+	for i := 0; i < 20; i++ {
+		fw, _ := mw.CreateFormFile("files", fmt.Sprintf("img-%02d.png", i))
+		_, _ = fw.Write(big)
+	}
+	_ = mw.Close()
+	req, _ := http.NewRequest("POST", ts.URL+"/admin/api/v1/upload", &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var list []map[string]any
+	_ = json.NewDecoder(res.Body).Decode(&list)
+	_ = res.Body.Close()
+	if res.StatusCode != 201 || len(list) != 20 {
+		t.Fatalf("20 files: %d %d", res.StatusCode, len(list))
+	}
+	for _, f := range list {
+		if formats, _ := f["formats"].(map[string]any); len(formats) < 2 {
+			t.Fatalf("formats of %v: %v", f["name"], formats)
+		}
+	}
+
+	id := strconv.Itoa(int(list[0]["id"].(float64)))
+	oldURL := list[0]["url"].(string)
+	const base = "/content-manager/collection-types/api::meme.meme"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Grumpy","picture":`+id+`}}`)
+	meme := dataOf(b)["documentId"].(string)
+	s, up := c.upload("/upload?id="+id, "replaced.png", pngBytes(t))
+	if s != 201 && s != 200 {
+		t.Fatalf("replace: %d %v", s, up)
+	}
+	_, b, _ = c.do("GET", "/upload/files/"+id, "")
+	// As in Strapi, the hash and so the URL stay: links to the file keep working.
+	if dataOf(b)["url"] != oldURL || dataOf(b)["width"].(float64) != 40 || dataOf(b)["name"] != "replaced.png" {
+		t.Fatalf("the same id holds the new content: %v", dataOf(b))
+	}
+	_, b, _ = c.do("GET", base+"/"+meme, "")
+	pic, _ := dataOf(b)["picture"].(map[string]any)
+	if pic == nil || fmt.Sprint(pic["id"]) != id || pic["width"].(float64) != 40 {
+		t.Fatalf("the entry points to the new content: %v", pic)
 	}
 }

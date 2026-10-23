@@ -185,8 +185,15 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const [path, setPath] = useState<Crumb[]>([{ id: null, name: t('media.root') }])
   const [q, setQ] = useState('')
   // allowedTypes are plural in Strapi schemas (images, videos, audios, files).
-  const initialType = pick?.allowedTypes?.length === 1 ? ({ images: 'image', videos: 'video', audios: 'audio' }[pick.allowedTypes[0]!] ?? '') : ''
+  const initialType = pick?.allowedTypes?.length === 1 ? ({ images: 'image', videos: 'video', audios: 'audio', files: 'file' }[pick.allowedTypes[0]!] ?? '') : ''
   const [type, setType] = useState(initialType)
+  // A picker for a field with allowedTypes offers only those kinds.
+  const kinds = (['image', 'video', 'audio', 'file'] as const).filter((k) => !pick?.allowedTypes?.length || pick.allowedTypes.includes(`${k}s`))
+  const allowed = (f: MediaFile) => {
+    if (!pick?.allowedTypes?.length) return true
+    const kind = ['image', 'video', 'audio'].find((k) => f.mime.startsWith(`${k}/`)) ?? 'file'
+    return pick.allowedTypes.includes(`${kind}s`)
+  }
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [view, setViewState] = useState<'grid' | 'list'>(() => {
@@ -279,6 +286,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const click = (f: MediaFile) => {
     if (!pick && selecting) return setChosen((c) => (c.includes(f.id) ? c.filter((x) => x !== f.id) : [...c, f.id]))
     if (!pick) return onOpen?.(f)
+    if (!allowed(f)) return toast.error(t('media.notAllowedType'))
     if (selectedIds.has(f.id)) pick.onChange(pick.selected.filter((x) => x.id !== f.id))
     else pick.onChange(pick.multiple ? [...pick.selected, f] : [f])
   }
@@ -343,8 +351,8 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             ))}
           </SelectField>
           <SelectField label={t('media.type')} value={type} onChange={(e) => setType(e.target.value)} className="md:w-40">
-            <option value="">{t('media.type.all')}</option>
-            {(['image', 'video', 'audio', 'file'] as const).map((k) => (
+            {kinds.length !== 1 && <option value="">{t('media.type.all')}</option>}
+            {kinds.map((k) => (
               <option key={k} value={k}>
                 {t(`media.type.${k}`)}
               </option>
@@ -482,7 +490,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
                       icon: <Trash2 className="h-4 w-4" />,
                       destructive: true,
                       onSelect: async () => {
-                        if (await confirm({ title: t('media.deleteFolder'), message: t('media.deleteFolderConfirm', { name: f.name }), confirmLabel: t('media.deleteFolder'), destructive: true })) removeFolder.mutate(f)
+                        if (await confirm({ title: t('media.deleteFolder'), message: t('media.deleteFolderConfirm', { name: f.name, files: String(f.totalFiles ?? f.filesCount), folders: String(f.totalFolders ?? f.childrenCount) }), confirmLabel: t('media.deleteFolder'), destructive: true })) removeFolder.mutate(f)
                       },
                     },
                   ]}

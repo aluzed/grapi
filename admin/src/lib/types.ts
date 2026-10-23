@@ -113,4 +113,4 @@ export type MediaFile = {
   focalPoint?: { x: number; y: number } | null
 }
 
-export type MediaFolder = { id: number; name: string; path: string; pathId: number; filesCount: number; childrenCount: number }
+export type MediaFolder = { id: number; name: string; path: string; pathId: number; filesCount: number; childrenCount: number; totalFiles?: number; totalFolders?: number }

@@ -443,6 +443,19 @@ func (s *Server) listFolders(w http.ResponseWriter, r *http.Request, _ *User, _ 
 			return err
 		}
 		m["filesCount"], m["childrenCount"] = files, children
+		// What deleting the folder removes, all levels down.
+		path := getString(row, "path")
+		allFiles, err := s.e.Count(ctx, fileUID, query.Params{Where: map[string]any{"$or": []any{
+			map[string]any{"folderPath": path}, map[string]any{"folderPath": map[string]any{"$startsWith": path + "/"}},
+		}}})
+		if err != nil {
+			return err
+		}
+		allFolders, err := s.e.Count(ctx, folderUID, query.Params{Where: map[string]any{"path": map[string]any{"$startsWith": path + "/"}}})
+		if err != nil {
+			return err
+		}
+		m["totalFiles"], m["totalFolders"] = allFiles, allFolders
 		out = append(out, m)
 	}
 	return data(w, out)

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # ADM-007 : Media Library
@@ -41,6 +41,10 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - Progression et annulation des envois : barre de progression et bouton « Annuler l'envoi » (l'envoi passe par XMLHttpRequest, seul à suivre le corps d'une requête ; `admin/src/lib/upload.test.ts`).
 - Un fichier utilisé dans un composant (même imbriqué) est rattaché à l'entrée qui porte le composant, via les tables de liaison des composants (`TestAdminFileRelatedThroughComponent`).
 - Recadrage dans le navigateur (canvas), comme Strapi : zone tracée à la souris ou au doigt, puis « Recadrer l'original » (remplacement, formats régénérés) ou « Recadrer une copie » (nouveau fichier dans le même dossier) ; vérifié dans Chrome (copie de 450 × 300 pour une moitié d'image de 900 × 600). Calcul des pixels testé (`admin/src/lib/crop.test.ts`).
+- Envoi de 20 images d'un coup avec leurs formats, et remplacement qui garde l'id, le hash et donc l'URL, comme Strapi, avec le nouveau contenu visible depuis l'entrée qui l'utilise (`TestAdminMediaBatchAndReplace`).
+- Suppression d'un dossier : la confirmation annonce le nombre de fichiers et de sous-dossiers supprimés, à tous les niveaux (`totalFiles`, `totalFolders` de `GET /upload/folders`).
+- Sélecteur d'un champ média : seuls les types de `allowedTypes` sont proposés, et un fichier d'un autre type est refusé (vérifié dans Chrome avec un champ `allowedTypes: ["images"]`).
+- Détails en lecture seule sans `assets.update` (champs désactivés, actions masquées) ; affichage à 375 px vérifié sur la page.
 - Point focal : clic sur l'image du détail, repère affiché, bouton pour le retirer ; `focalPoint` `{x, y}` en pourcentage validé comme Strapi (0 à 100, `null` l'efface) (`TestAdminFocalPoint`), vérifié dans Chrome.
 
 ## Hors périmètre
@@ -48,13 +52,13 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - Les métadonnées générées par IA (fonction EE chez Strapi, non prévue).
 
 ## Critères d'acceptation
-- [ ] Uploader 20 images en une fois crée 20 fichiers, avec leurs formats générés selon les réglages.
-- [ ] Remplacer un fichier conserve son id, et tous les documents qui l'utilisent pointent sur le nouveau contenu.
-- [ ] Supprimer un dossier non vide passe par une modale qui annonce le nombre de fichiers et sous-dossiers impactés.
+- [x] Uploader 20 images en une fois crée 20 fichiers, avec leurs formats générés selon les réglages.
+- [x] Remplacer un fichier conserve son id, et tous les documents qui l'utilisent pointent sur le nouveau contenu.
+- [x] Supprimer un dossier non vide passe par une modale qui annonce le nombre de fichiers et sous-dossiers impactés.
 - [x] Le point focal enregistré est renvoyé par l'API (`focalPoint`).
-- [ ] Le sélecteur depuis un champ `allowedTypes: ["images"]` ne propose que des images.
-- [ ] Un utilisateur sans `update` voit les détails en lecture seule.
-- [ ] À 375 px, la grille passe sur une ou deux colonnes et toutes les actions sont en pleine largeur.
+- [x] Le sélecteur depuis un champ `allowedTypes: ["images"]` ne propose que des images.
+- [x] Un utilisateur sans `update` voit les détails en lecture seule.
+- [x] À 375 px, la grille passe sur une ou deux colonnes et toutes les actions sont en pleine largeur.
 
 ## Notes techniques
 - Upload en multipart vers l'API admin d'upload (`MEDIA-001`), en parallèle limité (3 fichiers à la fois).

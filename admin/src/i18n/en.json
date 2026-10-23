@@ -504,7 +504,7 @@
   "media.bulkDeleted": "{count} files deleted",
   "media.renameFolder": "Rename",
   "media.deleteFolder": "Delete",
-  "media.deleteFolderConfirm": "Delete the folder {name} with all its files and subfolders?",
+  "media.deleteFolderConfirm": "Delete the folder {name}? It holds {files} files and {folders} subfolders, all deleted with it.",
   "media.folderDeleted": "Folder deleted",
   "media.replace": "Replace the file",
   "media.replaced": "File replaced",
@@ -671,5 +671,6 @@
   "media.cropFailed": "The image could not be cropped",
   "media.focalHelp": "Click the image to set its focal point.",
   "media.focalSet": "Focal point: {x} %, {y} %",
-  "media.focalClear": "Remove the focal point"
+  "media.focalClear": "Remove the focal point",
+  "media.notAllowedType": "This field does not accept this type of file"
 }
