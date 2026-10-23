@@ -13,13 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aluzed/grapi/internal/httpapi"
-
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/auth/session"
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
+	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/webhooks"
 	"github.com/aluzed/grapi/schema"
