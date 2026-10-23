@@ -174,7 +174,7 @@
   "roles.tab.contentTypes": "Types de contenu",
   "roles.tab.plugins": "Plugins",
   "roles.tab.settings": "Paramètres",
-  "roles.ownOnly": "Ses entrées seulement",
+  "roles.ownOnly": "Limiter aux entrées",
   "roles.ownOnlyHelp": "Limite la ligne aux entrées créées par l'administrateur.",
   "roles.contentType": "Type de contenu",
   "roles.selectRow": "Toutes les actions de {name}",
@@ -655,5 +655,8 @@
   "roles.someLocales": "certaines locales",
   "roles.duplicate": "Dupliquer",
   "roles.copyName": "{name} (copie)",
-  "roles.duplicated": "Rôle {name} créé"
+  "roles.duplicated": "Rôle {name} créé",
+  "roles.cond.creator": "créées par l'utilisateur",
+  "roles.cond.sameRole": "créées par son rôle",
+  "roles.sameRoleHelp": "Seulement les entrées créées par un admin qui partage un rôle avec l'utilisateur."
 }

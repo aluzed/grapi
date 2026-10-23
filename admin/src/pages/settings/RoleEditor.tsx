@@ -22,6 +22,7 @@ const fieldVerbs = ['create', 'read', 'update'] as const
 const systemFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt', 'createdBy', 'updatedBy', 'locale', 'localizations'])
 const explorer = 'plugin::content-manager.explorer.'
 const isCreator = 'admin::is-creator'
+const sameRole = 'admin::has-same-role-as-creator'
 
 const key = (action: string, subject: string | null) => `${action}|${subject ?? ''}`
 
@@ -70,13 +71,17 @@ export function RoleEditor() {
       else next.delete(k)
       return next
     })
-  const ownOnly = (subject: string) => verbs.some((v) => perms.get(key(explorer + v, subject))?.conditions.includes(isCreator))
-  const setOwnOnly = (subject: string, on: boolean) =>
+  const hasCondition = (subject: string, c: string) => verbs.some((v) => perms.get(key(explorer + v, subject))?.conditions.includes(c))
+  const conditionsOf = (subject: string) => [isCreator, sameRole].filter((c) => hasCondition(subject, c))
+  // Conditions are shared by the actions of a content type, and combine
+  // with OR, as in Strapi.
+  const setCondition = (subject: string, c: string, on: boolean) =>
     setPerms((prev) => {
       const next = new Map(prev)
+      const wanted = [isCreator, sameRole].filter((x) => (x === c ? on : verbs.some((v) => prev.get(key(explorer + v, subject))?.conditions.includes(x))))
       for (const v of verbs) {
         const p = next.get(key(explorer + v, subject))
-        if (p) next.set(key(explorer + v, subject), { ...p, conditions: on ? [isCreator] : [] })
+        if (p) next.set(key(explorer + v, subject), { ...p, conditions: wanted })
       }
       return next
     })
@@ -203,20 +208,22 @@ export function RoleEditor() {
                                 title={`${t(`roles.action.${v}`)} · ${displayName(s)}`}
                                 aria-label={`${t(`roles.action.${v}`)} · ${displayName(s)}`}
                                 checked={has(explorer + v, s)}
-                                onChange={(e) => set(explorer + v, s, e.target.checked, ownOnly(s) ? [isCreator] : [])}
+                                onChange={(e) => set(explorer + v, s, e.target.checked, conditionsOf(s))}
                                 className="h-4 w-4 accent-primary"
                               />
                             </Td>
                           ))}
                           <Td>
-                            <input
-                              type="checkbox"
-                              title={t('roles.ownOnlyHelp')}
-                              aria-label={`${t('roles.ownOnly')} · ${displayName(s)}`}
-                              checked={ownOnly(s)}
-                              onChange={(e) => setOwnOnly(s, e.target.checked)}
-                              className="h-4 w-4 accent-primary"
-                            />
+                            <div className="flex flex-col gap-1 text-xs">
+                              <label className="flex items-center gap-2" title={t('roles.ownOnlyHelp')}>
+                                <input type="checkbox" checked={hasCondition(s, isCreator)} onChange={(e) => setCondition(s, isCreator, e.target.checked)} className="h-4 w-4 accent-primary" />
+                                {t('roles.cond.creator')}
+                              </label>
+                              <label className="flex items-center gap-2" title={t('roles.sameRoleHelp')}>
+                                <input type="checkbox" checked={hasCondition(s, sameRole)} onChange={(e) => setCondition(s, sameRole, e.target.checked)} className="h-4 w-4 accent-primary" />
+                                {t('roles.cond.sameRole')}
+                              </label>
+                            </div>
                           </Td>
                         </Tr>
                       ))}
@@ -228,9 +235,10 @@ export function RoleEditor() {
                     <li key={s} className="rounded-lg border border-border p-3">
                       <p className="mb-2 font-medium">{displayName(s)}</p>
                       {verbs.map((v) => (
-                        <Checkbox key={v} label={t(`roles.action.${v}`)} checked={has(explorer + v, s)} onChange={(e) => set(explorer + v, s, e.target.checked, ownOnly(s) ? [isCreator] : [])} />
+                        <Checkbox key={v} label={t(`roles.action.${v}`)} checked={has(explorer + v, s)} onChange={(e) => set(explorer + v, s, e.target.checked, conditionsOf(s))} />
                       ))}
-                      <Checkbox label={t('roles.ownOnly')} checked={ownOnly(s)} onChange={(e) => setOwnOnly(s, e.target.checked)} />
+                      <Checkbox label={`${t('roles.ownOnly')} : ${t('roles.cond.creator')}`} checked={hasCondition(s, isCreator)} onChange={(e) => setCondition(s, isCreator, e.target.checked)} />
+                      <Checkbox label={`${t('roles.ownOnly')} : ${t('roles.cond.sameRole')}`} checked={hasCondition(s, sameRole)} onChange={(e) => setCondition(s, sameRole, e.target.checked)} />
                       <Button variant="outline" title={t('roles.restrict')} icon={<SlidersHorizontal className="h-4 w-4" />} disabled={!verbs.some((v) => has(explorer + v, s))} onClick={() => setRestricting(s)} className="mt-2 w-full">
                         {t('roles.restrict')}
                       </Button>
