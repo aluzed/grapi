@@ -43,6 +43,7 @@ make race              # unit tests with the race detector
 make test-integration  # Postgres (GRAPI_TEST_PG_DSN) and SQLite
 make lint              # golangci-lint + em-dash and story status checks
 make ci                # everything CI would run (GitHub Actions is off): lint, licenses, admin checks, tests, Postgres on the homelab
+make e2e-invite        # admin e-mails through Mailpit on the homelab: invitation, password reset, logout, test mail
 ```
 
 Requires Go 1.26, golangci-lint v2.14.0 and Bun 1.2 (admin, see [`admin/README.md`](admin/README.md)).
