@@ -15,6 +15,7 @@ Pre-alpha. `grapi start` serves the REST and GraphQL content APIs of a Strapi pr
 ```sh
 grapi new <name> [--db sqlite|postgres]      # create a project
 grapi develop                                # serve and reload on src/ or config/ changes
+grapi develop --open                         # same, and open the admin; a framework project (main.go) is rebuilt and restarted on Go changes
 grapi start -dir <project> [-config <dir>]    # serve the content API
 grapi report                                 # versions and project facts, without secrets
 grapi db:sync --dry-run -dir <project>       # what the start-up schema sync would change (read only)

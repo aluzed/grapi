@@ -737,8 +737,12 @@ func (a *App) setup(p *Project) (*Server, error) {
 	}}, nil
 }
 
-// Start sets the App up and serves it until SIGINT or SIGTERM.
+// Start sets the App up and serves it until SIGINT or SIGTERM. Under
+// `grapi develop` (GRAPI_DEVELOP=1) it develops instead: reloads in process.
 func (a *App) Start() error {
+	if os.Getenv("GRAPI_DEVELOP") == "1" {
+		return a.Develop(nil)
+	}
 	s, err := a.Setup()
 	if err != nil {
 		return err

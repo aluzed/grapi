@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # CLI-001 : CLI de base : `new`, `develop`, `start`, `version`
@@ -42,7 +42,7 @@ Le squelette de la CLI et les commandes de cycle de vie d'un projet.
 ## Avancement
 - Fait : `grapi new` (config YAML, `.env` aux secrets aléatoires et `.env.example` aux mêmes clés, `--db`, `--git-init`, `--framework`), `grapi develop` (rechargement en processus : un content type ajouté est servi 131 ms après l'écriture de son `schema.json`), `grapi report`, flags `-env` et `-log-level` sur les commandes de projet. La CLI garde le paquet `flag` de la bibliothèque standard plutôt que cobra.
 - `develop --open` ouvre l'admin dans le navigateur (`open`, `xdg-open` ou `rundll32` selon le système) ; les écritures du Content-Type Builder en develop sont faites (`ADM-006`).
-- Reste : redémarrage du processus pour le mode framework (`go run`).
+- Mode framework : `grapi develop` dans un projet avec `go.mod` et `main.go` compile le programme (`.grapi/develop-bin`), le lance avec `GRAPI_DEVELOP=1`, et le recompile puis le redémarre quand le code Go change ; une compilation en échec garde la version en cours (`TestSuperviseRebuildsOnGoChanges`). Avec `GRAPI_DEVELOP=1`, `App.Start` passe par `App.Develop` : rechargement en processus de `src/` et `config/` sur la même `App`, donc les hooks Go sont conservés.
 
 ## Notes techniques
 - `spf13/cobra`, `fsnotify/fsnotify` avec un debounce de 300 ms.
