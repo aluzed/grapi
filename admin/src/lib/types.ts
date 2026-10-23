@@ -70,6 +70,9 @@ export type Model = {
   labels: Record<string, string>
   settings: { pageSize: number; defaultSortBy: string; defaultSortOrder: 'ASC' | 'DESC'; searchable: boolean; filterable: boolean; bulkable: boolean }
   permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; publish: boolean }
+  editLayout: { name: string; size: number }[][]
+  editMeta: Record<string, { label: string; description: string; placeholder: string; visible: boolean; editable: boolean }>
+  canConfigure: boolean
 }
 
 export type Entry = Record<string, unknown> & { id: number; documentId: string; status?: 'draft' | 'published' | 'modified' }

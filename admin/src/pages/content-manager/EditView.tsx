@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, Send, Trash2, Undo2 } from 'lucide-react'
+import { ArrowLeft, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
-import { FieldsGrid, fromInput, isEditable, JSONError, toInput, type FieldContext, type Values } from './fields'
+import { fromInput, isEditable, JSONError, LayoutGrid, toInput, type FieldContext, type Values } from './fields'
 import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
@@ -202,6 +202,11 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
                 ))}
               </SelectField>
             )}
+            {single && model.canConfigure && (
+              <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full md:w-auto">
+                {t('cfg.open')}
+              </Button>
+            )}
             {canSave && (
               <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full md:w-auto">
                 {t('common.save')}
@@ -240,7 +245,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       ) : (
         <Card>
           <fieldset disabled={!canSave}>
-            <FieldsGrid attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
+            <LayoutGrid layout={model.editLayout ?? []} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
           </fieldset>
         </Card>
       )}

@@ -8,6 +8,7 @@ import { ResetPassword } from '@/pages/auth/ResetPassword'
 import { NotFound } from '@/pages/errors/Forbidden'
 import { Home } from '@/pages/home/Home'
 import { Profile } from '@/pages/profile/Profile'
+import { ConfigureView } from '@/pages/content-manager/ConfigureView'
 import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManager'
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
@@ -53,6 +54,8 @@ export const router = createBrowserRouter(
           children: [
             { index: true, element: <FirstModel /> },
             { path: 'collection-types/:uid', element: <ListView /> },
+            { path: 'collection-types/:uid/configurations', element: <ConfigureView /> },
+            { path: 'single-types/:uid/configurations', element: <ConfigureView /> },
             { path: 'collection-types/:uid/create', element: <EditView /> },
             { path: 'collection-types/:uid/:documentId', element: <EditView /> },
             { path: 'single-types/:uid', element: <EditView /> },

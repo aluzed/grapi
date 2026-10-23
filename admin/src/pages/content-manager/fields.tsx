@@ -361,6 +361,31 @@ function UIDField({ name, attr, text, value, values, error, onChange, ctx }: { n
   )
 }
 
+const span: Record<number, string> = { 4: 'md:col-span-4', 6: 'md:col-span-6', 8: 'md:col-span-8', 12: 'md:col-span-12' }
+
+// LayoutGrid renders the root fields along the configured edit layout:
+// rows of 12 columns on desktop, stacked on mobile.
+export function LayoutGrid(props: Omit<Parameters<typeof FieldsGrid>[0], 'fields'> & { layout: { name: string; size: number }[][]; fields: string[] }) {
+  const { layout, fields, ...rest } = props
+  const placed = new Set(layout.flat().map((f) => f.name))
+  const rows = [...layout, ...fields.filter((f) => !placed.has(f)).map((name) => [{ name, size: 12 }])]
+  return (
+    <div className="flex flex-col gap-4">
+      {rows.map((row, i) => (
+        <div key={i} className="grid grid-cols-1 gap-4 md:grid-cols-12">
+          {row
+            .filter((f) => fields.includes(f.name))
+            .map((f) => (
+              <div key={f.name} className={span[f.size] ?? 'md:col-span-12'}>
+                <FieldsGrid {...rest} fields={[f.name]} single />
+              </div>
+            ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function FieldsGrid({
   attrs,
   fields,
@@ -369,6 +394,7 @@ export function FieldsGrid({
   ctx,
   root,
   component,
+  single,
   errors = {},
 }: {
   attrs: Record<string, Attribute>
@@ -379,15 +405,19 @@ export function FieldsGrid({
   root: boolean
   // component is the uid of the component these fields belong to.
   component?: string
+  // single renders one field, without the two column grid.
+  single?: boolean
   errors?: Record<string, string>
 }) {
   const { t } = useI18n()
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className={single ? 'grid grid-cols-1' : 'grid grid-cols-1 gap-4 sm:grid-cols-2'}>
       {fields.map((name) => {
         const attr = attrs[name]
         if (!attr) return null
-        const text = (root ? (ctx.labels[name] ?? name) : name) + (attr.required ? ' *' : '')
+        const meta = root ? ctx.model.editMeta?.[name] : undefined
+        if (meta && !meta.visible) return null
+        const text = (meta?.label || name) + (attr.required ? ' *' : '')
         if (!isEditable(attr)) {
           return (
             <div key={name} className="flex flex-col gap-1.5">
@@ -396,6 +426,7 @@ export function FieldsGrid({
             </div>
           )
         }
+        const render = () => {
         switch (attr.type) {
           case 'relation':
             return (
@@ -424,6 +455,15 @@ export function FieldsGrid({
             return <DynamicZoneField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
         }
         return <ScalarField key={name} name={name} attr={attr} text={text} value={values[name]} error={errors[name]} onChange={(v) => onChange(name, v)} />
+        }
+        const el = render()
+        if (!meta || (meta.editable && !meta.description)) return el
+        return (
+          <fieldset key={name} disabled={!meta.editable} className="flex min-w-0 flex-col gap-1">
+            {el}
+            {meta.description && <p className="text-xs text-muted">{meta.description}</p>}
+          </fieldset>
+        )
       })}
     </div>
   )

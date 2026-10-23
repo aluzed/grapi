@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Pencil, Plus, Send, Trash2, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
@@ -137,11 +137,18 @@ function List({ model }: { model: Model }) {
         title={model.info.displayName}
         subtitle={pagination ? t('cm.entries', { count: String(pagination.total) }) : undefined}
         actions={
-          model.permissions.create && (
+          <>
+            {model.canConfigure && (
+              <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} className="w-full md:w-auto" onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/configurations`)}>
+                {t('cfg.open')}
+              </Button>
+            )}
+            {model.permissions.create && (
             <Button title={t('cm.create')} icon={<Plus className="h-4 w-4" />} className="w-full md:w-auto" onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create${locale ? `?locale=${locale}` : ''}`)}>
               {t('cm.create')}
             </Button>
-          )
+            )}
+          </>
         }
       />
 

@@ -24,7 +24,8 @@ Permettre de configurer la liste et le formulaire de chaque type depuis l'admin,
 
 ## Avancement
 - API (`docs/admin-api.md`) : configuration effective par type (stockée au format et sous la clé de Strapi, synchronisée avec le schéma : champs ajoutés en fin de mise en page, champs disparus retirés), configuration par défaut calquée sur Strapi (`createDefaultLayouts`, tailles de `field-sizes`), écriture validée, modèle du Content Manager alimenté par cette configuration. Testé (`TestAdminViewConfiguration`).
-- Reste : l'écran « Configurer la vue », le formulaire d'édition selon `editLayout`, la configuration des composants, les renommages d'attributs.
+- Écran « Configurer la vue » (depuis la liste, ou l'édition d'un single type) : réglages, colonnes de la liste (ordre, libellés, ajout et retrait), formulaire (ordre, largeur 4, 6, 8 ou 12, libellé, description, texte indicatif, visible, modifiable), regroupé en lignes de 12 à l'enregistrement. Le formulaire d'édition suit la mise en page (12 colonnes sur desktop, empilé sur mobile), les libellés, les descriptions, et masque ou verrouille les champs. Vérifié dans Chrome.
+- Reste : la configuration des composants, les renommages d'attributs, le glisser-déposer.
 
 ## Hors périmètre
 - Les vues elles-mêmes (`ADM-003`, `ADM-004`).
