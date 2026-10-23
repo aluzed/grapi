@@ -234,6 +234,7 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer httpapi.Recover(w, r, s.log)
 	s.mux.ServeHTTP(w, r.WithContext(document.WithOrigin(r.Context(), "admin-panel")))
 }
 

@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"math"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/auth/session"
@@ -224,7 +226,22 @@ func matchPath(pattern, path []string) (map[string]string, bool) {
 
 // ServeHTTP runs the global middlewares, then the router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer Recover(w, r, s.log)
 	s.handler.ServeHTTP(w, r)
+}
+
+// Recover turns a panic of a handler into Strapi's 500, the stack going to
+// the log only.
+func Recover(w http.ResponseWriter, r *http.Request, log *slog.Logger) {
+	p := recover()
+	if p == nil {
+		return
+	}
+	if p == http.ErrAbortHandler {
+		panic(p)
+	}
+	log.Error("panic serving a request", "method", r.Method, "path", r.URL.Path, "panic", fmt.Sprint(p), "stack", string(debug.Stack()))
+	writeError(w, newError(http.StatusInternalServerError, "InternalServerError", "Internal Server Error"), log)
 }
 
 // route routes a request, with Strapi's 404 and 405.

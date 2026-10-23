@@ -21,7 +21,7 @@ Les mêmes classes d'erreur et la même sérialisation.
 
 ## Critères d'acceptation
 - [ ] Les corps d'erreur des 10 classes sont identiques à Strapi (banc de compatibilité).
-- [ ] Une panique dans un handler donne un 500 propre, sans pile dans la réponse.
+- [x] Une panique dans un handler donne un 500 propre, sans pile dans la réponse.
 
 ## Notes techniques
 - Type `*grapi.Error{Status, Name, Message, Details}` qui implémente `error` ; constructeurs par classe.
@@ -34,3 +34,7 @@ Les mêmes classes d'erreur et la même sérialisation.
 
 ## Fichiers
 - `errors.go` (public), `internal/httpapi/errors.go`
+
+## Avancement
+- Panique dans un handler (API de contenu ou admin) : 500 au format de Strapi, connexion conservée, valeur et pile seulement dans les journaux (`TestPanicGivesA500`). Avant, `net/http` coupait la connexion sans réponse.
+- Banc : 8 des 10 classes y sont comparées (`ValidationError`, `NotFoundError`, `ForbiddenError`, `ApplicationError`, `UnauthorizedError`, `PaginationError`, `PayloadTooLargeError`, `RateLimitError`, plus le 500 générique). Restent `PolicyError` (il faudrait une fixture avec une policy JavaScript ; format testé dans `policies_test.go`) et `NotImplementedError` (aucune route standard ne la lève).
