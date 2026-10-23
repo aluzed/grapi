@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -234,5 +235,115 @@ func TestAdminProfile(t *testing.T) {
 	_ = res.Body.Close()
 	if res.StatusCode != 200 || !strings.HasPrefix(res.Header.Get("Content-Type"), "text/html") {
 		t.Fatalf("SPA route: %d %s", res.StatusCode, res.Header.Get("Content-Type"))
+	}
+}
+
+func errMessage(b map[string]any) string {
+	e, _ := b["error"].(map[string]any)
+	m, _ := e["message"].(string)
+	return m
+}
+
+func TestAdminUsersAndRoles(t *testing.T) {
+	ts, mail, stop := newAdminProject(t)
+	defer stop()
+	super := newAdminClient(t, ts.URL)
+	_, b, _ := super.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	super.token = dataOf(b)["token"].(string)
+	_, b, _ = super.do("GET", "/roles", "")
+	roles := map[string]float64{}
+	for _, r := range b["data"].([]any) {
+		m := r.(map[string]any)
+		roles[m["code"].(string)] = m["id"].(float64)
+	}
+	if len(roles) != 3 {
+		t.Fatalf("seeded roles: %v", roles)
+	}
+	editor := strconv.Itoa(int(roles["strapi-editor"]))
+
+	s, b, _ := super.do("POST", "/users", `{"firstname":"Ed","email":"ed@example.com","roles":[`+editor+`]}`)
+	if s != 201 {
+		t.Fatalf("invite: %d %v", s, b)
+	}
+	tok := dataOf(b)["registrationToken"].(string)
+	if len(mail.sent) != 1 || !strings.Contains(mail.sent[0].Text, "registrationToken="+tok) || mail.sent[0].To != "ed@example.com" {
+		t.Fatalf("invitation mail: %+v", mail.sent)
+	}
+	if s, _, _ := super.do("POST", "/users", `{"firstname":"Ed","email":"ed@example.com","roles":[`+editor+`]}`); s != 400 {
+		t.Fatalf("duplicate e-mail: %d", s)
+	}
+	ed := newAdminClient(t, ts.URL)
+	if s, b, _ := ed.do("GET", "/auth/registration-info?registrationToken="+tok, ""); s != 200 || dataOf(b)["email"] != "ed@example.com" {
+		t.Fatalf("registration-info: %d %v", s, b)
+	}
+	if s, _, _ := ed.do("POST", "/auth/login", `{"email":"ed@example.com","password":"Passw0rd"}`); s != 400 {
+		t.Fatalf("an invited user cannot log in yet: %d", s)
+	}
+	s, b, _ = ed.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Edward","password":"Ed1torPass"}}`)
+	if s != 200 {
+		t.Fatalf("register: %d %v", s, b)
+	}
+	ed.token = dataOf(b)["token"].(string)
+	if s, _, _ := ed.do("GET", "/auth/registration-info?registrationToken="+tok, ""); s != 400 {
+		t.Fatalf("the invitation is used once: %d", s)
+	}
+	if s, _, _ := ed.do("GET", "/users", ""); s != 403 {
+		t.Fatalf("an editor cannot list admins: %d", s)
+	}
+	_, b, _ = ed.do("GET", "/users/me/permissions", "")
+	perms := b["data"].([]any)
+	if len(perms) == 0 || strings.HasPrefix(perms[0].(map[string]any)["action"].(string), "admin::") {
+		t.Fatalf("editor permissions: %v", perms)
+	}
+
+	_, b, _ = super.do("GET", "/users?search=edw&pageSize=5", "")
+	if list := b["data"].([]any); len(list) != 1 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"].(float64) != 1 {
+		t.Fatalf("search: %v", b)
+	}
+	_, b, _ = super.do("GET", "/users/me", "")
+	ada := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	if s, b, _ := super.do("DELETE", "/users/"+ada, ""); s != 400 || !strings.Contains(errMessage(b), "super admin") {
+		t.Fatalf("the last super admin cannot be deleted: %d %v", s, b)
+	}
+	if s, _, _ := super.do("PUT", "/users/"+ada, `{"roles":[`+editor+`]}`); s != 400 {
+		t.Fatalf("the last super admin keeps the role: %d", s)
+	}
+	_, b, _ = super.do("GET", "/users?search=edw", "")
+	edID := strconv.Itoa(int(b["data"].([]any)[0].(map[string]any)["id"].(float64)))
+	if s, _, _ := super.do("PUT", "/users/"+edID, `{"isActive":false}`); s != 200 {
+		t.Fatalf("deactivate: %d", s)
+	}
+	if s, _, _ := ed.do("GET", "/users/me", ""); s != 401 {
+		t.Fatalf("a deactivated admin is logged out: %d", s)
+	}
+
+	s, b, _ = super.do("POST", "/roles", `{"name":"Reviewer","description":"Reads"}`)
+	if s != 201 {
+		t.Fatalf("create role: %d %v", s, b)
+	}
+	rid := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	if s, _, _ := super.do("POST", "/roles", `{"name":"reviewer"}`); s != 400 {
+		t.Fatalf("duplicate role name: %d", s)
+	}
+	if s, b, _ := super.do("PUT", "/roles/"+rid+"/permissions", `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::nope.nope"}]}`); s != 400 {
+		t.Fatalf("unknown subject: %d %v", s, b)
+	}
+	s, b, _ = super.do("PUT", "/roles/"+rid+"/permissions", `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{"fields":["title"]},"conditions":["admin::is-creator"]},{"action":"admin::webhooks.read","subject":null}]}`)
+	if s != 200 || len(b["data"].([]any)) != 2 {
+		t.Fatalf("set permissions: %d %v", s, b)
+	}
+	if s, _, _ := super.do("PUT", "/roles/"+strconv.Itoa(int(roles["strapi-super-admin"]))+"/permissions", `{"permissions":[]}`); s != 400 {
+		t.Fatalf("super admin permissions are fixed: %d", s)
+	}
+	if s, _, _ := super.do("DELETE", "/roles/"+editor, ""); s != 400 {
+		t.Fatalf("a role with users cannot be deleted: %d", s)
+	}
+	if s, _, _ := super.do("DELETE", "/roles/"+rid, ""); s != 200 {
+		t.Fatalf("delete role: %d", s)
+	}
+	_, b, _ = super.do("GET", "/permissions", "")
+	sections := dataOf(b)["sections"].(map[string]any)
+	if len(sections["contentTypes"].([]any)) == 0 || len(sections["settings"].([]any)) == 0 || len(dataOf(b)["conditions"].([]any)) != 2 {
+		t.Fatalf("catalog: %v", b)
 	}
 }

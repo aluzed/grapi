@@ -128,6 +128,8 @@ func (s *Server) routes() {
 	s.mux = http.NewServeMux()
 	s.authRoutes()
 	s.meRoutes()
+	s.adminRoutes()
+	s.roleRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

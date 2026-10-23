@@ -40,6 +40,29 @@ Le préfixe suit `admin.url` (`/admin` par défaut). Le reste de `/admin` sert l
 | `DELETE /users/me/sessions` | oui | Révoque toutes les sessions des autres appareils |
 | `GET /information` | oui | `{apiVersion, develop, languages}` |
 
+### Admins et rôles
+
+Chaque route exige l'action indiquée (403 `ForbiddenError` sinon). Le Super Admin a toutes les actions.
+
+| Méthode et chemin | Action | Rôle |
+|---|---|---|
+| `GET /users?page=&pageSize=&search=&sort=champ:asc` | `admin::users.read` | `{data, meta.pagination}`. `search` cherche dans prénom, nom, e-mail et username. |
+| `GET /users/{id}` | `admin::users.read` | Un admin |
+| `POST /users` | `admin::users.create` | Invite : `firstname`, `lastname`, `email`, `roles` (ids, au moins un). Le compte est inactif jusqu'à `auth/register`. Envoie le lien d'invitation et renvoie `{user, registrationToken, registrationUrl}` (201). |
+| `PUT /users/{id}` | `admin::users.update` | `firstname`, `lastname`, `username`, `email`, `isActive`, `blocked`, `roles`, `password`. Désactiver, bloquer ou changer le mot de passe ferme ses sessions. |
+| `DELETE /users/{id}` | `admin::users.delete` | Supprime l'admin et ses sessions |
+| `POST /users/batch-delete` | `admin::users.delete` | `{ids}` |
+| `GET /roles` | `admin::roles.read` | Rôles avec `usersCount` |
+| `GET /roles/{id}` | `admin::roles.read` | Un rôle |
+| `POST /roles` | `admin::roles.create` | `name` (unique sans tenir compte de la casse), `description`. Le `code` est généré. |
+| `PUT /roles/{id}` | `admin::roles.update` | `name`, `description` |
+| `DELETE /roles/{id}` | `admin::roles.delete` | Refusé pour le Super Admin et pour un rôle encore attribué |
+| `GET /roles/{id}/permissions` | `admin::roles.read` | Les permissions du rôle |
+| `PUT /roles/{id}/permissions` | `admin::roles.update` | `{permissions: [{action, subject, properties, conditions}]}` remplace tout. Chaque permission est validée contre le catalogue (action connue, sujet accepté, propriétés `fields` et `locales` seulement si l'action les prend, conditions connues). Refusé pour le Super Admin. |
+| `GET /permissions` | `admin::roles.read` | Catalogue : `sections.{contentTypes, plugins, settings}` et `conditions` |
+
+Il reste toujours au moins un Super Admin actif : le supprimer, le désactiver, le bloquer ou lui retirer ce rôle est refusé s'il est le dernier.
+
 ## Règles
 - Mot de passe : 8 caractères au moins, une minuscule, une majuscule, un chiffre, 72 octets au plus (limite de bcrypt). Hash bcrypt de coût 10, comme Strapi.
 - Un admin inactif ou bloqué ne peut ni se connecter ni utiliser un token déjà émis.

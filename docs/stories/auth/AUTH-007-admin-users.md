@@ -37,14 +37,15 @@ Le backend de l'administration des admins : création du premier admin, connexio
 - [x] **Compat DB (D3)** : un admin d'une base Strapi 5.59 se connecte sur grapi avec son mot de passe, et ses rôles et permissions s'appliquent.
 - [ ] Le flux d'invitation fonctionne de bout en bout (Mailpit sur le homelab).
 - [ ] Un Author ne voit que ses propres entrées dans le Content Manager (intégration avec `AUTH-001`).
-- [ ] La suppression du dernier super admin est refusée (TU).
+- [x] La suppression du dernier super admin est refusée (TU).
 - [ ] La CLI `admin:create-user` et `admin:reset-user-password` (`CLI-003`) passent par le même service.
 
 ## Avancement
 - `internal/adminapi` (`docs/admin-api.md`) : `auth/init`, `auth/register-admin`, `auth/login`, `auth/forgot-password`, `auth/reset-password` (expiration `admin.forgotPassword.expiresIn`), `auth/registration-info`, `auth/register`, `users/me` (GET, PUT), `users/me/permissions`. Politique de mot de passe et limite de 72 octets.
 - Rôles Super Admin, Editor et Author créés sur une base sans rôle, avec les permissions Content Manager et médiathèque par défaut (`is-creator` pour Author).
 - Banc en mode grapi : un admin enregistré par Strapi 5.59 (`/admin/register-admin`) se connecte sur grapi (`/admin/api/v1/auth/login`), SQLite et Postgres.
-- Reste : CRUD des admins et des rôles, invitations par e-mail, `permissions/check`, catalogue groupé par section, règle du dernier super admin, CLI.
+- CRUD des admins (invitation par e-mail avec `registrationToken`, recherche, pagination, batch-delete) et des rôles, permissions d'un rôle validées contre le catalogue, catalogue groupé par section, règle du dernier Super Admin actif. Chaque route exige son action admin. Testé de bout en bout (`admin_test.go`, e-mails capturés par un provider de test).
+- Reste : `permissions/check`, la CLI (`CLI-003`), l'invitation testée sur Mailpit, le test Author (attend le Content Manager `ADM-003`).
 
 ## Notes techniques
 - Mémoire projet : **ne jamais vider ni réinitialiser la table des admins** sur un serveur (migrations et `DB-011` comprises).
