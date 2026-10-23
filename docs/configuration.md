@@ -52,6 +52,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `plugins.graphql`: the plugin is on when the project's `package.json` depends on `@strapi/plugin-graphql` (Strapi enables installed plugins) or when `enabled: true`; `enabled: false` turns it off. `config.endpoint` (`/graphql`), `config.defaultLimit` (10), `config.maxLimit` (unlimited), `config.depthLimit` (unlimited), `config.shadowCRUD` (true; false generates nothing from the content types, the schema is then the extensions' only), `config.apolloServer.introspection` (on unless `NODE_ENV=production`, as Apollo).
 
+`plugins.documentation`: on when `package.json` depends on `@strapi/plugin-documentation` or with `enabled: true`. Swagger UI (`swagger-ui-dist` 5.17.14, Apache-2.0, embedded with its `LICENSE` and `NOTICE`; Strapi pins 4.19, which cannot render the OpenAPI 3.1 document grapi generates) on `/documentation` and `/documentation/v<x.y.z>`, its files on `/plugins/documentation/`, with the content API document grapi generates. With `restrictedAccess` in `plugin_documentation_config` (core store, bcrypt `password`), the pages ask the password on `/documentation/login` and keep a koa-session cookie (`koa.sess`, signed with `server.app.keys`, one day), as Strapi. Links use `server.url` as configured (relative when empty).
+
 Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a generated Strapi project.
 
 ## Variables

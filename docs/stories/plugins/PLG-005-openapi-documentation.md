@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # PLG-005 : OpenAPI et documentation (Swagger UI)
@@ -26,7 +26,7 @@ Un générateur OpenAPI 3 unique, qui part du registre des routes et des schéma
 ## Critères d'acceptation
 - [x] La spec du projet de test est valide (validation `kin-openapi`) et générer un client depuis elle fonctionne (openapi-generator ou orval, sur le homelab).
 - [x] Les chemins et opérations du Content API correspondent à ceux du `full_documentation.json` de Strapi pour le même projet (diff des chemins et méthodes dans le banc `SETUP-002`).
-- [ ] `/documentation` avec `restrictedAccess` demande le mot de passe.
+- [x] `/documentation` avec `restrictedAccess` demande le mot de passe.
 - [x] Une route custom avec schémas apparaît dans la spec.
 
 ## Avancement
@@ -40,6 +40,7 @@ Un générateur OpenAPI 3 unique, qui part du registre des routes et des schéma
 
 - Repérage pour Swagger UI et `restrictedAccess` (code MIT de `@strapi/plugin-documentation` 5.59.0, sans dossier `ee/`) : routes `GET /documentation` et `/documentation/v:major.:minor.:patch` (auth: false, middleware `restrict-access`), `GET|POST /documentation/login`, plus `getInfos`, `regenerateDoc`, `updateSettings`, `deleteDoc` côté admin. La page injecte la spec (`full_documentation.json` du dossier `extensions/documentation/documentation/<version>/`) et `backendUrl` dans un gabarit qui charge `swagger-ui-dist` 4.19.0 depuis `/plugins/documentation/`. `restrict-access` lit `plugin_documentation_config` (`restrictedAccess`, `password` en bcrypt) et redirige vers `/documentation/login` sans `ctx.session.documentation.logged` ; `POST /login` compare le mot de passe et pose la session. Prérequis côté grapi : la session de Koa (`koa.sess` + `koa.sess.sig`, JSON en base64 signé par keygrip avec `app.keys`), faite dans `internal/koasession` (signatures identiques à keygrip 1.1.0, cookie posé par Strapi relu, expiration), pas encore branchée ; et les assets `swagger-ui-dist` embarqués (licence Apache-2.0 à ajouter au NOTICE).
 
+- Plugin documentation (`internal/docplugin`, branché devant l'admin et l'API comme chez Strapi hors du préfixe `/api`) : Swagger UI 5.17.14 embarqué (Strapi épingle la 4.19, qui ne rend pas l'OpenAPI 3.1 de grapi), document du content API généré par grapi, vérifié dans Chrome, `restrictedAccess` lu dans `plugin_documentation_config`, page de connexion (même formulaire et même message « Wrong password... », sans logo ni police externes), session koa (`internal/koasession`). `TestDocumentationPlugin` : page ouverte, puis redirection vers la connexion, mauvais mot de passe, bon mot de passe, page servie. Reste : l'écran de réglages de l'admin (`getInfos`, `updateSettings`, `regenerateDoc`) ; en attendant, la config se pose par `configuration:restore`.
 ## Notes techniques
 - `getkin/kin-openapi/openapi3`. Swagger UI embarqué en statique (`embed`), version figée.
 - Les schémas de route en Go : une petite DSL ou des types Go convertis par réflexion (`invopop/jsonschema`), à décider dans le ticket `API-002`.

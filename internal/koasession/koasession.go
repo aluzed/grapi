@@ -9,6 +9,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -27,6 +28,9 @@ func Sign(data, key string) string {
 // Encode is the cookie value of a session that expires after maxAge, and
 // its signature with the first key.
 func Encode(data map[string]any, maxAge time.Duration, keys []string, now time.Time) (value, sig string, err error) {
+	if len(keys) == 0 {
+		return "", "", errors.New("app.keys is required to sign the session")
+	}
 	body := map[string]any{}
 	for k, v := range data {
 		body[k] = v

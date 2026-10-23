@@ -8,6 +8,7 @@ The keys of `strapi_core_store_settings` in a fresh Strapi 5.59 database (refere
 | `plugin_content_manager_configuration_content_types::<uid>` (one per content type, admin and plugins included) | object | `ADM-005` |
 | `plugin_content_manager_configuration_components::<uid>` (one per component, when the project has some) | object | `ADM-005` |
 | `plugin_i18n_default_locale` | string | `PLG-001` (read by the document service) |
+| `plugin_documentation_config` (with the documentation plugin: `restrictedAccess`, bcrypt `password`) | object | `PLG-005` |
 | `plugin_upload_settings` | object | `MEDIA-002`, `MEDIA-006` (read by the upload route) |
 | `plugin_upload_view_configuration` | object | `MEDIA-006` |
 | `plugin_upload_metrics` | object | `MEDIA-006` |

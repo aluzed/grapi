@@ -741,7 +741,8 @@ func (a *App) setup(p *project.Project) (*Server, error) {
 	destroy := a.onDestroy
 	releases, stopReleases := context.WithCancel(context.Background())
 	adm.StartScheduler(releases, 30*time.Second)
-	return &Server{Handler: withAdmin(adm, api), Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
+	documentation := a.documentationPlugin(conf, *dir, d, api, apiCfg.Users.AppKeys)
+	return &Server{Handler: withDocumentation(documentation, withAdmin(adm, api)), Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
 		stopReleases()
 		for _, fn := range destroy {
 			if err := fn(context.Background()); err != nil {

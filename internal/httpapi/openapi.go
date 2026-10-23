@@ -72,3 +72,9 @@ func (s *Server) Serves(method, p string) bool {
 	}
 	return false
 }
+
+// OpenAPIJSON is the content API's document, whatever the openapi access:
+// the documentation plugin shows it.
+func (s *Server) OpenAPIJSON(info openapi.Info, mutate []func(doc map[string]any)) ([]byte, error) {
+	return openapi.JSON(openapi.Generate(s.set, openapi.Options{Info: info, Served: s.Serves, Custom: s.customOps, Mutate: mutate}))
+}
