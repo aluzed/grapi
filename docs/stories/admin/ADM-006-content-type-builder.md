@@ -44,7 +44,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - [x] Un enregistrement par lot invalide (relation vers un type inexistant, nom réservé) est rejeté entièrement, sans fichier écrit ni changement en base.
 - [ ] Pendant un rechargement, les requêtes en cours se terminent, et les nouvelles attendent le nouveau schéma ou reçoivent 503 avec `Retry-After`. Aucune ne voit un état mixte.
 - [x] En mode production, `POST` d'écriture du CTB renvoie 403.
-- [ ] Toute suppression passe par la modale de confirmation qui liste les impacts.
+- [x] Toute suppression passe par la modale de confirmation qui liste les impacts.
 
 ## Avancement
 - Content API en lecture seule du plugin (`internal/httpapi/ctb.go`) : `GET /api/content-type-builder/content-types[/:uid]` (`kind`, types invisibles en 404) et `GET /api/content-type-builder/components[/:uid]`, au format de `formatContentType` et `formatComponent`. Corpus `components_ctb`, SQLite et Postgres : identique à Strapi. Les deux listes complètes sont en skip au banc : celle des content types contient les types Enterprise (clean-room), celle des composants suit chez Strapi l'ordre de lecture des fichiers.
@@ -53,7 +53,8 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - Vérifié le 2026-10-23 : l'image Strapi 5.59 du banc démarre sur un `src/` modifié par le CTB de grapi (type Recette avec relation manyToMany et champ inverse sur Tag) et sert `/api/recettes`. Vérification manuelle, pas encore un cas automatique du banc.
 - Renommage d'un champ scalaire (`renamedFrom`) : migration SQL `ALTER TABLE … RENAME COLUMN` écrite dans `database/migrations`, jouée au rechargement avant la synchronisation, configuration de vue déplacée (métadonnées, colonnes, mise en page, champ principal, tri), uid qui ciblaient l'ancien nom mis à jour. Relations, médias et composants ne se renomment pas (tables de jointure) : refus explicite. Testé (`TestAdminContentTypeBuilderRename` : la valeur survit, SQLite et Postgres via `make ci`).
 - Les noms réservés du builder ne s'appliquent qu'aux nouveaux attributs : un type existant qui en porte déjà un (`meta`) reste modifiable.
-- Reste : un cas de banc automatique avec un champ de chaque type, la liste des impacts dans la modale de suppression, les custom fields, le schéma visuel des relations, les icônes de composant.
+- Suppressions : la modale liste ce qui change ailleurs (relations vers un type supprimé, champs composant et zones dynamiques d'un composant supprimé, autre côté d'une relation bidirectionnelle), calculé comme le serveur l'applique (`admin/src/pages/ctb/model.ts`, testé). Retirer un côté d'une relation bidirectionnelle retire l'autre, comme le builder de Strapi ; avant, le lot était refusé (`inverse-missing`) (`TestAdminContentTypeBuilderDropsInverse`). Vérifié dans Chrome sous `grapi develop` jusqu'à l'enregistrement et au rechargement.
+- Reste : un cas de banc automatique avec un champ de chaque type, les custom fields, le schéma visuel des relations, les icônes de composant.
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

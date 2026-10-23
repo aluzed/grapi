@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { useI18n } from './I18nProvider'
 
-type Options = { title: string; message: string; confirmLabel?: string; destructive?: boolean }
+type Options = { title: string; message: string; details?: { title: string; items: string[] }; confirmLabel?: string; destructive?: boolean }
 type Confirm = (o: Options) => Promise<boolean>
 
 const ConfirmContext = createContext<Confirm | null>(null)
@@ -44,6 +44,16 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         }
       >
         <p className="text-sm">{opts?.message}</p>
+        {opts?.details && opts.details.items.length > 0 && (
+          <div className="mt-3">
+            <p className="text-sm font-medium">{opts.details.title}</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+              {opts.details.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Dialog>
     </ConfirmContext.Provider>
   )

@@ -16,7 +16,7 @@ import type { MessageKey } from '@/i18n'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { FieldDialog } from './FieldDialog'
-import { kebab, pluralize, type Action, type Attr, type SchemaFile } from './model'
+import { fieldDeletionImpacts, kebab, pluralize, typeDeletionImpacts, type Action, type Attr, type Impact, type SchemaFile } from './model'
 
 type Schema = { contentTypes: SchemaFile[]; components: SchemaFile[]; develop: boolean }
 type NewType = { kind: 'collectionType' | 'singleType' | 'component' }
@@ -207,6 +207,7 @@ export function ContentTypeBuilder() {
       </div>
     )
 
+  const impactLabel = (i: Impact) => t(`ctb.impact.${i.kind}`, { owner: i.owner, field: i.field })
   const editable = develop && Boolean(current?.editable)
   const fieldActions = (a: Attr) =>
     editable
@@ -218,7 +219,8 @@ export function ContentTypeBuilder() {
             destructive: true,
             onSelect: async () => {
               if (!current) return
-              if (await confirm({ title: t('ctb.deleteField'), message: t('ctb.deleteFieldConfirm', { name: a.name }), confirmLabel: t('ctb.deleteField'), destructive: true })) {
+              const details = { title: t('ctb.impacts'), items: fieldDeletionImpacts(current.uid, a, all).map(impactLabel) }
+              if (await confirm({ title: t('ctb.deleteField'), message: t('ctb.deleteFieldConfirm', { name: a.name }), details, confirmLabel: t('ctb.deleteField'), destructive: true })) {
                 put({ ...current, attributes: current.attributes.filter((x) => x !== a) })
                 mark(current.uid, 'update')
               }
@@ -293,7 +295,8 @@ export function ContentTypeBuilder() {
                         icon={<Trash2 className="h-4 w-4" />}
                         className="w-full md:w-auto"
                         onClick={async () => {
-                          if (await confirm({ title: t('ctb.deleteType'), message: t('ctb.deleteTypeConfirm', { name: current.info.displayName ?? current.uid }), confirmLabel: t('ctb.deleteType'), destructive: true })) {
+                          const details = { title: t('ctb.impacts'), items: typeDeletionImpacts(current.uid, all).map(impactLabel) }
+                          if (await confirm({ title: t('ctb.deleteType'), message: t('ctb.deleteTypeConfirm', { name: current.info.displayName ?? current.uid }), details, confirmLabel: t('ctb.deleteType'), destructive: true })) {
                             mark(current.uid, 'delete')
                             const keep = (l: SchemaFile[]) => l.filter((x) => x.uid !== current.uid)
                             setCts(keep)

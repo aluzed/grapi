@@ -238,6 +238,7 @@ Règles du lot :
 - `singularName` et `pluralName` ne changent pas à la mise à jour : ils font l'uid et la table.
 - Un attribut scalaire avec `renamedFrom` est renommé : une migration SQL renomme sa colonne (valeurs conservées) et sa configuration de vue suit. Relations, médias et composants ne se renomment pas.
 - Une relation `oneToOne`, `oneToMany`, `manyToOne` ou `manyToMany` avec `targetAttribute` est écrite des deux côtés (`inversedBy` ici, `mappedBy` sur la cible).
+- Retirer un côté d'une relation bidirectionnelle (ou le pointer ailleurs) retire l'autre côté du schéma de la cible.
 - Supprimer un type retire aussi les relations qui le visent ; supprimer un composant retire ses usages (attributs et zones dynamiques). Les tables restent en base.
 
 ### Historique des contenus

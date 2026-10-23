@@ -424,6 +424,7 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 		p.files[path] = top
 	}
 	s.dropReferences(p, changes, components, load)
+	s.dropInverses(p, changes, load)
 	for key, attr := range allInverses {
 		target, name, _ := strings.Cut(key, "#")
 		path, ok := s.ctPath(target)
@@ -514,6 +515,55 @@ func (s *Server) dropReferences(p *plan, changes, components []Change, load func
 			}
 		}
 		if changed {
+			setRaw(top, "attributes", attrs)
+			p.files[path] = top
+		}
+	}
+}
+
+// dropInverses removes the other side of the bidirectional relations an
+// update removes or points elsewhere, as Strapi's builder does.
+func (s *Server) dropInverses(p *plan, changes []Change, load func(string) *schema.OrderedMap[json.RawMessage]) {
+	for _, c := range changes {
+		if c.Action != "update" {
+			continue
+		}
+		ct, ok := s.set.ContentType(schema.UID(c.UID))
+		if !ok {
+			continue
+		}
+		next := map[string]map[string]any{}
+		for _, a := range c.Data.Attributes {
+			if n, _ := a["name"].(string); n != "" {
+				next[n] = a
+			}
+		}
+		for name, a := range ct.Attributes.All() {
+			other := a.InversedBy + a.MappedBy
+			if a.Auto || a.Type != schema.TypeRelation || other == "" {
+				continue
+			}
+			if n, ok := next[name]; ok && n["target"] == a.Target && (n["targetAttribute"] == other || n["inversedBy"] == other || n["mappedBy"] == other) {
+				continue
+			}
+			path, ok := s.ctPath(a.Target)
+			if !ok {
+				continue
+			}
+			top := load(path)
+			if top == nil {
+				continue
+			}
+			raw, _ := top.Get("attributes")
+			var attrs schema.OrderedMap[json.RawMessage]
+			if json.Unmarshal(raw, &attrs) != nil {
+				continue
+			}
+			back, ok := attrs.Get(other)
+			if m := decodeRaw(back); !ok || m["target"] != c.UID || m["mappedBy"] != name && m["inversedBy"] != name {
+				continue
+			}
+			attrs.Delete(other)
 			setRaw(top, "attributes", attrs)
 			p.files[path] = top
 		}
