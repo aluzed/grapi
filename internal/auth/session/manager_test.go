@@ -63,10 +63,14 @@ func TestReplayRevokesTheFamily(t *testing.T) {
 	m := newManager(st, c)
 	refresh, _, _ := m.Login(ctx, "1", "dev", TypeRefresh, nil)
 	_, _, _ = m.Login(ctx, "1", "other", TypeRefresh, nil)
-	next, _, err := m.Rotate(ctx, refresh)
+	next, child, err := m.Rotate(ctx, refresh)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, again, err := m.Rotate(ctx, refresh); err != nil || again.SessionID != child.SessionID {
+		t.Fatalf("a concurrent refresh gets the same child: %v %v", again, err)
+	}
+	c.advance(RotationGrace + time.Second)
 	if _, _, err := m.Rotate(ctx, refresh); !errors.Is(err, ErrInvalidToken) {
 		t.Fatal("replay must fail")
 	}
@@ -137,5 +141,25 @@ func TestOtherOrigin(t *testing.T) {
 	up.Now = c.now
 	if _, err := up.AccessToken(ctx, refresh); !errors.Is(err, ErrInvalidToken) {
 		t.Error("a session of another origin is refused")
+	}
+}
+
+func TestReplayAfterTheChildRotated(t *testing.T) {
+	ctx := context.Background()
+	st, c := &Memory{}, &clock{time.Unix(1_700_000_000, 0)}
+	m := newManager(st, c)
+	first, _, _ := m.Login(ctx, "1", "dev", TypeRefresh, nil)
+	second, _, err := m.Rotate(ctx, first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := m.Rotate(ctx, second); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := m.Rotate(ctx, first); !errors.Is(err, ErrInvalidToken) {
+		t.Fatal("the first token is two rotations old")
+	}
+	if st.Len() != 0 {
+		t.Errorf("the family is revoked, %d rows", st.Len())
 	}
 }

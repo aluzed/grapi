@@ -1,5 +1,7 @@
 .git
-dist
+/dist
+admin/dist
+node_modules
 compat/bin
 compat/report
 compat/golden

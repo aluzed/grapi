@@ -4,13 +4,20 @@ GOBIN := $(shell go env GOPATH)/bin
 GOLANGCI_LINT ?= $(GOBIN)/golangci-lint
 GO_LICENSES ?= $(GOBIN)/go-licenses
 
-.PHONY: docker ci build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
+.PHONY: docker ci admin admin-check build test race test-integration test-integration-homelab lint check-emdash check-stories bench-compat licenses notice
 
 # What GitHub Actions used to run, locally (Actions is off on the repo).
-ci: lint licenses test test-integration-homelab
+ci: lint licenses admin-check test test-integration-homelab
 
-build:
-	go build -trimpath -ldflags "$(LDFLAGS)" -o dist/grapi ./cmd/grapi
+# The admin SPA (Bun); build embeds it with the adminui tag.
+admin:
+	cd admin && bun install --frozen-lockfile && bun run build
+
+admin-check:
+	cd admin && bun install --frozen-lockfile && bun run typecheck && bun test src
+
+build: admin
+	go build -trimpath -tags adminui -ldflags "$(LDFLAGS)" -o dist/grapi ./cmd/grapi
 
 test:
 	go test ./...
@@ -39,7 +46,7 @@ check-stories:
 # The image is built on the homelab only (COMPAT_HOST), never on this machine.
 COMPAT_HOST ?= homelab
 docker:
-	rsync -a --delete --exclude .git --exclude dist --exclude compat/bin --exclude compat/report --exclude compat/golden ./ $(COMPAT_HOST):grapi-build/
+	rsync -a --delete --exclude .git --exclude /dist --exclude node_modules --exclude admin/dist --exclude compat/bin --exclude compat/report --exclude compat/golden ./ $(COMPAT_HOST):grapi-build/
 	ssh $(COMPAT_HOST) 'cd grapi-build && docker build --build-arg VERSION=$(VERSION) -t grapi:$(VERSION) -t grapi:latest .'
 
 FIXTURE ?= basic

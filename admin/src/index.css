@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-foreground: #18181b;
+  --color-muted: #71717a;
+  --color-border: #e4e4e7;
+  --color-primary: #4338ca;
+  --color-primary-hover: #3730a3;
+  --color-primary-foreground: #ffffff;
+  --color-destructive: #b91c1c;
+  --color-destructive-hover: #991b1b;
+  --color-success: #15803d;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

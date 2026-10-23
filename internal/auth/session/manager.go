@@ -28,6 +28,9 @@ const (
 	StatusRotated = "rotated"
 )
 
+// RotationGrace is how long a rotated refresh token still yields its child.
+const RotationGrace = time.Minute
+
 // ErrInvalidToken is every refresh or access token rejection.
 var ErrInvalidToken = errors.New("invalid token")
 
@@ -215,6 +218,14 @@ func (m *Manager) Rotate(ctx context.Context, refresh string) (string, *Session,
 		return "", nil, ErrInvalidToken
 	}
 	if cur.Status == StatusRotated {
+		// Tabs of one browser share the cookie: a refresh sent before the
+		// rotation's answer arrived gets the same child. Later, or once the
+		// child rotated too, the token leaked.
+		if child, err := m.store.Get(ctx, cur.ChildID); err == nil && child != nil && child.Status == StatusActive &&
+			m.live(child) && m.Now().Sub(child.CreatedAt) < RotationGrace {
+			tok, err := m.sign(child)
+			return tok, child, err
+		}
 		if err := m.store.DeleteDevice(ctx, m.origin, cur.UserID, cur.DeviceID); err != nil {
 			return "", nil, err
 		}

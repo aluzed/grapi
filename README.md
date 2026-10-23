@@ -8,7 +8,7 @@ The public content API stays wire-compatible with Strapi 5, so an existing front
 
 ## Status
 
-Pre-alpha. `grapi start` serves the REST and GraphQL content APIs of a Strapi project (configuration: [`docs/configuration.md`](docs/configuration.md); Go hooks, routes and policies: [`docs/framework.md`](docs/framework.md)). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
+Pre-alpha. `grapi start` serves the REST and GraphQL content APIs of a Strapi project, and an admin panel under `/admin` (first admin, login, profile so far; API: [`docs/admin-api.md`](docs/admin-api.md)) (configuration: [`docs/configuration.md`](docs/configuration.md); Go hooks, routes and policies: [`docs/framework.md`](docs/framework.md)). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
 
 ## Commands
 
@@ -35,15 +35,15 @@ On a database created by Strapi 5, run `db:sync --dry-run` and `db:check` first,
 ## Development
 
 ```sh
-make build             # dist/grapi
+make build             # dist/grapi, with the admin SPA embedded (needs Bun)
 make test              # unit tests
 make race              # unit tests with the race detector
 make test-integration  # Postgres (GRAPI_TEST_PG_DSN) and SQLite
 make lint              # golangci-lint + em-dash and story status checks
-make ci                # everything CI would run (GitHub Actions is off): lint, licenses, tests, Postgres on the homelab
+make ci                # everything CI would run (GitHub Actions is off): lint, licenses, admin checks, tests, Postgres on the homelab
 ```
 
-Requires Go 1.26 and golangci-lint v2.14.0.
+Requires Go 1.26, golangci-lint v2.14.0 and Bun 1.2 (admin, see [`admin/README.md`](admin/README.md)).
 
 ## License
 

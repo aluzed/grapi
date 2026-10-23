@@ -149,6 +149,9 @@ func TestAdminFirstAdminAndSessions(t *testing.T) {
 	if refreshCookie(res).Value == first.Value {
 		t.Fatal("the refresh token rotates")
 	}
+	if s, _, _ := anon.do("POST", "/auth/access-token", ""); s != 200 {
+		t.Fatalf("second rotation: %d", s)
+	}
 
 	thief := newAdminClient(t, ts.URL)
 	u, _ := http.NewRequest("GET", ts.URL+"/admin/api/v1/auth", nil)

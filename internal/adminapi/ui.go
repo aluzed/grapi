@@ -1,6 +1,8 @@
 package adminapi
 
 import (
+	"bytes"
+	"html"
 	"io/fs"
 	"net/http"
 	"path"
@@ -45,5 +47,12 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	_, _ = w.Write(index)
+	_, _ = w.Write(withBase(index, s.cfg.Path+"/"))
+}
+
+// withBase points the relative URLs of the build at the admin path, so one
+// build serves any admin.url.
+func withBase(index []byte, base string) []byte {
+	tag := []byte(`<head><base href="` + html.EscapeString(base) + `">`)
+	return bytes.Replace(index, []byte("<head>"), tag, 1)
 }

@@ -60,20 +60,23 @@ Livrer le socle de la SPA admin (`admin/`), embarqué dans le binaire, avec l'au
 - Le SSO (`XTR-001`).
 
 ## Critères d'acceptation
-- [ ] Sur une base vide, `/admin` affiche la création du premier admin. Une fois créé, cet écran n'est plus accessible.
+- [x] Sur une base vide, `/admin` affiche la création du premier admin. Une fois créé, cet écran n'est plus accessible.
 - [ ] Connexion, déconnexion, mot de passe oublié et invitation fonctionnent de bout en bout (e-mail capturé par Mailpit en test).
 - [ ] Un access token expiré est renouvelé sans perte de l'action en cours.
-- [ ] Sans « Se souvenir de moi », la session meurt avec le navigateur.
-- [ ] Les sessions listées dans le profil sont révocables, et une session révoquée ne peut plus renouveler son token.
+- [x] Sans « Se souvenir de moi », la session meurt avec le navigateur.
+- [x] Les sessions listées dans le profil sont révocables, et une session révoquée ne peut plus renouveler son token.
 - [ ] Les entrées de menu sans permission ne s'affichent pas. Accéder à leur URL directement mène à une page 403.
-- [ ] À 375 px de large, aucun écran du shell n'a de scroll horizontal et tous les boutons d'action sont en pleine largeur.
-- [ ] Le binaire `grapi` sert l'admin sans aucun fichier externe.
-- [ ] Interface disponible en fr et en en, avec bascule depuis le profil.
+- [x] À 375 px de large, aucun écran du shell n'a de scroll horizontal et tous les boutons d'action sont en pleine largeur.
+- [x] Le binaire `grapi` sert l'admin sans aucun fichier externe.
+- [x] Interface disponible en fr et en en, avec bascule depuis le profil.
 
 ## Avancement
 - Backend du shell : API `/admin/api/v1` pour le premier admin, la connexion, le refresh, la déconnexion, le mot de passe oublié, l'invitation, le profil et les sessions (`docs/admin-api.md`).
 - `admin/` est monté sous `/admin` avec fallback SPA (`admin.FS`, embarqué avec le tag `adminui`), page d'attente sans build.
-- Reste : la SPA elle-même.
+- SPA `admin/` (Bun, Vite, React 19, TypeScript strict, Tailwind 4, React Query, React Hook Form + Zod, react-router, sonner) : création du premier admin, connexion avec « Se souvenir de moi », mot de passe oublié, réinitialisation, inscription par invitation, menu latéral (tiroir sur mobile) filtré par permissions avec page 403, profil (infos, langue, mot de passe, sessions révocables), accueil avec raccourcis. Composants de base Button, champs, Card, Dialog, Table, Tabs, EntityActionsMenu, `useConfirm`. Interface fr et en.
+- Vérifié dans Chrome sur le binaire (`make build`) : premier admin, reprise de session au rechargement, deux onglets qui renouvellent en même temps, 375 px sans scroll horizontal avec boutons pleine largeur.
+- Écrits mais pas encore vérifiés en navigateur : le renouvellement sur 401 avec rejeu de la requête, et la page 403 d'un admin sans permission (il faut le CRUD des admins pour créer un Editor).
+- Reste : widgets de l'accueil (nombre de documents, derniers modifiés et publiés, qui attendent l'API du Content Manager `ADM-003`), e-mails de bout en bout sur Mailpit, client TS généré depuis l'OpenAPI admin.
 
 ## Notes techniques
 - Endpoints admin grapi versionnés sous `/admin/api/v1`. Schéma OpenAPI généré (voir `PLG-005`) et client TS généré pour la SPA.
