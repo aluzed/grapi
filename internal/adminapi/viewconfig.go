@@ -2,8 +2,11 @@ package adminapi
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/schema"
@@ -17,16 +20,44 @@ type LayoutField struct {
 	Size int    `json:"size"`
 }
 
+// FieldEdit is the edit part of a field's metadata. id and documentId have
+// an empty one, kept as {} so that a configuration reads back as stored.
+type FieldEdit struct {
+	Label       string `json:"label"`
+	Description string `json:"description"`
+	Placeholder string `json:"placeholder"`
+	Visible     bool   `json:"visible"`
+	Editable    bool   `json:"editable"`
+	MainField   string `json:"mainField,omitempty"`
+	empty       bool
+}
+
+type fieldEdit FieldEdit
+
+// MarshalJSON writes an empty edit part as {}.
+func (e FieldEdit) MarshalJSON() ([]byte, error) {
+	if e.empty {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(fieldEdit(e))
+}
+
+// UnmarshalJSON remembers an empty edit part.
+func (e *FieldEdit) UnmarshalJSON(b []byte) error {
+	var keys map[string]json.RawMessage
+	if err := json.Unmarshal(b, &keys); err != nil {
+		return err
+	}
+	if len(keys) == 0 {
+		*e = FieldEdit{empty: true}
+		return nil
+	}
+	return json.Unmarshal(b, (*fieldEdit)(e))
+}
+
 // FieldMeta is the per-field configuration of the edit and list views.
 type FieldMeta struct {
-	Edit struct {
-		Label       string `json:"label"`
-		Description string `json:"description"`
-		Placeholder string `json:"placeholder"`
-		Visible     bool   `json:"visible"`
-		Editable    bool   `json:"editable"`
-		MainField   string `json:"mainField,omitempty"`
-	} `json:"edit"`
+	Edit FieldEdit `json:"edit"`
 	List struct {
 		Label      string `json:"label"`
 		Searchable bool   `json:"searchable"`
@@ -46,6 +77,7 @@ type ViewConfig struct {
 		MainField        string `json:"mainField"`
 		DefaultSortBy    string `json:"defaultSortBy"`
 		DefaultSortOrder string `json:"defaultSortOrder"`
+		RelationOpenMode string `json:"relationOpenMode,omitempty"`
 	} `json:"settings"`
 	Metadatas map[string]*FieldMeta `json:"metadatas"`
 	Layouts   struct {
@@ -77,21 +109,103 @@ func editable(name string, a *schema.Attribute) bool {
 	return !notEditable[name] && a.IsVisible() && a.IsWritable()
 }
 
-func listable(name string, a *schema.Attribute) bool {
-	if name == schema.AttrDocumentID || !a.IsVisible() {
-		return false
+// cmField is an attribute of the content manager's model of a type.
+type cmField struct {
+	name   string
+	attr   *schema.Attribute
+	hidden bool
+}
+
+type cmModel []cmField
+
+func (m cmModel) get(name string) (cmField, bool) {
+	for _, f := range m {
+		if f.name == name {
+			return f, true
+		}
 	}
+	return cmField{}, false
+}
+
+// hiddenAttributes are the schema's config.attributes.<name>.hidden: kept
+// out of the list and edit views.
+func hiddenAttributes(ct *schema.ContentType) map[string]bool {
+	var config struct {
+		Attributes map[string]struct {
+			Hidden bool `json:"hidden"`
+		} `json:"attributes"`
+	}
+	out := map[string]bool{}
+	if raw, ok := ct.Extra["config"]; ok && json.Unmarshal(raw, &config) == nil {
+		for name, a := range config.Attributes {
+			out[name] = a.Hidden
+		}
+	}
+	return out
+}
+
+// cmFields is Strapi's toContentManagerModel: id, the visible attributes,
+// the timestamps, the creator fields, then documentId. Morph relations are
+// left out, and so is publishedAt, which Strapi does not show.
+func cmFields(ct *schema.ContentType) cmModel {
+	hidden := hiddenAttributes(ct)
+	out := cmModel{{"id", &schema.Attribute{Type: schema.TypeInteger}, false}}
+	for name, a := range ct.Attributes.All() {
+		if notEditable[name] || !a.IsVisible() || a.Type == schema.TypeRelation && a.IsMorph() {
+			continue
+		}
+		out = append(out, cmField{name, a, hidden[name]})
+	}
+	for _, name := range []string{"createdAt", "updatedAt", schema.AttrCreatedBy, schema.AttrUpdatedBy} {
+		if a, ok := ct.Attributes.Get(name); ok {
+			out = append(out, cmField{name, a, hidden[name]})
+		}
+	}
+	return append(out, cmField{schema.AttrDocumentID, &schema.Attribute{Type: schema.TypeString}, false})
+}
+
+func cmVisible(f cmField) bool { return !f.hidden && !notEditable[f.name] && f.attr.IsVisible() }
+
+func cmSortable(a *schema.Attribute) bool {
 	switch a.Type {
-	case schema.TypeJSON, schema.TypePassword, schema.TypeRichText, schema.TypeBlocks, schema.TypeDynamicZone, schema.TypeComponent:
+	case schema.TypeComponent, schema.TypeJSON, schema.TypeMedia, schema.TypeRichText, schema.TypeDynamicZone, schema.TypeBlocks:
 		return false
 	case schema.TypeRelation:
-		return !a.IsMorph()
+		return a.Relation == schema.OneToOne || a.Relation == schema.ManyToOne
 	}
 	return true
 }
 
+func cmListable(f cmField) bool {
+	if f.hidden {
+		return false
+	}
+	switch a := f.attr; a.Type {
+	case schema.TypeJSON, schema.TypePassword, schema.TypeRichText, schema.TypeDynamicZone, schema.TypeBlocks:
+		return false
+	case schema.TypeRelation:
+		switch a.Relation {
+		case schema.OneToOne, schema.OneToMany, schema.ManyToOne, schema.ManyToMany:
+			return true
+		}
+		return false
+	}
+	return true
+}
+
+// cmMainField is getDefaultMainField: the first string attribute, which is
+// documentId when the type has none of its own.
+func cmMainField(m cmModel) string {
+	for _, f := range m {
+		if f.attr.Type == schema.TypeString && f.name != "id" {
+			return f.name
+		}
+	}
+	return "id"
+}
+
 // appendEdit is Strapi's appendToEditLayout: fields fill rows of 12.
-func appendEdit(layout [][]LayoutField, names []string, attrs *schema.OrderedMap[*schema.Attribute]) [][]LayoutField {
+func appendEdit(layout [][]LayoutField, names []string, m cmModel) [][]LayoutField {
 	if len(names) == 0 {
 		return layout
 	}
@@ -100,8 +214,8 @@ func appendEdit(layout [][]LayoutField, names []string, attrs *schema.OrderedMap
 	}
 	row := len(layout) - 1
 	for _, n := range names {
-		a, _ := attrs.Get(n)
-		size := fieldSize(a.Type)
+		f, _ := m.get(n)
+		size := fieldSize(f.attr.Type)
 		used := 0
 		for _, f := range layout[row] {
 			used += f.Size
@@ -115,88 +229,203 @@ func appendEdit(layout [][]LayoutField, names []string, attrs *schema.OrderedMap
 	return layout
 }
 
-// defaultConfig is the configuration Strapi creates for a new type.
-func defaultConfig(ct *schema.ContentType) *ViewConfig {
-	c := &ViewConfig{UID: string(ct.UID), Metadatas: map[string]*FieldMeta{}}
-	c.Settings.Bulkable, c.Settings.Filterable, c.Settings.Searchable = true, true, true
-	c.Settings.PageSize, c.Settings.MainField, c.Settings.DefaultSortOrder = 10, defaultMainField(ct), "ASC"
-	c.Settings.DefaultSortBy = c.Settings.MainField
-	c.Layouts.List = []string{"id"}
-	var edit []string
-	for name, a := range ct.Attributes.All() {
-		m := &FieldMeta{}
-		m.Edit.Label, m.Edit.Visible, m.Edit.Editable = name, a.IsVisible(), true
-		m.List.Label, m.List.Searchable, m.List.Sortable = name, true, listable(name, a)
-		c.Metadatas[name] = m
-		if listable(name, a) && len(c.Layouts.List) < 4 {
-			c.Layouts.List = append(c.Layouts.List, name)
-		}
-		if editable(name, a) {
-			edit = append(edit, name)
+func allowedSize(a *schema.Attribute, size int) bool {
+	if fixedSize[a.Type] && size != fieldSize(a.Type) {
+		return false
+	}
+	return size <= 12
+}
+
+func (s *Server) targetMainField(a *schema.Attribute) string {
+	if t, ok := s.set.ContentType(schema.UID(a.Target)); ok {
+		return cmMainField(cmFields(t))
+	}
+	return ""
+}
+
+func (s *Server) defaultMeta(f cmField) *FieldMeta {
+	name, a := f.name, f.attr
+	m := &FieldMeta{}
+	if name == "id" || name == schema.AttrDocumentID {
+		m.Edit.empty = true
+		m.List.Label, m.List.Searchable, m.List.Sortable = name, true, true
+		return m
+	}
+	m.Edit.Label, m.Edit.Visible, m.Edit.Editable = name, cmVisible(f), true
+	if a.Type == schema.TypeRelation {
+		m.Edit.MainField = s.targetMainField(a)
+	}
+	m.List.Label, m.List.Searchable, m.List.Sortable = name, cmSortable(a), cmSortable(a)
+	return m
+}
+
+func defaultList(m cmModel) []string {
+	var list []string
+	for _, f := range m {
+		if cmListable(f) && f.name != schema.AttrDocumentID && len(list) < 4 {
+			list = append(list, f.name)
 		}
 	}
-	c.Layouts.Edit = appendEdit(nil, edit, &ct.Attributes)
+	return list
+}
+
+func defaultEdit(m cmModel) [][]LayoutField {
+	var names []string
+	for _, f := range m {
+		if cmVisible(f) {
+			names = append(names, f.name)
+		}
+	}
+	return appendEdit(nil, names, m)
+}
+
+// defaultConfig is the configuration Strapi creates for a new type.
+func (s *Server) defaultConfig(ct *schema.ContentType) *ViewConfig {
+	m := cmFields(ct)
+	c := &ViewConfig{UID: string(ct.UID), Metadatas: map[string]*FieldMeta{}}
+	main := cmMainField(m)
+	c.Settings.Bulkable, c.Settings.Filterable, c.Settings.Searchable = true, true, true
+	c.Settings.PageSize, c.Settings.RelationOpenMode = 10, "modal"
+	c.Settings.MainField, c.Settings.DefaultSortBy, c.Settings.DefaultSortOrder = main, main, "ASC"
+	for _, f := range m {
+		c.Metadatas[f.name] = s.defaultMeta(f)
+	}
+	c.Layouts.List, c.Layouts.Edit = defaultList(m), defaultEdit(m)
 	return c
 }
 
-// effectiveConfig is the stored configuration synced with the schema (new
-// fields appended, gone fields dropped), or the default one.
+// sortableBy is getSortableAttributes: what defaultSortBy may name.
+func sortableBy(m cmModel, ct *schema.ContentType, name string) bool {
+	if i := strings.IndexAny(name, ":."); i >= 0 {
+		name = name[:i]
+	}
+	switch name {
+	case "id", schema.AttrDocumentID, schema.AttrCreatedBy, schema.AttrUpdatedBy:
+		return true
+	}
+	if a, ok := m.get(name); ok && cmListable(a) {
+		return true
+	}
+	a, ok := ct.Attributes.Get(name)
+	return ok && !a.IsVisible() && a.IsWritable()
+}
+
+// effectiveConfig is Strapi's syncConfiguration of the stored configuration
+// with the schema, or the default configuration when none is stored.
 func (s *Server) effectiveConfig(ctx context.Context, ct *schema.ContentType) (*ViewConfig, error) {
-	def := defaultConfig(ct)
+	def := s.defaultConfig(ct)
 	var stored ViewConfig
 	found, err := s.store.Get(ctx, cmScope, "configuration_content_types::"+string(ct.UID), &stored)
 	if err != nil || !found {
 		return def, err
 	}
+	m := cmFields(ct)
 	out := &stored
 	out.UID = string(ct.UID)
-	if out.Metadatas == nil {
-		out.Metadatas = map[string]*FieldMeta{}
-	}
-	var list []string
-	for _, n := range out.Layouts.List {
-		if a, ok := ct.Attributes.Get(n); n == "id" || ok && listable(n, a) {
-			list = append(list, n)
+
+	set := &out.Settings
+	if *set == (ViewConfig{}).Settings {
+		out.Settings = def.Settings
+	} else {
+		if f, ok := m.get(set.MainField); !ok || !cmSortable(f.attr) {
+			set.MainField = def.Settings.MainField
+		}
+		if !sortableBy(m, ct, set.DefaultSortBy) {
+			set.DefaultSortBy = def.Settings.MainField
+		}
+		if set.PageSize <= 0 {
+			set.PageSize = def.Settings.PageSize
 		}
 	}
-	if len(list) == 0 {
-		list = def.Layouts.List
-	}
-	out.Layouts.List = list
-	placed := map[string]bool{}
-	var edit [][]LayoutField
-	for _, row := range out.Layouts.Edit {
-		var kept []LayoutField
-		for _, f := range row {
-			if a, ok := ct.Attributes.Get(f.Name); ok && editable(f.Name, a) && !placed[f.Name] {
-				placed[f.Name] = true
-				kept = append(kept, f)
+
+	if len(out.Layouts.List) == 0 && len(out.Layouts.Edit) == 0 {
+		out.Layouts = def.Layouts
+	} else {
+		var list []string
+		for _, n := range out.Layouts.List {
+			if a, ok := m.get(n); ok && cmListable(a) {
+				list = append(list, n)
 			}
 		}
-		if len(kept) > 0 {
-			edit = append(edit, kept)
+		var edit [][]LayoutField
+		var reappend []string
+		for _, row := range out.Layouts.Edit {
+			var kept []LayoutField
+			for _, f := range row {
+				a, ok := m.get(f.Name)
+				if !ok || !cmVisible(a) {
+					continue
+				}
+				if !allowedSize(a.attr, f.Size) {
+					reappend = append(reappend, f.Name)
+					continue
+				}
+				kept = append(kept, f)
+			}
+			if len(kept) > 0 {
+				edit = append(edit, kept)
+			}
 		}
-	}
-	var missing []string
-	for name, a := range ct.Attributes.All() {
-		if _, ok := out.Metadatas[name]; !ok {
-			out.Metadatas[name] = def.Metadatas[name]
+		edit = appendEdit(edit, reappend, m)
+		var added []string
+		for _, f := range m {
+			if _, ok := out.Metadatas[f.name]; !ok {
+				added = append(added, f.name)
+			}
 		}
-		if editable(name, a) && !placed[name] {
-			missing = append(missing, name)
+		if len(list) < 4 {
+			for _, n := range added {
+				if f, _ := m.get(n); cmListable(f) && !slices.Contains(list, n) && len(list) < 4 {
+					list = append(list, n)
+				}
+			}
 		}
-	}
-	out.Layouts.Edit = appendEdit(edit, missing, &ct.Attributes)
-	for name := range out.Metadatas {
-		if _, ok := ct.Attributes.Get(name); !ok {
-			delete(out.Metadatas, name)
+		var addedEdit []string
+		for _, n := range added {
+			if f, _ := m.get(n); cmVisible(f) {
+				addedEdit = append(addedEdit, n)
+			}
 		}
+		edit = appendEdit(edit, addedEdit, m)
+		if len(list) == 0 {
+			list = def.Layouts.List
+		}
+		if len(edit) == 0 {
+			edit = def.Layouts.Edit
+		}
+		out.Layouts.List, out.Layouts.Edit = list, edit
 	}
-	if out.Settings.PageSize <= 0 {
-		out.Settings.PageSize = def.Settings.PageSize
-	}
-	if out.Settings.MainField == "" {
-		out.Settings.MainField = def.Settings.MainField
+
+	if len(out.Metadatas) == 0 {
+		out.Metadatas = def.Metadatas
+	} else {
+		metas := map[string]*FieldMeta{}
+		for _, f := range m {
+			meta, ok := out.Metadatas[f.name]
+			if !ok || meta == nil {
+				metas[f.name] = def.Metadatas[f.name]
+				continue
+			}
+			if meta.List.Sortable && !cmSortable(f.attr) {
+				meta.List.Sortable = false
+			}
+			if meta.List.Searchable && !cmSortable(f.attr) {
+				meta.List.Searchable = false
+			}
+			if meta.Edit.MainField != "" {
+				if f.attr.Type != schema.TypeRelation {
+					meta.Edit.MainField = ""
+				} else if meta.Edit.MainField != "id" {
+					if t, ok := s.set.ContentType(schema.UID(f.attr.Target)); ok {
+						if ta, ok := cmFields(t).get(meta.Edit.MainField); !ok || !cmSortable(ta.attr) && !cmListable(ta) {
+							meta.Edit.MainField = s.targetMainField(f.attr)
+						}
+					}
+				}
+			}
+			metas[f.name] = meta
+		}
+		out.Metadatas = metas
 	}
 	return out, nil
 }
@@ -247,19 +476,20 @@ func (s *Server) putViewConfig(w http.ResponseWriter, r *http.Request, u *User) 
 	if set.PageSize < 1 || set.PageSize > 100 {
 		errs = append(errs, FieldError{Path: []string{"settings", "pageSize"}, Message: "pageSize must be between 1 and 100"})
 	}
+	m := cmFields(ct)
 	if set.MainField != "id" {
-		if attr, ok := ct.Attributes.Get(set.MainField); !ok || !listable(set.MainField, attr) || attr.Type == schema.TypeRelation || attr.Type == schema.TypeMedia {
+		if f, ok := m.get(set.MainField); !ok || !cmSortable(f.attr) || f.attr.Type == schema.TypeRelation {
 			errs = append(errs, FieldError{Path: []string{"settings", "mainField"}, Message: "mainField must be a sortable field"})
 		}
 	}
 	if set.DefaultSortOrder != "ASC" && set.DefaultSortOrder != "DESC" {
 		errs = append(errs, FieldError{Path: []string{"settings", "defaultSortOrder"}, Message: "defaultSortOrder must be ASC or DESC"})
 	}
-	if _, ok := ct.Attributes.Get(set.DefaultSortBy); !ok && set.DefaultSortBy != "id" {
+	if !sortableBy(m, ct, set.DefaultSortBy) {
 		errs = append(errs, FieldError{Path: []string{"settings", "defaultSortBy"}, Message: "defaultSortBy must be a field"})
 	}
 	for i, n := range c.Layouts.List {
-		if a, ok := ct.Attributes.Get(n); n != "id" && (!ok || !listable(n, a)) {
+		if a, ok := m.get(n); !ok || !cmListable(a) {
 			errs = append(errs, FieldError{Path: []string{"layouts", "list", strconv.Itoa(i)}, Message: n + " cannot be listed"})
 		}
 	}
@@ -287,7 +517,7 @@ func (s *Server) putViewConfig(w http.ResponseWriter, r *http.Request, u *User) 
 	}
 	c.UID = uid
 	for name := range c.Metadatas {
-		if _, ok := ct.Attributes.Get(name); !ok {
+		if _, ok := m.get(name); !ok {
 			delete(c.Metadatas, name)
 		}
 	}

@@ -86,16 +86,6 @@ type EditMeta struct {
 	Editable    bool   `json:"editable"`
 }
 
-func defaultMainField(ct *schema.ContentType) string {
-	for name, a := range ct.Attributes.All() {
-		switch a.Type {
-		case schema.TypeString, schema.TypeUID, schema.TypeEmail, schema.TypeText, schema.TypeEnumeration:
-			return name
-		}
-	}
-	return "id"
-}
-
 func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) (*Model, error) {
 	ct, ok := s.set.ContentType(schema.UID(uid))
 	if !ok {

@@ -462,6 +462,7 @@
   "cfg.desc": "Décroissant",
   "cfg.list": "Colonnes de la liste",
   "cfg.addColumn": "Ajouter une colonne",
+  "cfg.addField": "Ajouter un champ",
   "cfg.edit": "Formulaire d'édition",
   "cfg.editHelp": "Les champs remplissent des lignes de 12 colonnes, dans cet ordre. Les types pleine largeur prennent toujours une ligne.",
   "cfg.size": "Largeur",

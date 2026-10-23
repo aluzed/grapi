@@ -462,6 +462,7 @@
   "cfg.desc": "Descending",
   "cfg.list": "List columns",
   "cfg.addColumn": "Add a column",
+  "cfg.addField": "Add a field",
   "cfg.edit": "Edit form",
   "cfg.editHelp": "Fields fill rows of 12 columns, in this order. Full width types always take a row.",
   "cfg.size": "Width",

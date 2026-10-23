@@ -1,0 +1,997 @@
+{
+  "api::article.article": {
+    "settings": {
+      "bulkable": true,
+      "filterable": true,
+      "searchable": true,
+      "pageSize": 10,
+      "relationOpenMode": "modal",
+      "mainField": "title",
+      "defaultSortBy": "title",
+      "defaultSortOrder": "ASC"
+    },
+    "metadatas": {
+      "id": {
+        "edit": {},
+        "list": {
+          "label": "id",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "title": {
+        "edit": {
+          "label": "title",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "title",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "slug": {
+        "edit": {
+          "label": "slug",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "slug",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "summary": {
+        "edit": {
+          "label": "summary",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "summary",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "body": {
+        "edit": {
+          "label": "body",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "body",
+          "searchable": false,
+          "sortable": false
+        }
+      },
+      "content": {
+        "edit": {
+          "label": "content",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "content",
+          "searchable": false,
+          "sortable": false
+        }
+      },
+      "contact": {
+        "edit": {
+          "label": "contact",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "contact",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "views": {
+        "edit": {
+          "label": "views",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "views",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "bigCounter": {
+        "edit": {
+          "label": "bigCounter",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "bigCounter",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "rating": {
+        "edit": {
+          "label": "rating",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "rating",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "price": {
+        "edit": {
+          "label": "price",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "price",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "releaseDate": {
+        "edit": {
+          "label": "releaseDate",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "releaseDate",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "releaseTime": {
+        "edit": {
+          "label": "releaseTime",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "releaseTime",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "scheduledAt": {
+        "edit": {
+          "label": "scheduledAt",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "scheduledAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "importedAt": {
+        "edit": {
+          "label": "importedAt",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "importedAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "featured": {
+        "edit": {
+          "label": "featured",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "featured",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "meta": {
+        "edit": {
+          "label": "meta",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "meta",
+          "searchable": false,
+          "sortable": false
+        }
+      },
+      "stage": {
+        "edit": {
+          "label": "stage",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "stage",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "internalNote": {
+        "edit": {
+          "label": "internalNote",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "internalNote",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "code": {
+        "edit": {
+          "label": "code",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "code",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdAt": {
+        "edit": {
+          "label": "createdAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "createdAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedAt": {
+        "edit": {
+          "label": "updatedAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "updatedAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdBy": {
+        "edit": {
+          "label": "createdBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "createdBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedBy": {
+        "edit": {
+          "label": "updatedBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "updatedBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "documentId": {
+        "edit": {},
+        "list": {
+          "label": "documentId",
+          "searchable": true,
+          "sortable": true
+        }
+      }
+    },
+    "layouts": {
+      "list": [
+        "id",
+        "title",
+        "slug",
+        "summary"
+      ],
+      "edit": [
+        [
+          {
+            "name": "title",
+            "size": 6
+          },
+          {
+            "name": "slug",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "summary",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "body",
+            "size": 12
+          }
+        ],
+        [
+          {
+            "name": "content",
+            "size": 12
+          }
+        ],
+        [
+          {
+            "name": "contact",
+            "size": 6
+          },
+          {
+            "name": "views",
+            "size": 4
+          }
+        ],
+        [
+          {
+            "name": "bigCounter",
+            "size": 4
+          },
+          {
+            "name": "rating",
+            "size": 4
+          },
+          {
+            "name": "price",
+            "size": 4
+          }
+        ],
+        [
+          {
+            "name": "releaseDate",
+            "size": 4
+          },
+          {
+            "name": "releaseTime",
+            "size": 4
+          }
+        ],
+        [
+          {
+            "name": "scheduledAt",
+            "size": 6
+          },
+          {
+            "name": "importedAt",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "featured",
+            "size": 4
+          }
+        ],
+        [
+          {
+            "name": "meta",
+            "size": 12
+          }
+        ],
+        [
+          {
+            "name": "stage",
+            "size": 6
+          },
+          {
+            "name": "internalNote",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "code",
+            "size": 6
+          }
+        ]
+      ]
+    },
+    "uid": "api::article.article"
+  },
+  "api::homepage.homepage": {
+    "settings": {
+      "bulkable": true,
+      "filterable": true,
+      "searchable": true,
+      "pageSize": 10,
+      "relationOpenMode": "modal",
+      "mainField": "title",
+      "defaultSortBy": "title",
+      "defaultSortOrder": "ASC"
+    },
+    "metadatas": {
+      "id": {
+        "edit": {},
+        "list": {
+          "label": "id",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "title": {
+        "edit": {
+          "label": "title",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "title",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "tagline": {
+        "edit": {
+          "label": "tagline",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "tagline",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdAt": {
+        "edit": {
+          "label": "createdAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "createdAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedAt": {
+        "edit": {
+          "label": "updatedAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "updatedAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdBy": {
+        "edit": {
+          "label": "createdBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "createdBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedBy": {
+        "edit": {
+          "label": "updatedBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "updatedBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "documentId": {
+        "edit": {},
+        "list": {
+          "label": "documentId",
+          "searchable": true,
+          "sortable": true
+        }
+      }
+    },
+    "layouts": {
+      "list": [
+        "id",
+        "title",
+        "tagline",
+        "createdAt"
+      ],
+      "edit": [
+        [
+          {
+            "name": "title",
+            "size": 6
+          },
+          {
+            "name": "tagline",
+            "size": 6
+          }
+        ]
+      ]
+    },
+    "uid": "api::homepage.homepage"
+  },
+  "api::tag.tag": {
+    "settings": {
+      "bulkable": true,
+      "filterable": true,
+      "searchable": true,
+      "pageSize": 10,
+      "relationOpenMode": "modal",
+      "mainField": "name",
+      "defaultSortBy": "name",
+      "defaultSortOrder": "ASC"
+    },
+    "metadatas": {
+      "id": {
+        "edit": {},
+        "list": {
+          "label": "id",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "name": {
+        "edit": {
+          "label": "name",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "name",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "weight": {
+        "edit": {
+          "label": "weight",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "weight",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdAt": {
+        "edit": {
+          "label": "createdAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "createdAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedAt": {
+        "edit": {
+          "label": "updatedAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "updatedAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdBy": {
+        "edit": {
+          "label": "createdBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "createdBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedBy": {
+        "edit": {
+          "label": "updatedBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "updatedBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "documentId": {
+        "edit": {},
+        "list": {
+          "label": "documentId",
+          "searchable": true,
+          "sortable": true
+        }
+      }
+    },
+    "layouts": {
+      "list": [
+        "id",
+        "name",
+        "weight",
+        "createdAt"
+      ],
+      "edit": [
+        [
+          {
+            "name": "name",
+            "size": 6
+          },
+          {
+            "name": "weight",
+            "size": 4
+          }
+        ]
+      ]
+    },
+    "uid": "api::tag.tag"
+  },
+  "plugin::users-permissions.user": {
+    "settings": {
+      "bulkable": true,
+      "filterable": true,
+      "searchable": true,
+      "pageSize": 10,
+      "relationOpenMode": "modal",
+      "mainField": "username",
+      "defaultSortBy": "username",
+      "defaultSortOrder": "ASC"
+    },
+    "metadatas": {
+      "id": {
+        "edit": {},
+        "list": {
+          "label": "id",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "username": {
+        "edit": {
+          "label": "username",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "username",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "email": {
+        "edit": {
+          "label": "email",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "email",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "provider": {
+        "edit": {
+          "label": "provider",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "provider",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "password": {
+        "edit": {
+          "label": "password",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "password",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "resetPasswordToken": {
+        "edit": {
+          "label": "resetPasswordToken",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "resetPasswordToken",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "confirmationToken": {
+        "edit": {
+          "label": "confirmationToken",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "confirmationToken",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "confirmed": {
+        "edit": {
+          "label": "confirmed",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "confirmed",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "blocked": {
+        "edit": {
+          "label": "blocked",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true
+        },
+        "list": {
+          "label": "blocked",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "role": {
+        "edit": {
+          "label": "role",
+          "description": "",
+          "placeholder": "",
+          "visible": true,
+          "editable": true,
+          "mainField": "name"
+        },
+        "list": {
+          "label": "role",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdAt": {
+        "edit": {
+          "label": "createdAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "createdAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedAt": {
+        "edit": {
+          "label": "updatedAt",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true
+        },
+        "list": {
+          "label": "updatedAt",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "createdBy": {
+        "edit": {
+          "label": "createdBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "createdBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "updatedBy": {
+        "edit": {
+          "label": "updatedBy",
+          "description": "",
+          "placeholder": "",
+          "visible": false,
+          "editable": true,
+          "mainField": "firstname"
+        },
+        "list": {
+          "label": "updatedBy",
+          "searchable": true,
+          "sortable": true
+        }
+      },
+      "documentId": {
+        "edit": {},
+        "list": {
+          "label": "documentId",
+          "searchable": true,
+          "sortable": true
+        }
+      }
+    },
+    "layouts": {
+      "list": [
+        "id",
+        "username",
+        "email",
+        "confirmed"
+      ],
+      "edit": [
+        [
+          {
+            "name": "username",
+            "size": 6
+          },
+          {
+            "name": "email",
+            "size": 6
+          }
+        ],
+        [
+          {
+            "name": "password",
+            "size": 6
+          },
+          {
+            "name": "confirmed",
+            "size": 4
+          }
+        ],
+        [
+          {
+            "name": "blocked",
+            "size": 4
+          },
+          {
+            "name": "role",
+            "size": 6
+          }
+        ]
+      ]
+    },
+    "uid": "plugin::users-permissions.user"
+  }
+}

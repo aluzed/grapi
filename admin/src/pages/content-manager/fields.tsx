@@ -401,11 +401,10 @@ export function LayoutGrid(
   },
 ) {
   const { layout, fields, writable, ...rest } = props
-  const placed = new Set(layout.flat().map((f) => f.name))
-  const rows = [...layout, ...fields.filter((f) => !placed.has(f)).map((name) => [{ name, size: 12 }])]
+  // As in Strapi, a field left out of the configured layout is not shown.
   return (
     <div className="flex flex-col gap-4">
-      {rows.map((row, i) => (
+      {layout.map((row, i) => (
         <div key={i} className="grid grid-cols-1 gap-4 md:grid-cols-12">
           {row
             .filter((f) => fields.includes(f.name))

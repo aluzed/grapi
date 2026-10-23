@@ -505,6 +505,7 @@ if [ "$mode" = grapi ]; then
   sed -n 5p "$here/report/$(date +%F)-$fixture-reverse-$db.md"
   strapi_cli() { docker exec -w /app "$run_id-b" node node_modules/@strapi/strapi/bin/strapi.js "$@" >/dev/null 2>&1; }
   strapi_cli configuration:dump -f /data/cs-strapi-dump.json || admin_failed=1
+  cp "$work/b/cs-strapi-dump.json" "$here/report/$fixture-strapi-core-store-$db.json" 2>/dev/null || true
   python3 "$here/scripts/core-store.py" compare g "$work/b/cs-strapi-dump.json" Strapi || admin_failed=1
   # And the other way: Strapi writes, grapi reads back once restarted.
   python3 "$here/scripts/core-store.py" write s "$work/b/cs-strapi-in.json"

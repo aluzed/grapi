@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # ADM-005 : Content Manager : configuration des vues
@@ -25,17 +25,20 @@ Permettre de configurer la liste et le formulaire de chaque type depuis l'admin,
 ## Avancement
 - API (`docs/admin-api.md`) : configuration effective par type (stockée au format et sous la clé de Strapi, synchronisée avec le schéma : champs ajoutés en fin de mise en page, champs disparus retirés), configuration par défaut calquée sur Strapi (`createDefaultLayouts`, tailles de `field-sizes`), écriture validée, modèle du Content Manager alimenté par cette configuration. Testé (`TestAdminViewConfiguration`).
 - Écran « Configurer la vue » (depuis la liste, ou l'édition d'un single type) : réglages, colonnes de la liste (ordre, libellés, ajout et retrait), formulaire (ordre, largeur 4, 6, 8 ou 12, libellé, description, texte indicatif, visible, modifiable), regroupé en lignes de 12 à l'enregistrement. Le formulaire d'édition suit la mise en page (12 colonnes sur desktop, empilé sur mobile), les libellés, les descriptions, et masque ou verrouille les champs. Vérifié dans Chrome.
-- Reste : la configuration des composants, les renommages d'attributs, le glisser-déposer.
+- Fidélité à Strapi 5.59 : la configuration par défaut est octet pour octet celle que Strapi écrit (article, homepage, tag, users-permissions.user, tirées de son export du core store, `compat/fixtures/basic/strapi-view-configurations.json`, `TestAdminDefaultConfigurationIsStrapis`). Une configuration stockée par Strapi est servie telle quelle et n'est pas réécrite (`TestAdminReadsStrapiConfiguration`). La synchronisation suit `syncConfiguration` : un champ retiré du formulaire n'y revient pas, seuls les attributs nouveaux sont ajoutés en fin ; `relationOpenMode` est conservé ; `config.attributes.<nom>.hidden` est respecté.
+- Ajout d'un champ au schéma, renommage avec conservation du libellé et de la description, réglages intacts (`TestAdminConfigurationFollowsSchema`) ; configurations invalides refusées (`TestAdminConfigurationValidation`).
+- Écran : retrait d'un champ du formulaire et « Ajouter un champ » (l'EditView n'affiche plus que la mise en page configurée, comme Strapi). Vérifié dans Chrome, y compris à 375 px ; toutes les commandes sont des boutons et listes natifs, utilisables au clavier.
+- Reste, hors critères : la configuration des composants, le glisser-déposer, `config.settings|metadatas|layouts` du schéma comme valeurs par défaut.
 
 ## Hors périmètre
 - Les vues elles-mêmes (`ADM-003`, `ADM-004`).
 
 ## Critères d'acceptation
-- [ ] Sur une base Strapi existante, la configuration enregistrée par Strapi est relue et appliquée telle quelle.
-- [ ] Ajouter un champ au schéma l'ajoute en fin de mise en page d'édition, sans toucher aux autres réglages.
-- [ ] Renommer un champ via le CTB conserve ses métadonnées (libellé, description).
-- [ ] Une configuration invalide (champ inexistant, largeur hors de la grille) est rejetée par le serveur avec une erreur de validation.
-- [ ] La mise en page d'édition se configure entièrement au clavier et à la souris, et reste lisible à 375 px (rangées empilées).
+- [x] Sur une base Strapi existante, la configuration enregistrée par Strapi est relue et appliquée telle quelle.
+- [x] Ajouter un champ au schéma l'ajoute en fin de mise en page d'édition, sans toucher aux autres réglages.
+- [x] Renommer un champ via le CTB conserve ses métadonnées (libellé, description).
+- [x] Une configuration invalide (champ inexistant, largeur hors de la grille) est rejetée par le serveur avec une erreur de validation.
+- [x] La mise en page d'édition se configure entièrement au clavier et à la souris, et reste lisible à 375 px (rangées empilées).
 
 ## Notes techniques
 - Algorithme de synchronisation : partir de la configuration stockée, retirer les champs disparus, ajouter les nouveaux avec des métadonnées par défaut (libellé = nom du champ), et recalculer les rangées.

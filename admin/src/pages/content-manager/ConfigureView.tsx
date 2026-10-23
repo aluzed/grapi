@@ -22,6 +22,11 @@ type Config = {
 
 const fullWidth = new Set(['json', 'richtext', 'blocks', 'component', 'dynamiczone'])
 const notListable = new Set(['json', 'password', 'richtext', 'blocks', 'dynamiczone', 'component'])
+const narrow = new Set(['boolean', 'date', 'time', 'biginteger', 'decimal', 'float', 'integer'])
+const systemFields = new Set(['createdAt', 'updatedAt', 'publishedAt', 'createdBy', 'updatedBy', 'locale', 'localizations'])
+
+// The server's default sizes (field-sizes): full width, 4 or 6 columns.
+const defaultSize = (type: string) => (fullWidth.has(type) ? 12 : narrow.has(type) ? 4 : 6)
 const small =
   'inline-flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs font-medium disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500'
 
@@ -81,6 +86,7 @@ function Configure({ model }: { model: Model }) {
   const [c, setC] = useState<Config | null>(null)
   const [edit, setEdit] = useState<{ name: string; size: number }[]>([])
   const [adding, setAdding] = useState('')
+  const [addingField, setAddingField] = useState('')
   useEffect(() => {
     if (cfg.data) {
       setC(cfg.data)
@@ -104,6 +110,7 @@ function Configure({ model }: { model: Model }) {
   const listable = ['id', ...model.fields.filter((f) => attrs[f] && !notListable.has(attrs[f]!.type) && f !== 'documentId')]
   const sortable = ['id', ...model.fields.filter((f) => attrs[f] && !notListable.has(attrs[f]!.type) && attrs[f]!.type !== 'relation' && attrs[f]!.type !== 'media')]
   const remaining = listable.filter((f) => !c.layouts.list.includes(f))
+  const unplaced = model.fields.filter((f) => attrs[f] && !systemFields.has(f) && !edit.some((x) => x.name === f))
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-4">
@@ -214,7 +221,7 @@ function Configure({ model }: { model: Model }) {
               <li key={f.name} className="rounded-md border border-border p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">{f.name}</span>
-                  <Tools i={i} n={edit.length} move={(d) => setEdit(moved(edit, i, d))} />
+                  <Tools i={i} n={edit.length} move={(d) => setEdit(moved(edit, i, d))} remove={edit.length > 1 ? () => setEdit(edit.filter((x) => x.name !== f.name)) : undefined} />
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <SelectField label={t('cfg.size')} value={String(f.size)} disabled={fullWidth.has(type)} onChange={(e) => setEdit(edit.map((x, j) => (j === i ? { ...x, size: Number(e.target.value) } : x)))}>
@@ -234,6 +241,31 @@ function Configure({ model }: { model: Model }) {
             )
           })}
         </ul>
+        {unplaced.length > 0 && (
+          <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end">
+            <SelectField label={t('cfg.addField')} value={addingField} onChange={(e) => setAddingField(e.target.value)} className="md:w-72">
+              <option value="">-</option>
+              {unplaced.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </SelectField>
+            <Button
+              variant="outline"
+              title={t('cfg.addField')}
+              icon={<Plus className="h-4 w-4" />}
+              disabled={!addingField}
+              onClick={() => {
+                setEdit([...edit, { name: addingField, size: defaultSize(attrs[addingField]?.type ?? '') }])
+                setAddingField('')
+              }}
+              className="w-full md:w-auto"
+            >
+              {t('cfg.addField')}
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   )

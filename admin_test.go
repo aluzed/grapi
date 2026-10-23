@@ -1202,7 +1202,7 @@ func TestAdminViewConfiguration(t *testing.T) {
 	}
 	edit := m["editLayout"].([]any)
 	if m["settings"].(map[string]any)["pageSize"].(float64) != 20 || len(m["listColumns"].([]any)) != 3 || m["labels"].(map[string]any)["title"] != "Titre" ||
-		edit[0].([]any)[0].(map[string]any)["name"] != "views" || len(edit) < 2 {
+		edit[0].([]any)[0].(map[string]any)["name"] != "views" || len(edit) != 1 {
 		t.Fatalf("model after configuration: %v", m)
 	}
 	layouts["edit"] = []any{[]any{map[string]any{"name": "content", "size": 6}}}
