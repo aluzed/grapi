@@ -35,7 +35,7 @@ Offrir pour chaque collection type une vue liste générique pilotée par le sch
 - [x] Recharger la page restaure exactement la vue (état dans l'URL).
 - [x] La publication groupée de 50 documents, dont 3 invalides, publie les 47 valides et liste les 3 en erreur avec le motif.
 - [x] Chaque suppression, unitaire ou groupée, passe par la modale de confirmation.
-- [ ] Les permissions sont respectées :
+- [x] Les permissions sont respectées :
   - un utilisateur sans `delete` ne voit pas l'action supprimer ;
   - un champ non lisible n'apparaît pas en colonne ;
   - la condition `is-creator` filtre les lignes.
@@ -45,7 +45,7 @@ Offrir pour chaque collection type une vue liste générique pilotée par le sch
 - API (`docs/admin-api.md`, Content Manager) : modèles lisibles avec colonnes, `mainField` et réglages (configuration de vue Strapi lue dans le core store), liste paginée avec recherche `_q`, filtres JSON, tri, locale et statut, statut draft/published/modified par document, suppression unitaire, actions groupées (supprimer, publier, dépublier) avec rapport partiel. Filtre RBAC des conditions et champs lisibles appliqués. Testé de bout en bout (`TestAdminContentManager`) : publication groupée avec un document invalide, Author limité à ses entrées.
 - Interface (`admin/src/pages/content-manager/`) : menu des types avec recherche (select sur mobile), table avec tri par colonne, recherche, onglets Brouillons / Versions publiées, sélecteur de locale, pagination et taille de page, état complet dans l'URL, badges de statut, sélection et actions groupées avec confirmation et rapport partiel, menu engrenage par ligne, cartes sur mobile, bouton « Créer une entrée ». Vérifié dans Chrome sur le binaire, y compris le rechargement d'une URL de liste.
 - Constructeur de filtres : champ, opérateur selon le type (texte, nombre, date, booléen, énumération, relation filtrée sur le champ principal de la cible, média vide ou non), filtres combinés en ET, affichés en pastilles retirables, conservés dans l'URL (`admin/src/pages/content-manager/filters.ts`, testé). Vérifié dans Chrome, rechargement compris.
-- Tests (`admin_cm_test.go`) : la liste admin avec filtres, tri, recherche, locale et statut est identique au Document Service (`TestAdminListMatchesDocumentService`) ; 50 documents dont 3 invalides publient les 47 valides et nomment le champ fautif des 3 autres (`TestAdminBulkPublishFifty`).
+- Tests (`admin_cm_test.go`) : la liste admin avec filtres, tri, recherche, locale et statut est identique au Document Service (`TestAdminListMatchesDocumentService`) ; 50 documents dont 3 invalides publient les 47 valides et nomment le champ fautif des 3 autres (`TestAdminBulkPublishFifty`) ; sans `delete` ni lecture de certains champs, le modèle n'offre pas la suppression et la liste n'a ni ces colonnes ni ces valeurs (`TestAdminListPermissions`, l'interface masque les actions selon `model.permissions`) ; `is-creator` est couvert par `TestAdminContentManager`.
 - Reste : la miniature et le `mainField` des relations vérifiés sur un vrai jeu de données, le rapport détaillé de publication groupée (relations en brouillon), les tests à 375 px automatisés.
 
 ## Notes techniques

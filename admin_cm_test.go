@@ -144,3 +144,47 @@ func TestAdminFieldLevelUpdate(t *testing.T) {
 		t.Fatalf("title changes, views does not: %v", d)
 	}
 }
+
+// A role without delete and with some fields unreadable: the list neither
+// offers deletion nor shows those columns or values.
+func TestAdminListPermissions(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	const base = "/content-manager/collection-types/api::article.article"
+	c.do("POST", base, `{"data":{"title":"Visible","summary":"s","views":5}}`)
+	_, b, _ := c.do("POST", "/roles", `{"name":"Readers"}`)
+	role := fmt.Sprint(int(dataOf(b)["id"].(float64)))
+	perms := `{"permissions":[{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{"fields":["title"]},"conditions":[]}]}`
+	if s, b, _ := c.do("PUT", "/roles/"+role+"/permissions", perms); s != 200 {
+		t.Fatalf("permissions: %d %v", s, b)
+	}
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Rea","email":"rea@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	r := newAdminClient(t, ts.URL)
+	_, b, _ = r.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Rea","password":"Rea1derPass"}}`)
+	r.token = dataOf(b)["token"].(string)
+	_, b, _ = r.do("GET", "/content-manager/models", "")
+	var model map[string]any
+	for _, m := range b["data"].([]any) {
+		if m := m.(map[string]any); m["uid"] == "api::article.article" {
+			model = m
+		}
+	}
+	if model == nil {
+		t.Fatalf("the article model is readable: %v", b)
+	}
+	if model["permissions"].(map[string]any)["delete"] != false {
+		t.Fatalf("no delete permission: %v", model["permissions"])
+	}
+	for _, col := range model["listColumns"].([]any) {
+		if col == "summary" || col == "views" {
+			t.Fatalf("unreadable column %v listed: %v", col, model["listColumns"])
+		}
+	}
+	_, b, _ = r.do("GET", base, "")
+	raw, _ := json.Marshal(b)
+	if !strings.Contains(string(raw), `"Visible"`) || strings.Contains(string(raw), `"views"`) || strings.Contains(string(raw), `"summary"`) {
+		t.Fatalf("only readable values: %s", raw)
+	}
+}
