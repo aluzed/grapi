@@ -763,7 +763,11 @@ func (a *App) setup(p *Project) (*Server, error) {
 
 // Start sets the App up and serves it until SIGINT or SIGTERM. Under
 // `grapi develop` (GRAPI_DEVELOP=1) it develops instead: reloads in process.
+// Run as `<binary> routes:list`, it prints the route table and exits.
 func (a *App) Start() error {
+	if commandArg() == "routes:list" {
+		return a.listRoutes(os.Stdout)
+	}
 	if os.Getenv("GRAPI_DEVELOP") == "1" {
 		return a.Develop(nil)
 	}

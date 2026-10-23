@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/hook"
+	"github.com/aluzed/grapi/internal/clitable"
 )
 
 // routesList is `grapi routes:list`: Strapi's table, a GET route listed as
 // HEAD|GET as koa does.
 func routesList(args []string, stdout, stderr io.Writer) error {
 	fs, dir, configDir := projectFlags("routes:list")
+	details := fs.Bool("details", false, "add the handler and the policies of each route")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -23,49 +23,12 @@ func routesList(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	defer func() { _ = p.DB.Close() }()
-	rows := [][2]string{{"Method", "Path"}}
+	var routes []clitable.Route
 	for _, r := range p.Routes() {
-		m := r.Method
-		if m == "GET" {
-			m = "HEAD|GET"
-		}
-		rows = append(rows, [2]string{m, r.Path})
+		routes = append(routes, clitable.Route{Method: r.Method, Path: r.Path, Handler: r.Action})
 	}
-	_, err = fmt.Fprint(stdout, table(rows))
+	_, err = fmt.Fprint(stdout, clitable.Routes(routes, *details))
 	return err
-}
-
-// table draws Strapi's cli-table3 boxes, a separator between every row.
-func table[R ~[2]string | ~[1]string](rows []R) string {
-	cols := len(rows[0])
-	w := make([]int, cols)
-	for _, r := range rows {
-		for i := 0; i < cols; i++ {
-			w[i] = max(w[i], utf8.RuneCountInString(r[i])+2)
-		}
-	}
-	line := func(l, m, r string) string {
-		parts := make([]string, cols)
-		for i := range parts {
-			parts[i] = strings.Repeat("─", w[i])
-		}
-		return l + strings.Join(parts, m) + r + "\n"
-	}
-	cell := func(s string, n int) string { return " " + s + strings.Repeat(" ", n-1-utf8.RuneCountInString(s)) }
-	var b strings.Builder
-	b.WriteString(line("┌", "┬", "┐"))
-	for i, r := range rows {
-		if i > 0 {
-			b.WriteString(line("├", "┼", "┤"))
-		}
-		b.WriteString("│")
-		for c := 0; c < cols; c++ {
-			b.WriteString(cell(r[c], w[c]) + "│")
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString(line("└", "┴", "┘"))
-	return b.String()
 }
 
 // listCommand is `grapi content-types:list` and `components:list`.
@@ -90,11 +53,11 @@ func listCommand(kind string, args []string, stdout, stderr io.Writer) error {
 		}
 	}
 	sort.Strings(names)
-	rows := [][1]string{{"Name"}}
+	rows := [][]string{{"Name"}}
 	for _, n := range names {
-		rows = append(rows, [1]string{n})
+		rows = append(rows, []string{n})
 	}
-	_, err = fmt.Fprint(stdout, table(rows))
+	_, err = fmt.Fprint(stdout, clitable.Render(rows))
 	return err
 }
 
@@ -110,10 +73,10 @@ func staticList(kind string, stdout io.Writer) error {
 	if kind == "hooks" {
 		names = []string{hook.BeforeSync, hook.AfterSync}
 	}
-	rows := [][1]string{{"Name"}}
+	rows := [][]string{{"Name"}}
 	for _, n := range names {
-		rows = append(rows, [1]string{n})
+		rows = append(rows, []string{n})
 	}
-	_, err := fmt.Fprint(stdout, table(rows))
+	_, err := fmt.Fprint(stdout, clitable.Render(rows))
 	return err
 }

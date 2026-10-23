@@ -21,6 +21,8 @@ The files are gofmt'ed and pass `go vet`; an existing file is never overwritten.
 
 Everything below is registered before `Start` (or `Setup`, which returns the HTTP handler without listening, for tests).
 
+`grapi routes:list` cannot see the routes written in Go: run your own binary instead, `go run . routes:list` (`--details` adds the handler and the policies). `Start` prints the table and exits; `app.Routes()` returns it.
+
 ## Phases (`src/index.js` register, bootstrap, destroy)
 
 ```go

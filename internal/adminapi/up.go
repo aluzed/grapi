@@ -355,6 +355,9 @@ func (s *Server) upRoutes(w http.ResponseWriter, _ *http.Request, _ *User, _ *pe
 	out := map[string][]map[string]string{}
 	if s.cfg.Routes != nil {
 		for _, r := range s.cfg.Routes() {
+			if r.Action == "" {
+				continue
+			}
 			out[r.Action] = append(out[r.Action], map[string]string{"method": r.Method, "path": r.Path})
 		}
 	}

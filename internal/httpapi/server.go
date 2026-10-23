@@ -775,6 +775,8 @@ func (s *Server) Routes() []RouteInfo {
 		action := rt.uid + "." + rt.action
 		if rt.scope != "" {
 			action = rt.scope
+		} else if rt.uid == "" && rt.action == "" {
+			action = ""
 		}
 		out = append(out, RouteInfo{Method: rt.method, Path: "/" + strings.Join(rt.path, "/"), Action: action})
 	}
