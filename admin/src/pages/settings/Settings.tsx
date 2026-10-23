@@ -15,6 +15,10 @@ export const sections: Section[] = [
   { to: '/settings/roles', label: 'settings.roles', allowed: (p) => can(p, 'admin::roles.read') },
   { to: '/settings/api-tokens', label: 'settings.apiTokens', allowed: (p) => can(p, 'admin::api-tokens.read') },
   { to: '/settings/webhooks', label: 'settings.webhooks', allowed: (p) => can(p, 'admin::webhooks.read') },
+  { to: '/settings/users-permissions/roles', label: 'up.roles', allowed: (p) => can(p, 'plugin::users-permissions.roles.read') },
+  { to: '/settings/users-permissions/advanced', label: 'up.advanced', allowed: (p) => can(p, 'plugin::users-permissions.advanced-settings.read') },
+  { to: '/settings/users-permissions/email-templates', label: 'up.emails', allowed: (p) => can(p, 'plugin::users-permissions.email-templates.read') },
+  { to: '/settings/users-permissions/providers', label: 'up.providers', allowed: (p) => can(p, 'plugin::users-permissions.providers.read') },
   { to: '/settings/locales', label: 'settings.locales', allowed: (p) => can(p, 'plugin::i18n.locale.read') },
 ]
 

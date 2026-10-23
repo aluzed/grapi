@@ -19,6 +19,8 @@ import { Roles } from '@/pages/settings/Roles'
 import { Settings, sections } from '@/pages/settings/Settings'
 
 const settingsAllowed = (to: string) => sections.find((s) => s.to === to)!.allowed
+import { UPRoleEditor, UPRoles } from '@/pages/settings/up/UPRoles'
+import { UPAdvanced, UPEmails, UPProviders } from '@/pages/settings/up/UPSettings'
 import { Users } from '@/pages/settings/Users'
 import { Webhooks } from '@/pages/settings/Webhooks'
 import { MediaLibrary } from '@/pages/media/MediaLibrary'
@@ -80,6 +82,11 @@ export const router = createBrowserRouter(
             { path: 'roles/:id', element: <RequirePermission allowed={settingsAllowed('/settings/roles')}><RoleEditor /></RequirePermission> },
             { path: 'api-tokens', element: <RequirePermission allowed={settingsAllowed('/settings/api-tokens')}><ApiTokens /></RequirePermission> },
             { path: 'webhooks', element: <RequirePermission allowed={settingsAllowed('/settings/webhooks')}><Webhooks /></RequirePermission> },
+            { path: 'users-permissions/roles', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/roles')}><UPRoles /></RequirePermission> },
+            { path: 'users-permissions/roles/:id', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/roles')}><UPRoleEditor /></RequirePermission> },
+            { path: 'users-permissions/advanced', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/advanced')}><UPAdvanced /></RequirePermission> },
+            { path: 'users-permissions/email-templates', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/email-templates')}><UPEmails /></RequirePermission> },
+            { path: 'users-permissions/providers', element: <RequirePermission allowed={settingsAllowed('/settings/users-permissions/providers')}><UPProviders /></RequirePermission> },
             { path: 'locales', element: <RequirePermission allowed={settingsAllowed('/settings/locales')}><Locales /></RequirePermission> },
           ],
         },

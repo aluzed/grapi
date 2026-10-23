@@ -156,3 +156,21 @@ Table `strapi_webhooks`, partagée avec le runner qui envoie les événements. A
 | `PUT /webhooks/{id}` | Mêmes champs, remplace le webhook |
 | `DELETE /webhooks/{id}` | Supprime le webhook |
 | `POST /webhooks/{id}/trigger` | Envoie l'événement `trigger-test` et renvoie `{statusCode, message}` (`message` en cas d'échec réseau) |
+
+### Users-permissions
+
+Les rôles et réglages des utilisateurs finaux (API de contenu). Actions `plugin::users-permissions.{roles,advanced-settings,email-templates,providers}.*`.
+
+| Méthode et chemin | Rôle |
+|---|---|
+| `GET /users-permissions/roles` | Rôles avec `usersCount` |
+| `GET /users-permissions/actions` | Actions attribuables (`api::article.article.find`, actions des plugins) |
+| `GET /users-permissions/roles/{id}` | Un rôle avec ses `permissions` (liste d'actions) |
+| `POST /users-permissions/roles` | `name` (unique), `description`, `permissions`. Le `type` est le nom en snake_case. |
+| `PUT /users-permissions/roles/{id}` | `name`, `description`, `permissions` (remplace la liste) |
+| `DELETE /users-permissions/roles/{id}` | Ses utilisateurs passent dans Public. Public et Authenticated ne se suppriment pas. |
+| `GET` et `PUT /users-permissions/advanced` | Réglages avancés (`unique_email`, `allow_register`, `email_confirmation`, `email_confirmation_redirection`, `email_reset_password`, `default_role`) |
+| `GET` et `PUT /users-permissions/email-templates` | Modèles `email_confirmation` et `reset_password` |
+| `GET` et `PUT /users-permissions/providers` | Providers OAuth et `email` |
+
+Un `PUT` de réglages ne met à jour que les clés connues du core store, en fusionnant les objets (un provider garde son `callbackUrl` si le corps ne le donne pas) ; une clé inconnue est refusée.

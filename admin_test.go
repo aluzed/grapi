@@ -943,3 +943,70 @@ func TestAdminWebhooks(t *testing.T) {
 		t.Fatalf("list after delete: %v", b)
 	}
 }
+
+func TestAdminUsersPermissions(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	public := func(method, path, body string) int {
+		req, _ := http.NewRequest(method, ts.URL+path, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = res.Body.Close()
+		return res.StatusCode
+	}
+	_, b, _ = c.do("GET", "/users-permissions/roles", "")
+	var publicID string
+	for _, r := range b["data"].([]any) {
+		if m := r.(map[string]any); m["type"] == "public" {
+			publicID = strconv.Itoa(int(m["id"].(float64)))
+		}
+	}
+	_, b, _ = c.do("GET", "/users-permissions/roles/"+publicID, "")
+	perms := dataOf(b)["permissions"].([]any)
+	if public("GET", "/api/articles", "") != 403 {
+		t.Fatal("articles are not public yet")
+	}
+	list := `"api::article.article.find"`
+	for _, p := range perms {
+		list += `,"` + p.(string) + `"`
+	}
+	if s, b, _ := c.do("PUT", "/users-permissions/roles/"+publicID, `{"permissions":[`+list+`]}`); s != 200 {
+		t.Fatalf("grant: %d %v", s, b)
+	}
+	if public("GET", "/api/articles", "") != 200 {
+		t.Fatal("the public role now reads articles")
+	}
+	if s, _, _ := c.do("PUT", "/users-permissions/roles/"+publicID, `{"permissions":["api::nope.nope.find"]}`); s != 400 {
+		t.Fatalf("unknown action: %d", s)
+	}
+	if s, _, _ := c.do("DELETE", "/users-permissions/roles/"+publicID, ""); s != 400 {
+		t.Fatalf("public cannot be deleted: %d", s)
+	}
+	reg := `{"username":"bob","email":"bob@example.com","password":"Passw0rd!"}`
+	if s, b, _ := c.do("PUT", "/users-permissions/advanced", `{"allow_register":false}`); s != 200 || dataOf(b)["allow_register"] != false {
+		t.Fatalf("advanced: %d %v", s, b)
+	}
+	if public("POST", "/api/auth/local/register", reg) != 400 {
+		t.Fatal("registration is closed")
+	}
+	if s, _, _ := c.do("PUT", "/users-permissions/advanced", `{"nope":1}`); s != 400 {
+		t.Fatalf("unknown setting: %d", s)
+	}
+	if s, b, _ := c.do("PUT", "/users-permissions/providers", `{"github":{"enabled":true,"key":"k"}}`); s != 200 || dataOf(b)["github"].(map[string]any)["key"] != "k" || dataOf(b)["github"].(map[string]any)["callbackUrl"] == nil {
+		t.Fatalf("providers merge: %d %v", s, b)
+	}
+	s, b, _ := c.do("POST", "/users-permissions/roles", `{"name":"Editors of the site","permissions":["api::tag.tag.find"]}`)
+	if s != 201 || dataOf(b)["type"] != "editors_of_the_site" {
+		t.Fatalf("create role: %d %v", s, b)
+	}
+	rid := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	if s, _, _ := c.do("DELETE", "/users-permissions/roles/"+rid, ""); s != 200 {
+		t.Fatalf("delete role: %d", s)
+	}
+}
