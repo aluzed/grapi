@@ -286,3 +286,82 @@ func TestAdminAttributeRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+// Components and dynamic zones as the edit view sends them: existing items
+// keep their id, so adding, moving and removing persist. min and max hold
+// back publication, not a draft.
+func TestAdminComponentEditing(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "components")
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	const pages = "/content-manager/collection-types/api::page.page"
+	_, b, _ := c.do("POST", pages, `{"data":{"title":"Home","links":[{"label":"a","url":"/a"},{"label":"b","url":"/b"}]}}`)
+	page := dataOf(b)["documentId"].(string)
+	items := func(v any, key string) ([]string, []any) {
+		var names []string
+		var ids []any
+		for _, e := range v.([]any) {
+			m := e.(map[string]any)
+			names = append(names, fmt.Sprint(m[key]))
+			ids = append(ids, m["id"])
+		}
+		return names, ids
+	}
+	_, b, _ = c.do("GET", pages+"/"+page, "")
+	_, ids := items(dataOf(b)["links"], "label")
+	body := fmt.Sprintf(`{"data":{"links":[{"label":"c","url":"/c"},{"id":%v,"label":"b","url":"/b"},{"id":%v,"label":"a","url":"/a"}]}}`, ids[1], ids[0])
+	if s, b, _ := c.do("PUT", pages+"/"+page, body); s != 200 {
+		t.Fatalf("add and move: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", pages+"/"+page, "")
+	if names, _ := items(dataOf(b)["links"], "label"); strings.Join(names, ",") != "c,b,a" {
+		t.Fatalf("links after add and move: %v", names)
+	}
+	_, ids = items(dataOf(b)["links"], "label")
+	body = fmt.Sprintf(`{"data":{"links":[{"id":%v,"label":"a","url":"/a"}]}}`, ids[2])
+	c.do("PUT", pages+"/"+page, body)
+	_, b, _ = c.do("GET", pages+"/"+page, "")
+	if names, _ := items(dataOf(b)["links"], "label"); strings.Join(names, ",") != "a" {
+		t.Fatalf("links after removal: %v", names)
+	}
+	// Without draft and publish every save is a publication: max applies.
+	s, b, _ := c.do("PUT", pages+"/"+page, `{"data":{"links":[{"label":"1"},{"label":"2"},{"label":"3"},{"label":"4"}]}}`)
+	raw, _ := json.Marshal(b)
+	if s != 400 || !strings.Contains(string(raw), `"path":["links"]`) {
+		t.Fatalf("max on save without draft and publish: %d %s", s, raw)
+	}
+
+	const posts = "/content-manager/collection-types/api::post.post"
+	s, b, _ = c.do("POST", posts, `{"data":{"title":"Post","seo":{"metaTitle":"Post"},"blocks":[
+		{"__component":"blocks.hero","headline":"One"},{"__component":"blocks.rich-text","body":"Two"},{"__component":"blocks.hero","headline":"Three"}]}}`)
+	if s != 201 {
+		t.Fatalf("a draft over max saves: %d %v", s, b)
+	}
+	post := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("POST", posts+"/actions/bulk-publish", `{"documentIds":["`+post+`"]}`)
+	raw, _ = json.Marshal(b)
+	if !strings.Contains(string(raw), `"path":["blocks"]`) {
+		t.Fatalf("publishing over max names the zone: %s", raw)
+	}
+	_, b, _ = c.do("GET", posts+"/"+post, "")
+	var zone []any
+	for _, e := range dataOf(b)["blocks"].([]any) {
+		zone = append([]any{e}, zone...)
+	}
+	moved, _ := json.Marshal(map[string]any{"data": map[string]any{"blocks": zone[:2]}})
+	if s, b, _ := c.do("PUT", posts+"/"+post, string(moved)); s != 200 {
+		t.Fatalf("reverse and drop one: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", posts+"/"+post, "")
+	var got []string
+	for _, e := range dataOf(b)["blocks"].([]any) {
+		m := e.(map[string]any)
+		got = append(got, fmt.Sprint(m["__component"], ":", m["headline"], m["body"]))
+	}
+	if strings.Join(got, ",") != "blocks.hero:Three<nil>,blocks.rich-text:<nil>Two" {
+		t.Fatalf("zone after move and removal: %v", got)
+	}
+	if _, b, _ := c.do("POST", posts+"/actions/bulk-publish", `{"documentIds":["`+post+`"]}`); dataOf(b)["count"] != float64(1) {
+		t.Fatalf("publishes within max: %v", b)
+	}
+}

@@ -56,6 +56,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Brouillon incomplet : il s'enregistre, et l'échec de publication porte `details.errors`, que l'EditView affiche sous le champ fautif (`TestAdminIncompleteDraft`, vérifié dans Chrome). Ordre des relations : envoyé en `set`, relu dans le nouvel ordre par l'API REST (`TestAdminRelationReorder`). UID pris : `check-availability` (`TestAdminUID`), appelé par le champ avant l'enregistrement.
 - « Remplir depuis une autre locale » : modale avec la locale source, copie des seuls champs localisés et modifiables, rien n'est enregistré avant « Enregistrer » (`admin/src/pages/content-manager/fill.ts`, testé, vérifié dans Chrome). La règle « localisé » est celle du serveur (option, relation ou uid) : un champ sans option est partagé, et le formulaire d'une nouvelle locale l'affiche avec sa valeur au lieu d'un champ vide (le serveur gardait déjà la valeur partagée).
 - Aller-retour par type : le formulaire rend chaque type à l'identique (`roundtrip.test.ts`, fuseau Europe/Paris) et l'API admin relit ce qu'elle a écrit (`TestAdminAttributeRoundTrip`). Les dates sont affichées en heure locale et renvoyées au même instant, à la milliseconde (avant : décalage du fuseau à chaque enregistrement et secondes perdues). `timestamp`, lu en millisecondes comme dans Strapi, est éditable. Vérifié dans Chrome : enregistrer sans rien changer garde les valeurs.
+- Composants et zones dynamiques : ajout, déplacement et retrait persistent avec les charges de l'EditView (ids conservés) ; `max` refuse l'enregistrement sans draft & publish et la publication avec, un brouillon au-delà s'enregistre, et l'erreur s'affiche sous la zone (`TestAdminComponentEditing`).
 - Reste : relations morph, statut des cibles, éditeur blocks WYSIWYG et listes imbriquées, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
@@ -65,7 +66,7 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - [x] Chaque type d'attribut a un test d'aller-retour : saisie, enregistrement, rechargement, valeur identique (y compris biginteger, decimal et blocks).
 - [x] Un brouillon incomplet (champ requis vide) s'enregistre. La publication échoue avec l'erreur sur le bon champ.
 - [x] Réordonner trois relations envoie des positions correctes, et l'ordre persiste (vérifié via l'API REST).
-- [ ] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
+- [x] Composants répétables et zones dynamiques : l'ajout, le déplacement et la suppression persistent. `min` et `max` bloquent l'enregistrement à la publication.
 - [x] Un UID déjà pris est signalé avant l'enregistrement.
 - [x] « Remplir depuis une autre locale » copie uniquement les champs localisés.
 - [x] Un utilisateur avec la permission `update` limitée aux champs `title` et `content` voit les autres champs en lecture seule, et le serveur rejette toute tentative de les modifier.
