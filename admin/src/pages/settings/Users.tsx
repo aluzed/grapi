@@ -151,6 +151,7 @@ export function Users() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<AdminUser | null | undefined>(undefined)
+  const [selected, setSelected] = useState<number[]>([])
   const q = new URLSearchParams({ page: String(page), pageSize: '20', sort: 'firstname:asc' })
   if (search) q.set('search', search)
   const users = useQuery({
@@ -167,8 +168,21 @@ export function Users() {
     },
     onError: (err) => showError(err, undefined, t('common.error')),
   })
+  const removeMany = useMutation({
+    mutationFn: (ids: number[]) => api.post('/users/batch-delete', { ids }),
+    onSuccess: (_, ids) => {
+      toast.success(t('users.deletedMany', { count: String(ids.length) }))
+      setSelected([])
+      void queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+    onError: (err) => showError(err, undefined, t('common.error')),
+  })
   const list = users.data?.data ?? []
   const pagination = users.data?.meta.pagination
+  const canBulk = can(permissions, 'admin::users.delete')
+  const selectable = list.filter((u) => u.id !== me?.id)
+  const toggle = (id: number, on: boolean) => setSelected(on ? [...selected, id] : selected.filter((x) => x !== id))
+  const allChecked = selectable.length > 0 && selectable.every((u) => selected.includes(u.id))
   const actions = (u: AdminUser) => {
     const out = []
     if (can(permissions, 'admin::users.update')) out.push({ label: t('users.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => setEditing(u) })
@@ -207,10 +221,33 @@ export function Users() {
         aria-label={t('users.search')}
         className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none md:w-72"
       />
+      {canBulk && selected.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
+          <span className="text-sm font-medium">{t('cm.selected', { count: String(selected.length) })}</span>
+          <Button
+            variant="destructive-outline"
+            title={t('users.deleteSelection')}
+            icon={<Trash2 className="h-4 w-4" />}
+            loading={removeMany.isPending}
+            onClick={async () => {
+              if (await confirm({ title: t('users.deleteSelection'), message: t('users.deleteManyConfirm', { count: String(selected.length) }), confirmLabel: t('users.deleteSelection'), destructive: true }))
+                removeMany.mutate(selected)
+            }}
+            className="w-full md:w-auto"
+          >
+            {t('users.deleteSelection')}
+          </Button>
+        </div>
+      )}
       <div className="hidden md:block">
         <Table>
           <thead>
             <tr>
+              {canBulk && (
+                <Th className="w-10">
+                  <input type="checkbox" title={t('cm.selectAll')} aria-label={t('cm.selectAll')} checked={allChecked} onChange={(e) => setSelected(e.target.checked ? selectable.map((u) => u.id) : [])} className="h-4 w-4 accent-primary" />
+                </Th>
+              )}
               <Th>{t('users.name')}</Th>
               <Th>{t('users.email')}</Th>
               <Th>{t('users.roles')}</Th>
@@ -223,6 +260,13 @@ export function Users() {
           <tbody>
             {list.map((u) => (
               <Tr key={u.id}>
+                {canBulk && (
+                  <Td>
+                    {u.id !== me?.id && (
+                      <input type="checkbox" title={t('cm.select')} aria-label={`${t('cm.select')} ${fullName(u)}`} checked={selected.includes(u.id)} onChange={(e) => toggle(u.id, e.target.checked)} className="h-4 w-4 accent-primary" />
+                    )}
+                  </Td>
+                )}
                 <Td className="font-medium">{fullName(u)}</Td>
                 <Td>{u.email}</Td>
                 <Td>{u.roles.map((r) => r.name).join(', ')}</Td>
@@ -245,6 +289,7 @@ export function Users() {
               <div className="mt-2">
                 <StatusTag u={u} />
               </div>
+              {canBulk && u.id !== me?.id && <Checkbox label={t('cm.select')} checked={selected.includes(u.id)} onChange={(e) => toggle(u.id, e.target.checked)} className="mt-2" />}
             </div>
             {actions(u).length > 0 && <EntityActionsMenu actions={actions(u)} label={t('cm.actions')} />}
           </li>

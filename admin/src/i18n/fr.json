@@ -658,5 +658,8 @@
   "roles.duplicated": "Rôle {name} créé",
   "roles.cond.creator": "créées par l'utilisateur",
   "roles.cond.sameRole": "créées par son rôle",
-  "roles.sameRoleHelp": "Seulement les entrées créées par un admin qui partage un rôle avec l'utilisateur."
+  "roles.sameRoleHelp": "Seulement les entrées créées par un admin qui partage un rôle avec l'utilisateur.",
+  "users.deleteSelection": "Supprimer la sélection",
+  "users.deleteManyConfirm": "Supprimer les administrateurs sélectionnés ({count}) ? Leurs sessions sont fermées.",
+  "users.deletedMany": "Administrateurs supprimés : {count}"
 }
