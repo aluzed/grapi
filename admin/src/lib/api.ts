@@ -102,6 +102,23 @@ export async function requestWithMeta<T, M>(path: string): Promise<{ data: T; me
   return { data: json.data as T, meta: json.meta as M }
 }
 
+// upload posts a multipart form, with the same refresh-on-401 as request.
+export async function upload<T>(path: string, form: FormData): Promise<T> {
+  const post = () =>
+    fetch(`${apiBase()}${path}`, { method: 'POST', credentials: 'same-origin', headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, body: form })
+  let res = await post()
+  if (res.status === 401 && accessToken !== null) {
+    if (await refresh()) res = await post()
+    else onSessionLost()
+  }
+  const json = await res.json().catch(() => null)
+  if (!res.ok) {
+    const e = json?.error ?? {}
+    throw new ApiError(res.status, e.name ?? 'Error', e.message ?? res.statusText, e.details ?? {})
+  }
+  return json as T
+}
+
 export async function publicRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   return parse<T>(await send(method, path, body, false))
 }

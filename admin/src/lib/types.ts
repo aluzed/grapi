@@ -53,6 +53,7 @@ export type Attribute = {
   targetField?: string
   default?: unknown
   components?: string[]
+  allowedTypes?: string[]
 }
 
 export type Model = {
@@ -88,3 +89,22 @@ export type Catalog = {
 }
 
 export type ComponentModel = { uid: string; category: string; info: { displayName: string; icon?: string }; attributes: Record<string, Attribute>; fields: string[] }
+
+export type MediaFile = {
+  id: number
+  documentId: string
+  name: string
+  alternativeText: string | null
+  caption: string | null
+  width: number | null
+  height: number | null
+  formats: Record<string, { url: string; width: number; height: number }> | null
+  ext: string
+  mime: string
+  size: number
+  url: string
+  createdAt: string
+  folder?: { id: number; name: string; path: string } | null
+}
+
+export type MediaFolder = { id: number; name: string; path: string; pathId: number; filesCount: number; childrenCount: number }

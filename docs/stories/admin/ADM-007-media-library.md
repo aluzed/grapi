@@ -33,7 +33,8 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 
 ## Avancement
 - API (`docs/admin-api.md`, Médiathèque) : liste des fichiers par dossier avec recherche, type et tri, détail, édition des métadonnées et déplacement, suppression, upload par la chaîne de l'API de contenu (`AdminUpload`) dans un dossier, remplacement, dossiers (liste avec compteurs, création numérotée comme Strapi). Testé de bout en bout (`TestAdminMedia`).
-- Reste : l'interface (page et modale de sélection).
+- Interface : page Médiathèque (fil d'Ariane des dossiers, dossiers avec compteur, grille avec miniatures, recherche, filtre par type, pagination, upload multiple par sélection ou glisser-déposer, création de dossier, fiche fichier avec aperçu, taille, dimensions, copie de l'URL, téléchargement, édition du nom, du texte alternatif et de la légende, suppression confirmée) et modale de sélection réutilisée par les champs média (simple ou multiple, filtre `allowedTypes`). Vérifié dans Chrome sur le fixture `devfreelance`.
+- Reste : vue liste, filtres par date, upload depuis une URL, progression et annulation, point focal et recadrage, remplacement depuis l'interface, formats affichés, documents utilisateurs du fichier, déplacement et suppression groupés, renommage et suppression de dossier, réglages.
 
 ## Hors périmètre
 - Le traitement d'image côté serveur (`MEDIA-002`) et les providers (`MEDIA-003` à `MEDIA-005`).

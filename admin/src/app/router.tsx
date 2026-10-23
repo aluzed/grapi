@@ -16,6 +16,7 @@ import { RoleEditor } from '@/pages/settings/RoleEditor'
 import { Roles } from '@/pages/settings/Roles'
 import { Settings, sections } from '@/pages/settings/Settings'
 import { Users } from '@/pages/settings/Users'
+import { MediaLibrary } from '@/pages/media/MediaLibrary'
 import { Soon } from '@/pages/Soon'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
 import { Layout } from './Layout'
@@ -63,7 +64,7 @@ export const router = createBrowserRouter(
           ],
         },
         section('/content-type-builder'),
-        section('/media-library'),
+        { path: 'media-library', element: <RequirePermission allowed={navItems.find((i) => i.to === '/media-library')!.allowed}><MediaLibrary /></RequirePermission> },
         {
           path: 'settings',
           element: <Settings />,
