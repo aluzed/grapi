@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "convertStartQueryParams expected a positive integer got NaN",
+      "name": "ValidationError",
+      "status": 400
+    }
+  }
+}

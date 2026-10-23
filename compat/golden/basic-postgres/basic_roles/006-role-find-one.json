@@ -5,8 +5,8 @@
     "role": {
       "createdAt": "\u003cts\u003e",
       "description": "Edits",
-      "documentId": "#doc12",
-      "id": "#id8",
+      "documentId": "#doc17",
+      "id": "#id14",
       "name": "Éditeur Senior",
       "permissions": {
         "api::article": {

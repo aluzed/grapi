@@ -3,7 +3,9 @@ package grapi_test
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/png"
 	"mime/multipart"
@@ -178,5 +180,63 @@ func TestUploadLimitInputPixels(t *testing.T) {
 	}
 	if f := upload(20, 20); f["width"] != nil || f["height"] != nil || f["formats"] != nil || f["mime"] != "image/png" {
 		t.Fatalf("over the limit, a plain file: %v", f)
+	}
+}
+
+func TestUploadSizeLimitLeavesNoTempFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte("upload:\n  config:\n    sizeLimit: 2000\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	t.Setenv("JWT_SECRET", "test")
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = srv.Close() }()
+	ctx := context.Background()
+	e := app.Documents().E
+	public, _ := e.FindOne(ctx, "plugin::users-permissions.role", query.Params{Where: map[string]any{"type": "public"}})
+	roleID, _ := public.Get("id")
+	if _, err := e.Create(ctx, "plugin::users-permissions.permission", query.Data{"action": "plugin::upload.content-api.upload", "role": roleID}, query.Params{}); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(srv.Handler)
+	defer ts.Close()
+	// Random pixels do not compress: well over 2000 bytes.
+	var b bytes.Buffer
+	mw := multipart.NewWriter(&b)
+	part, _ := mw.CreateFormFile("files", "noise.png")
+	img := image.NewRGBA(image.Rect(0, 0, 64, 64))
+	_, _ = rand.Read(img.Pix)
+	_ = png.Encode(part, img)
+	_ = mw.Close()
+	res, err := http.Post(ts.URL+"/api/upload", mw.FormDataContentType(), &b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	_ = json.NewDecoder(res.Body).Decode(&body)
+	_ = res.Body.Close()
+	e2, _ := body["error"].(map[string]any)
+	if res.StatusCode != 413 || e2["name"] != "PayloadTooLargeError" || !strings.Contains(fmt.Sprint(e2["message"]), "noise.png exceeds size limit of 2 KB") {
+		t.Fatalf("over sizeLimit: %d %v", res.StatusCode, body)
+	}
+	left, _ := os.ReadDir(tmp)
+	for _, f := range left {
+		if strings.HasPrefix(f.Name(), "grapi-upload-") {
+			t.Fatalf("a temporary upload directory is left: %s", f.Name())
+		}
 	}
 }

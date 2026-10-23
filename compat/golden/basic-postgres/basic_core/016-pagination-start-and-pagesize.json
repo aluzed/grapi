@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "data": null,
+    "error": {
+      "details": {},
+      "message": "Cannot use both page \u0026 offset pagination in the same query",
+      "name": "PaginationError",
+      "status": 400
+    }
+  }
+}

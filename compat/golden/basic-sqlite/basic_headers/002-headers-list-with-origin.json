@@ -12,6 +12,11 @@
         "documentId": "#doc2",
         "id": "#id5",
         "title": "Defaults only"
+      },
+      {
+        "documentId": "#doc11",
+        "id": "#id11",
+        "title": "Defaults"
       }
     ],
     "meta": {
@@ -19,7 +24,7 @@
         "page": 1,
         "pageCount": 1,
         "pageSize": 25,
-        "total": 2
+        "total": 3
       }
     }
   },

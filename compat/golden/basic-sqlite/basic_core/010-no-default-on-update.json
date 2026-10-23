@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc11",
+      "featured": false,
+      "id": "#id11",
+      "stage": null,
+      "views": null
+    },
+    "meta": {}
+  }
+}

@@ -33,8 +33,8 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - [ ] Banc `SETUP-002` : `POST /api/upload` d'un JPEG renvoie un tableau dont chaque objet a les mêmes clés et types que Strapi 5.59. Seuls `hash`, les dates et les id diffèrent (normalisés par le banc).
 - [ ] Un populate d'un champ media simple renvoie un objet, et un champ media multiple renvoie un tableau ordonné (banc).
 - [ ] **Compat DB (D3)** : les 4 536 fichiers de la copie de base dev-freelance sont servis avec la même URL.
-- [ ] Un upload au-delà de `sizeLimit` renvoie 413 avec le format d'erreur `API-007`.
-- [ ] Aucun fichier temporaire ne reste après une erreur (TU).
+- [x] Un upload au-delà de `sizeLimit` renvoie 413 avec le format d'erreur `API-007`.
+- [x] Aucun fichier temporaire ne reste après une erreur (TU).
 
 ## Avancement
 - Fait : `POST /api/upload` (multipart `files`, `fileInfo`, `ref`/`refId`/`field`), dossier « API Uploads », provider local, `GET /api/upload/files[/:id]`, `DELETE /api/upload/files/:id`, fichiers servis depuis `public/`. Banc dev-freelance en mode grapi : 116/116 (8 uploads PNG).
@@ -42,6 +42,8 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - Correction du périmètre : l'upload à la création d'une entrée (`files.<champ>`) n'existe plus dans Strapi 5 (changement cassant de la v5). Un corps multipart y donne `Missing "data" payload in the request body`, comme dans grapi.
 - `GET /api/upload/files/page` (`findAndCountPage` : pagination REST, `defaultLimit`, `maxLimit`, `withCount`, `{data, meta.pagination}`), corpus `devfreelance_upload` (7 cas, SQLite et Postgres) identique à Strapi.
 - Reste : allow/deny lists de `security`, routes admin.
+
+- `TestUploadSizeLimitLeavesNoTempFile` : au-delà de `sizeLimit`, 413 `PayloadTooLargeError` « noise.png exceeds size limit of 2 KB », et aucun dossier `grapi-upload-*` ne reste.
 
 ## Notes techniques
 - Streamer le multipart (`mime/multipart.Reader`) vers un fichier temporaire, sans tout charger en mémoire.

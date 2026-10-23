@@ -22,10 +22,12 @@ Valider chaque écriture du Document Service avec les mêmes règles et les mêm
 - Le sanitize lié aux permissions (`API-005`).
 
 ## Critères d'acceptation
-- [ ] Un brouillon sans champ requis est accepté ; sa publication échoue avec `ValidationError` et le `path` du champ.
+- [x] Un brouillon sans champ requis est accepté ; sa publication échoue avec `ValidationError` et le `path` du champ.
 - [ ] Deux documents publiés avec la même valeur `unique` dans la même locale : la seconde publication échoue ; dans deux locales différentes, elle réussit.
 - [ ] Les messages et `details.errors` sont identiques à Strapi pour un jeu de 30 cas (banc de compatibilité).
-- [ ] `default` appliqué à la création seulement, jamais à l'update.
+- [x] `default` appliqué à la création seulement, jamais à l'update.
+
+- Banc `basic_core` identique à Strapi : un brouillon sans titre requis ou avec un `code` hors motif est accepté, sa publication échoue (`ValidationError` avec le `path`) ; `maxLength` s'applique aussi au brouillon ; un second `code` unique est refusé à la publication mais accepté en brouillon ; les valeurs par défaut sont posées à la création, un update à `null` les laisse à `null`.
 
 ## Notes techniques
 - Validateur maison piloté par le schéma (pas de lib de validation par tags : le schéma est dynamique).

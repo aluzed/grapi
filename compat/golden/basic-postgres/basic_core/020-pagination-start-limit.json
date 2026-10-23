@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc2",
+        "id": "#id5",
+        "title": "Defaults only"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "limit": 1,
+        "start": 1,
+        "total": 3
+      }
+    }
+  }
+}

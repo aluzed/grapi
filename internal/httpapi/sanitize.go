@@ -318,6 +318,10 @@ func (s *Server) validatePopulate(populate any, m *schemaModel, path string) err
 			if !ok {
 				return invalidKey("populate", path, "populate")
 			}
+			// "*" means everything only as the whole value: in a list it is a key.
+			if str == "*" {
+				return invalidKey("*", joinPath(path, "*"), "populate")
+			}
 			if err := s.validatePopulate(str, m, path); err != nil {
 				return err
 			}

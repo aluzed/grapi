@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "documentId": "#doc1",
+        "id": "#id1",
+        "title": "Hello World"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 3,
+        "pageSize": 1,
+        "total": 3
+      }
+    }
+  }
+}

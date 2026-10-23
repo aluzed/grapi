@@ -1,0 +1,32 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "bigCounter": null,
+      "body": null,
+      "code": "UNQ-001",
+      "contact": null,
+      "content": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc10",
+      "featured": false,
+      "id": "#id9",
+      "importedAt": null,
+      "meta": null,
+      "price": null,
+      "publishedAt": null,
+      "rating": null,
+      "releaseDate": null,
+      "releaseTime": null,
+      "scheduledAt": null,
+      "slug": null,
+      "stage": "idea",
+      "summary": null,
+      "title": "Unique draft",
+      "updatedAt": "\u003cts\u003e",
+      "views": 0
+    },
+    "meta": {}
+  }
+}

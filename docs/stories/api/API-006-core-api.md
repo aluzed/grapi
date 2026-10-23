@@ -26,7 +26,9 @@ La même API REST générée, avec les mêmes chemins, codes et formats de répo
 - [ ] Les 5 routes d'un collection type répondent avec les mêmes statuts et corps que Strapi pour post, category, theme et medium de dev-freelance.
 - [ ] `except: ['delete']` retire la route.
 - [ ] Une surcharge `find` qui appelle la base puis ajoute `meta.extra` fonctionne.
-- [ ] Réponse de `DELETE` : 204 sans corps, comme Strapi 5.59 (vérifier sur le banc).
+- [x] Réponse de `DELETE` : 204 sans corps, comme Strapi 5.59 (vérifier sur le banc).
+
+- `DELETE` (banc `basic_core`) : 204 sans corps, y compris sur un document déjà supprimé ou inconnu, comme Strapi 5.59.
 
 ## Notes techniques
 - La surcharge Go prend la forme `func(ctx *httpapi.Ctx, base httpapi.Action) error` : pas d'héritage, juste la base passée en paramètre.

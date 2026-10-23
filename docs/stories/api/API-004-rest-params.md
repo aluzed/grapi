@@ -28,10 +28,12 @@ Traduire l'arbre qs (`API-003`) en `document.Params` validés, avec les mêmes r
 
 ## Critères d'acceptation
 - [ ] Rejouer les requêtes réelles du front dev-freelance (journal d'accès Traefik d'une journée) : réponses identiques octet par octet à Strapi 5.59 sur la copie de la base.
-- [ ] `?pagination[page]=1&pagination[limit]=5` renvoie la même erreur que Strapi.
-- [ ] `populate=*` en profondeur 1 refusé comme chez Strapi.
-- [ ] `fields[0]=password` ou `filters[password][$eq]=x` refusés.
+- [x] `?pagination[page]=1&pagination[limit]=5` renvoie la même erreur que Strapi.
+- [x] `populate=*` en profondeur 1 refusé comme chez Strapi.
+- [x] `fields[0]=password` ou `filters[password][$eq]=x` refusés.
 - [ ] Test des 25 opérateurs sur chaque type d'attribut compatible.
+
+- Banc `basic_core` (SQLite et Postgres) identique à Strapi : page et offset mélangés (400 `PaginationError`), page négative, `pageSize` à 0, page non numérique, `start` et `limit` ; `populate=*` accepté seul mais refusé dans un tableau (`populate[0]=*` : 400 « Invalid key * », grapi l'acceptait, corrigé) et sous un champ scalaire. `password` refusé dans `fields` et `filters` : banc `devfreelance_sanitize`.
 
 ## Notes techniques
 - Parse en deux temps : arbre qs vers AST typé, puis validation contre le schéma. Les erreurs gardent le chemin (`filters.author.name.$foo`).
