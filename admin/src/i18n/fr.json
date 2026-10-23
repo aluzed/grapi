@@ -645,5 +645,12 @@
   "media.cancelUpload": "Annuler l'envoi",
   "media.uploadCancelled": "Envoi annulé",
   "comp.removeConfirm": "Retirer cet élément du formulaire ? Le changement sera conservé à l'enregistrement.",
-  "rel.removeConfirm": "Le retirer de ce champ ? Le changement sera conservé à l'enregistrement."
+  "rel.removeConfirm": "Le retirer de ce champ ? Le changement sera conservé à l'enregistrement.",
+  "roles.restrict": "Restreindre",
+  "roles.restrictTitle": "Restrictions · {name}",
+  "roles.fieldsFor": "Champs autorisés pour {action}",
+  "roles.locales": "Locales autorisées",
+  "roles.restrictHelp": "Tout coché signifie aucune restriction. Enregistrez le rôle pour appliquer.",
+  "roles.someFields": "certains champs",
+  "roles.someLocales": "certaines locales"
 }

@@ -60,7 +60,8 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - E-mail : fournisseur et expéditeurs par défaut, envoi d'un e-mail de test (`TestAdminEmailTest`).
 - Vérifié dans Chrome sur le binaire.
 - Critères prouvés : webhook limité aux événements cochés (`TestAdminWebhooks`), token `find` sans écriture (`TestAdminAPITokens`), rôle modifié appliqué aux sessions ouvertes (`TestAdminRoleChangeAppliesAtOnce`), Super Admin protégé et dernier actif non désactivable (`TestAdminUsersAndRoles`), e-mail de test reçu dans Mailpit (`make e2e-invite`), et toutes les suppressions confirmées, y compris le retrait d'un élément de composant, de bloc, de relation ou de média dans un formulaire.
-- Reste : permissions par champ, par locale et `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (événements par content type des webhooks, suppression groupée, admin et transfer tokens, liste des routes d'un rôle users-permissions, e-mail, médias, projet).
+- Éditeur de rôle : bouton « Restreindre » par content type, champs autorisés pour créer, lire et modifier, et locales autorisées pour un type localisé (tout coché : pas de restriction, `fields`/`locales` absents). Champs vérifiés de bout en bout dans Chrome ; l'écran des locales reste à essayer sur un projet localisé avant de cocher le critère.
+- Reste : `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (événements par content type des webhooks, suppression groupée, admin et transfer tokens, liste des routes d'un rôle users-permissions, e-mail, médias, projet).
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.

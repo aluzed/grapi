@@ -645,5 +645,12 @@
   "media.cancelUpload": "Cancel the upload",
   "media.uploadCancelled": "Upload cancelled",
   "comp.removeConfirm": "Remove this item from the form? The change is kept once you save.",
-  "rel.removeConfirm": "Remove it from this field? The change is kept once you save."
+  "rel.removeConfirm": "Remove it from this field? The change is kept once you save.",
+  "roles.restrict": "Restrict",
+  "roles.restrictTitle": "Restrictions · {name}",
+  "roles.fieldsFor": "Fields allowed to {action}",
+  "roles.locales": "Locales allowed",
+  "roles.restrictHelp": "Everything checked means no restriction. Save the role to apply.",
+  "roles.someFields": "some fields",
+  "roles.someLocales": "some locales"
 }

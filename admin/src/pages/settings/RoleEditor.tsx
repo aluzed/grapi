@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, SlidersHorizontal } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
 import { Checkbox, TextField } from '@/components/ui/field'
 import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
@@ -14,9 +15,11 @@ import { can } from '@/lib/permissions'
 import type { Catalog, CatalogAction, Permission, RoleWithCount } from '@/lib/types'
 import { useAuth } from '@/providers/AuthProvider'
 import { useI18n } from '@/providers/I18nProvider'
-import { useModels } from '../content-manager/hooks'
+import { useLocales, useModels } from '../content-manager/hooks'
 
 const verbs = ['create', 'read', 'update', 'delete', 'publish'] as const
+const fieldVerbs = ['create', 'read', 'update'] as const
+const systemFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt', 'createdBy', 'updatedBy', 'locale', 'localizations'])
 const explorer = 'plugin::content-manager.explorer.'
 const isCreator = 'admin::is-creator'
 
@@ -77,6 +80,33 @@ export function RoleEditor() {
       }
       return next
     })
+
+  const [restricting, setRestricting] = useState<string | null>(null)
+  const locales = useLocales(true).data ?? []
+  const modelOf = (uid: string) => models.find((m) => m.uid === uid)
+  const withProps = (action: string, subject: string, change: (p: Permission['properties']) => Permission['properties']) =>
+    setPerms((prev) => {
+      const k = key(action, subject)
+      const p = prev.get(k)
+      if (!p) return prev
+      const next = new Map(prev)
+      next.set(k, { ...p, properties: change(p.properties ?? {}) })
+      return next
+    })
+  // An absent list means everything: a full selection goes back to absent.
+  const toggleIn = (list: string[] | null | undefined, all: string[], item: string, on: boolean) => {
+    const current = list ?? all
+    const out = on ? [...new Set([...current, item])] : current.filter((x) => x !== item)
+    return all.every((x) => out.includes(x)) ? undefined : all.filter((x) => out.includes(x))
+  }
+  const restrictionSummary = (s: string) => {
+    const parts: string[] = []
+    const fields = fieldVerbs.some((v) => perms.get(key(explorer + v, s))?.properties?.fields)
+    const locs = verbs.some((v) => perms.get(key(explorer + v, s))?.properties?.locales)
+    if (fields) parts.push(t('roles.someFields'))
+    if (locs) parts.push(t('roles.someLocales'))
+    return parts.join(' · ')
+  }
 
   const save = useMutation({
     mutationFn: async () => {
@@ -157,7 +187,15 @@ export function RoleEditor() {
                     <tbody>
                       {subjects.map((s) => (
                         <Tr key={s}>
-                          <Td className="font-medium">{displayName(s)}</Td>
+                          <Td>
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="font-medium">{displayName(s)}</span>
+                              <Button variant="outline" title={t('roles.restrict')} icon={<SlidersHorizontal className="h-4 w-4" />} disabled={!verbs.some((v) => has(explorer + v, s))} onClick={() => setRestricting(s)} className="h-8 px-2 text-xs">
+                                {t('roles.restrict')}
+                              </Button>
+                              {restrictionSummary(s) && <span className="text-xs text-muted">{restrictionSummary(s)}</span>}
+                            </div>
+                          </Td>
                           {verbs.map((v) => (
                             <Td key={v} className="text-center">
                               <input
@@ -193,6 +231,10 @@ export function RoleEditor() {
                         <Checkbox key={v} label={t(`roles.action.${v}`)} checked={has(explorer + v, s)} onChange={(e) => set(explorer + v, s, e.target.checked, ownOnly(s) ? [isCreator] : [])} />
                       ))}
                       <Checkbox label={t('roles.ownOnly')} checked={ownOnly(s)} onChange={(e) => setOwnOnly(s, e.target.checked)} />
+                      <Button variant="outline" title={t('roles.restrict')} icon={<SlidersHorizontal className="h-4 w-4" />} disabled={!verbs.some((v) => has(explorer + v, s))} onClick={() => setRestricting(s)} className="mt-2 w-full">
+                        {t('roles.restrict')}
+                      </Button>
+                      {restrictionSummary(s) && <p className="mt-1 text-xs text-muted">{restrictionSummary(s)}</p>}
                     </li>
                   ))}
                 </ul>
@@ -214,6 +256,56 @@ export function RoleEditor() {
             )}
           </fieldset>
         </Card>
+      )}
+      {restricting && (
+        <Dialog open wide title={t('roles.restrictTitle', { name: displayName(restricting) })} onClose={() => setRestricting(null)} closeLabel={t('users.close')}>
+          <fieldset disabled={!editable} className="flex flex-col gap-5">
+            {fieldVerbs
+              .filter((v) => has(explorer + v, restricting))
+              .map((v) => {
+                const all = Object.keys(modelOf(restricting)?.attributes ?? {}).filter((f) => !systemFields.has(f))
+                const chosen = perms.get(key(explorer + v, restricting))?.properties?.fields
+                return (
+                  <section key={v}>
+                    <h3 className="mb-1 text-sm font-semibold">{t('roles.fieldsFor', { action: t(`roles.action.${v}`) })}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      {all.map((f) => (
+                        <Checkbox
+                          key={f}
+                          label={modelOf(restricting)?.editMeta?.[f]?.label || f}
+                          checked={!chosen || chosen.includes(f)}
+                          onChange={(e) => withProps(explorer + v, restricting, (p) => ({ ...p, fields: toggleIn(p.fields, all, f, e.target.checked) }))}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )
+              })}
+            {modelOf(restricting)?.localized && locales.length > 0 && (
+              <section>
+                <h3 className="mb-1 text-sm font-semibold">{t('roles.locales')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {locales.map((l) => {
+                    const codes = locales.map((x) => x.code)
+                    const current = verbs.map((v) => perms.get(key(explorer + v, restricting))?.properties?.locales).find((x) => x)
+                    return (
+                      <Checkbox
+                        key={l.code}
+                        label={l.name}
+                        checked={!current || current.includes(l.code)}
+                        onChange={(e) => {
+                          const next = toggleIn(current, codes, l.code, e.target.checked)
+                          for (const v of verbs) withProps(explorer + v, restricting, (p) => ({ ...p, locales: next }))
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+            <p className="text-xs text-muted">{t('roles.restrictHelp')}</p>
+          </fieldset>
+        </Dialog>
       )}
     </div>
   )
