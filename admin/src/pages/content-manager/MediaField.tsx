@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Check, ImagePlus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import type { Attribute, MediaFile } from '@/lib/types'
+import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { MediaBrowser, Thumb } from '../media/MediaBrowser'
 
@@ -16,6 +17,7 @@ export function mediaItems(v: unknown): MediaFile[] {
 
 export function MediaField({ attr, label, value, onChange }: { attr: Attribute & { allowedTypes?: string[] }; label: string; value: MediaFile[]; onChange: (v: MediaFile[]) => void }) {
   const { t } = useI18n()
+  const confirm = useConfirm()
   const multiple = Boolean(attr.multiple)
   const [picking, setPicking] = useState(false)
   const [selection, setSelection] = useState<MediaFile[]>([])
@@ -47,7 +49,9 @@ export function MediaField({ attr, label, value, onChange }: { attr: Attribute &
                     </button>
                   </>
                 )}
-                <button type="button" title={t('rel.remove')} onClick={() => onChange(value.filter((x) => x.id !== f.id))} className={`${small} border-destructive/40 bg-surface text-destructive`}>
+                <button type="button" title={t('rel.remove')} onClick={async () => {
+                  if (await confirm({ title: t('rel.remove'), message: t('rel.removeConfirm'), confirmLabel: t('rel.remove'), destructive: true })) onChange(value.filter((x) => x.id !== f.id))
+                }} className={`${small} border-destructive/40 bg-surface text-destructive`}>
                   <X className="h-3.5 w-3.5" />
                   <span>{t('rel.remove')}</span>
                 </button>

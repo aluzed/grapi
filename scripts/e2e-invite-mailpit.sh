@@ -1,8 +1,8 @@
 #!/bin/sh
-# End to end admin invitation through a real SMTP server: Mailpit runs on the
-# homelab (nothing in Docker locally), grapi runs here on a throwaway copy of
-# the basic fixture. Invite, read the mail in Mailpit, follow the link,
-# register, log in.
+# End to end admin invitation and settings test e-mail through a real SMTP
+# server: Mailpit runs on the homelab (nothing in Docker locally), grapi runs
+# here on a throwaway copy of the basic fixture. Invite, read the mail in
+# Mailpit, follow the link, register, log in; then send the test e-mail.
 # usage: scripts/e2e-invite-mailpit.sh
 set -eu
 host=${COMPAT_HOST:-homelab}
@@ -89,4 +89,15 @@ curl -sf -o /dev/null -H 'Content-Type: application/json' \
 login=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
   -d '{"email":"ed@example.test","password":"E2e-Ed1tor"}' "$base/auth/login")
 [ "$login" = 200 ] || { echo "error: the invited admin cannot log in ($login)" >&2; exit 1; }
+curl -sf -X DELETE "http://127.0.0.1:$api/api/v1/messages" >/dev/null
+curl -sf -o /dev/null -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"to":"ops@example.test"}' "$base/email/test"
+i=0
+until [ "$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages_count"]')" -ge 1 ]; do
+  i=$((i + 1))
+  [ $i -gt 20 ] && { echo "error: the test e-mail did not reach Mailpit" >&2; exit 1; }
+  sleep 1
+done
+to=$(curl -sf "http://127.0.0.1:$api/api/v1/messages" | json 'd["messages"][0]["To"][0]["Address"]')
+[ "$to" = ops@example.test ] || { echo "error: the test e-mail went to $to" >&2; exit 1; }
 echo "invitation e2e: mail delivered by SMTP to Mailpit, link followed, invited admin logged in"
+echo "test e-mail e2e: Settings > E-mail test delivered to Mailpit"

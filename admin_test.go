@@ -349,6 +349,9 @@ func TestAdminUsersAndRoles(t *testing.T) {
 	if s, b, _ := super.do("DELETE", "/users/"+ada, ""); s != 400 || !strings.Contains(errMessage(b), "super admin") {
 		t.Fatalf("the last super admin cannot be deleted: %d %v", s, b)
 	}
+	if s, _, _ := super.do("PUT", "/users/"+ada, `{"isActive":false}`); s != 400 {
+		t.Fatalf("the last active Super Admin stays active: %d", s)
+	}
 	if s, _, _ := super.do("PUT", "/users/"+ada, `{"roles":[`+editor+`]}`); s != 400 {
 		t.Fatalf("the last super admin keeps the role: %d", s)
 	}
@@ -921,6 +924,14 @@ func TestAdminAPITokens(t *testing.T) {
 	if api("/api/articles", key) != 200 || api("/api/tags", key) != 403 {
 		t.Fatalf("custom token scope: %d %d", api("/api/articles", key), api("/api/tags", key))
 	}
+	write, _ := http.NewRequest("POST", ts.URL+"/api/articles", strings.NewReader(`{"data":{"title":"Nope"}}`))
+	write.Header.Set("Authorization", "Bearer "+key)
+	write.Header.Set("Content-Type", "application/json")
+	if res, err := http.DefaultClient.Do(write); err != nil || res.StatusCode != 403 {
+		t.Fatalf("a find token cannot write: %v %v", res, err)
+	} else {
+		_ = res.Body.Close()
+	}
 	_, b, _ = c.do("GET", "/api-tokens", "")
 	if l := b["data"].([]any); len(l) != 1 || l[0].(map[string]any)["accessKey"] != nil {
 		t.Fatalf("list hides keys: %v", l)
@@ -973,6 +984,14 @@ func TestAdminWebhooks(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("no entry.create delivery")
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::article.article", "")
+	doc := b["data"].([]any)[0].(map[string]any)["documentId"].(string)
+	c.do("PUT", "/content-manager/collection-types/api::article.article/"+doc, `{"data":{"title":"Hooked"}}`)
+	select {
+	case got := <-hits:
+		t.Fatalf("entry.update is not checked: %q", got)
+	case <-time.After(500 * time.Millisecond):
 	}
 	if s, b, _ := c.do("PUT", "/webhooks/"+id, `{"name":"Build","url":"`+target.URL+`","events":["entry.create"],"isEnabled":false}`); s != 200 || dataOf(b)["isEnabled"] != false {
 		t.Fatalf("disable: %d %v", s, b)
@@ -2630,5 +2649,35 @@ func TestAdminFileRelated(t *testing.T) {
 	u := list[0].(map[string]any)
 	if u["documentId"] != meme || u["title"] != "Grumpy" || u["field"] != "picture" || u["contentType"] != "Meme" {
 		t.Fatalf("use: %v", u)
+	}
+}
+
+func TestAdminRoleChangeAppliesAtOnce(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("POST", "/roles", `{"name":"Readers"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	read := `{"action":"plugin::content-manager.explorer.read","subject":"api::article.article","properties":{},"conditions":[]}`
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[`+read+`]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Re","email":"re@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	re := newAdminClient(t, ts.URL)
+	_, b, _ = re.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"Re","password":"Read3rPass"}}`)
+	re.token = dataOf(b)["token"].(string)
+	const base = "/content-manager/collection-types/api::article.article"
+	if s, _, _ := re.do("POST", base, `{"data":{"title":"No"}}`); s != 403 {
+		t.Fatalf("read only: %d", s)
+	}
+	create := `{"action":"plugin::content-manager.explorer.create","subject":"api::article.article","properties":{},"conditions":[]}`
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[`+read+`,`+create+`]}`)
+	if s, b, _ := re.do("POST", base, `{"data":{"title":"Yes"}}`); s != 201 {
+		t.Fatalf("the same session can create now: %d %v", s, b)
+	}
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[]}`)
+	if s, _, _ := re.do("GET", base, ""); s != 403 {
+		t.Fatalf("and loses read at once: %d", s)
 	}
 }

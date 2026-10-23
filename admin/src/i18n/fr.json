@@ -643,5 +643,7 @@
   "media.preview": "Aperçu",
   "media.uploadProgress": "Envoi : {percent} %",
   "media.cancelUpload": "Annuler l'envoi",
-  "media.uploadCancelled": "Envoi annulé"
+  "media.uploadCancelled": "Envoi annulé",
+  "comp.removeConfirm": "Retirer cet élément du formulaire ? Le changement sera conservé à l'enregistrement.",
+  "rel.removeConfirm": "Le retirer de ce champ ? Le changement sera conservé à l'enregistrement."
 }

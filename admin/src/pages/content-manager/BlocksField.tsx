@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { SelectField, TextField } from '@/components/ui/field'
 import type { Item, Kind } from '@/lib/blocks'
 import type { MediaFile } from '@/lib/types'
+import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { MediaBrowser } from '../media/MediaBrowser'
 
@@ -29,6 +30,7 @@ const imageOf = (f: MediaFile) => ({
 
 export function BlocksField({ label, value, onChange }: { label: string; value: Item[]; onChange: (v: Item[]) => void }) {
   const { t } = useI18n()
+  const confirm = useConfirm()
   const [picking, setPicking] = useState<number | null>(null)
   const [selection, setSelection] = useState<MediaFile[]>([])
   const kindLabel = (k: Kind) =>
@@ -64,7 +66,9 @@ export function BlocksField({ label, value, onChange }: { label: string; value: 
                 <ArrowDown className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t('rel.down')}</span>
               </button>
-              <button type="button" title={t('comp.remove')} onClick={() => onChange(value.filter((_, j) => j !== i))} className={`${small} border-destructive/40 bg-surface text-destructive`}>
+              <button type="button" title={t('comp.remove')} onClick={async () => {
+                  if (await confirm({ title: t('comp.remove'), message: t('comp.removeConfirm'), confirmLabel: t('comp.remove'), destructive: true })) onChange(value.filter((_, j) => j !== i))
+                }} className={`${small} border-destructive/40 bg-surface text-destructive`}>
                 <X className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t('comp.remove')}</span>
               </button>

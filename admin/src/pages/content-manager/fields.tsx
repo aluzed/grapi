@@ -4,6 +4,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
+import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { fromItems, toItems, type Item } from '@/lib/blocks'
 import { BlocksField } from './BlocksField'
@@ -183,6 +184,7 @@ const small =
 
 function ItemTools({ index, count, onMove, onRemove }: { index: number; count: number; onMove?: (d: number) => void; onRemove: () => void }) {
   const { t } = useI18n()
+  const confirm = useConfirm()
   return (
     <span className="flex shrink-0 gap-1">
       {onMove && (
@@ -197,7 +199,14 @@ function ItemTools({ index, count, onMove, onRemove }: { index: number; count: n
           </button>
         </>
       )}
-      <button type="button" title={t('comp.remove')} onClick={onRemove} className={`${small} border-destructive/40 bg-surface text-destructive`}>
+      <button
+        type="button"
+        title={t('comp.remove')}
+        onClick={async () => {
+          if (await confirm({ title: t('comp.remove'), message: t('comp.removeConfirm'), confirmLabel: t('comp.remove'), destructive: true })) onRemove()
+        }}
+        className={`${small} border-destructive/40 bg-surface text-destructive`}
+      >
         <X className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{t('comp.remove')}</span>
       </button>

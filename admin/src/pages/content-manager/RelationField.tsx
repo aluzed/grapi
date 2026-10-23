@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, X } from 'lucide-react'
 import { requestWithMeta } from '@/lib/api'
 import type { Attribute, Model } from '@/lib/types'
+import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 
 export type RelationItem = { documentId: string; label: string }
@@ -26,6 +27,7 @@ const small =
 
 export function RelationField({ uid, component, name, attr, label, value, onChange, locale }: { uid: string; component?: string; name: string; attr: Attribute; label: string; value: RelationItem[]; onChange: (v: RelationItem[]) => void; locale?: string }) {
   const { t } = useI18n()
+  const confirm = useConfirm()
   const id = useId()
   const multiple = isMultiple(attr)
   const [q, setQ] = useState('')
@@ -77,7 +79,9 @@ export function RelationField({ uid, component, name, attr, label, value, onChan
                     </button>
                   </>
                 )}
-                <button type="button" title={t('rel.remove')} onClick={() => onChange(value.filter((v) => v.documentId !== item.documentId))} className={`${small} border-destructive/40 bg-surface text-destructive`}>
+                <button type="button" title={t('rel.remove')} onClick={async () => {
+                  if (await confirm({ title: t('rel.remove'), message: t('rel.removeConfirm'), confirmLabel: t('rel.remove'), destructive: true })) onChange(value.filter((v) => v.documentId !== item.documentId))
+                }} className={`${small} border-destructive/40 bg-surface text-destructive`}>
                   <X className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{t('rel.remove')}</span>
                 </button>

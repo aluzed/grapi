@@ -643,5 +643,7 @@
   "media.preview": "Preview",
   "media.uploadProgress": "Uploading: {percent} %",
   "media.cancelUpload": "Cancel the upload",
-  "media.uploadCancelled": "Upload cancelled"
+  "media.uploadCancelled": "Upload cancelled",
+  "comp.removeConfirm": "Remove this item from the form? The change is kept once you save.",
+  "rel.removeConfirm": "Remove it from this field? The change is kept once you save."
 }
