@@ -1,0 +1,12 @@
+{
+  "status": 201,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "documentId": "#doc26",
+      "id": "#id26",
+      "slug": "same-slug"
+    },
+    "meta": {}
+  }
+}

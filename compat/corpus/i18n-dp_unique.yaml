@@ -1,0 +1,8 @@
+fixture: i18n-dp
+# A uid is unique per locale: the same slug fails in one locale, not across.
+cases:
+  - { name: unique-en-first, method: POST, path: /api/articles, token: full, query: "locale=en&fields[0]=slug", body: { data: { title: "Same slug", slug: "same-slug" } }, save: { s1: data.documentId } }
+  - { name: unique-en-second, method: POST, path: /api/articles, token: full, query: "locale=en&fields[0]=slug", body: { data: { title: "Same slug again", slug: "same-slug" } } }
+  - { name: unique-fr-other-document, method: POST, path: /api/articles, token: full, query: "locale=fr&fields[0]=slug", body: { data: { title: "Meme slug", slug: "same-slug" } } }
+  - { name: unique-fr-same-document, method: PUT, path: "/api/articles/{{s1}}", token: full, query: "locale=de&fields[0]=slug", body: { data: { title: "Gleicher Slug", slug: "same-slug" } } }
+  - { name: unique-draft-en, method: POST, path: /api/articles, token: full, query: "locale=en&status=draft&fields[0]=slug", body: { data: { title: "Draft slug", slug: "same-slug" } } }

@@ -23,11 +23,12 @@ La même API REST générée, avec les mêmes chemins, codes et formats de répo
 - GraphQL (`PLG-003`).
 
 ## Critères d'acceptation
-- [ ] Les 5 routes d'un collection type répondent avec les mêmes statuts et corps que Strapi pour post, category, theme et medium de dev-freelance.
+- [x] Les 5 routes d'un collection type répondent avec les mêmes statuts et corps que Strapi pour post, category, theme et medium de dev-freelance.
 - [ ] `except: ['delete']` retire la route.
 - [ ] Une surcharge `find` qui appelle la base puis ajoute `meta.extra` fonctionne.
 - [x] Réponse de `DELETE` : 204 sans corps, comme Strapi 5.59 (vérifier sur le banc).
 
+- Banc `devfreelance_crud` (36 cas, SQLite et Postgres) identique à Strapi : create, find, findOne, update et delete sur post, category, theme et medium de dev-freelance, avec les règles du projet ; findOne et update après suppression en 404, create public en 403.
 - `DELETE` (banc `basic_core`) : 204 sans corps, y compris sur un document déjà supprimé ou inconnu, comme Strapi 5.59.
 
 ## Notes techniques

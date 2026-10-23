@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # PLG-004 : GraphQL : shadow CRUD, extensions, auth, policies, limites
@@ -31,10 +31,10 @@ Les mêmes mécanismes de personnalisation et de sécurité, exposés en Go (mod
 - Extensions écrites en JS (viendront avec `EXT-003`).
 
 ## Critères d'acceptation
-- [ ] `ShadowCRUD("api::post.post").Field("internalNote").Disable()` retire le champ du SDL (TU sur le SDL).
-- [ ] Une extension SDL qui ajoute `Query.popularPosts` avec un résolveur Go est appelable et soumise à son scope (intégration).
-- [ ] Une requête plus profonde que `depthLimit` est rejetée avec une erreur GraphQL standard.
-- [ ] Banc `SETUP-002` : `login` et `me` via GraphQL donnent les mêmes réponses que Strapi. Un rôle Public sans `find` reçoit une erreur `Forbidden access` identique.
+- [x] `ShadowCRUD("api::post.post").Field("internalNote").Disable()` retire le champ du SDL (TU sur le SDL).
+- [x] Une extension SDL qui ajoute `Query.popularPosts` avec un résolveur Go est appelable et soumise à son scope (intégration).
+- [x] Une requête plus profonde que `depthLimit` est rejetée avec une erreur GraphQL standard.
+- [x] Banc `SETUP-002` : `login` et `me` via GraphQL donnent les mêmes réponses que Strapi. Un rôle Public sans `find` reçoit une erreur `Forbidden access` identique.
 
 ## Avancement
 - Shadow CRUD : `graphql.Options.ShadowCRUD` dans le builder (types, queries, mutations, actions, champs en sortie, entrée et filtres), exposé en mode framework par `app.GraphQL().ShadowCRUD(uid)` avec les verbes de Strapi (`Disable`, `DisableQueries`, `DisableMutations`, `DisableAction(s)`, `Field(name).Disable/DisableOutput/DisableInput/DisableFilters`, `graphql.go`). Les désactivations des plugins (admin, dossiers d'upload, mutations de fichiers et de locales, permissions, CRUD users et rôles remplacé) sont celles de Strapi : le SDL est identique à celui de Strapi sur les 7 fixtures (`PLG-003`).
@@ -48,7 +48,9 @@ Les mêmes mécanismes de personnalisation et de sécurité, exposés en Go (mod
 - `emailConfirmation` : la confirmation REST avec `returnUser` (`{jwt, user}` au lieu de la redirection), jeton invalide au banc.
 - `shadowCRUD: false` (`config.shadowCRUD`) : rien n'est généré, ni par les plugins upload et users-permissions ; une `Query` vide reçoit le `ok: Boolean!` de nexus. Test `TestNoShadowCRUD`.
 - Middlewares de résolveur (`ResolverConfig.Middlewares`), dans l'ordre de wrap-resolvers : autorisation, middlewares, policies, résolveur.
-- Reste : limite de complexité (ajout grapi, optionnel).
+- Hors périmètre pour l'instant : une limite de complexité (ajout grapi optionnel, Strapi n'en a pas).
+
+- Preuves : `TestGraphQLExtensions` (champ `code` retiré du SDL, des filtres et des entrées ; extension `Query.popularTags` refusée hors de son scope `api::tag.tag.find` ; `Query.hello` avec middleware ; policy en `PolicyError` ; profondeur au-delà de `depthLimit` refusée en 400 avec le message de graphql-depth-limit) ; banc `graphql` (44 cas, SQLite et Postgres) : `gql-login`, `gql-me`, `gql-create-forbidden` identiques à Strapi.
 
 ## Notes techniques
 - Pour la fusion du SDL : parser avec `gqlparser`, puis convertir les définitions en objets `graphql-go`. C'est à écrire, il n'y a pas de pont existant mûr.
