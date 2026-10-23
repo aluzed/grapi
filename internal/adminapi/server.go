@@ -166,6 +166,7 @@ func (s *Server) routes() {
 	s.usersPermissionsRoutes()
 	s.emailRoutes()
 	s.ctbRoutes()
+	s.viewConfigRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

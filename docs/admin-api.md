@@ -75,9 +75,11 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 
 | Méthode et chemin | Rôle |
 |---|---|
-| `GET /content-manager/models` | Content types lisibles : `uid`, `kind`, `info`, `draftAndPublish`, `localized`, `attributes` lisibles, `mainField`, `listColumns`, `labels`, `settings` (taille de page, tri par défaut, recherche, filtres, actions groupées) et `permissions` de l'utilisateur. Lit la configuration de vue de Strapi (`plugin_content_manager_configuration_content_types::<uid>`) quand elle existe. |
+| `GET /content-manager/models` | Content types lisibles : `uid`, `kind`, `info`, `draftAndPublish`, `localized`, `attributes` lisibles, `mainField`, `listColumns`, `labels`, `settings` (taille de page, tri par défaut, recherche, filtres, actions groupées), `editLayout` et `editMeta` (lignes et libellés du formulaire), `canConfigure` et `permissions` de l'utilisateur, d'après la configuration de vue effective. |
 | `GET /content-manager/components` | Composants : `uid`, `category`, `info`, `attributes`, `fields` (ordre du schéma) |
 | `GET /content-manager/locales` | Locales i18n, avec `isDefault` |
+| `GET /content-manager/configuration/{uid}` | Configuration de vue effective : celle du core store (`plugin_content_manager_configuration_content_types::<uid>`, format Strapi) synchronisée avec le schéma, ou celle par défaut de Strapi (4 colonnes dont `id`, lignes de 12 colonnes avec les tailles de champ de Strapi) |
+| `PUT /content-manager/configuration/{uid}` | `{settings, metadatas, layouts}` (action `configure-view`). Validée : colonnes listables, champs éditables placés une fois, tailles 4, 6, 8 ou 12 (12 imposé pour JSON, richtext, blocks, composant, zone dynamique), lignes de 12 au plus. |
 | `GET /content-manager/collection-types/{uid}?page=&pageSize=&sort=&_q=&filters=&locale=&status=` | Liste. `filters` est un objet JSON au format des filtres REST, `status` vaut `draft` (défaut) ou `published`. Chaque document porte `status` : `draft`, `published` ou `modified`. |
 | `GET /content-manager/relations/{uid}/{field}?_q=&page=&pageSize=&locale=` | Documents que la relation `field` peut viser (hors morph) : `{id, documentId, label}`, `label` étant le `mainField` de la cible, avec `meta.pagination` |
 | `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document chargé en profondeur : relations, médias, composants et zones dynamiques à tous les niveaux |

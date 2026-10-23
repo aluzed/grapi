@@ -1107,3 +1107,48 @@ func TestAdminContentTypeBuilderProduction(t *testing.T) {
 		t.Fatalf("writes need grapi develop: %d", s)
 	}
 }
+
+func TestAdminViewConfiguration(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	const path = "/content-manager/configuration/api::article.article"
+	_, b, _ = c.do("GET", path, "")
+	cfg := dataOf(b)
+	layouts := cfg["layouts"].(map[string]any)
+	if list := layouts["list"].([]any); len(list) != 4 || list[0] != "id" {
+		t.Fatalf("default list: %v", list)
+	}
+	firstRow := layouts["edit"].([]any)[0].([]any)
+	if f := firstRow[0].(map[string]any); f["name"] != "title" || f["size"].(float64) != 6 {
+		t.Fatalf("default edit layout: %v", firstRow)
+	}
+	settings := cfg["settings"].(map[string]any)
+	settings["pageSize"], settings["mainField"], settings["defaultSortBy"], settings["defaultSortOrder"] = 20, "title", "views", "DESC"
+	layouts["list"] = []any{"id", "title", "views"}
+	layouts["edit"] = []any{[]any{map[string]any{"name": "views", "size": 4}, map[string]any{"name": "title", "size": 8}}}
+	cfg["metadatas"].(map[string]any)["title"].(map[string]any)["list"].(map[string]any)["label"] = "Titre"
+	body, _ := json.Marshal(cfg)
+	if s, b, _ := c.do("PUT", path, string(body)); s != 200 {
+		t.Fatalf("put: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/models", "")
+	var m map[string]any
+	for _, x := range b["data"].([]any) {
+		if x.(map[string]any)["uid"] == "api::article.article" {
+			m = x.(map[string]any)
+		}
+	}
+	edit := m["editLayout"].([]any)
+	if m["settings"].(map[string]any)["pageSize"].(float64) != 20 || len(m["listColumns"].([]any)) != 3 || m["labels"].(map[string]any)["title"] != "Titre" ||
+		edit[0].([]any)[0].(map[string]any)["name"] != "views" || len(edit) < 2 {
+		t.Fatalf("model after configuration: %v", m)
+	}
+	layouts["edit"] = []any{[]any{map[string]any{"name": "content", "size": 6}}}
+	body, _ = json.Marshal(cfg)
+	if s, _, _ := c.do("PUT", path, string(body)); s != 400 {
+		t.Fatalf("blocks take a full row: %d", s)
+	}
+}

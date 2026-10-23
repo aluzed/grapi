@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-005 : Content Manager : configuration des vues
@@ -21,6 +21,10 @@ Permettre de configurer la liste et le formulaire de chaque type depuis l'admin,
 - **Génération par défaut** : quand le schéma change, la configuration est créée ou mise à jour (champs ajoutés, retirés ou renommés), sans perdre les réglages existants.
 - Écran « Configurer la vue » accessible depuis la liste et l'édition (permission dédiée).
 - Stockage dans le core store (`DB-010`), avec des clés compatibles Strapi pour permettre la reprise d'une base existante (`DB-011`).
+
+## Avancement
+- API (`docs/admin-api.md`) : configuration effective par type (stockée au format et sous la clé de Strapi, synchronisée avec le schéma : champs ajoutés en fin de mise en page, champs disparus retirés), configuration par défaut calquée sur Strapi (`createDefaultLayouts`, tailles de `field-sizes`), écriture validée, modèle du Content Manager alimenté par cette configuration. Testé (`TestAdminViewConfiguration`).
+- Reste : l'écran « Configurer la vue », le formulaire d'édition selon `editLayout`, la configuration des composants, les renommages d'attributs.
 
 ## Hors périmètre
 - Les vues elles-mêmes (`ADM-003`, `ADM-004`).

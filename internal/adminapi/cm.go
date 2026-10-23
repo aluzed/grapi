@@ -11,7 +11,6 @@ import (
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/db/query"
-	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/schema"
 )
@@ -68,44 +67,19 @@ type Model struct {
 	Labels      map[string]string `json:"labels"`
 	Settings    ModelSettings     `json:"settings"`
 	Permissions ModelPermissions  `json:"permissions"`
+	// EditLayout are the rows of the edit form, EditMeta its labels.
+	EditLayout   [][]LayoutField     `json:"editLayout"`
+	EditMeta     map[string]EditMeta `json:"editMeta"`
+	CanConfigure bool                `json:"canConfigure"`
 }
 
-// cmConfiguration is the part of Strapi's view configuration (core store)
-// the list reads.
-type cmConfiguration struct {
-	Settings struct {
-		PageSize         int    `json:"pageSize"`
-		MainField        string `json:"mainField"`
-		DefaultSortBy    string `json:"defaultSortBy"`
-		DefaultSortOrder string `json:"defaultSortOrder"`
-		Searchable       *bool  `json:"searchable"`
-		Filterable       *bool  `json:"filterable"`
-		Bulkable         *bool  `json:"bulkable"`
-	} `json:"settings"`
-	Metadatas map[string]struct {
-		List struct {
-			Label string `json:"label"`
-		} `json:"list"`
-	} `json:"metadatas"`
-	Layouts struct {
-		List []string `json:"list"`
-	} `json:"layouts"`
-}
-
-var cmScope = store.Scope{Type: "plugin", Name: "content_manager"}
-
-func (s *Server) configuration(ctx context.Context, uid string) (*cmConfiguration, error) {
-	var c cmConfiguration
-	found, err := s.store.Get(ctx, cmScope, "configuration_content_types::"+uid, &c)
-	if err != nil || !found {
-		return nil, err
-	}
-	return &c, nil
-}
-
-var notListable = map[string]bool{
-	schema.TypeJSON: true, schema.TypePassword: true, schema.TypeRichText: true, schema.TypeBlocks: true,
-	schema.TypeDynamicZone: true, schema.TypeComponent: true, schema.TypeRelation: true, schema.TypeMedia: true,
+// EditMeta is the edit view configuration of a field.
+type EditMeta struct {
+	Label       string `json:"label"`
+	Description string `json:"description"`
+	Placeholder string `json:"placeholder"`
+	Visible     bool   `json:"visible"`
+	Editable    bool   `json:"editable"`
 }
 
 func defaultMainField(ct *schema.ContentType) string {
@@ -146,49 +120,15 @@ func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) 
 		m.Attributes[name] = attr
 		m.Fields = append(m.Fields, name)
 	}
-	m.MainField = defaultMainField(ct)
-	cfg, err := s.configuration(ctx, uid)
+	cfg, err := s.effectiveConfig(ctx, ct)
 	if err != nil {
 		return nil, err
 	}
-	if cfg != nil {
-		set := cfg.Settings
-		if set.MainField != "" {
-			m.MainField = set.MainField
-		}
-		if set.PageSize > 0 {
-			m.Settings.PageSize = set.PageSize
-		}
-		m.Settings.DefaultSortBy, m.Settings.DefaultSortOrder = set.DefaultSortBy, strings.ToUpper(set.DefaultSortOrder)
-		for _, b := range []struct {
-			v   *bool
-			dst *bool
-		}{{set.Searchable, &m.Settings.Searchable}, {set.Filterable, &m.Settings.Filterable}, {set.Bulkable, &m.Settings.Bulkable}} {
-			if b.v != nil {
-				*b.dst = *b.v
-			}
-		}
-		for name, md := range cfg.Metadatas {
-			if md.List.Label != "" {
-				m.Labels[name] = md.List.Label
-			}
-		}
-		for _, col := range cfg.Layouts.List {
-			if _, ok := m.Attributes[col]; ok || col == "id" {
-				m.ListColumns = append(m.ListColumns, col)
-			}
-		}
-	}
-	if m.ListColumns == nil {
-		m.ListColumns = []string{"id"}
-		for name, attr := range ct.Attributes.All() {
-			if len(m.ListColumns) == 4 {
-				break
-			}
-			if _, ok := m.Attributes[name]; ok && !notListable[attr.Type] {
-				m.ListColumns = append(m.ListColumns, name)
-			}
-		}
+	set := cfg.Settings
+	m.MainField = set.MainField
+	m.Settings = ModelSettings{
+		PageSize: set.PageSize, DefaultSortBy: set.DefaultSortBy, DefaultSortOrder: strings.ToUpper(set.DefaultSortOrder),
+		Searchable: set.Searchable, Filterable: set.Filterable, Bulkable: set.Bulkable,
 	}
 	if m.Settings.DefaultSortBy == "" {
 		m.Settings.DefaultSortBy = m.MainField
@@ -196,6 +136,34 @@ func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) 
 	if m.Settings.DefaultSortOrder != "DESC" {
 		m.Settings.DefaultSortOrder = "ASC"
 	}
+	m.EditMeta = map[string]EditMeta{}
+	for name, md := range cfg.Metadatas {
+		if md == nil {
+			continue
+		}
+		if md.List.Label != "" && md.List.Label != name {
+			m.Labels[name] = md.List.Label
+		}
+		m.EditMeta[name] = EditMeta{Label: md.Edit.Label, Description: md.Edit.Description, Placeholder: md.Edit.Placeholder, Visible: md.Edit.Visible, Editable: md.Edit.Editable}
+	}
+	m.ListColumns = []string{}
+	for _, col := range cfg.Layouts.List {
+		if _, ok := m.Attributes[col]; ok || col == "id" {
+			m.ListColumns = append(m.ListColumns, col)
+		}
+	}
+	for _, row := range cfg.Layouts.Edit {
+		var kept []LayoutField
+		for _, f := range row {
+			if _, ok := m.Attributes[f.Name]; ok {
+				kept = append(kept, f)
+			}
+		}
+		if len(kept) > 0 {
+			m.EditLayout = append(m.EditLayout, kept)
+		}
+	}
+	m.CanConfigure = a.Can(configureAction(ct), "", "")
 	return m, nil
 }
 
@@ -696,12 +664,11 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		return errNotFound
 	}
 	ctx := r.Context()
-	mainField := defaultMainField(target)
-	if cfg, err := s.configuration(ctx, attr.Target); err != nil {
+	cfg, err := s.effectiveConfig(ctx, target)
+	if err != nil {
 		return err
-	} else if cfg != nil && cfg.Settings.MainField != "" {
-		mainField = cfg.Settings.MainField
 	}
+	mainField := cfg.Settings.MainField
 	page, size := pageParams(r)
 	p := document.Params{"page": page, "pageSize": size, "sort": mainField + ":asc"}
 	if mainField != "id" {
