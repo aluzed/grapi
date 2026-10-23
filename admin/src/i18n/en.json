@@ -640,5 +640,8 @@
   "media.to": "Uploaded before",
   "media.viewGrid": "Grid",
   "media.viewList": "List",
-  "media.preview": "Preview"
+  "media.preview": "Preview",
+  "media.uploadProgress": "Uploading: {percent} %",
+  "media.cancelUpload": "Cancel the upload",
+  "media.uploadCancelled": "Upload cancelled"
 }

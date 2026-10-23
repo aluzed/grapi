@@ -234,17 +234,25 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const folders = useQuery({ queryKey: ['media', 'folders', folderParam], queryFn: () => api.get<MediaFolder[]>(`/upload/folders?parent=${folderParam}`), enabled: !q })
   const canUpload = can(permissions, 'plugin::upload.assets.create')
 
+  const [progress, setProgress] = useState<number | null>(null)
+  const abort = useRef<AbortController | null>(null)
   const send = useMutation({
     mutationFn: (list: File[]) => {
       const form = new FormData()
       for (const f of list) form.append('files', f)
-      return upload<MediaFile[]>(`/upload?folder=${folderParam}`, form)
+      abort.current = new AbortController()
+      setProgress(0)
+      return upload<MediaFile[]>(`/upload?folder=${folderParam}`, form, { onProgress: setProgress, signal: abort.current.signal })
     },
     onSuccess: (res) => {
       toast.success(t('media.uploaded', { count: String(res.length) }))
       void queryClient.invalidateQueries({ queryKey: ['media'] })
     },
-    onError: (err) => showError(err, undefined, t('common.error')),
+    onError: (err) => (err instanceof DOMException && err.name === 'AbortError' ? toast.info(t('media.uploadCancelled')) : showError(err, undefined, t('common.error'))),
+    onSettled: () => {
+      setProgress(null)
+      abort.current = null
+    },
   })
   const onFiles = (list: FileList | null) => {
     if (list && list.length > 0) send.mutate([...list])
@@ -408,6 +416,19 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
           onChange={(id) => setView(id as 'grid' | 'list')}
         />
       </div>
+      {progress !== null && (
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 md:flex-row md:items-center">
+          <div className="flex-1">
+            <p className="mb-1 text-sm">{t('media.uploadProgress', { percent: String(Math.round(progress * 100)) })}</p>
+            <div className="h-2 overflow-hidden rounded bg-background" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+              <div className="h-full bg-primary transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
+            </div>
+          </div>
+          <Button variant="destructive-outline" title={t('media.cancelUpload')} icon={<X className="h-4 w-4" />} onClick={() => abort.current?.abort()} className="w-full md:w-auto">
+            {t('media.cancelUpload')}
+          </Button>
+        </div>
+      )}
       {canUpload && <p className="hidden text-xs text-muted md:block">{t('media.drop')}</p>}
       {!pick && selecting && chosen.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">

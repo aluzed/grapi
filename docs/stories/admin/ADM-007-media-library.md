@@ -38,7 +38,8 @@ Offrir la gestion complète des médias dans l'admin, à la fois comme page à p
 - Faits depuis : import depuis des URL, déplacement de dossier, page de réglages, tri et configuration d'affichage (voir `MEDIA-006`).
 - Détail d'un fichier : type, date d'envoi, formats générés, et entrées qui l'utilisent (`GET /upload/files/{id}/related`, lu dans `files_related_mph`, filtré par les droits de lecture ; `TestAdminFileRelated`) avec un bouton « Ouvrir l'entrée ».
 - Vue liste (table sur desktop, cartes sur mobile, choix mémorisé dans le navigateur) et filtres par date d'envoi (`from`, `to` sur `createdAt`, validés côté serveur).
-- Reste : progression et annulation des envois, point focal et recadrage, usages à l'intérieur d'un composant.
+- Progression et annulation des envois : barre de progression et bouton « Annuler l'envoi » (l'envoi passe par XMLHttpRequest, seul à suivre le corps d'une requête ; `admin/src/lib/upload.test.ts`).
+- Reste : point focal et recadrage, usages à l'intérieur d'un composant.
 
 ## Hors périmètre
 - Le traitement d'image côté serveur (`MEDIA-002`) et les providers (`MEDIA-003` à `MEDIA-005`).

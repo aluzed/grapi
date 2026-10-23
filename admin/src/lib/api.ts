@@ -103,9 +103,33 @@ export async function requestWithMeta<T, M>(path: string): Promise<{ data: T; me
 }
 
 // upload posts a multipart form, with the same refresh-on-401 as request.
-export async function upload<T>(path: string, form: FormData): Promise<T> {
+export type UploadOptions = { onProgress?: (fraction: number) => void; signal?: AbortSignal }
+
+// xhrPost is fetch for an upload: only XMLHttpRequest reports the progress
+// of a request body.
+function xhrPost(url: string, form: FormData, { onProgress, signal }: UploadOptions): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    xhr.withCredentials = true
+    if (accessToken) xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(e.loaded / e.total)
+    }
+    xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status, statusText: xhr.statusText }))
+    xhr.onerror = () => reject(new TypeError('Network error'))
+    xhr.onabort = () => reject(new DOMException('Upload cancelled', 'AbortError'))
+    if (signal?.aborted) return xhr.onabort?.(new ProgressEvent('abort'))
+    signal?.addEventListener('abort', () => xhr.abort(), { once: true })
+    xhr.send(form)
+  })
+}
+
+export async function upload<T>(path: string, form: FormData, options?: UploadOptions): Promise<T> {
   const post = () =>
-    fetch(`${apiBase()}${path}`, { method: 'POST', credentials: 'same-origin', headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, body: form })
+    options
+      ? xhrPost(`${apiBase()}${path}`, form, options)
+      : fetch(`${apiBase()}${path}`, { method: 'POST', credentials: 'same-origin', headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, body: form })
   let res = await post()
   if (res.status === 401 && accessToken !== null) {
     if (await refresh()) res = await post()

@@ -640,5 +640,8 @@
   "media.to": "Envoyé avant",
   "media.viewGrid": "Grille",
   "media.viewList": "Liste",
-  "media.preview": "Aperçu"
+  "media.preview": "Aperçu",
+  "media.uploadProgress": "Envoi : {percent} %",
+  "media.cancelUpload": "Annuler l'envoi",
+  "media.uploadCancelled": "Envoi annulé"
 }
