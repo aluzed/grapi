@@ -35,7 +35,7 @@ Un bus de lifecycles par ligne, avec la même liste d'événements, la même for
 - [x] Chaque événement est émis exactement une fois par opération, avec la bonne forme (tests unitaires sur un content type de test).
 - [x] Un `beforeCreate` qui modifie `params.data.slug` change la valeur écrite.
 - [x] `state` posé dans `beforeUpdate` est lu dans `afterUpdate` de la même opération.
-- [ ] Publication d'un document en draft & publish : `beforeCreate` est déclenché pour la ligne publiée. Scénario de caractérisation porté depuis dev-freelance : le slug publié est recalculé depuis le titre, et une publication de thème ne modifie pas le slug du brouillon.
+- [x] Publication d'un document en draft & publish : `beforeCreate` est déclenché pour la ligne publiée. Scénario de caractérisation porté depuis dev-freelance : le slug publié est recalculé depuis le titre, et une publication de thème ne modifie pas le slug du brouillon.
 - [ ] Banc : les 21 cas de caractérisation de dev-freelance (slugs, hash d'abonné, thèmes) donnent les mêmes sorties qu'avec Strapi 5.59, une fois les règles portées en hooks Go.
 - [x] Une erreur levée dans `beforeDelete` annule la suppression, et le client reçoit l'erreur au format Strapi.
 

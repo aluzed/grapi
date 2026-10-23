@@ -106,7 +106,10 @@ func TestPublishRunsBeforeCreate(t *testing.T) {
 		"beforeCreate": func(e *query.Event) error {
 			data := e.Params.Data.(map[string]any)
 			created = append(created, data["publishedAt"])
-			data["slug"] = "from-hook"
+			// dev-freelance's rule: the published slug comes from the title.
+			if data["publishedAt"] != nil {
+				data["slug"] = "from-" + data["title"].(string)
+			}
 			return nil
 		},
 	}})
@@ -122,8 +125,15 @@ func TestPublishRunsBeforeCreate(t *testing.T) {
 	if len(created) != 2 || created[0] != nil || created[1] == nil {
 		t.Fatalf("beforeCreate saw publishedAt %v", created)
 	}
-	if slug, _ := pub[0].Get("slug"); slug != "from-hook" {
+	if slug, _ := pub[0].Get("slug"); slug != "from-Hello" {
 		t.Fatalf("published slug = %v", slug)
+	}
+	draft, err := s.FindOne(ctx, "api::article.article", doc.(string), document.Params{"status": "draft"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slug, _ := draft.Get("slug"); slug != nil {
+		t.Fatalf("publishing leaves the draft's slug alone: %v", slug)
 	}
 }
 
