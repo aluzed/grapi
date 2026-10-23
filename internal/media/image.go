@@ -210,9 +210,10 @@ func encode(w io.Writer, img image.Image, format string, quality int) error {
 var optimizable = map[string]bool{"jpeg": true, "png": true, "tiff": true}
 
 // Optimize re-encodes src at quality (80 for sizeOptimization, 100 for
-// orientation only). ok is false when the format is not handled or the
-// result is bigger than the original, which Strapi then keeps.
-func Optimize(src, dst string, info Info, quality int) (Resized, bool, error) {
+// orientation only), turned upright by its EXIF orientation when autoOrient
+// is set. ok is false when the format is not handled or the result is
+// bigger than the original, which Strapi then keeps.
+func Optimize(src, dst string, info Info, quality int, autoOrient bool) (Resized, bool, error) {
 	if !optimizable[info.Format] {
 		return Resized{}, false, nil
 	}
@@ -224,6 +225,12 @@ func Optimize(src, dst string, info Info, quality int) (Resized, bool, error) {
 	img, _, err := image.Decode(f)
 	if err != nil {
 		return Resized{}, false, err
+	}
+	turned := false
+	if autoOrient && info.Format == "jpeg" {
+		if o := exifOrientation(src); o > 1 {
+			img, turned = orient(img, o), true
+		}
 	}
 	out, err := os.Create(dst) //nolint:gosec // inside the request's working directory
 	if err != nil {
@@ -244,7 +251,8 @@ func Optimize(src, dst string, info Info, quality int) (Resized, bool, error) {
 	if err != nil {
 		return Resized{}, false, err
 	}
-	if after.Size() > before.Size() {
+	// A turned image is kept even when bigger: the original is sideways.
+	if after.Size() > before.Size() && !turned {
 		return Resized{}, false, nil
 	}
 	b := img.Bounds()

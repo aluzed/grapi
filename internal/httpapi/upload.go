@@ -536,13 +536,17 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 			quality = 80
 		}
 		optimized := filepath.Join(dir, "optimized-"+hash)
-		res, ok, err := media.Optimize(src, optimized, img, quality)
+		res, ok, err := media.Optimize(src, optimized, img, quality, settings.AutoOrientation)
 		if err != nil {
 			return nil, appError("File is not a valid image")
 		}
 		if ok {
 			src = optimized
 			file["size"] = media.BytesToKbytes(res.Size)
+			// A turned image swaps its dimensions for what follows.
+			if img.PageHeight == 0 {
+				img.Width, img.Height = res.Width, res.Height
+			}
 		}
 	}
 	// A provider's checkFileSize replaces the sizeLimit check.
