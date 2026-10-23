@@ -4,7 +4,7 @@ status: todo
 
 # ADM-008 : Settings (webhooks, tokens, utilisateurs, rôles et RBAC, locales, users-permissions, e-mail, projet)
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 La section Settings de Strapi regroupe la configuration modifiable à chaud : informations de l'application, réglages du projet (logos), webhooks, API tokens, transfer tokens, utilisateurs et rôles admin (avec l'éditeur de permissions RBAC), locales i18n, rôles et réglages users-permissions (providers, templates d'e-mail, réglages avancés), configuration e-mail (envoi de test) et Media Library.

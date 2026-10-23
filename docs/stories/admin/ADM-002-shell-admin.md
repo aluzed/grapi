@@ -4,7 +4,7 @@ status: todo
 
 # ADM-002 : Shell admin : connexion, navigation, profil, page d'accueil
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`.
 
 ## Contexte
 Tous les écrans de l'admin partagent un shell : écran de création du premier administrateur, connexion, mot de passe oublié, menu latéral, profil et page d'accueil. Strapi propose les mêmes fonctions (`/admin/init`, `register-admin`, login avec refresh en cookie, page Profil avec sessions, page d'accueil avec widgets).

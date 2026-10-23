@@ -43,7 +43,7 @@ Construire un banc qui envoie le même corpus de requêtes à une instance Strap
 - **CI** : le job « compat » est déclenché manuellement et la nuit. Il fait un rsync puis un ssh vers le homelab, et publie le rapport en artefact.
 
 ## Hors périmètre
-- Comparer l'API admin, sauf si D1 = A (`ADM-001`).
+- Comparer l'API admin : D1 = B (`docs/decisions/D1-admin.md`), l'API admin est propre à grapi.
 - Les tests unitaires de chaque package (propres à chaque ticket).
 
 ## Critères d'acceptation

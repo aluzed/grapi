@@ -4,7 +4,7 @@ status: todo
 
 # ADM-005 : Content Manager : configuration des vues
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 Chez Strapi, chaque content type et chaque composant a une configuration de vue stockée dans le core store (`plugin_content_manager_configuration_content_types::<uid>` et `..._components::<uid>`). Elle comprend des réglages globaux, des métadonnées par champ et deux mises en page (colonnes de liste et rangées d'édition). Cette configuration est resynchronisée automatiquement quand le schéma change.

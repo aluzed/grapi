@@ -4,7 +4,7 @@ status: todo
 
 # ADM-010 : Extensions UI (custom fields, zones d'injection, menus)
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 Chez Strapi, les plugins étendent l'admin au moment du build. Ils peuvent ajouter :

@@ -1,8 +1,11 @@
 ---
-status: todo
+status: done
 ---
 
 # ADM-001 : Décision et spike : SPA Strapi ou admin maison (D1)
+
+## Décision
+Option B, actée le 2026-10-23 dans `docs/decisions/D1-admin.md`. Le mainteneur a tranché sur la base de `feasibility.md` : les spikes n'ont pas été faits, les critères qui en dépendent sont caducs.
 
 ## Contexte
 L'admin de Strapi est une SPA React (`@strapi/admin`, MIT hors `ee/`) qui parle à une API interne non versionnée (`/admin/*`, `/content-manager/*`, `/content-type-builder/*`, `/upload/*`, `/i18n/*`, `/users-permissions/*`, `/email/*`). Cette API change à chaque mineure : entre 5.38 et 5.59 sont arrivés les sessions avec refresh, les admin tokens, MCP et des endpoints IA. `feasibility.md` (D1) recommande l'option B, mais on doit trancher sur des faits avant d'écrire `ADM-002` à `ADM-010`.
@@ -41,7 +44,7 @@ Prendre la décision A ou B, à partir de deux spikes courts, et l'acter dans `d
 - [ ] Les deux spikes sont démontrés (capture ou courte vidéo) sur le homelab.
 - [ ] La liste exhaustive des endpoints que la SPA Strapi appelle pendant le parcours du spike A est versionnée dans `docs/decisions/D1-admin.md`.
 - [ ] La grille est remplie avec une justification par critère.
-- [ ] La décision est actée, et `ADM-002` à `ADM-010` portent la mention « option retenue ».
+- [x] La décision est actée, et `ADM-002` à `ADM-010` portent la mention « option retenue ».
 - [ ] Aucun fichier sous licence Enterprise n'entre dans le bundle du spike A (vérifié par une liste des modules du bundle). Sont concernés : les dossiers `ee/`, les paquets `core/review-workflows` et `core/content-releases`, et les dossiers `core/content-manager/{admin,server}/src/{history,preview}`.
 
 ## Notes techniques

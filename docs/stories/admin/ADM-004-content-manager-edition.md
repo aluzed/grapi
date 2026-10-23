@@ -4,7 +4,7 @@ status: todo
 
 # ADM-004 : Content Manager : vue édition (champs, composants, zones dynamiques, relations, D&P, i18n)
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 La vue édition est l'écran le plus riche de Strapi. Elle propose un champ de saisie par type d'attribut, des composants répétables, des zones dynamiques, des relations avec recherche et réordonnancement, les actions de draft & publish, le changement de locale, « remplir depuis une autre locale », la génération des champs UID et la duplication.

@@ -4,7 +4,7 @@ status: todo
 
 # ADM-003 : Content Manager : vue liste
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 Le Content Manager liste les documents de chaque collection type. On y trouve la recherche, les filtres, le tri, la pagination, le choix des colonnes, le statut draft/published, la locale et les actions groupées : publier, dépublier, supprimer.

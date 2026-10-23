@@ -4,7 +4,7 @@ status: in-progress
 
 # ADM-006 : Content-Type Builder (écriture des schémas, rechargement à chaud, migrations de renommage)
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 Le Content-Type Builder (CTB) de Strapi crée, modifie et supprime des content types, des composants, des catégories de composants et des champs. Côté serveur, il écrit les fichiers `schema.json` dans `src/` et génère des migrations de renommage. Il redémarre ensuite le process, et il n'est actif qu'en mode develop. Strapi 5 enregistre par lot (`POST /update-schema`) et l'admin interroge ensuite `update-schema-status`. Un binaire Go ne redémarre pas comme un process Node : grapi recharge le schéma dans le process.
@@ -48,7 +48,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 
 ## Avancement
 - Content API en lecture seule du plugin (`internal/httpapi/ctb.go`) : `GET /api/content-type-builder/content-types[/:uid]` (`kind`, types invisibles en 404) et `GET /api/content-type-builder/components[/:uid]`, au format de `formatContentType` et `formatComponent`. Corpus `components_ctb`, SQLite et Postgres : identique à Strapi. Les deux listes complètes sont en skip au banc : celle des content types contient les types Enterprise (clean-room), celle des composants suit chez Strapi l'ordre de lecture des fichiers.
-- Reste : tout le côté admin (édition des schémas, écriture des fichiers, redémarrage), qui attend la décision `ADM-001`.
+- Reste : tout le côté admin (édition des schémas, écriture des fichiers, redémarrage), sur l'API `/admin/api/v1/*` (option B, `docs/decisions/D1-admin.md`).
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

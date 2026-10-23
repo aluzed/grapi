@@ -4,7 +4,7 @@ status: todo
 
 # ADM-009 : Preview
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`. Le code preview de Strapi est sous licence Enterprise (D6) : ce ticket se spécifie uniquement à partir de la documentation publique.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`. Le code preview de Strapi est sous licence Enterprise (D6) : ce ticket se spécifie uniquement à partir de la documentation publique.
 
 ## Contexte
 Strapi affiche le front du projet dans l'admin, depuis la vue édition. La documentation publique décrit : un bloc `preview` dans la config admin (`enabled`, `allowedOrigins`, `handler` qui construit l'URL par document et peut renvoyer `null`), un bouton « Open preview » désactivé tant que des modifications ne sont pas enregistrées, des onglets brouillon / publié, une bascule Desktop / Mobile, la copie du lien, un affichage plein écran ou côte à côte, et des messages `postMessage` (`strapiUpdate`, `previewReady`). Chez Strapi, le côte à côte est payant ; dans grapi tout est inclus.

@@ -4,7 +4,7 @@ status: todo
 
 # ADM-007 : Media Library
 
-> Option retenue : B (admin maison), sous réserve de `ADM-001`. Conventions UI : voir `ADM-002`.
+> Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
 La Media Library de Strapi gère les fichiers et les dossiers. Elle permet l'upload multiple en glisser-déposer ou depuis une URL, l'édition des métadonnées (nom, texte alternatif, légende, point focal), le recadrage, le remplacement de fichier, le déplacement et la suppression groupés, la recherche, les filtres et le tri. Elle sert aussi de sélecteur pour les champs média de la vue édition.
