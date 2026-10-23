@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -177,4 +179,85 @@ func TestDeliveryOrder(t *testing.T) {
 			t.Fatalf("delivery %d carries event %v: a receiver gets its events in order", i, n)
 		}
 	}
+}
+
+// An unreachable receiver: retries spaced by the backoff, then one logged
+// error; with no retries, a single try, as Strapi.
+func TestDeliveryGivesUp(t *testing.T) {
+	ctx := context.Background()
+	res, md, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", "basic")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, retries := range []int{0, 2} {
+		d, err := db.Open(ctx, db.Config{Client: "sqlite", Filename: filepath.Join(t.TempDir(), "data.db")}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		desired, _ := md.Schema()
+		ran, _ := migrate.Run(ctx, d, migrate.Options{RunMigrations: true})
+		if _, err := schemasync.Sync(ctx, d, desired, schemasync.Options{MigrationsRan: ran}); err != nil {
+			t.Fatal(err)
+		}
+		var hits atomic.Int32
+		var times []time.Time
+		var mu sync.Mutex
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			hits.Add(1)
+			mu.Lock()
+			times = append(times, time.Now())
+			mu.Unlock()
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		e := &query.Engine{DB: d, MD: md}
+		if _, err := e.Create(ctx, "strapi::webhook", query.Data{"name": "down", "url": ts.URL, "headers": map[string]any{}, "events": []any{"entry.create"}, "enabled": true}, query.Params{}); err != nil {
+			t.Fatal(err)
+		}
+		docs := document.New(e, res.Set)
+		docs.Events = events.New(nil)
+		var logs syncBuffer
+		r := &webhooks.Runner{DB: d, Hub: docs.Events, Log: slog.New(slog.NewTextHandler(&logs, nil)), Config: webhooks.Config{Retries: retries, Backoff: 40 * time.Millisecond}}
+		stop := r.Start(ctx)
+		if _, err := docs.Create(ctx, "api::tag.tag", document.Params{"data": map[string]any{"name": "Go"}}); err != nil {
+			t.Fatal(err)
+		}
+		deadline := time.Now().Add(3 * time.Second)
+		for time.Now().Before(deadline) && !strings.Contains(logs.String(), "Error running webhook") {
+			time.Sleep(10 * time.Millisecond)
+		}
+		time.Sleep(150 * time.Millisecond)
+		stop()
+		ts.Close()
+		_ = d.Close()
+		if got := int(hits.Load()); got != retries+1 {
+			t.Errorf("retries %d: %d tries, want %d", retries, got, retries+1)
+		}
+		if n := strings.Count(logs.String(), "Error running webhook"); n != 1 {
+			t.Errorf("retries %d: %d logged errors, want 1: %s", retries, n, logs.String())
+		}
+		mu.Lock()
+		for i := 1; i < len(times); i++ {
+			if gap := times[i].Sub(times[i-1]); gap < 30*time.Millisecond<<(i-1) {
+				t.Errorf("retries %d: try %d came %v after the previous one", retries, i+1, gap)
+			}
+		}
+		mu.Unlock()
+	}
+}
+
+type syncBuffer struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (s *syncBuffer) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.Write(p)
+}
+
+func (s *syncBuffer) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.String()
 }

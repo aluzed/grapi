@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # API-002 : Routage déclaratif et pipeline par route
@@ -30,7 +30,7 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 - [x] Sans token, une route protégée renvoie 403 si le rôle Public n'a pas la permission, et une route marquée `auth: false` répond.
 - [x] Ordre d'exécution vérifié par test : auth, policies dans l'ordre déclaré, middlewares dans l'ordre déclaré, handler.
 - [x] Une `PolicyError` garde son message et son status 403 dans la réponse.
-- [ ] Banc de compatibilité : codes de statut identiques à Strapi sur la matrice rôle x route de dev-freelance.
+- [x] Banc de compatibilité : codes de statut identiques à Strapi sur la matrice rôle x route de dev-freelance.
 
 ## Avancement
 - Fait : routes custom en Go (`grapi.App.Route`, `PublicRoute` pour `auth: false`), placées avant les routes core, avec le scope de permission à la Strapi (`api::account.account.anonymize`) et les erreurs `ctx.badRequest`/`ctx.unauthorized` (`grapi.Error`, noms http-errors). Test : `hooks_test.go` (`TestCustomRoutes`).
@@ -40,6 +40,8 @@ Le même modèle de routes et le même pipeline, alimentés par les routes gén�
 - `PolicyError` : banc `devfreelance_errors`, message et détails d'une policy repris à l'identique de Strapi.
 
 - Route custom dans `routes:list` : le binaire d'un projet framework la liste (`go run . routes:list --details` : méthode, chemin, action, policies), `TestAppRoutesListsGoRoutes`.
+- Matrice rôle x route : `devfreelance_matrix` (161 cas générés par `compat/tools/gen-route-matrix.py` : 16 types, liste, lecture, création, modification et suppression, en Public et en Authenticated), statuts et corps identiques à Strapi. Le rôle Authenticated de la fixture n'a aucune permission sur ces types : ses 80 cas sont des 403.
+- Reste, hors critères : routes déclarées dans `src/api/*/routes/*` (fichiers JS ou déclaratifs).
 
 ## Notes techniques
 - Conflits de routes (même méthode et chemin) : erreur au démarrage, Strapi laisse gagner la première.
