@@ -588,5 +588,13 @@
   "releases.release": "Release",
   "releases.choose": "Choisir une release",
   "releases.addedMany": "{added} entrées sur {total} ajoutées (les autres y étaient déjà)",
-  "releases.addedAll": "{added} entrées ajoutées"
+  "releases.addedAll": "{added} entrées ajoutées",
+  "settings.releases": "Releases",
+  "releases.settingsSaved": "Réglages des releases enregistrés",
+  "releases.settingsHelp": "Le fuseau horaire proposé quand on planifie une release.",
+  "releases.defaultTimezone": "Fuseau horaire par défaut",
+  "releases.browserTimezone": "Le fuseau du navigateur",
+  "releases.groupBy": "Grouper par",
+  "releases.locale": "Locale",
+  "releases.noLocale": "Sans locale"
 }

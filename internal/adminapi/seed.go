@@ -94,6 +94,8 @@ func (s *Server) registerActions() {
 		plugin("admin", "releases.publish", "Publish", "releases"),
 		plugin("admin", "releases.actions.create", "Add an entry", "releases"),
 		plugin("admin", "releases.actions.delete", "Remove an entry", "releases"),
+		setting("admin", "releases.settings.read", "Read", "releases"),
+		setting("admin", "releases.settings.update", "Edit", "releases"),
 		setting("admin", "audit-logs.export", "Export", "audit logs"),
 		setting("admin", "project-settings.update", "Update the project level settings", "project"),
 		setting("upload", "settings.read", "Access the Media Library settings page", "media library"),

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Save } from 'lucide-react'
 import { useNavigate } from 'react-router'
@@ -14,6 +14,7 @@ import { api, ApiError } from '@/lib/api'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import { isoToZoned, localTimeZone, timeZones, zonedToISO } from '@/lib/tz'
+import { useReleaseSettings } from '@/pages/settings/ReleaseSettings'
 import { useAuth } from '@/providers/AuthProvider'
 import type { MessageKey } from '@/i18n'
 import { useI18n } from '@/providers/I18nProvider'
@@ -38,7 +39,12 @@ export function ReleaseDialog({ release, onClose, onSaved }: { release: Release 
   const queryClient = useQueryClient()
   const [name, setName] = useState(release?.name ?? '')
   const [scheduled, setScheduled] = useState(Boolean(release?.scheduledAt))
+  const { permissions } = useAuth()
+  const defaults = useReleaseSettings(!release && can(permissions, 'admin::releases.settings.read'))
   const [timezone, setTimezone] = useState(release?.timezone ?? localTimeZone())
+  useEffect(() => {
+    if (!release && defaults.data?.defaultTimezone) setTimezone(defaults.data.defaultTimezone)
+  }, [release, defaults.data])
   const [at, setAt] = useState(release?.scheduledAt ? isoToZoned(release.scheduledAt, release.timezone ?? 'UTC') : '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const save = useMutation({

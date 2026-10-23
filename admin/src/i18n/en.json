@@ -588,5 +588,13 @@
   "releases.release": "Release",
   "releases.choose": "Choose a release",
   "releases.addedMany": "{added} of {total} entries added (the others were already in it)",
-  "releases.addedAll": "{added} entries added"
+  "releases.addedAll": "{added} entries added",
+  "settings.releases": "Releases",
+  "releases.settingsSaved": "Releases settings saved",
+  "releases.settingsHelp": "The timezone proposed when a release is scheduled.",
+  "releases.defaultTimezone": "Default timezone",
+  "releases.browserTimezone": "The browser's timezone",
+  "releases.groupBy": "Group by",
+  "releases.locale": "Locale",
+  "releases.noLocale": "No locale"
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
+	"github.com/aluzed/grapi/internal/db/store"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/schema"
 )
@@ -46,6 +47,8 @@ func (s *Server) releaseRoutes() {
 	s.allowed("GET /releases", "admin::releases.read", s.listReleases)
 	s.allowed("POST /releases", "admin::releases.create", s.createRelease)
 	s.allowed("GET /releases/document/{uid}/{documentId}", "admin::releases.read", s.documentReleases)
+	s.allowed("GET /releases/settings", "admin::releases.settings.read", s.getReleaseSettings)
+	s.allowed("PUT /releases/settings", "admin::releases.settings.update", s.updateReleaseSettings)
 	s.allowed("GET /releases/{id}", "admin::releases.read", s.getRelease)
 	s.allowed("PUT /releases/{id}", "admin::releases.update", s.updateRelease)
 	s.allowed("DELETE /releases/{id}", "admin::releases.delete", s.deleteRelease)
@@ -239,9 +242,46 @@ type releaseBody struct {
 	Timezone    *string `json:"timezone"`
 }
 
+var releasesScope = store.Scope{Type: "plugin", Name: "grapi-releases"}
+
+// ReleaseSettings are the releases settings.
+type ReleaseSettings struct {
+	DefaultTimezone *string `json:"defaultTimezone"`
+}
+
+func (s *Server) releaseSettings(ctx context.Context) ReleaseSettings {
+	var rs ReleaseSettings
+	_, _ = s.store.Get(ctx, releasesScope, "settings", &rs)
+	return rs
+}
+
+func (s *Server) getReleaseSettings(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+	return data(w, s.releaseSettings(r.Context()))
+}
+
+func (s *Server) updateReleaseSettings(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
+	var rs ReleaseSettings
+	if err := decode(r, &rs); err != nil {
+		return err
+	}
+	if rs.DefaultTimezone != nil && *rs.DefaultTimezone == "" {
+		rs.DefaultTimezone = nil
+	}
+	if rs.DefaultTimezone != nil {
+		if _, err := time.LoadLocation(*rs.DefaultTimezone); err != nil {
+			return validation([]FieldError{{Path: []string{"defaultTimezone"}, Message: "unknown timezone"}})
+		}
+	}
+	if err := s.store.Set(r.Context(), releasesScope, "settings", rs); err != nil {
+		return err
+	}
+	s.audit(r, u, "release-settings.update", map[string]any{"defaultTimezone": rs.DefaultTimezone})
+	return data(w, rs)
+}
+
 // scheduled checks a schedule: an RFC 3339 instant, and an IANA timezone
-// kept for display.
-func scheduled(b releaseBody) (any, any, error) {
+// kept for display (the default timezone, else UTC).
+func (s *Server) scheduled(ctx context.Context, b releaseBody) (any, any, error) {
 	if b.ScheduledAt == nil || *b.ScheduledAt == "" {
 		return nil, nil, nil
 	}
@@ -250,6 +290,9 @@ func scheduled(b releaseBody) (any, any, error) {
 		return nil, nil, validation([]FieldError{{Path: []string{"scheduledAt"}, Message: "scheduledAt must be an RFC 3339 date"}})
 	}
 	tz := "UTC"
+	if d := s.releaseSettings(ctx).DefaultTimezone; d != nil {
+		tz = *d
+	}
 	if b.Timezone != nil && *b.Timezone != "" {
 		if _, err := time.LoadLocation(*b.Timezone); err != nil {
 			return nil, nil, validation([]FieldError{{Path: []string{"timezone"}, Message: "unknown timezone"}})
@@ -267,7 +310,7 @@ func (s *Server) createRelease(w http.ResponseWriter, r *http.Request, u *User, 
 	if b.Name == nil || strings.TrimSpace(*b.Name) == "" {
 		return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
 	}
-	at, tz, err := scheduled(b)
+	at, tz, err := s.scheduled(r.Context(), b)
 	if err != nil {
 		return err
 	}
@@ -327,7 +370,7 @@ func (s *Server) updateRelease(w http.ResponseWriter, r *http.Request, u *User, 
 	if b.Name != nil && strings.TrimSpace(*b.Name) != "" {
 		name = strings.TrimSpace(*b.Name)
 	}
-	at, tz, err := scheduled(b)
+	at, tz, err := s.scheduled(r.Context(), b)
 	if err != nil {
 		return err
 	}

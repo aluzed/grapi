@@ -1580,6 +1580,18 @@ func TestAdminReleases(t *testing.T) {
 
 	_, b, _ = c.do("POST", base, `{"data":{"title":"Later"}}`)
 	later := dataOf(b)["documentId"].(string)
+	if s, _, _ := c.do("PUT", "/releases/settings", `{"defaultTimezone":"Mars/Olympus"}`); s != 400 {
+		t.Fatalf("settings validation: %d", s)
+	}
+	c.do("PUT", "/releases/settings", `{"defaultTimezone":"Asia/Tokyo"}`)
+	_, b, _ = c.do("POST", "/releases", `{"name":"Tokyo","scheduledAt":"2099-01-01T00:00:00Z"}`)
+	if tz := dataOf(b)["timezone"]; tz != "Asia/Tokyo" {
+		t.Fatalf("the default timezone applies: %v", tz)
+	}
+	c.do("DELETE", "/releases/"+strconv.Itoa(int(dataOf(b)["id"].(float64))), "")
+	if _, b, _ = c.do("GET", "/releases/settings", ""); dataOf(b)["defaultTimezone"] != "Asia/Tokyo" {
+		t.Fatalf("settings: %v", b)
+	}
 	if s, _, _ := c.do("POST", "/releases", `{"name":"Bad","scheduledAt":"tomorrow"}`); s != 400 {
 		t.Fatalf("schedule validation: %d", s)
 	}

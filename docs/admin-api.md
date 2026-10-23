@@ -82,6 +82,7 @@ Tables propres à grapi (`grapi_releases`, `grapi_release_actions`), créées au
 | `POST /releases/{id}/actions` | `admin::releases.actions.create` | `type` (`publish`, `unpublish`), `uid`, `documentId`, `locale`. 400 si le type n'a pas Draft & Publish ou si le document y est déjà ; exige aussi `publish` sur le type et la locale. |
 | `DELETE /releases/{id}/actions/{actionId}` | `admin::releases.actions.delete` | |
 | `POST /releases/{id}/publish` | `admin::releases.publish` | Exige `publish` sur le type et la locale de chaque entrée. Tout ou rien dans une transaction. 400 avec la liste des entrées fautives si la release est bloquée. |
+| `GET /releases/settings`, `PUT /releases/settings` | `admin::releases.settings.read`, `.update` | `{defaultTimezone}` (IANA ou `null`), le fuseau d'une release créée sans `timezone` |
 | `GET /releases/document/{uid}/{documentId}` | `admin::releases.read` | Releases en attente qui contiennent le document |
 
 Statuts : `empty`, `ready`, `blocked`, `done`, et `failed` (publication planifiée refusée, rien n'a changé, message dans `error`). L'état `not-ready` vient d'une publication d'essai dans une transaction annulée : les événements partant au commit, elle ne déclenche aucun webhook.
