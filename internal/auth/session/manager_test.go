@@ -163,3 +163,24 @@ func TestReplayAfterTheChildRotated(t *testing.T) {
 		t.Errorf("the family is revoked, %d rows", st.Len())
 	}
 }
+
+func TestExpiredAccessToken(t *testing.T) {
+	ctx := context.Background()
+	st, c := &Memory{}, &clock{time.Unix(1_700_000_000, 0)}
+	m := newManager(st, c)
+	refresh, _, _ := m.Login(ctx, "1", "dev", TypeRefresh, nil)
+	access, err := m.AccessToken(ctx, refresh)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := m.ValidateAccess(ctx, access); err != nil {
+		t.Fatalf("fresh: %v", err)
+	}
+	c.advance(m.Config().AccessTokenLifespan + time.Second)
+	if _, _, err := m.ValidateAccess(ctx, access); !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("an expired access token is refused: %v", err)
+	}
+	if fresh, err := m.AccessToken(ctx, refresh); err != nil || fresh == access {
+		t.Fatalf("the refresh token still gives a new one: %v", err)
+	}
+}

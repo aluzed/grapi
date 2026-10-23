@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # AUTH-003 : Sessions et refresh tokens (partagé entre admin et utilisateurs finaux)
@@ -30,7 +30,7 @@ Un service de sessions unique, utilisé par `AUTH-007` (admin) et par `AUTH-002`
 - [x] Banc `SETUP-002` en mode refresh : login, refresh, logout et sessions ont les mêmes formes de réponse et les mêmes cookies (nom, `HttpOnly`, `SameSite`, `Secure` derrière HTTPS) que Strapi 5.59.
 - [x] Rejouer un refresh token déjà utilisé donne 401 et révoque la session (TU + intégration).
 - [x] L'expiration idle et l'expiration absolue sont respectées (tests avec une horloge injectable).
-- [ ] Un access token admin expiré renvoie 401 ; la SPA appelle alors `/admin/access-token` et obtient un nouveau token.
+- [x] Un access token admin expiré renvoie 401 ; la SPA appelle alors `/admin/access-token` et obtient un nouveau token.
 
 ## Avancement
 - Routes `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/sessions` et `DELETE /auth/sessions/:sessionId` présentes, avec leurs permissions (Public pour `refresh`, Authenticated pour les autres, seedées au bootstrap). En mode `legacy-support` (défaut de Strapi), elles répondent 404 comme Strapi : corpus `basic_roles`, SQLite et Postgres.
@@ -43,6 +43,7 @@ Un service de sessions unique, utilisé par `AUTH-007` (admin) et par `AUTH-002`
   - `POST /auth/refresh` (400 sans token, 401 s'il est invalide, rotation), `POST /auth/logout` (`scope: all`, `deviceId`, ou la session courante ; cookie effacé), `GET /auth/sessions` (session courante d'abord, puis la plus récente), `DELETE /auth/sessions/:id` (404 « Session not found ») ;
   - seuls les access tokens d'une session vivante sont acceptés ; durées par défaut de Strapi pour cette origine (access 10 min) ; `sessions.*` en secondes.
   - Testé : `TestUsersPermissionsRefreshMode`, `TestUsersPermissionsRefreshCookie`, `TestUsersPermissionsLegacyModeHidesSessions`, et le corpus de banc `sessions` (fixture `sessions`, `upConfig.jwtManagement` dans `compat.json`) : 21 cas identiques à Strapi 5.59 sous SQLite et Postgres (identifiants d'appareil générés en UUID v4 comme Strapi). Le runner compare maintenant les `Set-Cookie` (nom, attributs, effacement, sans la valeur) : 21 cas identiques à Strapi sous SQLite et Postgres, y compris le cookie de signature `strapi_up_refresh.sig` (keygrip, HMAC-SHA1 avec la première clé de `server.app.keys`). La fixture fixe `cookie.secure: false` : Strapi tourne en production dans le banc et Koa refuse un cookie `Secure` en HTTP simple (500).
+- Access token expiré refusé (`TestExpiredAccessToken`), renouvellement par la SPA sur un 401 (`admin/src/lib/api.test.ts`).
 - Rejeu : `TestReplayRevokesTheFamily` et le voleur de `TestAdminFirstAdminAndSessions` ; expirations : `TestIdleAndAbsoluteExpiry`.
   - Divergences assumées (`docs/divergences.md`) : access token refusé dès la révocation de sa session ; vrai token à la confirmation d'e-mail.
 
