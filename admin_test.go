@@ -1679,3 +1679,57 @@ func TestAdminReleaseIsAtomic(t *testing.T) {
 		t.Fatalf("the release is not done: %v", dataOf(b))
 	}
 }
+
+func TestAdminReleaseLocalePermissions(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "i18n-dp")
+	defer stop()
+	super := newAdminClient(t, ts.URL)
+	_, b, _ := super.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	super.token = dataOf(b)["token"].(string)
+	super.do("POST", "/i18n/locales", `{"code":"fr"}`)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = super.do("POST", base, `{"data":{"title":"Hello"}}`)
+	id := dataOf(b)["documentId"].(string)
+	if s, b, _ := super.do("PUT", base+"/"+id+"?locale=fr", `{"data":{"title":"Bonjour"}}`); s != 200 {
+		t.Fatalf("fr version: %d %v", s, b)
+	}
+	_, b, _ = super.do("POST", "/roles", `{"name":"English editor"}`)
+	role := strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	perms := []string{}
+	for _, a := range []string{"read", "update", "publish"} {
+		perms = append(perms, `{"action":"plugin::content-manager.explorer.`+a+`","subject":"api::article.article","properties":{"locales":["en"]},"conditions":[]}`)
+	}
+	for _, a := range []string{"read", "create", "publish", "actions.create"} {
+		perms = append(perms, `{"action":"admin::releases.`+a+`","subject":null,"properties":{},"conditions":[]}`)
+	}
+	if s, b, _ := super.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[`+strings.Join(perms, ",")+`]}`); s != 200 {
+		t.Fatalf("permissions: %d %v", s, b)
+	}
+	_, b, _ = super.do("POST", "/users", `{"firstname":"En","email":"en@example.com","roles":[`+role+`]}`)
+	tok := dataOf(b)["registrationToken"].(string)
+	en := newAdminClient(t, ts.URL)
+	_, b, _ = en.do("POST", "/auth/register", `{"registrationToken":"`+tok+`","userInfo":{"firstname":"En","password":"Engl1shPass"}}`)
+	en.token = dataOf(b)["token"].(string)
+
+	_, b, _ = en.do("POST", "/releases", `{"name":"Mixed"}`)
+	rel := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	add := func(c *adminClient, locale string) int {
+		s, _, _ := c.do("POST", rel+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+id+`","locale":"`+locale+`"}`)
+		return s
+	}
+	if s := add(en, "en"); s != 201 {
+		t.Fatalf("en entry: %d", s)
+	}
+	if s := add(en, "fr"); s != 403 {
+		t.Fatalf("fr is not publishable by this role: %d", s)
+	}
+	if s := add(super, "fr"); s != 201 {
+		t.Fatalf("super admin adds fr: %d", s)
+	}
+	if s, _, _ := en.do("POST", rel+"/publish", ""); s != 403 {
+		t.Fatalf("the release holds a locale the role cannot publish: %d", s)
+	}
+	if s, b, _ := super.do("POST", rel+"/publish", ""); s != 200 {
+		t.Fatalf("super admin publishes: %d %v", s, b)
+	}
+}

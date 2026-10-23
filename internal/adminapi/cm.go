@@ -608,6 +608,9 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 		return err
 	}
 	id := r.PathValue("documentId")
+	if b.Locale == "" {
+		b.Locale = r.URL.Query().Get("locale")
+	}
 	p := localeParam(ct, b.Locale)
 	ctx := r.Context()
 	ok, err := s.allows(ctx, ct, id, p["locale"], filter)

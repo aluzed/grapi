@@ -79,9 +79,9 @@ Tables propres à grapi (`grapi_releases`, `grapi_release_actions`), créées au
 | `GET /releases/{id}` | `admin::releases.read` | La release et ses `actions`, avec l'état recalculé de chaque entrée : `ready`, `not-ready` (+ `errors`), `already-published`, `already-unpublished` |
 | `PUT /releases/{id}` | `admin::releases.update` | Mêmes champs. Une nouvelle date redonne sa chance à une release `failed`. 409 si publiée. |
 | `DELETE /releases/{id}` | `admin::releases.delete` | Les entrées restent telles quelles |
-| `POST /releases/{id}/actions` | `admin::releases.actions.create` | `type` (`publish`, `unpublish`), `uid`, `documentId`, `locale`. 400 si le type n'a pas Draft & Publish ou si le document y est déjà ; exige aussi `publish` sur le type. |
+| `POST /releases/{id}/actions` | `admin::releases.actions.create` | `type` (`publish`, `unpublish`), `uid`, `documentId`, `locale`. 400 si le type n'a pas Draft & Publish ou si le document y est déjà ; exige aussi `publish` sur le type et la locale. |
 | `DELETE /releases/{id}/actions/{actionId}` | `admin::releases.actions.delete` | |
-| `POST /releases/{id}/publish` | `admin::releases.publish` | Tout ou rien dans une transaction. 400 avec la liste des entrées fautives si la release est bloquée. |
+| `POST /releases/{id}/publish` | `admin::releases.publish` | Exige `publish` sur le type et la locale de chaque entrée. Tout ou rien dans une transaction. 400 avec la liste des entrées fautives si la release est bloquée. |
 | `GET /releases/document/{uid}/{documentId}` | `admin::releases.read` | Releases en attente qui contiennent le document |
 
 Statuts : `empty`, `ready`, `blocked`, `done`, et `failed` (publication planifiée refusée, rien n'a changé, message dans `error`). L'état `not-ready` vient d'une publication d'essai dans une transaction annulée : les événements partant au commit, elle ne déclenche aucun webhook.
@@ -108,7 +108,7 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | `GET /content-manager/relations/{uid}/{field}?_q=&page=&pageSize=&locale=` | Documents que la relation `field` peut viser (hors morph) : `{id, documentId, label}`, `label` étant le `mainField` de la cible, avec `meta.pagination` |
 | `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document chargé en profondeur : relations, médias, composants et zones dynamiques à tous les niveaux |
 | `POST /content-manager/collection-types/{uid}` | `{data, locale}`. Renseigne `createdBy` et `updatedBy`. Les relations s'écrivent comme dans l'API REST (`{set: [{documentId}]}` remplace la liste dans cet ordre, `connect` et `disconnect` sont acceptés). |
-| `PUT /content-manager/collection-types/{uid}/{documentId}` | `{data, locale}`. Renseigne `updatedBy`. |
+| `PUT /content-manager/collection-types/{uid}/{documentId}` | `{data, locale}` (ou `?locale=`). Renseigne `updatedBy`. |
 | `DELETE /content-manager/collection-types/{uid}/{documentId}?locale=` | Supprime le document (dans la locale) |
 | `POST /content-manager/collection-types/{uid}/actions/bulk-delete` | `{documentIds, locale}` |
 | `POST /content-manager/collection-types/{uid}/actions/bulk-publish` | `{documentIds, locale}` (action `publish`) |

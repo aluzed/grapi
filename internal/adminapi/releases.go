@@ -126,6 +126,13 @@ func releaseID(r *http.Request, key string) (int64, error) {
 
 var errDryRun = errors.New("dry run")
 
+func canPublish(a *permissions.Ability, uid string, locale any) bool {
+	if l, ok := locale.(string); ok && l != "" {
+		return a.CanLocale(actionPublish, uid, l)
+	}
+	return a.Can(actionPublish, uid, "")
+}
+
 func actionParams(ct *schema.ContentType, a ReleaseAction) document.Params {
 	p := document.Params{}
 	if ct.Localized() && a.Locale != nil {
@@ -386,15 +393,15 @@ func (s *Server) addReleaseAction(w http.ResponseWriter, r *http.Request, u *Use
 	if !ok || !ct.DraftAndPublish() || !contains(s.ContentManagerTypes(), b.UID) {
 		return validation([]FieldError{{Path: []string{"uid"}, Message: "only the content types with draft and publish go in a release"}})
 	}
-	if !a.Can(actionPublish, b.UID, "") {
-		return errForbidden
-	}
 	var locale any
 	if ct.Localized() {
 		if b.Locale == "" {
 			b.Locale, _ = s.docs.DefaultLocale(ctx).(string)
 		}
 		locale = b.Locale
+	}
+	if !canPublish(a, b.UID, locale) {
+		return errForbidden
 	}
 	row, err := s.docs.FindOne(ctx, b.UID, b.DocumentID, document.Params{"locale": locale})
 	if err != nil {
@@ -557,7 +564,7 @@ func (s *Server) publishReleaseHandler(w http.ResponseWriter, r *http.Request, u
 		return errReleased
 	}
 	for _, x := range rel.Actions {
-		if !a.Can(actionPublish, x.UID, "") {
+		if !canPublish(a, x.UID, deref(x.Locale)) {
 			return errForbidden
 		}
 	}
