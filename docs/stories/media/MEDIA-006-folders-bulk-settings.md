@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # MEDIA-006 : Dossiers, actions groupées, remplacement, upload depuis URL, réglages
@@ -35,14 +35,14 @@ Les endpoints admin du Media Library, au-delà de l'upload de base (`MEDIA-001`)
 - Réglages `GET|PUT /upload/settings` (core store `plugin_upload_settings`, lus à chaque upload) et page Paramètres > Médiathèque ; configuration `GET|PUT /upload/configuration` (`plugin_upload_view_configuration`, pageSize 10/20/50/100, tri validé).
 - Testé : `TestAdminUploadFromURLs`, `TestAdminUploadFromPrivateURLs`, `TestPublicOnly`.
 - La médiathèque applique la configuration d'affichage (taille de page, tri par défaut) et propose un tri ; la direction du tri accepte `ASC`/`DESC` comme Strapi.
-- Reste : le critère de compatibilité D3 (arborescence d'une base Strapi) à vérifier au banc.
+- Compatibilité D3 : le banc (mode `grapi`) crée 4 dossiers sur 3 niveaux via l'API admin de Strapi, puis compare la `folder-structure` de Strapi et celle de grapi sur la même base : identiques sous Postgres et SQLite.
 
 ## Critères d'acceptation
 - [x] Déplacer un dossier qui contient 3 niveaux recalcule `path` et `folderPath` partout (intégration).
 - [x] Déplacer un dossier dans son propre descendant est refusé (TU).
 - [x] `upload-from-urls` vers `http://169.254.169.254/` est refusé (TU anti-SSRF).
 - [x] Les réglages modifiés s'appliquent immédiatement aux uploads suivants.
-- [ ] **Compat DB (D3)** : l'arborescence de dossiers d'une base Strapi s'affiche à l'identique.
+- [x] **Compat DB (D3)** : l'arborescence de dossiers d'une base Strapi s'affiche à l'identique.
 
 ## Notes techniques
 - Les déplacements et suppressions récursives se font dans une transaction unique (`DB-001`).

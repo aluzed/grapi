@@ -168,10 +168,19 @@ grapi | perf)
   wait_up b
   # An admin registered by Strapi must log in on grapi (same tables, bcrypt).
   admin_body='{"firstname":"Compat","lastname":"Admin","email":"compat-admin@example.com","password":"Compat1234"}'
-  curl -sf -o /dev/null -H 'Content-Type: application/json' -d "$admin_body" "http://127.0.0.1:$(port_of b)/admin/register-admin" || {
+  strapi_admin=$(curl -sf -H 'Content-Type: application/json' -d "$admin_body" "http://127.0.0.1:$(port_of b)/admin/register-admin") || {
     echo "error: Strapi refused register-admin" >&2
     exit 1
   }
+  # A folder tree made by Strapi must read the same on grapi.
+  s_auth="Authorization: Bearer $(printf '%s' "$strapi_admin" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')"
+  s_url=http://127.0.0.1:$(port_of b)
+  folder_id() { python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["id"])'; }
+  f_a=$(curl -sf -H "$s_auth" -H 'Content-Type: application/json' -d '{"name":"Compat A","parent":null}' "$s_url/upload/folders" | folder_id)
+  f_b=$(curl -sf -H "$s_auth" -H 'Content-Type: application/json' -d "{\"name\":\"Compat B\",\"parent\":$f_a}" "$s_url/upload/folders" | folder_id)
+  curl -sf -o /dev/null -H "$s_auth" -H 'Content-Type: application/json' -d "{\"name\":\"Compat C\",\"parent\":$f_b}" "$s_url/upload/folders"
+  curl -sf -o /dev/null -H "$s_auth" -H 'Content-Type: application/json' -d '{"name":"Compat D","parent":null}' "$s_url/upload/folders"
+  curl -sf -H "$s_auth" "$s_url/upload/folder-structure" >"$work/folders-strapi.json" || admin_failed=1
   docker stop "$run_id-b" >/dev/null
   grapi_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
   if [ "$db" = postgres ]; then
@@ -206,6 +215,20 @@ grapi | perf)
     -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login")
   echo "Login after admin:reset-user-password: $relogin"
   [ "$relogin" = 200 ] || admin_failed=1
+  g_token=$(curl -s -H 'Content-Type: application/json' -d '{"email":"compat-admin@example.com","password":"Compat5678"}' "$b_url/admin/api/v1/auth/login" |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')
+  curl -sf -H "Authorization: Bearer $g_token" "$b_url/admin/api/v1/upload/folder-structure" >"$work/folders-grapi.json" || admin_failed=1
+  tree='import json,sys
+def norm(nodes): return sorted(({"id": n["id"], "name": n["name"], "children": norm(n.get("children") or [])} for n in nodes), key=lambda n: n["id"])
+print(json.dumps(norm(json.load(open(sys.argv[1]))["data"]), sort_keys=True))'
+  if [ "$(python3 -c "$tree" "$work/folders-strapi.json")" = "$(python3 -c "$tree" "$work/folders-grapi.json")" ]; then
+    echo "Strapi folder tree on grapi: identical ($(grep -o '"name"' "$work/folders-grapi.json" | wc -l | tr -d ' ') folders)"
+  else
+    echo "Strapi folder tree on grapi: DIFFERENT"
+    python3 -c "$tree" "$work/folders-strapi.json"
+    python3 -c "$tree" "$work/folders-grapi.json"
+    admin_failed=1
+  fi
   ;;
 *)
   echo "error: unknown mode $mode" >&2
