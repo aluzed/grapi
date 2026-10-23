@@ -19,6 +19,11 @@ type Stored struct {
 	Hash   string
 }
 
+// HasTable reports whether the table exists in the current schema.
+func HasTable(ctx context.Context, d *db.DB, name string) (bool, error) {
+	return hasTable(ctx, d, name)
+}
+
 func hasTable(ctx context.Context, d *db.DB, name string) (bool, error) {
 	var query string
 	if d.Dialect.Name() == "postgres" {

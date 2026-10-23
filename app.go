@@ -589,6 +589,9 @@ func (a *App) setup(p *Project) (*Server, error) {
 			return nil, fmt.Errorf("register: %w", err)
 		}
 	}
+	if err := a.disableMigrations(ctx, p); err != nil {
+		return nil, fmt.Errorf("content type migrations: %w", err)
+	}
 	if err := a.syncHook(ctx, hook.BeforeSync, res.Set, d); err != nil {
 		return nil, fmt.Errorf("%s: %w", hook.BeforeSync, err)
 	}
@@ -716,6 +719,14 @@ func (a *App) setup(p *Project) (*Server, error) {
 	if err := adm.Bootstrap(ctx); err != nil {
 		a.stopWebhooks()
 		return nil, fmt.Errorf("admin bootstrap: %w", err)
+	}
+	if err := a.enableMigrations(ctx, p, docs); err != nil {
+		a.stopWebhooks()
+		return nil, fmt.Errorf("content type migrations: %w", err)
+	}
+	if err := storeFlags(ctx, d, res.Set); err != nil {
+		a.stopWebhooks()
+		return nil, err
 	}
 	// After the sync and once the services exist, so that a handler can seed.
 	if err := a.syncHook(ctx, hook.AfterSync, res.Set, d); err != nil {
