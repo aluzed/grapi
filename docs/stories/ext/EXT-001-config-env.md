@@ -27,7 +27,7 @@ Charger la configuration du projet, avec la même structure de clés que Strapi,
 - Les valeurs fonctionnelles (origin CORS calculée, `responses.handlers`) : disponibles seulement en mode framework Go (`EXT-002`).
 
 ## Critères d'acceptation
-- [ ] La config de dev-freelance (server, database, admin, api, middlewares, plugins) se transcrit en YAML et donne le même objet fusionné que Strapi (dump comparé sur le banc).
+- [x] La config de dev-freelance (server, database, admin, api, middlewares, plugins) se transcrit en YAML et donne le même objet fusionné que Strapi (dump comparé sur le banc).
 - [x] `${env.bool:X}` vaut `false` pour `X=1` (comportement Strapi conservé).
 - [x] `${env.oneOf:DB:postgres|sqlite:mysql}` fait échouer le démarrage (défaut hors liste).
 - [x] `${file:dkim/private.key}` injecte le contenu du fichier ; un fichier absent fait échouer le démarrage.
@@ -35,7 +35,9 @@ Charger la configuration du projet, avec la même structure de clés que Strapi,
 
 ## Avancement
 - Fait : `internal/config` (YAML, JSON, directives, `.env`, alias, fusion lodash, noms réservés, contrôle de type des clés lues), branché dans `grapi start` ; doc `docs/configuration.md`.
-- Reste : TOML, dump comparé à Strapi sur la config dev-freelance, accès typé complet (`app.Config().Server.Port`), valeurs par défaut des autres fichiers.
+- Reste : TOML, accès typé complet (`app.Config().Server.Port`), valeurs par défaut des autres fichiers.
+
+- Config de dev-freelance transcrite en YAML (`compat/fixtures/devfreelance/config-yaml`) : `TestDevFreelanceConfigTranscription` compare chaque feuille à l'objet fusionné de Strapi (`loadConfiguration` sur les fichiers TypeScript, mêmes variables d'environnement, `testdata/devfreelance-config.json`). Les directives s'imbriquent maintenant (`${file:dkim/${env:DKIM_PRIVATE_KEY}}`, le chemin de la clé DKIM de `plugins.ts`). Limite de la transcription : `ssl: env.bool(...) && {key, cert, ...}` de `database.ts` n'a pas d'équivalent sans condition, `ssl` reste le booléen. Hors objet fusionné, grapi calcule où il s'en sert les URL absolues, le chemin de l'admin et les défauts d'`openapi` et de `transfer`.
 
 ## Notes techniques
 - Garder une table de correspondance documentée « clé Strapi » vers « clé grapi » : identique sauf exception justifiée.

@@ -10,7 +10,7 @@ import (
 
 // A directive is ${env:KEY}, ${env:KEY:default}, ${env.<helper>:KEY:default},
 // ${env.oneOf:KEY:a|b|c:default} or ${file:path}.
-var directive = regexp.MustCompile(`\$\{(env(?:\.[a-zA-Z]+)?|file):([^}]*)\}`)
+var directive = regexp.MustCompile(`\$\{(env(?:\.[a-zA-Z]+)?|file):([^{}]*)\}`)
 
 type resolver struct {
 	env  Env
@@ -46,6 +46,31 @@ func (r *resolver) resolve(v any, path string) (any, error) {
 }
 
 func (r *resolver) resolveString(s, path string) (any, error) {
+	// A directive inside another one (${file:dkim/${env:KEY}}) is replaced
+	// by its text first, innermost first.
+	for {
+		nested := false
+		locs := directive.FindAllStringSubmatchIndex(s, -1)
+		for i := len(locs) - 1; i >= 0; i-- {
+			l := locs[i]
+			if strings.Count(s[:l[0]], "${") <= strings.Count(s[:l[0]], "}") {
+				continue
+			}
+			v, err := r.run(s[l[2]:l[3]], s[l[4]:l[5]], path)
+			if err != nil {
+				return nil, err
+			}
+			text := ""
+			if v != nil {
+				text = fmt.Sprint(v)
+			}
+			s = s[:l[0]] + text + s[l[1]:]
+			nested = true
+		}
+		if !nested {
+			break
+		}
+	}
 	locs := directive.FindAllStringSubmatchIndex(s, -1)
 	if len(locs) == 0 {
 		return s, nil

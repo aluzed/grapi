@@ -24,7 +24,7 @@ grapi reads the same configuration keys as Strapi 5, from declarative files inst
 | `${env.oneOf:KEY:a\|b\|c:default}` | `env.oneOf`: a default outside the list fails the start |
 | `${file:path/to/file}` | `fs.readFileSync` (relative to the project root; missing file fails the start) |
 
-A value that is a single directive keeps the directive's type; a directive inside a longer string is concatenated.
+A value that is a single directive keeps the directive's type; a directive inside a longer string is concatenated. Directives nest, innermost first: `${file:dkim/${env:DKIM_PRIVATE_KEY}}` reads the file the variable names, as `path.resolve(env('STRAPI_PATH'), 'dkim', env('DKIM_PRIVATE_KEY'))` would.
 
 A key that is set but empty counts as set, as with Strapi's `env()`.
 
