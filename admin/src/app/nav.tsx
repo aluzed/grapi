@@ -15,7 +15,7 @@ export const navItems: NavItem[] = [
     to: '/content-type-builder',
     label: 'nav.contentTypeBuilder',
     icon: <Boxes className={icon} />,
-    allowed: (p, info) => Boolean(info?.develop) && can(p, 'plugin::content-type-builder.read'),
+    allowed: (p) => can(p, 'plugin::content-type-builder.read'),
   },
   { to: '/media-library', label: 'nav.mediaLibrary', icon: <Image className={icon} />, allowed: (p) => can(p, 'plugin::upload.read') },
   {

@@ -24,24 +24,11 @@ import { UPRoleEditor, UPRoles } from '@/pages/settings/up/UPRoles'
 import { UPAdvanced, UPEmails, UPProviders } from '@/pages/settings/up/UPSettings'
 import { Users } from '@/pages/settings/Users'
 import { Webhooks } from '@/pages/settings/Webhooks'
+import { ContentTypeBuilder } from '@/pages/ctb/ContentTypeBuilder'
 import { MediaLibrary } from '@/pages/media/MediaLibrary'
-import { Soon } from '@/pages/Soon'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
 import { Layout } from './Layout'
 import { navItems } from './nav'
-
-const section = (to: string) => {
-  const item = navItems.find((i) => i.to === to)
-  if (!item) throw new Error(`no nav item ${to}`)
-  return {
-    path: `${to.slice(1)}/*`,
-    element: (
-      <RequirePermission allowed={item.allowed}>
-        <Soon title={item.label} />
-      </RequirePermission>
-    ),
-  }
-}
 
 export const router = createBrowserRouter(
   [
@@ -71,7 +58,7 @@ export const router = createBrowserRouter(
             { path: 'single-types/:uid', element: <EditView /> },
           ],
         },
-        section('/content-type-builder'),
+        { path: 'content-type-builder', element: <RequirePermission allowed={navItems.find((i) => i.to === '/content-type-builder')!.allowed}><ContentTypeBuilder /></RequirePermission> },
         { path: 'media-library', element: <RequirePermission allowed={navItems.find((i) => i.to === '/media-library')!.allowed}><MediaLibrary /></RequirePermission> },
         {
           path: 'settings',

@@ -1062,7 +1062,7 @@ func TestAdminContentTypeBuilder(t *testing.T) {
 		t.Fatalf("update-schema: %d %v", s, b)
 	}
 	book, err := os.ReadFile(filepath.Join(dir, "src/api/book/content-types/book/schema.json"))
-	if err != nil || !strings.Contains(string(book), `"inversedBy": "books"`) || !strings.Contains(string(book), `"collectionName": "books"`) {
+	if err != nil || !strings.Contains(string(book), `"inversedBy": "books"`) || !strings.Contains(string(book), `"collectionName": "books"`) || !regexp.MustCompile(`"title": \{\s*"type": "string"`).Match(book) {
 		t.Fatalf("book schema: %s %v", book, err)
 	}
 	tag, _ := os.ReadFile(tagFile)

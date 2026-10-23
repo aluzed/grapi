@@ -242,9 +242,29 @@ func attributesOf(uid string, list []map[string]any, p *plan, at []string, dp bo
 				}
 			}
 		}
-		setRaw(&attrs, name, out)
+		setRaw(&attrs, name, attributeJSON(out))
 	}
 	return &attrs, inverses
+}
+
+// attributeJSON writes type first, then the other keys sorted: stable
+// files, shaped like Strapi's.
+func attributeJSON(m map[string]any) *schema.OrderedMap[json.RawMessage] {
+	var out schema.OrderedMap[json.RawMessage]
+	if t, ok := m["type"]; ok {
+		setRaw(&out, "type", t)
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		if k != "type" {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		setRaw(&out, k, m[k])
+	}
+	return &out
 }
 
 func collectionName(plural string) string { return strings.ReplaceAll(plural, "-", "_") }
@@ -401,7 +421,7 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 				continue
 			}
 		}
-		setRaw(&attrs, name, attr)
+		setRaw(&attrs, name, attributeJSON(attr))
 		setRaw(top, "attributes", attrs)
 	}
 	return p
