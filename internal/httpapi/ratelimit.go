@@ -6,29 +6,14 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/aluzed/grapi/internal/ratelimit"
 )
 
 // RateLimit is users-permissions' ratelimit config (koa2-ratelimit).
-type RateLimit struct {
-	Disabled bool
-	Interval time.Duration
-	Max      int
-}
-
-type window struct {
-	count int
-	reset time.Time
-}
-
-type limiter struct {
-	mu   sync.Mutex
-	hits map[string]*window
-	last time.Time
-}
+type RateLimit = ratelimit.Config
 
 // Routes whose body has no email identifier: keying them on body.email
 // would let a caller get a fresh bucket per request.
@@ -66,42 +51,6 @@ func prefixKey(p, ip string, body []byte) string {
 	return strings.ToLower(email) + ":" + rp + ":" + ip
 }
 
-// allow counts a hit and sets the X-RateLimit headers; false past max.
-func (l *limiter) allow(w http.ResponseWriter, key string, cfg RateLimit, now time.Time) bool {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if l.hits == nil {
-		l.hits = map[string]*window{}
-	}
-	if now.Sub(l.last) > cfg.Interval {
-		for k, v := range l.hits {
-			if now.After(v.reset) {
-				delete(l.hits, k)
-			}
-		}
-		l.last = now
-	}
-	win := l.hits[key]
-	if win == nil || now.After(win.reset) {
-		win = &window{reset: now.Add(cfg.Interval)}
-		l.hits[key] = win
-	}
-	win.count++
-	remaining := cfg.Max - win.count
-	if remaining < 0 {
-		remaining = 0
-	}
-	h := w.Header()
-	h.Set("X-RateLimit-Limit", strconv.Itoa(cfg.Max))
-	h.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
-	h.Set("X-RateLimit-Reset", strconv.FormatInt(win.reset.Unix(), 10))
-	if win.count > cfg.Max {
-		h.Set("Retry-After", strconv.Itoa(int(win.reset.Sub(now).Seconds()+0.999)))
-		return false
-	}
-	return true
-}
-
 var errRateLimit = newError(http.StatusTooManyRequests, "RateLimitError", "Too many requests, please try again later.")
 
 // rateLimited runs the users-permissions rateLimit route middleware.
@@ -122,7 +71,7 @@ func (s *Server) rateLimited(w http.ResponseWriter, r *http.Request) bool {
 		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
 	key := prefixKey(r.URL.Path, s.cfg.Proxy.IP(r), body)
-	if s.limiter.allow(w, key, cfg, time.Now()) {
+	if s.limiter.Allow(w, key, cfg, time.Now()) {
 		return false
 	}
 	writeError(w, errRateLimit, s.log)

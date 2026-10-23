@@ -13,6 +13,7 @@ import (
 	"github.com/aluzed/grapi/internal/clientip"
 	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/ratelimit"
 )
 
 func seconds(c *config.Config, key string) time.Duration {
@@ -24,6 +25,7 @@ func seconds(c *config.Config, key string) time.Duration {
 // .env under ADMIN_JWT_SECRET.
 func adminConfig(c *config.Config, dir string, mail *email.Service, proxy clientip.Proxy, log *slog.Logger) (adminapi.Config, error) {
 	cfg := adminapi.Config{Proxy: proxy, Email: mail}
+	cfg.RateLimit = rateLimitConfig(c, "admin.rateLimit", ratelimit.Config{Interval: 5 * time.Minute, Max: 5})
 	cfg.Path, _ = c.String("admin.url")
 	if strings.HasPrefix(cfg.Path, "http") || cfg.Path == "" {
 		cfg.Path = "/admin"

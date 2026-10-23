@@ -33,7 +33,8 @@ Le même rate limiting, avec les mêmes clés, la même configuration et le mêm
 - Vérifié dans Strapi 5.59 : `POST /api/email` n'a pas de rate limit ; les routes limitées sont les 6 de grapi plus `/connect/(.*)`, qui viendra avec `AUTH-005`. Les mutations GraphQL d'auth partagent le compteur des routes REST (`PLG-004`).
 - Critères prouvés : `TestLoginRateLimitIgnoresIdentifier` (11 identifiants différents et un `X-Forwarded-For` falsifié : la 11e tentative donne 429), `TestLoginRateLimitUsesProxyClientIP` (`server.proxy.koa` : une IP client par compteur ; `maxIpsCount` écarte une première adresse forgée), banc dev-freelance `ratelimit-login-11` pour le corps du 429.
 - `server.proxy` lu comme Strapi 5 : `koa`, `ipHeader`, `maxIpsCount` (`internal/clientip`, port de `request.ip` de Koa). Un `proxy: true` booléen ne fait plus confiance aux en-têtes (Strapi ne lit que `proxy.koa`) : avant, grapi croyait `X-Forwarded-For` là où Strapi l'ignore, ce qui permettait de contourner la limite.
-- Reste : `/connect/(.*)` (avec `AUTH-005`), routes admin (`admin.rateLimit`), stockage Redis.
+- Admin : `admin.rateLimit` (5 essais par 5 minutes par défaut, clé `email:chemin:ip`) sur login et register-admin, les deux routes que Strapi limite (`TestAdminLoginRateLimit`). Le compteur vit dans `internal/ratelimit`, partagé avec users-permissions.
+- Reste : `/connect/(.*)` (avec `AUTH-005`), stockage Redis.
 
 ## Notes techniques
 - `ulule/limiter/v3` (mémoire + Redis) ou un compteur maison à fenêtre fixe. Le comportement de koa2-ratelimit est une fenêtre fixe, à reproduire pour ne pas surprendre.

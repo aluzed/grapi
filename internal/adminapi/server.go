@@ -21,6 +21,7 @@ import (
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/ratelimit"
 	"github.com/aluzed/grapi/internal/webhooks"
 	"github.com/aluzed/grapi/schema"
 )
@@ -42,6 +43,8 @@ type Config struct {
 	Path     string
 	Sessions session.Config
 	Cookie   Cookie
+	// RateLimit is admin.rateLimit, on login and register-admin.
+	RateLimit ratelimit.Config
 	// Proxy is server.proxy: the client IP, and X-Forwarded-Proto telling
 	// HTTPS when trusted.
 	Proxy clientip.Proxy
@@ -101,6 +104,7 @@ type Config struct {
 // Server serves the admin.
 type Server struct {
 	cfg        Config
+	limiter    ratelimit.Limiter
 	docs       *document.Service
 	store      store.Store
 	e          *query.Engine

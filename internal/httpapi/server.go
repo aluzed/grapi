@@ -21,6 +21,7 @@ import (
 	"github.com/aluzed/grapi/internal/jsnum"
 	"github.com/aluzed/grapi/internal/openapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/ratelimit"
 	"github.com/aluzed/grapi/schema"
 )
 
@@ -62,7 +63,7 @@ type Server struct {
 	upSessions *session.Manager
 	routes     []route
 	handler    http.Handler
-	limiter    limiter
+	limiter    ratelimit.Limiter
 	gql        *graphql.Schema
 	// customOps are the OpenAPI operations of the custom routes.
 	customOps []openapi.Operation

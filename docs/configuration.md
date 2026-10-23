@@ -36,6 +36,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `server.proxy`: `koa: true` trusts the proxy headers, as Koa does for Strapi: the client IP (rate limits, audit logs) is the first address of `ipHeader` (`X-Forwarded-For` by default), after keeping only the last `maxIpsCount` ones when it is set, and `X-Forwarded-Proto: https` marks the admin cookie `Secure`. Strapi 5 reads `server.proxy.koa` only, so `proxy: true` trusts nothing (grapi logs a warning).
 
+`admin.rateLimit`: `enabled` (true), `interval` (5 minutes, in ms or as `{min: 5}`), `max` (5), as Strapi: admin login and register-admin are limited per email, path and client IP, past the limit with Strapi's 429 `RateLimitError`. `plugins.users-permissions.config.ratelimit` does the same for the users-permissions auth routes (1 minute, 10).
+
 `server.webhooks`: `retries` (3; Strapi makes none), `defaultHeaders`, and `blockPrivateNetworks` (false), a grapi option that refuses deliveries to loopback, private and link-local addresses.
 
 `api.documents.strictRelations` (false by default): required relations and media are enforced on non-draft writes, as in Strapi. A value other than a boolean stops the start (Strapi fails on the first write).

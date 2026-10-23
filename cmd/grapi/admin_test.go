@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -20,6 +21,13 @@ func TestAdminCommands(t *testing.T) {
 		t.Fatalf("new: %s", out.String())
 	}
 	project := filepath.Join(dir, "demo")
+	// The test logs in more often than admin.rateLimit allows.
+	f, err := os.OpenFile(filepath.Join(project, "config", "admin.yaml"), os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = f.WriteString("rateLimit:\n  enabled: false\n")
+	_ = f.Close()
 	out.Reset()
 	if code := run([]string{"admin:create-user", "-dir", project, "--email", "ops@example.com", "--firstname", "Ops", "--password", "Passw0rd"}, &out, &out); code == 0 {
 		t.Fatal("the roles do not exist before the first start")

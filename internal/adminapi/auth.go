@@ -20,8 +20,8 @@ const RefreshCookie = "grapi_admin_refresh"
 
 func (s *Server) authRoutes() {
 	s.handle("GET /auth/init", s.initInfo)
-	s.handle("POST /auth/register-admin", s.registerAdmin)
-	s.handle("POST /auth/login", s.login)
+	s.handle("POST /auth/register-admin", s.rateLimited(s.registerAdmin))
+	s.handle("POST /auth/login", s.rateLimited(s.login))
 	s.handle("POST /auth/access-token", s.accessToken)
 	s.handle("POST /auth/logout", s.logout)
 	s.handle("POST /auth/forgot-password", s.forgotPassword)

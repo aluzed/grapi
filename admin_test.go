@@ -2856,3 +2856,25 @@ func TestAdminLocaleRestrictedRead(t *testing.T) {
 		t.Fatalf("en list: %d", s)
 	}
 }
+
+func TestAdminLoginRateLimit(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "basic")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	login := func(email string) (int, map[string]any) {
+		s, b, _ := c.do("POST", "/auth/login", `{"email":"`+email+`","password":"wrong"}`)
+		return s, b
+	}
+	for i := range 5 {
+		if s, _ := login("ada@example.com"); s != 400 {
+			t.Fatalf("attempt %d: %d", i+1, s)
+		}
+	}
+	if s, b := login("Ada@example.com"); s != 429 || fmt.Sprint(b["error"]) != fmt.Sprint(map[string]any{"status": float64(429), "name": "RateLimitError", "message": "Too many requests, please try again later.", "details": map[string]any{}}) {
+		t.Fatalf("6th attempt, the email case aside: %d %v", s, b)
+	}
+	if s, _ := login("bob@example.com"); s != 400 {
+		t.Fatalf("another email has its own counter: %d", s)
+	}
+}

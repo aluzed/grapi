@@ -1,9 +1,7 @@
 package httpapi
 
 import (
-	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestPrefixKey(t *testing.T) {
@@ -22,24 +20,5 @@ func TestPrefixKey(t *testing.T) {
 	}
 	if got := prefixKey("/api/auth/forgot-password", "ip", []byte(`{}`)); got != "unknownIdentifier:/api/auth/forgot-password:ip" {
 		t.Errorf("no email: %s", got)
-	}
-}
-
-func TestLimiter(t *testing.T) {
-	var l limiter
-	cfg := RateLimit{Interval: time.Minute, Max: 2}
-	now := time.Now()
-	for i := range 3 {
-		w := httptest.NewRecorder()
-		ok := l.allow(w, "k", cfg, now)
-		if ok != (i < 2) {
-			t.Fatalf("hit %d allowed=%v", i+1, ok)
-		}
-		if i == 2 && w.Header().Get("Retry-After") == "" {
-			t.Fatal("Retry-After missing")
-		}
-	}
-	if !l.allow(httptest.NewRecorder(), "k", cfg, now.Add(61*time.Second)) {
-		t.Fatal("a new window must start after the interval")
 	}
 }

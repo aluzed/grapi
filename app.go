@@ -39,6 +39,7 @@ import (
 	"github.com/aluzed/grapi/internal/media/provider"
 	"github.com/aluzed/grapi/internal/openapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
+	"github.com/aluzed/grapi/internal/ratelimit"
 	"github.com/aluzed/grapi/internal/registry"
 	"github.com/aluzed/grapi/internal/webhooks"
 )
@@ -173,7 +174,7 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 			}
 		}
 	}
-	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit")
+	cfg.Users.RateLimit = rateLimitConfig(c, up+"ratelimit", ratelimit.Config{Interval: time.Minute, Max: 10})
 	// Strapi 5 reads server.proxy.koa only: a boolean proxy trusts nothing.
 	switch p := c.Get("server.proxy").(type) {
 	case bool:
@@ -342,10 +343,9 @@ func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
 	return p, nil
 }
 
-// rateLimitConfig reads a koa2-ratelimit config: interval in ms or as
-// {min: 5}, users-permissions' defaults (1 minute, 10 requests).
-func rateLimitConfig(c *config.Config, key string) httpapi.RateLimit {
-	rl := httpapi.RateLimit{Interval: time.Minute, Max: 10}
+// rateLimitConfig reads a koa2-ratelimit config over defaults: interval
+// in ms or as {min: 5}.
+func rateLimitConfig(c *config.Config, key string, rl ratelimit.Config) ratelimit.Config {
 	if v, ok := c.Bool(key + ".enabled"); ok && !v {
 		rl.Disabled = true
 	}
