@@ -190,5 +190,11 @@
   "rel.up": "Move up",
   "rel.down": "Move down",
   "rel.none": "No relation",
-  "rel.noResult": "No result"
+  "rel.noResult": "No result",
+  "comp.add": "Add",
+  "comp.addEntry": "Add an entry",
+  "comp.remove": "Remove",
+  "comp.choose": "Component to add",
+  "comp.empty": "No component",
+  "comp.entry": "Entry {n}"
 }

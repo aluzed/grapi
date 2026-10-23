@@ -75,10 +75,11 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | Méthode et chemin | Rôle |
 |---|---|
 | `GET /content-manager/models` | Content types lisibles : `uid`, `kind`, `info`, `draftAndPublish`, `localized`, `attributes` lisibles, `mainField`, `listColumns`, `labels`, `settings` (taille de page, tri par défaut, recherche, filtres, actions groupées) et `permissions` de l'utilisateur. Lit la configuration de vue de Strapi (`plugin_content_manager_configuration_content_types::<uid>`) quand elle existe. |
+| `GET /content-manager/components` | Composants : `uid`, `category`, `info`, `attributes`, `fields` (ordre du schéma) |
 | `GET /content-manager/locales` | Locales i18n, avec `isDefault` |
 | `GET /content-manager/collection-types/{uid}?page=&pageSize=&sort=&_q=&filters=&locale=&status=` | Liste. `filters` est un objet JSON au format des filtres REST, `status` vaut `draft` (défaut) ou `published`. Chaque document porte `status` : `draft`, `published` ou `modified`. |
 | `GET /content-manager/relations/{uid}/{field}?_q=&page=&pageSize=&locale=` | Documents que la relation `field` peut viser (hors morph) : `{id, documentId, label}`, `label` étant le `mainField` de la cible, avec `meta.pagination` |
-| `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document, relations, médias et composants peuplés |
+| `GET /content-manager/collection-types/{uid}/{documentId}?locale=&status=` | Un document chargé en profondeur : relations, médias, composants et zones dynamiques à tous les niveaux |
 | `POST /content-manager/collection-types/{uid}` | `{data, locale}`. Renseigne `createdBy` et `updatedBy`. Les relations s'écrivent comme dans l'API REST (`{set: [{documentId}]}` remplace la liste dans cet ordre, `connect` et `disconnect` sont acceptés). |
 | `PUT /content-manager/collection-types/{uid}/{documentId}` | `{data, locale}`. Renseigne `updatedBy`. |
 | `DELETE /content-manager/collection-types/{uid}/{documentId}?locale=` | Supprime le document (dans la locale) |
@@ -90,5 +91,7 @@ Les droits viennent des actions `plugin::content-manager.explorer.{read,create,u
 | `PUT /content-manager/single-types/{uid}` | `{data, locale}` : crée le document (action `create`) ou le met à jour (`update`) |
 | `DELETE /content-manager/single-types/{uid}?locale=` | Supprime le document |
 | `POST /content-manager/single-types/{uid}/actions/publish` et `unpublish` | `{locale}` |
+
+Une erreur de validation du document porte `details.errors: [{path, message}]` avec le chemin complet (`links.0.label`).
 
 Les actions groupées traitent chaque document séparément et renvoient `{count, documentIds, errors: [{documentId, message}]}` : un document invalide ou hors des droits n'empêche pas les autres.

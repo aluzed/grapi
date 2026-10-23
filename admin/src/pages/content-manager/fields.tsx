@@ -1,0 +1,361 @@
+import { useState } from 'react'
+import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Checkbox, SelectField, TextField } from '@/components/ui/field'
+import type { Attribute, ComponentModel, Model } from '@/lib/types'
+import { useI18n } from '@/providers/I18nProvider'
+import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
+
+export type Values = Record<string, unknown>
+
+export type FieldContext = {
+  model: Model
+  models: Model[]
+  components: Map<string, ComponentModel>
+  locale?: string
+  labels: Record<string, string>
+}
+
+const scalarTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
+
+// isEditable: relations only at the root of a content type (their target
+// search is keyed by the content type's field).
+export function isEditable(attr: Attribute, root: boolean): boolean {
+  if (scalarTypes.has(attr.type)) return true
+  if (attr.type === 'relation') return root && isEditableRelation(attr)
+  return attr.type === 'component' || attr.type === 'dynamiczone'
+}
+
+export function toInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown {
+  switch (attr.type) {
+    case 'relation':
+      return relationItems(v, attr, ctx.models)
+    case 'component': {
+      const c = ctx.components.get(attr.component ?? '')
+      if (!c) return attr.repeatable ? [] : null
+      if (attr.repeatable) return ((v as Values[] | null) ?? []).map((item) => toObject(c, item, ctx))
+      return v ? toObject(c, v as Values, ctx) : null
+    }
+    case 'dynamiczone':
+      return ((v as Values[] | null) ?? []).flatMap((item) => {
+        const c = ctx.components.get(String(item.__component))
+        return c ? [{ ...toObject(c, item, ctx), __component: c.uid }] : []
+      })
+  }
+  if (v === null || v === undefined) return attr.type === 'boolean' ? false : ''
+  if (attr.type === 'json') return JSON.stringify(v, null, 2)
+  if (attr.type === 'datetime') return String(v).slice(0, 16)
+  if (attr.type === 'time') return String(v).slice(0, 5)
+  return v
+}
+
+export function toObject(c: ComponentModel, src: Values | null, ctx: FieldContext): Values {
+  const out: Values = {}
+  if (src?.id !== undefined) out.id = src.id
+  for (const name of c.fields) {
+    const attr = c.attributes[name]
+    if (attr && isEditable(attr, false)) out[name] = toInput(attr, src ? src[name] : (attr.default ?? null), ctx)
+  }
+  return out
+}
+
+export class JSONError extends Error {}
+
+// fromInput converts the form value back; undefined leaves the field out.
+export function fromInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown {
+  switch (attr.type) {
+    case 'relation':
+      return { set: ((v as RelationItem[] | undefined) ?? []).map((i) => ({ documentId: i.documentId })) }
+    case 'component': {
+      const c = ctx.components.get(attr.component ?? '')
+      if (!c) return undefined
+      if (attr.repeatable) return ((v as Values[] | undefined) ?? []).map((item) => fromObject(c, item, ctx))
+      return v ? fromObject(c, v as Values, ctx) : null
+    }
+    case 'dynamiczone':
+      return ((v as Values[] | undefined) ?? []).flatMap((item) => {
+        const c = ctx.components.get(String(item.__component))
+        return c ? [{ ...fromObject(c, item, ctx), __component: c.uid }] : []
+      })
+    case 'boolean':
+      return Boolean(v)
+  }
+  if (v === '' || v === undefined) return attr.type === 'password' ? undefined : null
+  switch (attr.type) {
+    case 'integer':
+      return Number.parseInt(String(v), 10)
+    case 'float':
+    case 'decimal':
+      return Number(v)
+    case 'json':
+      try {
+        return JSON.parse(String(v))
+      } catch {
+        throw new JSONError()
+      }
+    case 'datetime':
+      return new Date(String(v)).toISOString()
+    case 'time':
+      return `${String(v)}:00.000`
+  }
+  return v
+}
+
+function fromObject(c: ComponentModel, item: Values, ctx: FieldContext): Values {
+  const out: Values = {}
+  if (item.id !== undefined) out.id = item.id
+  for (const name of c.fields) {
+    const attr = c.attributes[name]
+    if (!attr || !isEditable(attr, false)) continue
+    const v = fromInput(attr, item[name], ctx)
+    if (v !== undefined) out[name] = v
+  }
+  return out
+}
+
+function ScalarField({ name, attr, text, value, error, onChange }: { name: string; attr: Attribute; text: string; value: unknown; error?: string; onChange: (v: unknown) => void }) {
+  const common = { label: text, error, name }
+  switch (attr.type) {
+    case 'boolean':
+      return <Checkbox label={text} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
+    case 'enumeration':
+      return (
+        <SelectField {...common} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
+          <option value="">-</option>
+          {attr.enum?.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </SelectField>
+      )
+    case 'text':
+    case 'richtext':
+    case 'json':
+      return (
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="text-sm font-medium">
+            {text}
+            <textarea
+              name={name}
+              rows={attr.type === 'text' ? 4 : 10}
+              value={String(value ?? '')}
+              onChange={(e) => onChange(e.target.value)}
+              aria-invalid={error ? true : undefined}
+              className={`mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm font-normal focus:border-primary focus:outline-none aria-[invalid=true]:border-destructive ${attr.type === 'json' ? 'font-mono' : ''}`}
+            />
+          </label>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+      )
+  }
+  const type = { integer: 'number', float: 'number', decimal: 'number', email: 'email', password: 'password', date: 'date', time: 'time', datetime: 'datetime-local' }[attr.type] ?? 'text'
+  return (
+    <TextField
+      {...common}
+      type={type}
+      step={attr.type === 'integer' ? 1 : attr.type === 'float' || attr.type === 'decimal' ? 'any' : undefined}
+      autoComplete={attr.type === 'password' ? 'new-password' : 'off'}
+      value={String(value ?? '')}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={attr.type === 'password' ? '••••••••' : undefined}
+    />
+  )
+}
+
+const small =
+  'inline-flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs font-medium disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500'
+
+function ItemTools({ index, count, onMove, onRemove }: { index: number; count: number; onMove?: (d: number) => void; onRemove: () => void }) {
+  const { t } = useI18n()
+  return (
+    <span className="flex shrink-0 gap-1">
+      {onMove && (
+        <>
+          <button type="button" title={t('rel.up')} disabled={index === 0} onClick={() => onMove(-1)} className={`${small} border-border bg-surface`}>
+            <ArrowUp className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t('rel.up')}</span>
+          </button>
+          <button type="button" title={t('rel.down')} disabled={index === count - 1} onClick={() => onMove(1)} className={`${small} border-border bg-surface`}>
+            <ArrowDown className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t('rel.down')}</span>
+          </button>
+        </>
+      )}
+      <button type="button" title={t('comp.remove')} onClick={onRemove} className={`${small} border-destructive/40 bg-surface text-destructive`}>
+        <X className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{t('comp.remove')}</span>
+      </button>
+    </span>
+  )
+}
+
+function move<T>(list: T[], i: number, d: number): T[] {
+  const next = [...list]
+  const [item] = next.splice(i, 1)
+  if (item !== undefined) next.splice(i + d, 0, item)
+  return next
+}
+
+function Group({ title, tools, children }: { title: string; tools: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-border bg-background/50">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <span className="min-w-0 truncate text-sm font-medium">{title}</span>
+        {tools}
+      </div>
+      <div className="p-3">{children}</div>
+    </div>
+  )
+}
+
+function ComponentField({ attr, text, value, onChange, ctx }: { attr: Attribute; text: string; value: unknown; onChange: (v: unknown) => void; ctx: FieldContext }) {
+  const { t } = useI18n()
+  const c = ctx.components.get(attr.component ?? '')
+  if (!c) return null
+  const empty = () => toObject(c, null, ctx)
+  if (!attr.repeatable) {
+    const v = value as Values | null
+    return (
+      <fieldset className="flex flex-col gap-2 sm:col-span-2">
+        <legend className="mb-1.5 text-sm font-medium">{text}</legend>
+        {v ? (
+          <Group title={c.info.displayName} tools={<ItemTools index={0} count={1} onRemove={() => onChange(null)} />}>
+            <FieldsGrid attrs={c.attributes} fields={c.fields} values={v} onChange={(name, x) => onChange({ ...v, [name]: x })} ctx={ctx} root={false} />
+          </Group>
+        ) : (
+          <Button variant="outline" title={`${t('comp.add')} : ${c.info.displayName}`} icon={<Plus className="h-4 w-4" />} onClick={() => onChange(empty())} className="w-full md:w-auto">
+            {`${t('comp.add')} : ${c.info.displayName}`}
+          </Button>
+        )}
+      </fieldset>
+    )
+  }
+  const list = (value as Values[]) ?? []
+  return (
+    <fieldset className="flex flex-col gap-2 sm:col-span-2">
+      <legend className="mb-1.5 text-sm font-medium">{text}</legend>
+      {list.map((item, i) => (
+        <Group
+          key={String(item.id ?? `new-${i}`)}
+          title={`${c.info.displayName} · ${t('comp.entry', { n: String(i + 1) })}`}
+          tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
+        >
+          <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} />
+        </Group>
+      ))}
+      <Button variant="outline" title={t('comp.addEntry')} icon={<Plus className="h-4 w-4" />} onClick={() => onChange([...list, empty()])} className="w-full md:w-auto">
+        {t('comp.addEntry')}
+      </Button>
+    </fieldset>
+  )
+}
+
+function DynamicZoneField({ attr, text, value, onChange, ctx }: { attr: Attribute; text: string; value: unknown; onChange: (v: unknown) => void; ctx: FieldContext }) {
+  const { t } = useI18n()
+  const allowed = (attr.components ?? []).flatMap((uid) => {
+    const c = ctx.components.get(uid)
+    return c ? [c] : []
+  })
+  const [choice, setChoice] = useState(allowed[0]?.uid ?? '')
+  const list = (value as Values[]) ?? []
+  return (
+    <fieldset className="flex flex-col gap-2 sm:col-span-2">
+      <legend className="mb-1.5 text-sm font-medium">{text}</legend>
+      {list.length === 0 && <p className="text-xs text-muted">{t('comp.empty')}</p>}
+      {list.map((item, i) => {
+        const c = ctx.components.get(String(item.__component))
+        if (!c) return null
+        return (
+          <Group
+            key={`${c.uid}-${String(item.id ?? `new-${i}`)}`}
+            title={c.info.displayName}
+            tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
+          >
+            <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} />
+          </Group>
+        )
+      })}
+      {allowed.length > 0 && (
+        <div className="flex flex-col gap-2 md:flex-row md:items-end">
+          <SelectField label={t('comp.choose')} value={choice} onChange={(e) => setChoice(e.target.value)} className="md:w-72">
+            {allowed.map((c) => (
+              <option key={c.uid} value={c.uid}>
+                {c.info.displayName}
+              </option>
+            ))}
+          </SelectField>
+          <Button
+            variant="outline"
+            title={t('comp.add')}
+            icon={<Plus className="h-4 w-4" />}
+            className="w-full md:w-auto"
+            onClick={() => {
+              const c = ctx.components.get(choice)
+              if (c) onChange([...list, { ...toObject(c, null, ctx), __component: c.uid }])
+            }}
+          >
+            {t('comp.add')}
+          </Button>
+        </div>
+      )}
+    </fieldset>
+  )
+}
+
+export function FieldsGrid({
+  attrs,
+  fields,
+  values,
+  onChange,
+  ctx,
+  root,
+  errors = {},
+}: {
+  attrs: Record<string, Attribute>
+  fields: string[]
+  values: Values
+  onChange: (name: string, v: unknown) => void
+  ctx: FieldContext
+  root: boolean
+  errors?: Record<string, string>
+}) {
+  const { t } = useI18n()
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {fields.map((name) => {
+        const attr = attrs[name]
+        if (!attr) return null
+        const text = (root ? (ctx.labels[name] ?? name) : name) + (attr.required ? ' *' : '')
+        if (!isEditable(attr, root)) {
+          return (
+            <div key={name} className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">{text}</span>
+              <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted">{t('cm.notEditable')}</p>
+            </div>
+          )
+        }
+        switch (attr.type) {
+          case 'relation':
+            return (
+              <RelationField
+                key={name}
+                uid={ctx.model.uid}
+                name={name}
+                attr={attr}
+                label={text}
+                value={(values[name] as RelationItem[] | undefined) ?? []}
+                locale={ctx.locale}
+                onChange={(v) => onChange(name, v)}
+              />
+            )
+          case 'component':
+            return <ComponentField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
+          case 'dynamiczone':
+            return <DynamicZoneField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
+        }
+        return <ScalarField key={name} name={name} attr={attr} text={text} value={values[name]} error={errors[name]} onChange={(v) => onChange(name, v)} />
+      })}
+    </div>
+  )
+}

@@ -46,7 +46,8 @@ Pouvoir créer et modifier n'importe quel document (collection type ou single ty
 - Formulaire générique dans l'ordre du schéma pour les champs simples (texte, richtext et JSON en zone de texte, nombres, booléen, énumération, dates, uid sans génération, mot de passe jamais pré-rempli), valeurs par défaut, erreurs de validation du serveur par champ, enregistrer, publier, dépublier, supprimer avec confirmation, badge de statut.
 - Relations (hors morph) : recherche paginée des cibles libellées par leur `mainField` (`GET /content-manager/relations/{uid}/{field}`), ajout, retrait, réordonnancement, envoi en `set` dans l'ordre affiché. Testé de bout en bout (`TestAdminRelations`) et dans Chrome sur le fixture `relations`.
 - Single types : lecture, création au premier enregistrement, mise à jour, publication, dépublication, suppression (`/content-manager/single-types/{uid}`), même formulaire. Testé (`TestAdminSingleType`) et vérifié dans Chrome.
-- Reste : relations morph, statut des cibles, médias, composants, zones dynamiques, blocks, génération d'uid, locales, mise en page configurée (`ADM-005`).
+- Composants (simples et répétables, imbriqués) et zones dynamiques : ajout, retrait, réordonnancement, choix du composant, document chargé en profondeur (`populate` récursif) et renvoyé entier avec les `id` des composants. Erreurs de validation avec leur chemin (`links.0.label`). Testé (`TestAdminComponents`, `TestAdminValidationDetails`) et vérifié dans Chrome sur le fixture `components`.
+- Reste : relations dans les composants, relations morph, statut des cibles, médias, blocks, génération d'uid, locales, mise en page configurée (`ADM-005`).
 
 ## Hors périmètre
 - Preview (`ADM-009`), content history (`XTR-003`), review workflows (`XTR-004`) : ce sont des panneaux latéraux ajoutés par ces tickets.

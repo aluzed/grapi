@@ -1,122 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Save, Send, Trash2, Undo2 } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import { api, ApiError } from '@/lib/api'
 import { showError } from '@/lib/form'
-import type { Attribute, BulkResult, Entry, Model } from '@/lib/types'
+import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
-import { entryPath, label, useModels } from './hooks'
-import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
-
-const editableTypes = new Set(['string', 'text', 'richtext', 'email', 'password', 'uid', 'enumeration', 'integer', 'biginteger', 'float', 'decimal', 'boolean', 'date', 'time', 'datetime', 'json'])
-
-type Values = Record<string, unknown>
-
-const editable = (attr: Attribute) => editableTypes.has(attr.type) || isEditableRelation(attr)
+import { FieldsGrid, fromInput, isEditable, JSONError, toInput, type FieldContext, type Values } from './fields'
+import { entryPath, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
 
-function toInput(attr: Attribute, v: unknown, models: Model[]): unknown {
-  if (attr.type === 'relation') return relationItems(v, attr, models)
-  if (v === null || v === undefined) return attr.type === 'boolean' ? false : ''
-  if (attr.type === 'json') return JSON.stringify(v, null, 2)
-  if (attr.type === 'datetime') return String(v).slice(0, 16)
-  if (attr.type === 'time') return String(v).slice(0, 5)
-  return v
-}
+const singlePath = (uid: string) => `/content-manager/single-types/${encodeURIComponent(uid)}`
 
-// fromInput converts the form value back; undefined leaves the field out.
-function fromInput(attr: Attribute, v: unknown): unknown {
-  if (attr.type === 'relation') return { set: ((v as RelationItem[] | undefined) ?? []).map((i) => ({ documentId: i.documentId })) }
-  if (attr.type === 'boolean') return Boolean(v)
-  if (v === '' || v === undefined) return attr.type === 'password' ? undefined : null
-  switch (attr.type) {
-    case 'integer':
-      return Number.parseInt(String(v), 10)
-    case 'float':
-    case 'decimal':
-      return Number(v)
-    case 'json':
-      return JSON.parse(String(v))
-    case 'datetime':
-      return new Date(String(v)).toISOString()
-    case 'time':
-      return `${String(v)}:00.000`
-  }
-  return v
-}
-
-function Field({ name, attr, model, value, error, onChange }: { name: string; attr: Attribute; model: Model; value: unknown; error?: string; onChange: (v: unknown) => void }) {
-  const text = label(model, name) + (attr.required ? ' *' : '')
-  const common = { label: text, error, name }
-  switch (attr.type) {
-    case 'boolean':
-      return <Checkbox label={text} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
-    case 'enumeration':
-      return (
-        <SelectField {...common} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
-          <option value="">-</option>
-          {attr.enum?.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </SelectField>
-      )
-    case 'text':
-    case 'richtext':
-    case 'json':
-      return (
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label htmlFor={`f-${name}`} className="text-sm font-medium">
-            {text}
-          </label>
-          <textarea
-            id={`f-${name}`}
-            rows={attr.type === 'text' ? 4 : 10}
-            value={String(value ?? '')}
-            onChange={(e) => onChange(e.target.value)}
-            aria-invalid={error ? true : undefined}
-            className={`block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none aria-[invalid=true]:border-destructive ${attr.type === 'json' ? 'font-mono' : ''}`}
-          />
-          {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-      )
-  }
-  const type =
-    { integer: 'number', float: 'number', decimal: 'number', email: 'email', password: 'password', date: 'date', time: 'time', datetime: 'datetime-local' }[attr.type] ?? 'text'
-  return (
-    <TextField
-      {...common}
-      type={type}
-      step={attr.type === 'integer' ? 1 : attr.type === 'float' || attr.type === 'decimal' ? 'any' : undefined}
-      autoComplete={attr.type === 'password' ? 'new-password' : 'off'}
-      value={String(value ?? '')}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={attr.type === 'password' ? '••••••••' : undefined}
-    />
-  )
+export function useComponents() {
+  return useQuery({ queryKey: ['cm', 'components'], queryFn: () => api.get<ComponentModel[]>('/content-manager/components'), staleTime: 60_000 })
 }
 
 export function EditView() {
   const model = useModel()
   const { documentId } = useParams()
-  if (!model) return null
-  const single = model.kind === 'singleType'
-  return <Edit key={`${model.uid}/${documentId ?? 'create'}`} model={model} documentId={documentId} single={single} />
+  const components = useComponents()
+  if (!model || !components.data) return null
+  return <Edit key={`${model.uid}/${documentId ?? 'create'}`} model={model} documentId={documentId} single={model.kind === 'singleType'} components={components.data} />
 }
 
-const singlePath = (uid: string) => `/content-manager/single-types/${encodeURIComponent(uid)}`
-
-function Edit({ model, documentId, single }: { model: Model; documentId?: string; single: boolean }) {
+function Edit({ model, documentId, single, components }: { model: Model; documentId?: string; single: boolean; components: ComponentModel[] }) {
   const { t } = useI18n()
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -125,10 +40,14 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
   const [params] = useSearchParams()
   const locale = params.get('locale') ?? ''
   const loc = locale ? `?locale=${locale}` : ''
-  const fields = model.fields.filter((f) => !readOnlyFields.has(f)).map((f) => [f, model.attributes[f]!] as const)
+  const fields = model.fields.filter((f) => !readOnlyFields.has(f))
   const [values, setValues] = useState<Values>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const listPath = `/content-manager/collection-types/${encodeURIComponent(model.uid)}${locale ? `?locale=${locale}` : ''}`
+  const listPath = `/content-manager/collection-types/${encodeURIComponent(model.uid)}${loc}`
+  const ctx: FieldContext = useMemo(
+    () => ({ model, models, components: new Map(components.map((c) => [c.uid, c])), locale: locale || undefined, labels: model.labels }),
+    [model, models, components, locale],
+  )
 
   const entry = useQuery({
     queryKey: ['cm', 'entry', model.uid, documentId, locale],
@@ -147,23 +66,26 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
     if (single ? !entry.isSuccess : !creating && !entry.data) return
     const src: Values = entry.data ?? {}
     const next: Values = {}
-    for (const [name, attr] of fields) {
-      if (!editable(attr)) continue
-      next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], models)
+    for (const name of fields) {
+      const attr = model.attributes[name]
+      if (!attr || !isEditable(attr, true)) continue
+      next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
     setValues(next)
-    // fields derive from model, which keys this component.
+    // ctx and fields derive from props that key this component.
   }, [entry.data, entry.isSuccess, creating])
 
   const payload = (): Values | null => {
     const out: Values = {}
     const errs: Record<string, string> = {}
-    for (const [name, attr] of fields) {
-      if (!editable(attr)) continue
+    for (const name of fields) {
+      const attr = model.attributes[name]
+      if (!attr || !isEditable(attr, true)) continue
       try {
-        const v = fromInput(attr, values[name])
+        const v = fromInput(attr, values[name], ctx)
         if (v !== undefined) out[name] = v
-      } catch {
+      } catch (e) {
+        if (!(e instanceof JSONError)) throw e
         errs[name] = t('cm.invalidJson')
       }
     }
@@ -174,10 +96,8 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
   const refreshAll = () => queryClient.invalidateQueries({ queryKey: ['cm'] })
   const fail = (err: unknown) => {
     if (err instanceof ApiError) {
-      const path = (err.details as { errors?: { path: string[]; message: string }[] }).errors
-      if (path && path.length > 0) {
-        setErrors(Object.fromEntries(path.map((e) => [e.path[e.path.length - 1] ?? '', e.message])))
-      }
+      const list = err.fieldErrors()
+      if (list.length > 0) setErrors(Object.fromEntries(list.filter((e) => e.path.length === 1).map((e) => [e.path[0] ?? '', e.message])))
     }
     showError(err, undefined, t('common.error'))
   }
@@ -192,7 +112,7 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
       void refreshAll()
-      if (creating && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${locale ? `?locale=${locale}` : ''}`, { replace: true })
+      if (creating && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${loc}`, { replace: true })
     },
     onError: fail,
   })
@@ -230,9 +150,9 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
       <div className="space-y-4">
         {!single && (
           <div>
-          <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
-            {t('cm.backToList')}
-          </Button>
+            <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
+              {t('cm.backToList')}
+            </Button>
           </div>
         )}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -280,28 +200,8 @@ function Edit({ model, documentId, single }: { model: Model; documentId?: string
         <p className="text-sm text-muted">{t('common.loading')}</p>
       ) : (
         <Card>
-          <fieldset disabled={!canSave} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {fields.map(([name, attr]) =>
-              attr.type === 'relation' && editable(attr) ? (
-                <RelationField
-                  key={name}
-                  uid={model.uid}
-                  name={name}
-                  attr={attr}
-                  label={label(model, name) + (attr.required ? ' *' : '')}
-                  value={(values[name] as RelationItem[] | undefined) ?? []}
-                  locale={locale || undefined}
-                  onChange={(v) => setValues((s) => ({ ...s, [name]: v }))}
-                />
-              ) : editable(attr) ? (
-                <Field key={name} name={name} attr={attr} model={model} value={values[name]} error={errors[name]} onChange={(v) => setValues((s) => ({ ...s, [name]: v }))} />
-              ) : (
-                <div key={name} className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium">{label(model, name)}</span>
-                  <p className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted">{t('cm.notEditable')}</p>
-                </div>
-              ),
-            )}
+          <fieldset disabled={!canSave}>
+            <FieldsGrid attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
           </fieldset>
         </Card>
       )}

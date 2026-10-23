@@ -543,3 +543,64 @@ func TestAdminSingleType(t *testing.T) {
 		t.Fatalf("deleted: %v", b)
 	}
 }
+
+func TestAdminComponents(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "components")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("GET", "/content-manager/components", "")
+	if list := b["data"].([]any); len(list) != 8 {
+		t.Fatalf("components: %v", b)
+	}
+	const base = "/content-manager/collection-types/api::page.page"
+	s, b, _ := c.do("POST", base, `{"data":{"title":"Home","seo":{"metaTitle":"Home","noIndex":true},
+		"layout":{"heading":"Grid","columns":[{"width":6,"cell":{"text":"left"}},{"width":6,"cell":{"text":"right"}}]},
+		"body":[{"__component":"blocks.hero","headline":"Hi","cta":{"label":"Go","url":"/go"}},{"__component":"blocks.gallery","caption":"G","slides":3}]}}`)
+	if s != 201 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	id := dataOf(b)["documentId"].(string)
+	read := func() map[string]any {
+		_, b, _ := c.do("GET", base+"/"+id, "")
+		return dataOf(b)
+	}
+	got := read()
+	cols := got["layout"].(map[string]any)["columns"].([]any)
+	if len(cols) != 2 || cols[1].(map[string]any)["cell"].(map[string]any)["text"] != "right" {
+		t.Fatalf("nested components are populated: %v", got["layout"])
+	}
+	hero := got["body"].([]any)[0].(map[string]any)
+	if hero["__component"] != "blocks.hero" || hero["cta"].(map[string]any)["url"] != "/go" {
+		t.Fatalf("dynamic zone: %v", got["body"])
+	}
+	// The edit view sends the whole document back, ids included.
+	got["title"] = "Home page"
+	got["seo"].(map[string]any)["metaTitle"] = "Welcome"
+	body, _ := json.Marshal(map[string]any{"data": map[string]any{"title": got["title"], "seo": got["seo"], "layout": got["layout"], "body": got["body"]}})
+	if s, b, _ := c.do("PUT", base+"/"+id, string(body)); s != 200 {
+		t.Fatalf("update: %d %v", s, b)
+	}
+	got = read()
+	cols = got["layout"].(map[string]any)["columns"].([]any)
+	if got["seo"].(map[string]any)["metaTitle"] != "Welcome" || len(cols) != 2 || cols[0].(map[string]any)["cell"].(map[string]any)["text"] != "left" || len(got["body"].([]any)) != 2 {
+		t.Fatalf("after update: %v", got)
+	}
+}
+
+func TestAdminValidationDetails(t *testing.T) {
+	ts, _, stop := newAdminFixture(t, "components")
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	s, b, _ := c.do("POST", "/content-manager/collection-types/api::page.page", `{"data":{"title":"T","links":[{"url":"/x"}]}}`)
+	errs, _ := b["error"].(map[string]any)["details"].(map[string]any)["errors"].([]any)
+	if s != 400 || len(errs) == 0 {
+		t.Fatalf("validation details: %d %v", s, b)
+	}
+	if path := errs[0].(map[string]any)["path"].([]any); len(path) < 2 || path[0] != "links" {
+		t.Fatalf("error path: %v", errs)
+	}
+}

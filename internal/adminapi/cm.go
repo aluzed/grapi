@@ -426,7 +426,7 @@ func (s *Server) withStatus(ctx context.Context, uid string, locale any, listed 
 func asValidation(err error) error {
 	var ve *document.ValidationError
 	if errors.As(err, &ve) {
-		return &Error{Status: http.StatusBadRequest, Name: "ValidationError", Message: ve.Error()}
+		return &Error{Status: http.StatusBadRequest, Name: "ValidationError", Message: ve.Error(), Details: ve.Details}
 	}
 	return err
 }
@@ -557,7 +557,7 @@ func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) erro
 	if ct.DraftAndPublish() && q.Get("status") == "published" {
 		p["status"] = "published"
 	}
-	p["populate"] = "*"
+	p["populate"] = s.deepPopulate(&ct.Attributes, 0)
 	row, err := s.docs.FindOne(r.Context(), string(ct.UID), id, p)
 	if err != nil {
 		return asValidation(err)
@@ -764,7 +764,7 @@ func (s *Server) stFind(w http.ResponseWriter, r *http.Request, u *User) error {
 		return data(w, nil)
 	}
 	p := localeParam(ct, q.Get("locale"))
-	p["populate"] = "*"
+	p["populate"] = s.deepPopulate(&ct.Attributes, 0)
 	if ct.DraftAndPublish() && q.Get("status") == "published" {
 		p["status"] = "published"
 	}
@@ -871,4 +871,78 @@ func (s *Server) stAction(op string) authedHandler {
 		}
 		return data(w, map[string]any{"documentId": id})
 	}
+}
+
+func (s *Server) componentRoutes() {
+	s.authed("GET /content-manager/components", s.cmComponents)
+}
+
+// ComponentModel is a component as the edit view needs it.
+type ComponentModel struct {
+	UID        string                       `json:"uid"`
+	Category   string                       `json:"category"`
+	Info       schema.Info                  `json:"info"`
+	Attributes map[string]*schema.Attribute `json:"attributes"`
+	Fields     []string                     `json:"fields"`
+}
+
+func (s *Server) cmComponents(w http.ResponseWriter, _ *http.Request, _ *User) error {
+	out := []ComponentModel{}
+	for uid, c := range s.set.Components.All() {
+		cat, _, _ := strings.Cut(uid, ".")
+		m := ComponentModel{UID: uid, Category: cat, Info: c.Info, Attributes: map[string]*schema.Attribute{}}
+		for name, attr := range c.Attributes.All() {
+			if attr.Type == schema.TypePassword || !attr.IsVisible() || name == "id" {
+				continue
+			}
+			m.Attributes[name] = attr
+			m.Fields = append(m.Fields, name)
+		}
+		out = append(out, m)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].UID < out[j].UID })
+	return data(w, out)
+}
+
+// deepPopulate loads every component and dynamic zone level, and the
+// relations and media of each, as the edit view writes them back whole.
+func (s *Server) deepPopulate(attrs *schema.OrderedMap[*schema.Attribute], depth int) map[string]any {
+	out := map[string]any{}
+	if depth > 10 {
+		return out
+	}
+	sub := func(uid string) any {
+		c, ok := s.set.Component(schema.UID(uid))
+		if !ok {
+			return true
+		}
+		if p := s.deepPopulate(&c.Attributes, depth+1); len(p) > 0 {
+			return map[string]any{"populate": p}
+		}
+		return true
+	}
+	for name, a := range attrs.All() {
+		switch a.Type {
+		case schema.TypeRelation:
+			if a.Virtual || name == schema.AttrCreatedBy || name == schema.AttrUpdatedBy || name == "localizations" {
+				continue
+			}
+			out[name] = true
+		case schema.TypeMedia:
+			out[name] = true
+		case schema.TypeComponent:
+			out[name] = sub(a.Component)
+		case schema.TypeDynamicZone:
+			on := map[string]any{}
+			for _, c := range a.Components {
+				if p, ok := sub(c).(map[string]any); ok {
+					on[c] = p
+				} else {
+					on[c] = map[string]any{"populate": "*"}
+				}
+			}
+			out[name] = map[string]any{"on": on}
+		}
+	}
+	return out
 }

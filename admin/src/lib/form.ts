@@ -14,7 +14,7 @@ export function showError<T extends FieldValues>(err: unknown, setError?: UseFor
       }
       return
     }
-    toast.error(err.message)
+    toast.error(fields.length > 0 ? fields.map((f) => `${f.path.join('.')}: ${f.message}`).join('\n') : err.message)
     return
   }
   toast.error(fallback)

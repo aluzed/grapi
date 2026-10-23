@@ -52,6 +52,7 @@ export type Attribute = {
   repeatable?: boolean
   targetField?: string
   default?: unknown
+  components?: string[]
 }
 
 export type Model = {
@@ -85,3 +86,5 @@ export type Catalog = {
   sections: { contentTypes: CatalogAction[]; plugins: CatalogAction[]; settings: CatalogAction[] }
   conditions: { id: string; displayName: string; category: string }[]
 }
+
+export type ComponentModel = { uid: string; category: string; info: { displayName: string; icon?: string }; attributes: Record<string, Attribute>; fields: string[] }
