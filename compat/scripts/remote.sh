@@ -339,6 +339,10 @@ if [ "$mode" = grapi ]; then
   mkdir -p "$work/snap"
   "$here/bin/compat" snapshot -fixture-dir "$here/fixtures/$fx" -name "$fixture-snapshot" -out "$work/snap/snapshot.yaml"
   "$here/bin/compat" run -corpus "$work/snap" -fixture "$fixture-snapshot" -url "$b_url" -tokens "$b_tokens" -out "$work/out/snap-grapi"
+  # Core store round trip, one way: grapi writes, Strapi reads back below.
+  python3 "$here/scripts/core-store.py" write g "$work/cs-grapi-in.json"
+  env "$@" "$here/bin/grapi" configuration:restore -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" -f "$work/cs-grapi-in.json" -s merge >/dev/null || admin_failed=1
+  env "$@" "$here/bin/grapi" configuration:dump -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" -f "$work/b/grapi-dump.json" >/dev/null || admin_failed=1
   kill "$grapi_pid" 2>/dev/null || true
   wait "$grapi_pid" 2>/dev/null || true
   cp "$work/grapi.log" "$here/report/$(date +%F)-$fixture-grapi-$db.log"
@@ -348,6 +352,13 @@ if [ "$mode" = grapi ]; then
   "$here/bin/compat" diff -a "$work/out/snap-strapi" -b "$work/out/snap-grapi" -report "$here/report/$(date +%F)-$fixture-reverse-$db.md" \
     -title "Reverse $fixture ($db): Strapi reading grapi's writes vs grapi" || true
   sed -n 5p "$here/report/$(date +%F)-$fixture-reverse-$db.md"
+  strapi_cli() { docker exec -w /app "$run_id-b" node node_modules/@strapi/strapi/bin/strapi.js "$@" >/dev/null 2>&1; }
+  strapi_cli configuration:dump -f /data/cs-strapi-dump.json || admin_failed=1
+  python3 "$here/scripts/core-store.py" compare g "$work/b/cs-strapi-dump.json" Strapi || admin_failed=1
+  # And the other way: Strapi writes, grapi reads back once restarted.
+  python3 "$here/scripts/core-store.py" write s "$work/b/cs-strapi-in.json"
+  strapi_cli configuration:restore -f /data/cs-strapi-in.json -s merge || admin_failed=1
+  if strapi_cli configuration:restore -f /data/grapi-dump.json -s merge; then echo "A grapi dump restored by Strapi: ok"; else echo "A grapi dump restored by Strapi: FAILED"; admin_failed=1; fi
   # An end user registered by Strapi must log in on grapi (same table, bcrypt).
   reg=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
     -d '{"username":"compat-enduser","email":"compat-enduser@example.com","password":"Compat1234!"}' "http://127.0.0.1:$(port_of b)/api/auth/local/register")
@@ -363,6 +374,14 @@ if [ "$mode" = grapi ]; then
   enduser=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
     -d '{"identifier":"compat-enduser@example.com","password":"Compat1234!"}' "$b_url/api/auth/local")
   echo "Strapi end user login on grapi: $enduser (registered by Strapi: $reg)"
+  env "$@" "$here/bin/grapi" configuration:dump -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" -f "$work/cs-grapi-dump.json" >/dev/null || admin_failed=1
+  python3 "$here/scripts/core-store.py" compare s "$work/cs-grapi-dump.json" grapi || admin_failed=1
+  if env "$@" "$here/bin/grapi" configuration:restore -dir "$here/fixtures/$fx" -config "$here/reference/grapi-config" -f "$work/b/cs-strapi-dump.json" -s merge >/dev/null; then
+    echo "A Strapi dump restored by grapi: ok"
+  else
+    echo "A Strapi dump restored by grapi: FAILED"
+    admin_failed=1
+  fi
   { [ "$reg" = 200 ] && [ "$enduser" = 200 ]; } || admin_failed=1
   kill "$grapi_pid" 2>/dev/null || true
   wait "$grapi_pid" 2>/dev/null || true

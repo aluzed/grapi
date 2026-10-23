@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -130,5 +131,50 @@ func TestDelivery(t *testing.T) {
 	defer rc.mu.Unlock()
 	if len(rc.calls) != 1 {
 		t.Fatalf("%d deliveries, the disabled webhook or the rolled back create got one", len(rc.calls))
+	}
+}
+
+func TestDeliveryOrder(t *testing.T) {
+	ctx := context.Background()
+	_, md, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", "basic")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := db.Open(ctx, db.Config{Client: "sqlite", Filename: filepath.Join(t.TempDir(), "data.db")}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = d.Close() }()
+	desired, _ := md.Schema()
+	ran, _ := migrate.Run(ctx, d, migrate.Options{RunMigrations: true})
+	if _, err := schemasync.Sync(ctx, d, desired, schemasync.Options{MigrationsRan: ran}); err != nil {
+		t.Fatal(err)
+	}
+	rc := &received{}
+	var hits atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Uneven latency: parallel deliveries would overtake each other.
+		time.Sleep(time.Duration(hits.Add(1)%3) * time.Millisecond)
+		rc.handler(w, r)
+	}))
+	defer ts.Close()
+	e := &query.Engine{DB: d, MD: md}
+	if _, err := e.Create(ctx, "strapi::webhook", query.Data{"name": "order", "url": ts.URL, "headers": map[string]any{}, "events": []any{"entry.create"}, "enabled": true}, query.Params{}); err != nil {
+		t.Fatal(err)
+	}
+	hub := events.New(nil)
+	r := &webhooks.Runner{DB: d, Hub: hub}
+	stop := r.Start(ctx)
+	defer stop()
+	for i := range 30 {
+		hub.Emit("entry.create", map[string]any{"entry": map[string]any{"n": i}})
+	}
+	rc.wait(t, 30)
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+	for i, c := range rc.calls {
+		if n := c["entry"].(map[string]any)["n"].(float64); int(n) != i {
+			t.Fatalf("delivery %d carries event %v: a receiver gets its events in order", i, n)
+		}
 	}
 }

@@ -38,14 +38,15 @@ Un service clé-valeur typé au-dessus de `strapi_core_store_settings`, avec le 
 - Le contenu métier de chaque clé (traité par les tickets consommateurs).
 
 ## Critères d'acceptation
-- [ ] Une valeur écrite par grapi est relue à l'identique par Strapi 5.59, et inversement (sur la fixture `basic`, pour les types `object`, `string`, `boolean`, `number` et `array`).
+- [x] Une valeur écrite par grapi est relue à l'identique par Strapi 5.59, et inversement (sur la fixture `basic`, pour les types `object`, `string`, `boolean`, `number` et `array`).
 - [ ] Sur la copie de la base dev-freelance, grapi relit la configuration des vues du Content Manager et les réglages users-permissions existants.
 - [x] `docs/core-store-keys.md` liste toutes les clés présentes dans une base Strapi 5.59 fraîche, avec leur ticket consommateur.
 - [x] `Get` sur une clé absente renvoie `nil` sans erreur.
 
 ## Avancement
 - Fait : `internal/db/store` (Get, Set, Delete, types `typeof` de Strapi, clé `<type>_<name>_<key>`, environment et tag), utilisé par users-permissions, upload et i18n.
-- Reste : le cache mémoire, la relecture croisée Strapi/grapi sur la fixture `basic`.
+- Relecture croisée au banc (mode `grapi`, fixture `basic`, SQLite et Postgres) : des entrées `object`, `string`, `boolean`, `number` et `array` restaurées par grapi sont relues à l'identique par `strapi configuration:dump`, et inversement (`compat/scripts/core-store.py`).
+- Reste : le cache mémoire, et la relecture sur la copie de la base dev-freelance.
 
 ## Notes techniques
 - La colonne `value` est du texte qui contient du JSON, même pour une chaîne (`"\"en\""`). Le relever exactement, sinon la relecture côté Strapi échoue.

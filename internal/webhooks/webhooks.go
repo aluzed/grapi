@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/aluzed/grapi/internal/db"
@@ -44,8 +45,12 @@ type Runner struct {
 	Config Config
 	Client *http.Client
 	Log    *slog.Logger
-	queue  chan job
 	now    func() time.Time
+	ctx    context.Context
+	mu     sync.Mutex
+	// queues hold one queue and one worker per webhook: each receiver gets
+	// its events in order, and a slow one delays only itself.
+	queues map[int64]chan job
 }
 
 type job struct {
@@ -54,7 +59,8 @@ type job struct {
 	event   string
 }
 
-// Start subscribes to the hub and starts 5 delivery workers.
+// Start subscribes to the hub; each webhook gets its own delivery worker
+// on its first event.
 func (r *Runner) Start(ctx context.Context) func() {
 	if r.Client == nil {
 		r.Client = &http.Client{Timeout: 10 * time.Second}
@@ -71,11 +77,8 @@ func (r *Runner) Start(ctx context.Context) func() {
 	if r.now == nil {
 		r.now = time.Now
 	}
-	r.queue = make(chan job, 1000)
 	ctx, cancel := context.WithCancel(ctx)
-	for range 5 {
-		go r.worker(ctx)
-	}
+	r.ctx, r.queues = ctx, map[int64]chan job{}
 	off := r.Hub.Subscribe(func(name string, payload map[string]any) { r.dispatch(ctx, name, payload) })
 	return func() {
 		off()
@@ -158,19 +161,31 @@ func (r *Runner) dispatch(ctx context.Context, name string, payload map[string]a
 	}
 	for _, w := range hooks {
 		select {
-		case r.queue <- job{webhook: w, body: body, event: name}:
+		case r.queueOf(w.ID) <- job{webhook: w, body: body, event: name}:
 		default:
 			r.Log.Error("webhooks: queue full, event dropped", "event", name, "webhook", w.Name)
 		}
 	}
 }
 
-func (r *Runner) worker(ctx context.Context) {
+func (r *Runner) queueOf(id int64) chan job {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	q, ok := r.queues[id]
+	if !ok {
+		q = make(chan job, 1000)
+		r.queues[id] = q
+		go r.worker(r.ctx, q)
+	}
+	return q
+}
+
+func (r *Runner) worker(ctx context.Context, q chan job) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case j := <-r.queue:
+		case j := <-q:
 			r.deliver(ctx, j)
 		}
 	}

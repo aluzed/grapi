@@ -27,7 +27,7 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 
 ## Critères d'acceptation
 - [x] `admin:reset-user-password` fonctionne sur une base Strapi 5.59 existante, sans rien casser d'autre (règle projet : on ne touche jamais à la table des admins en dehors de cette opération ciblée).
-- [ ] `configuration:dump` sur une base Strapi produit un fichier que `strapi configuration:restore` accepte, et inversement (banc `SETUP-002`).
+- [x] `configuration:dump` sur une base Strapi produit un fichier que `strapi configuration:restore` accepte, et inversement (banc `SETUP-002`).
 - [ ] `routes:list` affiche méthode, chemin, handler et policies pour toutes les routes, y compris celles des plugins.
 - [ ] Le mot de passe saisi en interactif n'est jamais affiché ni loggé.
 
@@ -41,6 +41,7 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - `grapi content-types:list` et `components:list` (tableau `Name` de Strapi), `TestListCommands`.
 - `grapi middlewares:list` et `hooks:list` : les middlewares que grapi implémente (sous les noms de Strapi) et les hooks intégrés. Strapi liste aussi ses middlewares absents de grapi (compression, session, favicon...) et ceux de l'admin.
 - Commandes admin complètes : `admin:delete-user`, `admin:active-user` (`--active=false`), `admin:block-user` (`--unblock`) ferment les sessions, refusent de laisser l'instance sans Super Admin actif et s'inscrivent au journal d'audit (origine `cli`) ; testé (`TestAdminCommands`).
+- Banc (mode `grapi`, SQLite et Postgres) : un dump de grapi est restauré par `strapi configuration:restore`, et un dump de Strapi par `grapi configuration:restore`.
 - Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, `rename:field`.
 
 ## Notes techniques
