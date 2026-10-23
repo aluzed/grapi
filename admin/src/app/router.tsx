@@ -28,6 +28,8 @@ import { Users } from '@/pages/settings/Users'
 import { Webhooks } from '@/pages/settings/Webhooks'
 import { ContentTypeBuilder } from '@/pages/ctb/ContentTypeBuilder'
 import { MediaLibrary } from '@/pages/media/MediaLibrary'
+import { ReleaseDetail } from '@/pages/releases/ReleaseDetail'
+import { Releases } from '@/pages/releases/Releases'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
 import { Layout } from './Layout'
 import { navItems } from './nav'
@@ -64,6 +66,8 @@ export const router = createBrowserRouter(
         },
         { path: 'content-type-builder', element: <RequirePermission allowed={navItems.find((i) => i.to === '/content-type-builder')!.allowed}><ContentTypeBuilder /></RequirePermission> },
         { path: 'media-library', element: <RequirePermission allowed={navItems.find((i) => i.to === '/media-library')!.allowed}><MediaLibrary /></RequirePermission> },
+        { path: 'releases', element: <RequirePermission allowed={navItems.find((i) => i.to === '/releases')!.allowed}><Releases /></RequirePermission> },
+        { path: 'releases/:id', element: <RequirePermission allowed={navItems.find((i) => i.to === '/releases')!.allowed}><ReleaseDetail /></RequirePermission> },
         {
           path: 'settings',
           element: <Settings />,

@@ -64,6 +64,13 @@ func (s *Server) audit(r *http.Request, u *User, action string, payload map[stri
 		payload = map[string]any{}
 	}
 	payload["ip"], payload["userAgent"], payload["method"], payload["route"] = clientIP(r, s.cfg.TrustProxy), r.UserAgent(), r.Method, r.URL.Path
+	s.writeAudit(context.WithoutCancel(r.Context()), u, "admin-panel", action, payload)
+}
+
+func (s *Server) writeAudit(ctx context.Context, u *User, origin, action string, payload map[string]any) {
+	if !s.cfg.AuditEnabled {
+		return
+	}
 	b, _ := json.Marshal(payload)
 	var id, name, email any
 	if u != nil {
@@ -74,8 +81,7 @@ func (s *Server) audit(r *http.Request, u *User, action string, payload map[stri
 		s.e.DB.Dialect.Quote(auditTable), s.ph(1), s.ph(2), s.ph(3), s.ph(4), s.ph(5), s.ph(6), s.ph(7))
 	now := s.now().UTC()
 	// The write itself succeeded: an audit failure is logged, not returned.
-	ctx := context.WithoutCancel(r.Context())
-	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(time.RFC3339Nano), id, name, email, "admin-panel", string(b)); err != nil {
+	if _, err := s.e.DB.Exec(ctx, q, action, now.Format(time.RFC3339Nano), id, name, email, origin, string(b)); err != nil {
 		s.log.Error("audit log", "action", action, "error", err)
 	}
 	days := s.cfg.AuditRetentionDays

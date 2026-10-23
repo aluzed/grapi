@@ -68,6 +68,26 @@ Chaque route exige l'action indiquée (403 `ForbiddenError` sinon). Le Super Adm
 
 Il reste toujours au moins un Super Admin actif : le supprimer, le désactiver, le bloquer ou lui retirer ce rôle est refusé s'il est le dernier.
 
+### Releases
+
+Tables propres à grapi (`grapi_releases`, `grapi_release_actions`), créées au démarrage. Strapi les ignore.
+
+| Méthode et chemin | Action | Rôle |
+|---|---|---|
+| `GET /releases?status=done` | `admin::releases.read` | Releases en attente (par défaut) ou publiées, avec `count` |
+| `POST /releases` | `admin::releases.create` | `name`, `scheduledAt` (RFC 3339, stocké en UTC), `timezone` (IANA, `UTC` par défaut, gardé pour l'affichage) |
+| `GET /releases/{id}` | `admin::releases.read` | La release et ses `actions`, avec l'état recalculé de chaque entrée : `ready`, `not-ready` (+ `errors`), `already-published`, `already-unpublished` |
+| `PUT /releases/{id}` | `admin::releases.update` | Mêmes champs. Une nouvelle date redonne sa chance à une release `failed`. 409 si publiée. |
+| `DELETE /releases/{id}` | `admin::releases.delete` | Les entrées restent telles quelles |
+| `POST /releases/{id}/actions` | `admin::releases.actions.create` | `type` (`publish`, `unpublish`), `uid`, `documentId`, `locale`. 400 si le type n'a pas Draft & Publish ou si le document y est déjà ; exige aussi `publish` sur le type. |
+| `DELETE /releases/{id}/actions/{actionId}` | `admin::releases.actions.delete` | |
+| `POST /releases/{id}/publish` | `admin::releases.publish` | Tout ou rien dans une transaction. 400 avec la liste des entrées fautives si la release est bloquée. |
+| `GET /releases/document/{uid}/{documentId}` | `admin::releases.read` | Releases en attente qui contiennent le document |
+
+Statuts : `empty`, `ready`, `blocked`, `done`, et `failed` (publication planifiée refusée, rien n'a changé, message dans `error`). L'état `not-ready` vient d'une publication d'essai dans une transaction annulée : les événements partant au commit, elle ne déclenche aucun webhook.
+
+Le planificateur tourne dans le serveur : au démarrage (une échéance passée pendant un arrêt s'exécute tout de suite), toutes les 30 s, et dès qu'une release reçoit une date passée. Avec plusieurs instances, la mise à jour `released_at is null` garantit une seule exécution. Webhook `releases.publish` : `{event, createdAt, isPublished, release: {id, name, releasedAt, scheduledAt, timezone, createdAt, actions: {count}}}`, `isPublished: false` sur un échec. Audit `release.*` et `release-action.*` ; les publications planifiées ont l'origine `scheduler`. Supprimer un document depuis l'admin le retire des releases en attente.
+
 ## Règles
 - Mot de passe : 8 caractères au moins, une minuscule, une majuscule, un chiffre, 72 octets au plus (limite de bcrypt). Hash bcrypt de coût 10, comme Strapi.
 - Un admin inactif ou bloqué ne peut ni se connecter ni utiliser un token déjà émis.

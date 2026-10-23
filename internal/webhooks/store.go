@@ -9,7 +9,7 @@ import (
 )
 
 // Events are the events a webhook can listen to.
-var Events = []string{"entry.create", "entry.update", "entry.delete", "entry.publish", "entry.unpublish", "media.create", "media.update", "media.delete"}
+var Events = []string{"entry.create", "entry.update", "entry.delete", "entry.publish", "entry.unpublish", "media.create", "media.update", "media.delete", "releases.publish"}
 
 func (r *Runner) ph(n int) string { return r.DB.Dialect.Placeholder(n) }
 

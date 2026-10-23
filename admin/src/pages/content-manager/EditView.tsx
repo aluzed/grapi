@@ -15,6 +15,7 @@ import { StatusBadge } from './cell'
 import { useModel } from './ContentManager'
 import { fromInput, isEditable, JSONError, LayoutGrid, toInput, withoutIDs, type FieldContext, type Values } from './fields'
 import { HistoryButton } from './HistoryDialog'
+import { ReleaseButton } from './ReleaseButton'
 import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
@@ -241,6 +242,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
             {!creating && (entry.data?.documentId || documentId) && (
               <HistoryButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} title={title} />
             )}
+            {!creating && (entry.data?.documentId || documentId) && <ReleaseButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} />}
             {!creating && !single && model.permissions.create && (
               <Button
                 variant="outline"

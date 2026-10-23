@@ -1456,3 +1456,161 @@ func TestAdminAuditLogs(t *testing.T) {
 		t.Fatal("the export is audited")
 	}
 }
+
+func TestAdminReleases(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	hits := make(chan map[string]any, 10)
+	target := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		hits <- body
+	}))
+	defer target.Close()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	c.do("POST", "/webhooks", `{"name":"Build","url":"`+target.URL+`","events":["releases.publish"]}`)
+	const base = "/content-manager/collection-types/api::article.article"
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Ready"}}`)
+	ready := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("POST", base, `{"data":{"views":3}}`)
+	untitled := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Live"}}`)
+	live := dataOf(b)["documentId"].(string)
+	c.do("POST", base+"/actions/bulk-publish", `{"documentIds":["`+live+`"]}`)
+
+	if s, _, _ := c.do("POST", "/releases", `{"name":" "}`); s != 400 {
+		t.Fatalf("a release needs a name: %d", s)
+	}
+	s, b, _ := c.do("POST", "/releases", `{"name":"Launch"}`)
+	if s != 201 || dataOf(b)["status"] != "empty" {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	rel := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	add := func(typ, doc string) (int, map[string]any) {
+		s, b, _ := c.do("POST", rel+"/actions", `{"type":"`+typ+`","uid":"api::article.article","documentId":"`+doc+`"}`)
+		return s, b
+	}
+	for _, a := range [][2]string{{"publish", ready}, {"publish", untitled}, {"unpublish", live}} {
+		if s, b := add(a[0], a[1]); s != 201 {
+			t.Fatalf("add %v: %d %v", a, s, b)
+		}
+	}
+	if s, b := add("publish", ready); s != 400 || !strings.Contains(errMessage(b), "already") {
+		t.Fatalf("a document goes once in a release: %d %v", s, b)
+	}
+	_, b, _ = c.do("POST", "/content-manager/collection-types/api::tag.tag", `{"data":{"name":"x"}}`)
+	if tag, ok := dataOf(b)["documentId"].(string); ok {
+		if s, _, _ := c.do("POST", rel+"/actions", `{"type":"publish","uid":"api::tag.tag","documentId":"`+tag+`"}`); s != 400 {
+			t.Fatalf("only draft and publish types: %d", s)
+		}
+	}
+	_, b, _ = c.do("GET", rel, "")
+	d := dataOf(b)
+	states := map[string]string{}
+	for _, a := range d["actions"].([]any) {
+		a := a.(map[string]any)
+		states[a["documentId"].(string)] = a["state"].(string)
+	}
+	if d["status"] != "blocked" || states[ready] != "ready" || states[untitled] != "not-ready" || states[live] != "ready" {
+		t.Fatalf("assessment: %v %v", d["status"], states)
+	}
+	if s, b, _ := c.do("POST", rel+"/publish", ""); s != 400 {
+		t.Fatalf("a blocked release does not publish: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"?status=published", "")
+	if n := len(b["data"].([]any)); n != 1 {
+		t.Fatalf("nothing changed: %d published", n)
+	}
+	_, b, _ = c.do("GET", "/releases/document/api::article.article/"+ready, "")
+	if l := b["data"].([]any); len(l) != 1 || l[0].(map[string]any)["name"] != "Launch" {
+		t.Fatalf("releases of a document: %v", l)
+	}
+
+	c.do("PUT", base+"/"+untitled, `{"data":{"title":"Titled"}}`)
+	s, b, _ = c.do("POST", rel+"/publish", "")
+	if s != 200 || dataOf(b)["status"] != "done" || dataOf(b)["releasedAt"] == nil {
+		t.Fatalf("publish: %d %v", s, b)
+	}
+	_, b, _ = c.do("GET", base+"?status=published&sort=title", "")
+	titles := []string{}
+	for _, e := range b["data"].([]any) {
+		titles = append(titles, e.(map[string]any)["title"].(string))
+	}
+	if strings.Join(titles, ",") != "Ready,Titled" {
+		t.Fatalf("published together, Live unpublished: %v", titles)
+	}
+	select {
+	case h := <-hits:
+		if r, _ := h["release"].(map[string]any); h["event"] != "releases.publish" || r["name"] != "Launch" {
+			t.Fatalf("webhook: %#v", h)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no releases.publish webhook")
+	}
+	if s, _ := add("publish", live); s != 409 {
+		t.Fatalf("a published release is read-only: %d", s)
+	}
+	if _, b, _ = c.do("GET", "/releases?status=done", ""); len(b["data"].([]any)) != 1 {
+		t.Fatalf("done list: %v", b)
+	}
+
+	_, b, _ = c.do("POST", base, `{"data":{"title":"Later"}}`)
+	later := dataOf(b)["documentId"].(string)
+	if s, _, _ := c.do("POST", "/releases", `{"name":"Bad","scheduledAt":"tomorrow"}`); s != 400 {
+		t.Fatalf("schedule validation: %d", s)
+	}
+	_, b, _ = c.do("POST", "/releases", `{"name":"Scheduled","scheduledAt":"2099-01-01T09:00:00+02:00","timezone":"Europe/Paris"}`)
+	sched := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	if at := dataOf(b)["scheduledAt"]; at != "2099-01-01T07:00:00Z" {
+		t.Fatalf("stored in UTC: %v", at)
+	}
+	c.do("POST", sched+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+later+`"}`)
+	c.do("PUT", sched, `{"scheduledAt":"2001-01-01T00:00:00Z","timezone":"Europe/Paris"}`)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		_, b, _ = c.do("GET", sched, "")
+		if dataOf(b)["status"] == "done" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the scheduler publishes a due release: %v", dataOf(b))
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	_, b, _ = c.do("POST", base, `{"data":{"views":1}}`)
+	blocked := dataOf(b)["documentId"].(string)
+	_, b, _ = c.do("POST", "/releases", `{"name":"Doomed"}`)
+	doomed := "/releases/" + strconv.Itoa(int(dataOf(b)["id"].(float64)))
+	c.do("POST", doomed+"/actions", `{"type":"publish","uid":"api::article.article","documentId":"`+blocked+`"}`)
+	c.do("PUT", doomed, `{"scheduledAt":"2001-01-01T00:00:00Z"}`)
+	deadline = time.Now().Add(5 * time.Second)
+	for {
+		_, b, _ = c.do("GET", doomed, "")
+		if dataOf(b)["status"] == "failed" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("a blocked scheduled release fails: %v", dataOf(b))
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	if e, _ := dataOf(b)["error"].(string); !strings.Contains(e, blocked) {
+		t.Fatalf("the failure names the entry: %v", dataOf(b))
+	}
+	c.do("DELETE", base+"/"+blocked, "")
+	if _, b, _ = c.do("GET", doomed, ""); dataOf(b)["count"].(float64) != 0 {
+		t.Fatalf("a deleted document leaves the pending releases: %v", dataOf(b))
+	}
+	_, b, _ = c.do("GET", "/audit-logs?action=release.fail", "")
+	if l, _ := b["data"].([]any); len(l) != 1 || l[0].(map[string]any)["origin"] != "scheduler" {
+		t.Fatalf("the scheduler is audited: %v", b)
+	}
+	if s, _, _ := c.do("DELETE", sched, ""); s != 200 {
+		t.Fatalf("delete: %d", s)
+	}
+	if s, _, _ := c.do("GET", sched, ""); s != 404 {
+		t.Fatalf("deleted: %d", s)
+	}
+}

@@ -103,15 +103,17 @@ func (s *Server) recordVersion(ctx context.Context, ct *schema.ContentType, docu
 }
 
 // forgetDocument drops the versions of a deleted document (in a locale,
-// or all of them).
+// or all of them) and takes it out of the pending releases.
 func (s *Server) forgetDocument(ctx context.Context, uid, documentID string, locale any) {
-	q := fmt.Sprintf(`delete from %s where uid = %s and document_id = %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1), s.ph(2))
+	where := fmt.Sprintf(`uid = %s and document_id = %s`, s.ph(1), s.ph(2))
 	args := []any{uid, documentID}
 	if l, ok := locale.(string); ok && l != "" {
-		q += " and locale = " + s.ph(3)
+		where += " and locale = " + s.ph(3)
 		args = append(args, l)
 	}
-	_, _ = s.e.DB.Exec(ctx, q, args...)
+	_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where %s`, s.e.DB.Dialect.Quote(historyTable), where), args...)
+	_, _ = s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where %s and release_id in (select id from %s where released_at is null)`,
+		s.q(actionsTable), where, s.q(releasesTable)), args...)
 }
 
 // HistoryVersion is one entry of a document's history.

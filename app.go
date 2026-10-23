@@ -686,7 +686,10 @@ func (a *App) setup(p *Project) (*Server, error) {
 	port, _ := conf.Int("server.port")
 	stop := a.stopWebhooks
 	destroy := a.onDestroy
+	releases, stopReleases := context.WithCancel(context.Background())
+	adm.StartScheduler(releases, 30*time.Second)
 	return &Server{Handler: withAdmin(adm, api), Addr: net.JoinHostPort(host, strconv.Itoa(port)), project: p, stop: func() {
+		stopReleases()
 		for _, fn := range destroy {
 			if err := fn(context.Background()); err != nil {
 				log.Error("destroy", "error", err)

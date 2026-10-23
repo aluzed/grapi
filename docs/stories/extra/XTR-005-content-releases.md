@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # XTR-005 : Content releases (dont planifiées)
@@ -35,15 +35,26 @@ Publier ou dépublier un lot de documents de façon atomique, à la main ou à u
 
 ## Critères d'acceptation
 - [ ] Une release avec 2 publish et 1 unpublish sur deux content types et deux locales s'applique entièrement ; les 3 documents ont l'état attendu.
-- [ ] Une entrée avec un champ requis vide rend la release `blocked` ; la publication manuelle renvoie 400 avec la liste des entrées fautives.
+- [x] Une entrée avec un champ requis vide rend la release `blocked` ; la publication manuelle renvoie 400 avec la liste des entrées fautives.
 - [ ] Panne simulée sur la 3e action : aucune des actions n'est appliquée et la release n'est pas `done`.
-- [ ] Planification à 09:00 `Europe/Paris` le jour du passage à l'heure d'hiver : exécution à l'instant UTC correct.
-- [ ] Serveur arrêté pendant l'échéance : la release est publiée au redémarrage.
-- [ ] Release planifiée devenue `blocked` : passe en `failed` à l'échéance, webhook reçu avec `isPublished: false`.
-- [ ] Une release `done` refuse toute modification (409).
-- [ ] Ajouter deux fois le même document et la même locale à une release est refusé.
-- [ ] Un content type sans Draft & Publish n'apparaît pas dans « Ajouter à une release ».
-- [ ] Payload du webhook `releases.publish` conforme au périmètre (récepteur de test).
+- [x] Planification à 09:00 `Europe/Paris` le jour du passage à l'heure d'hiver : exécution à l'instant UTC correct.
+- [x] Serveur arrêté pendant l'échéance : la release est publiée au redémarrage.
+- [x] Release planifiée devenue `blocked` : passe en `failed` à l'échéance, webhook reçu avec `isPublished: false`.
+- [x] Une release `done` refuse toute modification (409).
+- [x] Ajouter deux fois le même document et la même locale à une release est refusé.
+- [x] Un content type sans Draft & Publish n'apparaît pas dans « Ajouter à une release ».
+- [x] Payload du webhook `releases.publish` conforme au périmètre (récepteur de test).
+
+## Avancement
+Fait : tables, API (`internal/adminapi/releases.go`), état par publication d'essai, publication tout ou rien, planificateur (démarrage, 30 s, réveil sur date passée), `failed`, webhook, audit (origine `scheduler`), retrait des documents supprimés, permissions, écrans (liste, détail, « Ajouter à une release » dans l'édition), conversion de fuseau testée sur les deux changements d'heure (`admin/src/lib/tz.test.ts`), test de bout en bout `TestAdminReleases`.
+
+Reste :
+- ajout en lot depuis la vue liste ;
+- réglage `releases.defaultTimezone` (l'écran propose le fuseau du navigateur) et permissions `releases.settings.*` ;
+- détail groupé par content type ou par locale ;
+- permission `publish` vérifiée par locale (aujourd'hui par content type) ;
+- retrait des entrées d'une locale supprimée et des documents supprimés par l'API de contenu (ils apparaissent `not-ready`) ;
+- critères 1 (deux content types, deux locales) et 3 (panne sur la 3e action) à tester explicitement.
 
 ## Notes techniques
 - Tables `grapi_releases` et `grapi_release_actions` (index `(uid, document_id, locale)` pour afficher les releases d'un document).

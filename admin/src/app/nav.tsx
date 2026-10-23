@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Boxes, FileText, House, Image, Settings } from 'lucide-react'
+import { Boxes, CalendarClock, FileText, House, Image, Settings } from 'lucide-react'
 import { can, canAny } from '@/lib/permissions'
 import type { Information, Permission } from '@/lib/types'
 import type { MessageKey } from '@/i18n'
@@ -18,6 +18,7 @@ export const navItems: NavItem[] = [
     allowed: (p) => can(p, 'plugin::content-type-builder.read'),
   },
   { to: '/media-library', label: 'nav.mediaLibrary', icon: <Image className={icon} />, allowed: (p) => can(p, 'plugin::upload.read') },
+  { to: '/releases', label: 'nav.releases', icon: <CalendarClock className={icon} />, allowed: (p) => can(p, 'admin::releases.read') },
   {
     to: '/settings',
     label: 'nav.settings',

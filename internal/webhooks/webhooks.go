@@ -126,7 +126,7 @@ func Body(event string, at time.Time, info map[string]any) ([]byte, error) {
 	ev, _ := json.Marshal(event)
 	b.Write(ev)
 	b.WriteString(`,"createdAt":"` + at.UTC().Format("2006-01-02T15:04:05.000Z") + `"`)
-	for _, k := range []string{"model", "uid", "entry", "media"} {
+	for _, k := range []string{"model", "uid", "entry", "media", "isPublished", "release", "error"} {
 		v, ok := info[k]
 		if !ok {
 			continue

@@ -92,6 +92,7 @@ type Server struct {
 	conditions *permissions.Conditions
 	mux        *http.ServeMux
 	now        func() time.Time
+	wake       chan struct{}
 }
 
 // New builds the admin server on the Document Service of the content API.
@@ -107,7 +108,7 @@ func New(cfg Config, docs *document.Service, log *slog.Logger) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
-	s := &Server{cfg: cfg, docs: docs, store: store.Store{DB: e.DB}, e: e, set: set, log: log, actions: &permissions.Actions{}, conditions: permissions.NewConditions(), now: time.Now}
+	s := &Server{cfg: cfg, docs: docs, store: store.Store{DB: e.DB}, e: e, set: set, log: log, actions: &permissions.Actions{}, conditions: permissions.NewConditions(), now: time.Now, wake: make(chan struct{}, 1)}
 	s.sessions = session.New(session.DB{E: e}, "admin", cfg.Sessions)
 	s.registerActions()
 	s.routes()
@@ -178,6 +179,7 @@ func (s *Server) routes() {
 	s.viewConfigRoutes()
 	s.historyRoutes()
 	s.auditRoutes()
+	s.releaseRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})
@@ -192,6 +194,9 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 		return err
 	}
 	if err := s.ensureAuditTable(ctx); err != nil {
+		return err
+	}
+	if err := s.ensureReleaseTables(ctx); err != nil {
 		return err
 	}
 	return s.seedRoles(ctx)
