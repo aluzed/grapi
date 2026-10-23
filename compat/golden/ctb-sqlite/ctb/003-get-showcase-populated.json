@@ -1,0 +1,86 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": {
+      "bigViews": "9007199254740991",
+      "body": "# Title",
+      "contact": "ada@example.com",
+      "content": [
+        {
+          "children": [
+            {
+              "text": "Hi",
+              "type": "text"
+            }
+          ],
+          "type": "paragraph"
+        }
+      ],
+      "cover": null,
+      "createdAt": "\u003cts\u003e",
+      "documentId": "#doc2",
+      "featured": true,
+      "gallery": [],
+      "id": "#id1",
+      "mainTag": {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "retro",
+        "publishedAt": "\u003cts\u003e",
+        "updatedAt": "\u003cts\u003e"
+      },
+      "notes": [
+        {
+          "heading": "One",
+          "id": "#id1",
+          "text": "First"
+        },
+        {
+          "heading": "Two",
+          "id": "#id2",
+          "text": "Second"
+        }
+      ],
+      "opensAt": "12:34:56.000",
+      "price": 19.99,
+      "publishAt": "2026-10-23T15:35:45.385Z",
+      "publishedAt": null,
+      "rating": 3.25,
+      "releaseDate": "2026-10-23",
+      "sections": [
+        {
+          "__component": "shared.note",
+          "heading": "Zone",
+          "id": "#id3",
+          "text": "In the zone"
+        }
+      ],
+      "settings": {
+        "a": [
+          1,
+          "two"
+        ],
+        "b": null
+      },
+      "slug": "every-field",
+      "stage": "review",
+      "summary": "Line 1\nLine 2",
+      "tags": [
+        {
+          "createdAt": "\u003cts\u003e",
+          "documentId": "#doc1",
+          "id": "#id1",
+          "name": "retro",
+          "publishedAt": "\u003cts\u003e",
+          "updatedAt": "\u003cts\u003e"
+        }
+      ],
+      "title": "Every field",
+      "updatedAt": "\u003cts\u003e",
+      "views": 42
+    },
+    "meta": {}
+  }
+}

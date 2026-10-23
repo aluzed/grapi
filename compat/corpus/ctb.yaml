@@ -1,0 +1,44 @@
+fixture: ctb
+cases:
+  - name: create-tag
+    method: POST
+    path: /api/tags
+    token: full
+    body: { data: { name: "retro" } }
+    save: { tag: data.documentId }
+  - name: create-showcase
+    method: POST
+    path: /api/showcases
+    token: full
+    body:
+      data:
+        title: "Every field"
+        slug: "every-field"
+        summary: "Line 1\nLine 2"
+        body: "# Title"
+        content: [{ type: paragraph, children: [{ type: text, text: "Hi" }] }]
+        contact: "ada@example.com"
+        secret: "Hidden123"
+        stage: review
+        views: 42
+        bigViews: "9007199254740991"
+        rating: 3.25
+        price: 19.99
+        releaseDate: "2026-10-23"
+        publishAt: "2026-10-23T15:35:45.385Z"
+        opensAt: "12:34:56.000"
+        featured: true
+        settings: { a: [1, "two"], b: null }
+        mainTag: "{{tag}}"
+        tags: ["{{tag}}"]
+        notes: [{ heading: "One", text: "First" }, { heading: "Two", text: "Second" }]
+        sections: [{ __component: shared.note, heading: "Zone", text: "In the zone" }]
+    save: { showcase: data.documentId }
+  - name: get-showcase-populated
+    path: "/api/showcases/{{showcase}}?populate=*&status=draft"
+  - name: list-showcases
+    path: /api/showcases?status=draft&fields[0]=title&fields[1]=stage
+  - name: tag-with-inverse
+    path: /api/tags?populate=showcases
+  - name: filter-on-every-scalar
+    path: /api/showcases?status=draft&filters[views][$gte]=40&filters[featured][$eq]=true&filters[stage][$eq]=review&filters[releaseDate][$eq]=2026-10-23

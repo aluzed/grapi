@@ -234,7 +234,7 @@ Lecture avec `plugin::content-type-builder.read`. L'écriture n'est possible que
 
 Règles du lot :
 - Tout ou rien : le lot est appliqué à une copie de `src/` puis chargé ; une erreur (nom réservé ou pas en kebab-case, nom déjà pris, relation vers un type inconnu…) le rejette sans rien écrire.
-- Fichiers au format Strapi, écrits de façon atomique : `src/api/<nom>/content-types/<nom>/schema.json` et `src/components/<catégorie>/<nom>.json`.
+- Fichiers au format Strapi, écrits de façon atomique : `src/api/<nom>/content-types/<nom>/schema.json` et `src/components/<catégorie>/<nom>.json`. Un nouveau type reçoit aussi le controller, la route et le service par défaut que génère le builder de Strapi (`src/api/<nom>/{controllers,routes,services}/<nom>.js`, `.ts` si le projet a un `tsconfig.json`), jamais réécrits s'ils existent : Strapi sert le type sans autre étape.
 - `singularName` et `pluralName` ne changent pas à la mise à jour : ils font l'uid et la table.
 - Un attribut scalaire avec `renamedFrom` est renommé : une migration SQL renomme sa colonne (valeurs conservées) et sa configuration de vue suit. Relations, médias et composants ne se renomment pas.
 - Une relation `oneToOne`, `oneToMany`, `manyToOne` ou `manyToMany` avec `targetAttribute` est écrite des deux côtés (`inversedBy` ici, `mappedBy` sur la cible).

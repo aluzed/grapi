@@ -1,0 +1,114 @@
+{
+  "kind": "collectionType",
+  "collectionName": "showcases",
+  "info": {
+    "displayName": "Showcase",
+    "pluralName": "showcases",
+    "singularName": "showcase"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 120,
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title"
+    },
+    "summary": {
+      "type": "text"
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "content": {
+      "type": "blocks"
+    },
+    "contact": {
+      "type": "email"
+    },
+    "secret": {
+      "type": "password",
+      "private": true
+    },
+    "stage": {
+      "type": "enumeration",
+      "default": "draft",
+      "enum": [
+        "draft",
+        "review",
+        "done"
+      ]
+    },
+    "views": {
+      "type": "integer",
+      "min": 0
+    },
+    "bigViews": {
+      "type": "biginteger"
+    },
+    "rating": {
+      "type": "float"
+    },
+    "price": {
+      "type": "decimal"
+    },
+    "releaseDate": {
+      "type": "date"
+    },
+    "publishAt": {
+      "type": "datetime"
+    },
+    "opensAt": {
+      "type": "time"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "settings": {
+      "type": "json"
+    },
+    "cover": {
+      "type": "media",
+      "allowedTypes": [
+        "images"
+      ],
+      "multiple": false
+    },
+    "gallery": {
+      "type": "media",
+      "allowedTypes": [
+        "images",
+        "videos"
+      ],
+      "multiple": true
+    },
+    "mainTag": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::tag.tag"
+    },
+    "tags": {
+      "type": "relation",
+      "inversedBy": "showcases",
+      "relation": "manyToMany",
+      "target": "api::tag.tag"
+    },
+    "notes": {
+      "type": "component",
+      "component": "shared.note",
+      "repeatable": true
+    },
+    "sections": {
+      "type": "dynamiczone",
+      "components": [
+        "shared.note"
+      ]
+    }
+  }
+}

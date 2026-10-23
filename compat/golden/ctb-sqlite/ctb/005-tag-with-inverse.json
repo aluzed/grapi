@@ -1,0 +1,65 @@
+{
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "data": [
+      {
+        "createdAt": "\u003cts\u003e",
+        "documentId": "#doc1",
+        "id": "#id1",
+        "name": "retro",
+        "publishedAt": "\u003cts\u003e",
+        "showcases": [
+          {
+            "bigViews": "9007199254740991",
+            "body": "# Title",
+            "contact": "ada@example.com",
+            "content": [
+              {
+                "children": [
+                  {
+                    "text": "Hi",
+                    "type": "text"
+                  }
+                ],
+                "type": "paragraph"
+              }
+            ],
+            "createdAt": "\u003cts\u003e",
+            "documentId": "#doc2",
+            "featured": true,
+            "id": "#id2",
+            "opensAt": "12:34:56.000",
+            "price": 19.99,
+            "publishAt": "2026-10-23T15:35:45.385Z",
+            "publishedAt": "\u003cts\u003e",
+            "rating": 3.25,
+            "releaseDate": "2026-10-23",
+            "settings": {
+              "a": [
+                1,
+                "two"
+              ],
+              "b": null
+            },
+            "slug": "every-field",
+            "stage": "review",
+            "summary": "Line 1\nLine 2",
+            "title": "Every field",
+            "updatedAt": "\u003cts\u003e",
+            "views": 42
+          }
+        ],
+        "updatedAt": "\u003cts\u003e"
+      }
+    ],
+    "meta": {
+      "pagination": {
+        "page": 1,
+        "pageCount": 1,
+        "pageSize": 25,
+        "total": 1
+      }
+    }
+  }
+}

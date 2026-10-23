@@ -194,6 +194,7 @@ var inverse = map[string]string{schema.OneToOne: schema.OneToOne, schema.OneToMa
 // plan is the files a batch writes (path to content, nil to delete).
 type plan struct {
 	files   map[string]*schema.OrderedMap[json.RawMessage]
+	texts   map[string]string
 	removes []string
 	renames []rename
 	errs    []FieldError
@@ -377,6 +378,7 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 				}
 			}
 			uid = "api::" + singular + "." + singular
+			s.coreFiles(p, singular, uid)
 		}
 		if !strings.HasPrefix(uid, "api::") {
 			p.fail(at, "only the api:: content types can be edited")
@@ -603,6 +605,34 @@ func writeAtomic(path string, m *schema.OrderedMap[json.RawMessage]) error {
 	return os.Rename(tmp, path)
 }
 
+// coreFiles are the controller, router and service Strapi's builder
+// generates with a new API (@strapi/generators templates), so that Strapi
+// serves the type too; TypeScript when the project has a tsconfig.json.
+func (s *Server) coreFiles(p *plan, name, uid string) {
+	ts := false
+	if _, err := os.Stat(filepath.Join(s.cfg.ProjectDir, "tsconfig.json")); err == nil {
+		ts = true
+	}
+	for _, kind := range []struct{ dir, label, factory string }{
+		{"controllers", "controller", "createCoreController"},
+		{"routes", "router", "createCoreRouter"},
+		{"services", "service", "createCoreService"},
+	} {
+		var text, ext string
+		if ts {
+			ext = ".ts"
+			text = fmt.Sprintf("/**\n * %s %s\n */\n\nimport { factories } from '@strapi/strapi';\n\nexport default factories.%s('%s');\n", name, kind.label, kind.factory, uid)
+		} else {
+			ext = ".js"
+			text = fmt.Sprintf("'use strict';\n\n/**\n * %s %s\n */\n\nconst { %s } = require('@strapi/strapi').factories;\n\nmodule.exports = %s('%s');\n", name, kind.label, kind.factory, kind.factory, uid)
+		}
+		if p.texts == nil {
+			p.texts = map[string]string{}
+		}
+		p.texts[s.srcPath("api", name, kind.dir, name+ext)] = text
+	}
+}
+
 // apply writes the plan under root (the project, or its copy).
 func (s *Server) apply(p *plan, root string) error {
 	rebase := func(path string) string {
@@ -611,6 +641,18 @@ func (s *Server) apply(p *plan, root string) error {
 	}
 	for path, m := range p.files {
 		if err := writeAtomic(rebase(path), m); err != nil {
+			return err
+		}
+	}
+	for path, text := range p.texts {
+		target := rebase(path)
+		if _, err := os.Stat(target); err == nil {
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o750); err != nil {
+			return err
+		}
+		if err := os.WriteFile(target, []byte(text), 0o600); err != nil {
 			return err
 		}
 	}

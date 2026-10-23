@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # ADM-006 : Content-Type Builder (écriture des schémas, rechargement à chaud, migrations de renommage)
@@ -37,7 +37,7 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - Le rechargement de code Go utilisateur : en mode framework, un changement de code Go demande toujours une recompilation.
 
 ## Critères d'acceptation
-- [ ] Créer un content type avec 1 champ de chaque type, des relations et un composant :
+- [x] Créer un content type avec 1 champ de chaque type, des relations et un composant :
   - les `schema.json` écrits sont valides au format Strapi, et Strapi 5.59 les charge sans erreur (vérifié par le banc `SETUP-002`) ;
   - grapi expose les routes REST sans redémarrage.
 - [x] Renommer un champ rempli conserve toutes les valeurs (vérifié sur Postgres et SQLite).
@@ -55,7 +55,9 @@ Modéliser le contenu depuis l'admin, avec écriture des fichiers de schéma au 
 - Les noms réservés du builder ne s'appliquent qu'aux nouveaux attributs : un type existant qui en porte déjà un (`meta`) reste modifiable.
 - Suppressions : la modale liste ce qui change ailleurs (relations vers un type supprimé, champs composant et zones dynamiques d'un composant supprimé, autre côté d'une relation bidirectionnelle), calculé comme le serveur l'applique (`admin/src/pages/ctb/model.ts`, testé). Retirer un côté d'une relation bidirectionnelle retire l'autre, comme le builder de Strapi ; avant, le lot était refusé (`inverse-missing`) (`TestAdminContentTypeBuilderDropsInverse`). Vérifié dans Chrome sous `grapi develop` jusqu'à l'enregistrement et au rechargement.
 - Rechargement de `grapi develop` : une barrière (`reload_gate.go`) laisse finir les requêtes en cours avant la synchronisation du schéma, fait attendre les nouvelles (10 s au plus, puis 503 avec `Retry-After`) et ne ferme l'ancienne version qu'une fois vide. Sous charge (8 clients en continu, ajout d'un champ, `ALTER TABLE`), 0 erreur sur ~11 000 réponses ; sans la barrière, des 500 à chaque essai (`TestDevelopReloadUnderLoad`, `TestReloadGate`, avec `-race`).
-- Reste : un cas de banc automatique avec un champ de chaque type, les custom fields, le schéma visuel des relations, les icônes de composant.
+- Banc automatique : `TestContentTypeBuilderFixture` crée sous `grapi develop`, par le builder, un type avec un champ de chaque type (21, dont deux médias), une relation simple et une bidirectionnelle, un composant répétable et une zone dynamique ; les routes REST répondent après chaque lot sans redémarrage, et les fichiers écrits forment la fixture `ctb`. Strapi 5.59 la charge et répond au corpus `ctb` (6 cas, création et relecture de toutes les valeurs) ; grapi lui est identique sur SQLite et Postgres, contrôles direct et inverse compris.
+- Un nouveau type reçoit le controller, la route et le service par défaut que génère le builder de Strapi (JS, ou TS avec un `tsconfig.json`), sans écraser un fichier existant : un projet passé par le builder de grapi est servi par Strapi tel quel (`TestAdminContentTypeBuilderCoreFilesTS`).
+- Reste, hors critères : les custom fields, le schéma visuel des relations, les icônes de composant.
 
 ## Notes techniques
 - Le rechargement à chaud est la vraie difficulté. Il faut :

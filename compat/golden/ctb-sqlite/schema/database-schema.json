@@ -1,0 +1,5820 @@
+{
+    "tables": [
+        {
+            "name": "files",
+            "indexes": [
+                {
+                    "name": "upload_files_folder_path_index",
+                    "columns": [
+                        "folder_path"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "upload_files_created_at_index",
+                    "columns": [
+                        "created_at"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "upload_files_updated_at_index",
+                    "columns": [
+                        "updated_at"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "upload_files_name_index",
+                    "columns": [
+                        "name"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "upload_files_size_index",
+                    "columns": [
+                        "size"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "upload_files_ext_index",
+                    "columns": [
+                        "ext"
+                    ],
+                    "type": null
+                },
+                {
+                    "name": "files_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "files_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "files_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "files_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "files_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "alternative_text",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "caption",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "focal_point",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "width",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "height",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "formats",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "hash",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "ext",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "mime",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "size",
+                    "type": "decimal",
+                    "args": [
+                        10,
+                        2
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "url",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "preview_url",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "provider",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "provider_metadata",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "folder_path",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "upload_folders",
+            "indexes": [
+                {
+                    "name": "upload_folders_path_id_index",
+                    "columns": [
+                        "path_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "upload_folders_path_index",
+                    "columns": [
+                        "path"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "upload_folders_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "upload_folders_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "upload_folders_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "upload_folders_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "upload_folders_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "path_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "path",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "i18n_locale",
+            "indexes": [
+                {
+                    "name": "i18n_locale_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "i18n_locale_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "i18n_locale_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "i18n_locale_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "i18n_locale_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "code",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_releases",
+            "indexes": [
+                {
+                    "name": "strapi_releases_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_releases_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_releases_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_releases_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_releases_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "released_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "scheduled_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "timezone",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "status",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_release_actions",
+            "indexes": [
+                {
+                    "name": "strapi_release_actions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_release_actions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_release_actions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_release_actions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_release_actions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "content_type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "entry_document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "is_entry_valid",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_workflows",
+            "indexes": [
+                {
+                    "name": "strapi_workflows_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_workflows_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_workflows_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "content_types",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_workflows_stages",
+            "indexes": [
+                {
+                    "name": "strapi_workflows_stages_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_workflows_stages_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_workflows_stages_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "color",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "up_permissions",
+            "indexes": [
+                {
+                    "name": "up_permissions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "up_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "up_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "up_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "up_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "action",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "up_roles",
+            "indexes": [
+                {
+                    "name": "up_roles_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "up_roles_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "up_roles_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "up_roles_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "up_roles_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "up_users",
+            "indexes": [
+                {
+                    "name": "up_users_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "up_users_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "up_users_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "up_users_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "up_users_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "username",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "email",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "provider",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "password",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "reset_password_token",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "confirmation_token",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "confirmed",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "blocked",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "showcases_cmps",
+            "indexes": [
+                {
+                    "name": "showcases_field_idx",
+                    "columns": [
+                        "field"
+                    ]
+                },
+                {
+                    "name": "showcases_component_type_idx",
+                    "columns": [
+                        "component_type"
+                    ]
+                },
+                {
+                    "name": "showcases_entity_fk",
+                    "columns": [
+                        "entity_id"
+                    ]
+                },
+                {
+                    "name": "showcases_uq",
+                    "columns": [
+                        "entity_id",
+                        "cmp_id",
+                        "field",
+                        "component_type"
+                    ],
+                    "type": "unique"
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "showcases_entity_fk",
+                    "columns": [
+                        "entity_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "showcases",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "entity_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "cmp_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "component_type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "field",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "order",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "showcases",
+            "indexes": [
+                {
+                    "name": "showcases_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "showcases_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "showcases_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "showcases_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "showcases_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "title",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "summary",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "body",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "content",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "contact",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "secret",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "stage",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "views",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "big_views",
+                    "type": "bigInteger",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "rating",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "price",
+                    "type": "decimal",
+                    "args": [
+                        10,
+                        2
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "release_date",
+                    "type": "date",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "publish_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "opens_at",
+                    "type": "time",
+                    "args": [
+                        {
+                            "precision": 3
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "featured",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "settings",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "tags",
+            "indexes": [
+                {
+                    "name": "tags_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "tags_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "tags_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "tags_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "tags_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "admin_permissions",
+            "indexes": [
+                {
+                    "name": "admin_permissions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "admin_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "action",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "action_parameters",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "subject",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "properties",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "conditions",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "admin_users",
+            "indexes": [
+                {
+                    "name": "admin_users_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "admin_users_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "admin_users_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_users_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "admin_users_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "firstname",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "lastname",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "username",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "email",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "password",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "reset_password_token",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "reset_password_token_expires_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "registration_token",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "blocked",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "prefered_language",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "admin_roles",
+            "indexes": [
+                {
+                    "name": "admin_roles_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "admin_roles_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "admin_roles_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_roles_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "admin_roles_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "code",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_api_tokens",
+            "indexes": [
+                {
+                    "name": "strapi_api_tokens_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_api_tokens_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_tokens_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_api_tokens_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_api_tokens_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "kind",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "access_key",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "encrypted_key",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "last_used_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "expires_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "lifespan",
+                    "type": "bigInteger",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_api_token_permissions",
+            "indexes": [
+                {
+                    "name": "strapi_api_token_permissions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_api_token_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_token_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_api_token_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_api_token_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "action",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_transfer_tokens",
+            "indexes": [
+                {
+                    "name": "strapi_transfer_tokens_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_tokens_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_tokens_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_transfer_tokens_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_transfer_tokens_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "access_key",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "last_used_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "expires_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "lifespan",
+                    "type": "bigInteger",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_transfer_token_permissions",
+            "indexes": [
+                {
+                    "name": "strapi_transfer_token_permissions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_transfer_token_permissions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "action",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_sessions",
+            "indexes": [
+                {
+                    "name": "strapi_sessions_documents_idx",
+                    "columns": [
+                        "document_id",
+                        "locale",
+                        "published_at"
+                    ]
+                },
+                {
+                    "name": "strapi_sessions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                },
+                {
+                    "name": "strapi_sessions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_sessions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                },
+                {
+                    "name": "strapi_sessions_updated_by_id_fk",
+                    "columns": [
+                        "updated_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "user_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "session_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "child_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "device_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "origin",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "expires_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "absolute_expires_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "status",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "metadata",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "published_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "updated_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "components_shared_notes",
+            "indexes": [],
+            "foreignKeys": [],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "heading",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "text",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_core_store_settings",
+            "indexes": [],
+            "foreignKeys": [],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "key",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "value",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "environment",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "tag",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_webhooks",
+            "indexes": [],
+            "foreignKeys": [],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "url",
+                    "type": "text",
+                    "args": [
+                        "longtext"
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "headers",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "events",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "enabled",
+                    "type": "boolean",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_history_versions",
+            "indexes": [
+                {
+                    "name": "strapi_history_versions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_history_versions_created_by_id_fk",
+                    "columns": [
+                        "created_by_id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "onDelete": "SET NULL"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "content_type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "related_document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "status",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "data",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "schema",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_by_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_ai_metadata_jobs",
+            "indexes": [],
+            "foreignKeys": [],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "status",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "completed_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "strapi_ai_localization_jobs",
+            "indexes": [],
+            "foreignKeys": [],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "content_type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "related_document_id",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "source_locale",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "target_locales",
+                    "type": "jsonb",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "status",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "created_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "updated_at",
+                    "type": "datetime",
+                    "args": [
+                        {
+                            "useTz": false,
+                            "precision": 6
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                }
+            ]
+        },
+        {
+            "name": "files_related_mph",
+            "indexes": [
+                {
+                    "name": "files_related_mph_fk",
+                    "columns": [
+                        "file_id"
+                    ]
+                },
+                {
+                    "name": "files_related_mph_oidx",
+                    "columns": [
+                        "order"
+                    ]
+                },
+                {
+                    "name": "files_related_mph_idix",
+                    "columns": [
+                        "related_id"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "files_related_mph_fk",
+                    "columns": [
+                        "file_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "files",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "file_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "related_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "related_type",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "field",
+                    "type": "string",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": false
+                },
+                {
+                    "name": "order",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "files_folder_lnk",
+            "indexes": [
+                {
+                    "name": "files_folder_lnk_fk",
+                    "columns": [
+                        "file_id"
+                    ]
+                },
+                {
+                    "name": "files_folder_lnk_ifk",
+                    "columns": [
+                        "folder_id"
+                    ]
+                },
+                {
+                    "name": "files_folder_lnk_uq",
+                    "columns": [
+                        "file_id",
+                        "folder_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "files_folder_lnk_oifk",
+                    "columns": [
+                        "file_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "files_folder_lnk_fk",
+                    "columns": [
+                        "file_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "files",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "files_folder_lnk_ifk",
+                    "columns": [
+                        "folder_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "upload_folders",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "file_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "folder_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "file_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "upload_folders_parent_lnk",
+            "indexes": [
+                {
+                    "name": "upload_folders_parent_lnk_fk",
+                    "columns": [
+                        "folder_id"
+                    ]
+                },
+                {
+                    "name": "upload_folders_parent_lnk_ifk",
+                    "columns": [
+                        "inv_folder_id"
+                    ]
+                },
+                {
+                    "name": "upload_folders_parent_lnk_uq",
+                    "columns": [
+                        "folder_id",
+                        "inv_folder_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "upload_folders_parent_lnk_oifk",
+                    "columns": [
+                        "folder_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "upload_folders_parent_lnk_fk",
+                    "columns": [
+                        "folder_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "upload_folders",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "upload_folders_parent_lnk_ifk",
+                    "columns": [
+                        "inv_folder_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "upload_folders",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "folder_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "inv_folder_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "folder_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_release_actions_release_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_release_actions_release_lnk_fk",
+                    "columns": [
+                        "release_action_id"
+                    ]
+                },
+                {
+                    "name": "strapi_release_actions_release_lnk_ifk",
+                    "columns": [
+                        "release_id"
+                    ]
+                },
+                {
+                    "name": "strapi_release_actions_release_lnk_uq",
+                    "columns": [
+                        "release_action_id",
+                        "release_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_release_actions_release_lnk_oifk",
+                    "columns": [
+                        "release_action_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_release_actions_release_lnk_fk",
+                    "columns": [
+                        "release_action_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_release_actions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_release_actions_release_lnk_ifk",
+                    "columns": [
+                        "release_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_releases",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "release_action_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "release_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "release_action_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_workflows_stage_required_to_publish_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_workflows_stage_required_to_publish_lnk_fk",
+                    "columns": [
+                        "workflow_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stage_required_to_publish_lnk_ifk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stage_required_to_publish_lnk_uq",
+                    "columns": [
+                        "workflow_id",
+                        "workflow_stage_id"
+                    ],
+                    "type": "unique"
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_workflows_stage_required_to_publish_lnk_fk",
+                    "columns": [
+                        "workflow_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_workflows",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_workflows_stage_required_to_publish_lnk_ifk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_workflows_stages",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "workflow_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "workflow_stage_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_workflows_stages_workflow_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_fk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_ifk",
+                    "columns": [
+                        "workflow_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_uq",
+                    "columns": [
+                        "workflow_stage_id",
+                        "workflow_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_oifk",
+                    "columns": [
+                        "workflow_stage_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_fk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_workflows_stages",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_workflows_stages_workflow_lnk_ifk",
+                    "columns": [
+                        "workflow_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_workflows",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "workflow_stage_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "workflow_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "workflow_stage_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_workflows_stages_permissions_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_fk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_ifk",
+                    "columns": [
+                        "permission_id"
+                    ]
+                },
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_uq",
+                    "columns": [
+                        "workflow_stage_id",
+                        "permission_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_ofk",
+                    "columns": [
+                        "permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_fk",
+                    "columns": [
+                        "workflow_stage_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_workflows_stages",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_workflows_stages_permissions_lnk_ifk",
+                    "columns": [
+                        "permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_permissions",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "workflow_stage_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "up_permissions_role_lnk",
+            "indexes": [
+                {
+                    "name": "up_permissions_role_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ]
+                },
+                {
+                    "name": "up_permissions_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ]
+                },
+                {
+                    "name": "up_permissions_role_lnk_uq",
+                    "columns": [
+                        "permission_id",
+                        "role_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "up_permissions_role_lnk_oifk",
+                    "columns": [
+                        "permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "up_permissions_role_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "up_permissions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "up_permissions_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "up_roles",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "role_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "up_users_role_lnk",
+            "indexes": [
+                {
+                    "name": "up_users_role_lnk_fk",
+                    "columns": [
+                        "user_id"
+                    ]
+                },
+                {
+                    "name": "up_users_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ]
+                },
+                {
+                    "name": "up_users_role_lnk_uq",
+                    "columns": [
+                        "user_id",
+                        "role_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "up_users_role_lnk_oifk",
+                    "columns": [
+                        "user_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "up_users_role_lnk_fk",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "up_users",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "up_users_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "up_roles",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "role_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "user_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "showcases_main_tag_lnk",
+            "indexes": [
+                {
+                    "name": "showcases_main_tag_lnk_fk",
+                    "columns": [
+                        "showcase_id"
+                    ]
+                },
+                {
+                    "name": "showcases_main_tag_lnk_ifk",
+                    "columns": [
+                        "tag_id"
+                    ]
+                },
+                {
+                    "name": "showcases_main_tag_lnk_uq",
+                    "columns": [
+                        "showcase_id",
+                        "tag_id"
+                    ],
+                    "type": "unique"
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "showcases_main_tag_lnk_fk",
+                    "columns": [
+                        "showcase_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "showcases",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "showcases_main_tag_lnk_ifk",
+                    "columns": [
+                        "tag_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "tags",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "showcase_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "tag_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "showcases_tags_lnk",
+            "indexes": [
+                {
+                    "name": "showcases_tags_lnk_fk",
+                    "columns": [
+                        "showcase_id"
+                    ]
+                },
+                {
+                    "name": "showcases_tags_lnk_ifk",
+                    "columns": [
+                        "tag_id"
+                    ]
+                },
+                {
+                    "name": "showcases_tags_lnk_uq",
+                    "columns": [
+                        "showcase_id",
+                        "tag_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "showcases_tags_lnk_ofk",
+                    "columns": [
+                        "tag_ord"
+                    ]
+                },
+                {
+                    "name": "showcases_tags_lnk_oifk",
+                    "columns": [
+                        "showcase_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "showcases_tags_lnk_fk",
+                    "columns": [
+                        "showcase_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "showcases",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "showcases_tags_lnk_ifk",
+                    "columns": [
+                        "tag_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "tags",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "showcase_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "tag_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "tag_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "showcase_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "admin_permissions_role_lnk",
+            "indexes": [
+                {
+                    "name": "admin_permissions_role_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_role_lnk_uq",
+                    "columns": [
+                        "permission_id",
+                        "role_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "admin_permissions_role_lnk_oifk",
+                    "columns": [
+                        "permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_permissions_role_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_permissions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "admin_permissions_role_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_roles",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "role_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "admin_permissions_api_token_lnk",
+            "indexes": [
+                {
+                    "name": "admin_permissions_api_token_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_api_token_lnk_ifk",
+                    "columns": [
+                        "api_token_id"
+                    ]
+                },
+                {
+                    "name": "admin_permissions_api_token_lnk_uq",
+                    "columns": [
+                        "permission_id",
+                        "api_token_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "admin_permissions_api_token_lnk_oifk",
+                    "columns": [
+                        "permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_permissions_api_token_lnk_fk",
+                    "columns": [
+                        "permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_permissions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "admin_permissions_api_token_lnk_ifk",
+                    "columns": [
+                        "api_token_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_api_tokens",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "api_token_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "admin_users_roles_lnk",
+            "indexes": [
+                {
+                    "name": "admin_users_roles_lnk_fk",
+                    "columns": [
+                        "user_id"
+                    ]
+                },
+                {
+                    "name": "admin_users_roles_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ]
+                },
+                {
+                    "name": "admin_users_roles_lnk_uq",
+                    "columns": [
+                        "user_id",
+                        "role_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "admin_users_roles_lnk_ofk",
+                    "columns": [
+                        "role_ord"
+                    ]
+                },
+                {
+                    "name": "admin_users_roles_lnk_oifk",
+                    "columns": [
+                        "user_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "admin_users_roles_lnk_fk",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "admin_users_roles_lnk_ifk",
+                    "columns": [
+                        "role_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_roles",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "role_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "role_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "user_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_api_tokens_admin_user_owner_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_fk",
+                    "columns": [
+                        "api_token_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_ifk",
+                    "columns": [
+                        "user_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_uq",
+                    "columns": [
+                        "api_token_id",
+                        "user_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_oifk",
+                    "columns": [
+                        "api_token_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_fk",
+                    "columns": [
+                        "api_token_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_api_tokens",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_api_tokens_admin_user_owner_lnk_ifk",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "admin_users",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "api_token_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "user_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "api_token_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_api_token_permissions_token_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_fk",
+                    "columns": [
+                        "api_token_permission_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_ifk",
+                    "columns": [
+                        "api_token_id"
+                    ]
+                },
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_uq",
+                    "columns": [
+                        "api_token_permission_id",
+                        "api_token_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_oifk",
+                    "columns": [
+                        "api_token_permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_fk",
+                    "columns": [
+                        "api_token_permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_api_token_permissions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_api_token_permissions_token_lnk_ifk",
+                    "columns": [
+                        "api_token_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_api_tokens",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "api_token_permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "api_token_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "api_token_permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        },
+        {
+            "name": "strapi_transfer_token_permissions_token_lnk",
+            "indexes": [
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_fk",
+                    "columns": [
+                        "transfer_token_permission_id"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_ifk",
+                    "columns": [
+                        "transfer_token_id"
+                    ]
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_uq",
+                    "columns": [
+                        "transfer_token_permission_id",
+                        "transfer_token_id"
+                    ],
+                    "type": "unique"
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_oifk",
+                    "columns": [
+                        "transfer_token_permission_ord"
+                    ]
+                }
+            ],
+            "foreignKeys": [
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_fk",
+                    "columns": [
+                        "transfer_token_permission_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_transfer_token_permissions",
+                    "onDelete": "CASCADE"
+                },
+                {
+                    "name": "strapi_transfer_token_permissions_token_lnk_ifk",
+                    "columns": [
+                        "transfer_token_id"
+                    ],
+                    "referencedColumns": [
+                        "id"
+                    ],
+                    "referencedTable": "strapi_transfer_tokens",
+                    "onDelete": "CASCADE"
+                }
+            ],
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "increments",
+                    "args": [
+                        {
+                            "primary": true,
+                            "primaryKey": true
+                        }
+                    ],
+                    "defaultTo": null,
+                    "notNullable": true,
+                    "unsigned": false
+                },
+                {
+                    "name": "transfer_token_permission_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "transfer_token_id",
+                    "type": "integer",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                },
+                {
+                    "name": "transfer_token_permission_ord",
+                    "type": "double",
+                    "args": [],
+                    "defaultTo": null,
+                    "notNullable": false,
+                    "unsigned": true
+                }
+            ]
+        }
+    ]
+}

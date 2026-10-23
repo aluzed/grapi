@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tags",
+  "info": {
+    "displayName": "Tag",
+    "pluralName": "tags",
+    "singularName": "tag"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "showcases": {
+      "type": "relation",
+      "mappedBy": "tags",
+      "relation": "manyToMany",
+      "target": "api::showcase.showcase"
+    }
+  }
+}

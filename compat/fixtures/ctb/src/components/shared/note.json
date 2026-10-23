@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_shared_notes",
+  "info": {
+    "displayName": "Note"
+  },
+  "options": {},
+  "attributes": {
+    "heading": {
+      "type": "string"
+    },
+    "text": {
+      "type": "text"
+    }
+  }
+}

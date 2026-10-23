@@ -53,3 +53,31 @@ func TestAdminContentTypeBuilderDropsInverse(t *testing.T) {
 		t.Error("the other fields stay")
 	}
 }
+
+// A TypeScript project gets the .ts core files, and existing ones are kept.
+func TestAdminContentTypeBuilderCoreFilesTS(t *testing.T) {
+	ts, _, stop, dir := newAdminApp(t, "basic", true)
+	defer stop()
+	if err := os.WriteFile(filepath.Join(dir, "tsconfig.json"), []byte("{}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	custom := filepath.Join(dir, "src", "api", "book", "services", "book.ts")
+	if err := os.MkdirAll(filepath.Dir(custom), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(custom, []byte("// mine\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	c := adminLogin(t, ts.URL)
+	batch := `{"contentTypes":[{"action":"create","data":{"kind":"collectionType","info":{"displayName":"Book","singularName":"book","pluralName":"books"},"options":{},"attributes":[{"name":"title","type":"string"}]}}]}`
+	if s, b, _ := c.do("POST", "/content-type-builder/update-schema", batch); s != 200 {
+		t.Fatalf("create: %d %v", s, b)
+	}
+	router, err := os.ReadFile(filepath.Join(dir, "src", "api", "book", "routes", "book.ts"))
+	if err != nil || string(router) != "/**\n * book router\n */\n\nimport { factories } from '@strapi/strapi';\n\nexport default factories.createCoreRouter('api::book.book');\n" {
+		t.Fatalf("router: %q %v", router, err)
+	}
+	if kept, _ := os.ReadFile(custom); string(kept) != "// mine\n" {
+		t.Fatalf("an existing file is kept: %q", kept)
+	}
+}
