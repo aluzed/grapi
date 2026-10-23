@@ -3,6 +3,7 @@ package adminapi
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/db/query"
@@ -185,5 +186,9 @@ func (s *Server) revokeOtherSessions(w http.ResponseWriter, r *http.Request, u *
 // information is what the shell needs besides the user: menu entries and
 // the content types it can show.
 func (s *Server) information(w http.ResponseWriter, _ *http.Request, _ *User) error {
-	return data(w, map[string]any{"apiVersion": Version, "develop": s.cfg.Develop, "languages": Languages})
+	return data(w, map[string]any{
+		"apiVersion": Version, "develop": s.cfg.Develop, "languages": Languages,
+		"version": s.cfg.Version, "goVersion": runtime.Version(), "database": s.e.DB.Dialect.Name(), "environment": s.cfg.Environment,
+		"contentTypes": len(s.ContentManagerTypes()), "edition": "Community",
+	})
 }

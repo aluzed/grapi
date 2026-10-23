@@ -658,6 +658,7 @@ func (a *App) setup(p *Project) (*Server, error) {
 		a.stopWebhooks()
 		return nil, err
 	}
+	adminCfg.Version, adminCfg.Environment = a.opts.Version, conf.Environment
 	adm := adminapi.New(adminCfg, docs, log)
 	if err := adm.Bootstrap(ctx); err != nil {
 		a.stopWebhooks()

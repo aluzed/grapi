@@ -29,7 +29,17 @@ export type AdminSession = {
   isCurrent: boolean
 }
 
-export type Information = { apiVersion: string; develop: boolean; languages: string[] }
+export type Information = {
+  apiVersion: string
+  develop: boolean
+  languages: string[]
+  version: string
+  goVersion: string
+  database: string
+  environment: string
+  contentTypes: number
+  edition: string
+}
 
 export type Attribute = {
   type: string
@@ -66,3 +76,12 @@ export type Pagination = { page: number; pageSize: number; pageCount: number; to
 export type Locale = { code: string; name: string; isDefault: boolean }
 
 export type BulkResult = { count: number; documentIds: string[]; errors: { documentId: string; message: string }[] }
+
+export type RoleWithCount = Role & { usersCount: number }
+
+export type CatalogAction = { actionId: string; displayName: string; plugin: string; category?: string; subjects?: string[]; applyToProperties?: string[] }
+
+export type Catalog = {
+  sections: { contentTypes: CatalogAction[]; plugins: CatalogAction[]; settings: CatalogAction[] }
+  conditions: { id: string; displayName: string; category: string }[]
+}

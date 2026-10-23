@@ -22,7 +22,6 @@ export const navItems: NavItem[] = [
     to: '/settings',
     label: 'nav.settings',
     icon: <Settings className={icon} />,
-    allowed: (p) =>
-      p.some((x) => ['admin::webhooks.', 'admin::users.', 'admin::roles.', 'admin::api-tokens.', 'admin::project-settings.', 'plugin::i18n.locale.', 'plugin::users-permissions.', 'plugin::email.settings', 'plugin::upload.settings'].some((pre) => x.action.startsWith(pre))),
+    allowed: () => true,
   },
 ]

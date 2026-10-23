@@ -52,6 +52,9 @@ type Config struct {
 	UI fs.FS
 	// Develop enables the Content-Type Builder entry.
 	Develop bool
+	// Version is grapi's version, Environment the project's (NODE_ENV).
+	Version     string
+	Environment string
 }
 
 // Server serves the admin.

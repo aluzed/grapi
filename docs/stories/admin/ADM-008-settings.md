@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-008 : Settings (webhooks, tokens, utilisateurs, rôles et RBAC, locales, users-permissions, e-mail, projet)
@@ -47,6 +47,14 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
   - réglages avancés (e-mail unique, inscription ouverte, rôle par défaut, confirmation e-mail et redirection, URL de reset).
 - **E-mail** : provider actif et expéditeur par défaut en lecture seule, envoi d'un e-mail de test.
 - **Media Library** : réglages de `ADM-007`.
+
+## Avancement
+- Écran Paramètres avec sous-menu filtré par permissions (select sur mobile).
+- Vue d'ensemble : version de grapi, édition, version de Go, base, environnement, nombre de content types.
+- Administrateurs : liste avec recherche et statut (actif, invitation en attente, bloqué), invitation (e-mail, rôles, lien d'inscription copiable), édition (identité, rôles, activation), suppression avec confirmation.
+- Rôles : liste avec nombre d'utilisateurs, création, suppression (refusée si le rôle est attribué), éditeur : nom, description, matrice create, read, update, delete, publish par content type avec « Ses entrées seulement » (`is-creator`), actions des plugins et des réglages groupées par catégorie. Super Admin en lecture seule.
+- Vérifié dans Chrome sur le binaire.
+- Reste : permissions par champ, par locale et `has-same-role-as-creator` dans l'éditeur, duplication de rôle, et toutes les autres sections (webhooks, tokens, locales, users-permissions, e-mail, médias, projet).
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.

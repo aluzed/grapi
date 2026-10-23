@@ -11,6 +11,11 @@ import { Profile } from '@/pages/profile/Profile'
 import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManager'
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
+import { Overview } from '@/pages/settings/Overview'
+import { RoleEditor } from '@/pages/settings/RoleEditor'
+import { Roles } from '@/pages/settings/Roles'
+import { Settings, sections } from '@/pages/settings/Settings'
+import { Users } from '@/pages/settings/Users'
 import { Soon } from '@/pages/Soon'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
 import { Layout } from './Layout'
@@ -59,7 +64,16 @@ export const router = createBrowserRouter(
         },
         section('/content-type-builder'),
         section('/media-library'),
-        section('/settings'),
+        {
+          path: 'settings',
+          element: <Settings />,
+          children: [
+            { index: true, element: <Overview /> },
+            { path: 'users', element: <RequirePermission allowed={sections[1]!.allowed}><Users /></RequirePermission> },
+            { path: 'roles', element: <RequirePermission allowed={sections[2]!.allowed}><Roles /></RequirePermission> },
+            { path: 'roles/:id', element: <RequirePermission allowed={sections[2]!.allowed}><RoleEditor /></RequirePermission> },
+          ],
+        },
         { path: '*', element: <NotFound /> },
       ],
     },
