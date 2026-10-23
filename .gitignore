@@ -12,3 +12,6 @@ node_modules/
 /compat/bin/
 /compat/report/
 /admin/dist/
+
+# Private fixtures (GRAPI_PRIVATE_COMPAT) brought in by compat/scripts/bench.sh
+/compat/cmd/compat/zz_private_*.go

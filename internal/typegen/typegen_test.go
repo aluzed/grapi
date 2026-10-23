@@ -32,15 +32,15 @@ func firstDiff(want, got string) string {
 }
 
 func TestMatchesStrapi(t *testing.T) {
-	for _, fx := range append([]string{"graphql"}, fixturetest.Names...) {
+	for _, fx := range append([]string{"graphql"}, fixturetest.All()...) {
 		t.Run(fx, func(t *testing.T) {
-			res, _, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", fx)))
+			res, _, err := builtin.Load(os.DirFS(fixturetest.Dir(fx)))
 			if err != nil {
 				t.Fatal(err)
 			}
 			got := Generate(res.Set)
 			for name, out := range map[string]string{"contentTypes.d.ts": got.ContentTypes, "components.d.ts": got.Components} {
-				raw, err := os.ReadFile(filepath.Join("testdata", fx, name))
+				raw, err := os.ReadFile(filepath.Join(fixturetest.Testdata(fx), name))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -54,7 +54,7 @@ func TestMatchesStrapi(t *testing.T) {
 }
 
 func TestDeterministic(t *testing.T) {
-	res, _, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", "devfreelance")))
+	res, _, err := builtin.Load(os.DirFS(fixturetest.Dir("components")))
 	if err != nil {
 		t.Fatal(err)
 	}

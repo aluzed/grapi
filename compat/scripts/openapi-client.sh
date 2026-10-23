@@ -1,5 +1,5 @@
 #!/bin/sh
-# The OpenAPI document grapi generates for devfreelance: validated by
+# The OpenAPI document grapi generates for the basic fixture: validated by
 # Redocly, turned into types by openapi-typescript, and a typed
 # openapi-fetch client compiled with tsc --strict, on the homelab (nothing
 # runs in Docker here). openapi-generator is left out: its OpenAPI 3.1
@@ -14,7 +14,7 @@ remote=/tmp/grapi-openapi-$$
 trap 'rm -rf "$work"; ssh "$host" "rm -rf $remote"' EXIT
 cd "$root"
 DATABASE_CLIENT=sqlite DATABASE_FILENAME="$work/data.db" JWT_SECRET=openapi \
-  go run ./cmd/grapi openapi -dir compat/fixtures/devfreelance -o "$work/oas.json"
+  go run ./cmd/grapi openapi -dir compat/fixtures/basic -o "$work/oas.json"
 rm -f "$work"/data.db*
 mkdir -p "$work/client"
 cat >"$work/client/client.ts" <<'TS'
@@ -23,8 +23,8 @@ import type { paths } from "./schema";
 
 const client = createClient<paths>({ baseUrl: "http://localhost:1337/api" });
 
-export async function postTitles() {
-  const { data, error } = await client.GET("/posts", { params: { query: { sort: "title" } } });
+export async function articleTitles() {
+  const { data, error } = await client.GET("/articles", { params: { query: { sort: "title" } } });
   if (error) throw new Error(JSON.stringify(error));
   return data?.data?.map((p) => p.title);
 }

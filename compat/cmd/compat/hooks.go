@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/aluzed/grapi"
-	"github.com/aluzed/grapi/compat/fixtures/devfreelance/framework/backend"
 )
 
 // fixtureHooks are the fixtures' project code ported to Go, by fixture name.
-var fixtureHooks = map[string]func(*grapi.App){
-	"devfreelance": backend.Register,
-}
+// A private fixture registers its own from a zz_private_*.go file that
+// compat/scripts/bench.sh copies here (GRAPI_PRIVATE_COMPAT).
+var fixtureHooks = map[string]func(*grapi.App){}
 
 // hookedApp sets up a full App on the bench database with a fixture's hooks,
 // as its framework binary would.

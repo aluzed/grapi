@@ -30,6 +30,7 @@ import (
 
 	"github.com/aluzed/grapi"
 	"github.com/aluzed/grapi/document"
+	"github.com/aluzed/grapi/internal/fixturetest"
 	"github.com/aluzed/grapi/query"
 )
 
@@ -87,7 +88,8 @@ func newAdminApp(t *testing.T, fixture string, develop bool) (*httptest.Server, 
 func newAdminAppWith(t *testing.T, fixture string, develop bool, setup func(app *grapi.App, dir string)) (*httptest.Server, *captureMail, func(), string) {
 	t.Helper()
 	dir := t.TempDir()
-	if err := copyDir(filepath.Join("compat", "fixtures", fixture, "src"), filepath.Join(dir, "src")); err != nil {
+	fixturetest.Require(t, fixture)
+	if err := copyDir(filepath.Join(fixturetest.Dir(fixture), "src"), filepath.Join(dir, "src")); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
@@ -1213,9 +1215,9 @@ func TestAdminViewConfiguration(t *testing.T) {
 }
 
 // Every admin read of every fixture answers: a smoke test over the
-// schemas of the compat bench, devfreelance included.
+// schemas of the compat bench, private ones included.
 func TestAdminSmokeFixtures(t *testing.T) {
-	for _, fx := range []string{"basic", "relations", "components", "i18n-dp", "devfreelance", "naming"} {
+	for _, fx := range fixturetest.All() {
 		t.Run(fx, func(t *testing.T) {
 			ts, _, stop := newAdminFixture(t, fx)
 			defer stop()

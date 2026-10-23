@@ -56,7 +56,7 @@ var migrationTables = map[string]bool{"strapi_migrations": true, "strapi_migrati
 // the same CREATE TABLE and CREATE INDEX statements, byte for byte.
 func TestSyncEmptySQLiteMatchesStrapi(t *testing.T) {
 	ctx := context.Background()
-	for _, fixture := range fixturetest.Names {
+	for _, fixture := range fixturetest.All() {
 		t.Run(fixture, func(t *testing.T) {
 			_, desired := fixturetest.Schema(t, fixture)
 			d := openSQLite(t)
@@ -67,7 +67,7 @@ func TestSyncEmptySQLiteMatchesStrapi(t *testing.T) {
 			if status != schemasync.Changed {
 				t.Fatalf("first sync: %s", status)
 			}
-			raw, err := os.ReadFile(filepath.Join(fixturetest.Compat(), "golden", fixture+"-sqlite", "schema", "physical-sqlite-master.json"))
+			raw, err := os.ReadFile(fixturetest.Golden(fixture, "sqlite", "schema", "physical-sqlite-master.json"))
 			if err != nil {
 				t.Fatal(err)
 			}

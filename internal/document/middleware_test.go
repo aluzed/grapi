@@ -18,7 +18,8 @@ import (
 
 func service(t *testing.T, fixture string) *document.Service {
 	t.Helper()
-	return serviceOf(t, os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", fixture)))
+	fixturetest.Require(t, fixture)
+	return serviceOf(t, os.DirFS(fixturetest.Dir(fixture)))
 }
 
 func serviceOf(t *testing.T, app fs.FS) *document.Service {

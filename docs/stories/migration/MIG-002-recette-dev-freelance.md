@@ -13,7 +13,7 @@ Démontrer que le front Go de dev-freelance fonctionne à l'identique contre gra
 ## Périmètre
 - **Environnement** : uniquement sur le homelab (`ssh homelab`). Aucun conteneur sur le Mac, et rien sur le serveur de prod.
 - **Données** :
-  - copie de la base de prod (dump `pg_dump` de `la base de prod`, transféré en flux serveur vers homelab) ;
+  - copie de la base de prod (dump `pg_dump` de la base de prod, transféré en flux serveur vers homelab) ;
   - copie des uploads (ou montage en lecture seule d'une copie) ;
   - les variables d'env transférées de la même façon, jamais affichées.
 - **Deux instances côte à côte sur la même copie** : Strapi 5.59 (image de prod) et grapi, chacune sur sa propre copie de la base pour les tests d'écriture.

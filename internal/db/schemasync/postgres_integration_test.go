@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/aluzed/grapi/internal/db"
@@ -75,7 +74,7 @@ func physicalRows(t *testing.T, raw []byte) []string {
 func TestSyncEmptyPostgresMatchesStrapi(t *testing.T) {
 	ctx := context.Background()
 	d := openPostgres(t)
-	for _, fixture := range fixturetest.Names {
+	for _, fixture := range fixturetest.All() {
 		t.Run(fixture, func(t *testing.T) {
 			resetPostgres(t, d)
 			_, desired := fixturetest.Schema(t, fixture)
@@ -87,7 +86,7 @@ func TestSyncEmptyPostgresMatchesStrapi(t *testing.T) {
 				if err := d.QueryRow(ctx, query).Scan(&got); err != nil {
 					t.Fatal(err)
 				}
-				want, err := os.ReadFile(filepath.Join(fixturetest.Compat(), "golden", fixture+"-postgres", "schema", file))
+				want, err := os.ReadFile(fixturetest.Golden(fixture, "postgres", "schema", file))
 				if err != nil {
 					t.Fatal(err)
 				}

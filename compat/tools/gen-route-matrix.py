@@ -2,7 +2,7 @@
 routes, called as Public and as an Authenticated user, so that the bench
 compares the status (and body) of each role x route pair with Strapi.
 
-usage: python3 compat/tools/gen-route-matrix.py devfreelance
+usage: python3 compat/tools/gen-route-matrix.py <fixture> [compat dir]
 """
 import glob
 import json
@@ -10,7 +10,7 @@ import os
 import sys
 
 fixture = sys.argv[1]
-root = os.path.join(os.path.dirname(__file__), "..")
+root = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), "..")
 cases = [
     {"name": "matrix-register", "method": "POST", "path": "/api/auth/local/register",
      "body": {"username": "matrixuser", "email": "matrix@example.com", "password": "Passw0rd!"}, "save": {"jwtm": "jwt"}},

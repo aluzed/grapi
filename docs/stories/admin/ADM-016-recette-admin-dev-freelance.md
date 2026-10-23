@@ -7,7 +7,7 @@ status: todo
 > Option retenue : B (admin maison), voir `docs/decisions/D1-admin.md`. Conventions UI : voir `ADM-002`.
 
 ## Contexte
-Le site dev-freelance lit déjà ses données via grapi (`deploy/dev-freelance`), mais l'édition se fait encore dans l'admin Strapi. Pour basculer aussi l'admin, il faut vérifier qu'on y fait tout ce que l'équipe fait au quotidien, aussi confortablement, et que le JS du projet Strapi (génération IA, invalidation du cache Redis) a son équivalent.
+Le site dev-freelance lit déjà ses données via grapi (déploiement décrit dans le dépôt privé du projet), mais l'édition se fait encore dans l'admin Strapi. Pour basculer aussi l'admin, il faut vérifier qu'on y fait tout ce que l'équipe fait au quotidien, aussi confortablement, et que le JS du projet Strapi (génération IA, invalidation du cache Redis) a son équivalent.
 
 ## Objectif
 Pouvoir écrire, illustrer et publier les articles dev-freelance dans l'admin grapi sans regretter Strapi.

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"testing"
@@ -97,9 +96,9 @@ func short(v any) string {
 }
 
 func TestDocumentMatchesStrapi(t *testing.T) {
-	for _, fx := range append([]string{"graphql"}, fixturetest.Names...) {
+	for _, fx := range append([]string{"graphql"}, fixturetest.All()...) {
 		t.Run(fx, func(t *testing.T) {
-			raw, err := os.ReadFile(filepath.Join("testdata", "oas-"+fx+".json"))
+			raw, err := os.ReadFile(fixturetest.Testdata("oas-" + fx + ".json"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -107,7 +106,7 @@ func TestDocumentMatchesStrapi(t *testing.T) {
 			if err := json.Unmarshal(raw, &want); err != nil {
 				t.Fatal(err)
 			}
-			res, _, err := builtin.Load(os.DirFS(filepath.Join(fixturetest.Compat(), "fixtures", fx)))
+			res, _, err := builtin.Load(os.DirFS(fixturetest.Dir(fx)))
 			if err != nil {
 				t.Fatal(err)
 			}

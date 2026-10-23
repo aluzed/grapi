@@ -30,11 +30,16 @@ func dropNil(v any) any {
 }
 
 // dev-freelance's config, transcribed in YAML, gives Strapi's merged
-// configuration (testdata/devfreelance-config.json: loadConfiguration on its
+// configuration (devfreelance-config.json: loadConfiguration on its
 // TypeScript files with the same environment, plugins evaluated with
 // @strapi/utils' env), leaf by leaf.
 func TestDevFreelanceConfigTranscription(t *testing.T) {
-	raw, err := os.ReadFile("testdata/devfreelance-config.json")
+	// Private material: GRAPI_PRIVATE_COMPAT, see internal/fixturetest.
+	private := os.Getenv("GRAPI_PRIVATE_COMPAT")
+	if private == "" {
+		t.Skip("GRAPI_PRIVATE_COMPAT not set")
+	}
+	raw, err := os.ReadFile(filepath.Join(private, "testdata", "devfreelance-config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +47,7 @@ func TestDevFreelanceConfigTranscription(t *testing.T) {
 	if err := json.Unmarshal(raw, &want); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open("testdata/devfreelance-config.env")
+	f, err := os.Open(filepath.Join(private, "testdata", "devfreelance-config.env"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +66,7 @@ func TestDevFreelanceConfigTranscription(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(project, "dkim", "key.pem"), []byte("FAKE-DKIM-KEY\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	c, err := Load(Options{Dir: project, ConfigDir: filepath.Join("..", "..", "compat", "fixtures", "devfreelance", "config-yaml"), Env: env})
+	c, err := Load(Options{Dir: project, ConfigDir: filepath.Join(private, "fixtures", "devfreelance", "config-yaml"), Env: env})
 	if err != nil {
 		t.Fatal(err)
 	}

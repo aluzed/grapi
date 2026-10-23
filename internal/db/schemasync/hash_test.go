@@ -45,8 +45,24 @@ func TestHashMatchesStrapi(t *testing.T) {
 	if len(h.Hashes) == 0 {
 		t.Fatal("no vectors")
 	}
+	files := map[string]struct{ Full, CE string }{}
 	for file, want := range h.Hashes {
-		b, err := os.ReadFile(filepath.Join("../../../compat", file))
+		files[filepath.Join("../../../compat", file)] = want
+	}
+	// A private fixture's vectors sit with it (GRAPI_PRIVATE_COMPAT, see internal/fixturetest).
+	if dir := os.Getenv("GRAPI_PRIVATE_COMPAT"); dir != "" {
+		if b, err := os.ReadFile(filepath.Join(dir, "testdata", "strapi-hashes.json")); err == nil {
+			var p strapiHashes
+			if err := json.Unmarshal(b, &p); err != nil {
+				t.Fatal(err)
+			}
+			for file, want := range p.Hashes {
+				files[filepath.Join(dir, file)] = want
+			}
+		}
+	}
+	for file, want := range files {
+		b, err := os.ReadFile(file)
 		if err != nil {
 			t.Fatal(err)
 		}

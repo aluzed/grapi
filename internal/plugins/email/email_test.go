@@ -107,8 +107,8 @@ func TestSMTPSendsSignedMail(t *testing.T) {
 	addr, got := fakeSMTP(t)
 	host, port, _ := net.SplitHostPort(addr)
 	n, _ := strconv.Atoi(port)
-	p := &SMTP{Host: host, Port: n, User: "u", Pass: "p", DKIM: &DKIM{DomainName: "dev-freelance.com", KeySelector: "sel2026", PrivateKey: pemKey}}
-	s := &Service{Provider: p, Settings: Settings{DefaultFrom: "Dev Freelance <contact@dev-freelance.com>"}}
+	p := &SMTP{Host: host, Port: n, User: "u", Pass: "p", DKIM: &DKIM{DomainName: "example.com", KeySelector: "sel2026", PrivateKey: pemKey}}
+	s := &Service{Provider: p, Settings: Settings{DefaultFrom: "Example <contact@example.com>"}}
 	if err := s.Send(context.Background(), Message{To: "a@ex.com", Subject: "Réinitialisation", Text: "Bonjour", HTML: "<p>Bonjour</p>"}); err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestSMTPSendsSignedMail(t *testing.T) {
 	pub, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 	verifications, err := dkim.VerifyWithOptions(bytes.NewReader(raw), &dkim.VerifyOptions{
 		LookupTXT: func(domain string) ([]string, error) {
-			if domain != "sel2026._domainkey.dev-freelance.com" {
+			if domain != "sel2026._domainkey.example.com" {
 				t.Errorf("lookup %s", domain)
 			}
 			return []string{"v=DKIM1; k=rsa; p=" + base64.StdEncoding.EncodeToString(pub)}, nil
@@ -130,7 +130,7 @@ func TestSMTPSendsSignedMail(t *testing.T) {
 	if err != nil || len(verifications) != 1 || verifications[0].Err != nil {
 		t.Fatalf("dkim: %v %+v", err, verifications)
 	}
-	if v := verifications[0]; v.Domain != "dev-freelance.com" {
+	if v := verifications[0]; v.Domain != "example.com" {
 		t.Fatalf("d=%s", v.Domain)
 	}
 	if !bytes.Contains(raw, []byte("multipart/alternative")) || !bytes.Contains(raw, []byte("=?utf-8?q?R=C3=A9initialisation?=")) {

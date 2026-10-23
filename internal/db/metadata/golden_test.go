@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"sort"
 	"testing"
 
@@ -53,11 +52,11 @@ func golden(t *testing.T, path string) map[string]string {
 // The schema grapi computes is byte for byte the one Strapi 5.59 stored for
 // every fixture, so Strapi and grapi see no diff on each other's database.
 func TestSchemaMatchesStrapi(t *testing.T) {
-	for _, fixture := range fixturetest.Names {
+	for _, fixture := range fixturetest.All() {
 		t.Run(fixture, func(t *testing.T) {
 			got := build(t, fixture)
 			for _, db := range []string{"sqlite", "postgres"} {
-				want := golden(t, filepath.Join(fixturetest.Compat(), "golden", fixture+"-"+db, "schema/database-schema.json"))
+				want := golden(t, fixturetest.Golden(fixture, db, "schema/database-schema.json"))
 				seen := map[string]bool{}
 				for _, table := range got.Tables {
 					seen[table.Name] = true
