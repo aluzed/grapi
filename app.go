@@ -754,14 +754,18 @@ func (a *App) Start() error {
 	}
 	defer func() { _ = s.Close() }()
 	log := s.project.Log
-	srv := &http.Server{Addr: s.Addr, Handler: s.Handler, ReadHeaderTimeout: 10 * time.Second}
+	srv := s.httpServer(s.Handler)
+	ln, addr, err := s.listener()
+	if err != nil {
+		return err
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	errc := make(chan error, 1)
-	go func() { errc <- srv.ListenAndServe() }()
+	go func() { errc <- srv.Serve(ln) }()
 	conf := s.project.Conf
 	server, admin := absoluteURLs(conf)
-	log.Info(fmt.Sprintf("grapi %s listening on %s", a.opts.Version, s.Addr),
+	log.Info(fmt.Sprintf("grapi %s listening on %s", a.opts.Version, addr),
 		"environment", conf.Environment, "server", server, "admin", admin, "database", s.project.DB.Dialect.Name())
 	select {
 	case err := <-errc:

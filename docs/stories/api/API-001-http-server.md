@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # API-001 : Serveur HTTP, contexte de requête, /_health, arrêt propre
@@ -24,10 +24,16 @@ Le serveur HTTP de grapi, sa configuration réseau et son cycle de vie.
 - HTTP/3.
 
 ## Critères d'acceptation
-- [ ] `curl -I /_health` renvoie `204`, et aucun en-tête ne nomme le serveur ni sa version.
-- [ ] Derrière un proxy avec `server.proxy.koa: true`, l'IP client est celle de `X-Forwarded-For`.
-- [ ] SIGTERM pendant une requête longue : la requête se termine, puis le processus sort avec le code 0.
-- [ ] Démarrage à vide (projet minimal SQLite) en moins de 300 ms sur le homelab.
+- [x] `curl -I /_health` renvoie `204`, et aucun en-tête ne nomme le serveur ni sa version.
+- [x] Derrière un proxy avec `server.proxy.koa: true`, l'IP client est celle de `X-Forwarded-For`.
+- [x] SIGTERM pendant une requête longue : la requête se termine, puis le processus sort avec le code 0.
+- [x] Démarrage à vide (projet minimal SQLite) en moins de 300 ms sur le homelab.
+
+## Avancement
+- `HEAD /_health` : 204, sans en-tête `Server` ni `X-Powered-By`, et arrêt propre sur SIGTERM (la requête en cours se termine, puis sortie en code 0) : `TestGracefulShutdown`, sur un vrai processus.
+- `server.proxy` lu comme Strapi 5 (`koa`, `ipHeader`, `maxIpsCount`, `internal/clientip`) : `TestLoginRateLimitUsesProxyClientIP`, `clientip.TestIP`.
+- `server.socket` (socket Unix) et `server.http.serverOptions` (`requestTimeout`, `headersTimeout`, `keepAliveTimeout`, lus comme les options de Node) : `TestUnixSocket`.
+- Démarrage sur le homelab, projet `grapi new` en SQLite, jusqu'au premier 204 de `/_health` : 95 ms à froid (base et schéma créés), 44 ms ensuite.
 
 ## Notes techniques
 - `net/http` standard. Le routeur de Go 1.22 (méthode + motif) suffit ; chi seulement si un besoin apparaît.

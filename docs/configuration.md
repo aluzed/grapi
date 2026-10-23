@@ -34,6 +34,8 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 `server.openapi['content-api']`: `access: public` serves the content API's OpenAPI 3.1 document on `<api prefix>/openapi.json` (`route.path` to move it), as Strapi 5.59 does; `disabled` (the default) does not. The document is Strapi's for the same project, limited to the routes grapi serves. `grapi openapi [-o file]` writes it without starting the server.
 
+`server.socket`: a Unix socket path to listen on instead of `server.host` and `server.port`, as Strapi. `server.http.serverOptions`: Node's `requestTimeout`, `headersTimeout` and `keepAliveTimeout` (milliseconds) become the server's read, header and idle timeouts; without them, headers must arrive within 10 seconds and the rest has no limit.
+
 `server.proxy`: `koa: true` trusts the proxy headers, as Koa does for Strapi: the client IP (rate limits, audit logs) is the first address of `ipHeader` (`X-Forwarded-For` by default), after keeping only the last `maxIpsCount` ones when it is set, and `X-Forwarded-Proto: https` marks the admin cookie `Secure`. Strapi 5 reads `server.proxy.koa` only, so `proxy: true` trusts nothing (grapi logs a warning).
 
 `admin.rateLimit`: `enabled` (true), `interval` (5 minutes, in ms or as `{min: 5}`), `max` (5), as Strapi: admin login and register-admin are limited per email, path and client IP, past the limit with Strapi's 429 `RateLimitError`. `plugins.users-permissions.config.ratelimit` does the same for the users-permissions auth routes (1 minute, 10).

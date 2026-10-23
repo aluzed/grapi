@@ -49,20 +49,20 @@ func (a *App) Develop(onListen func(addr string)) error {
 	}
 	var current atomic.Pointer[Server]
 	current.Store(srv)
-	httpSrv := &http.Server{
-		Addr:              srv.Addr,
-		ReadHeaderTimeout: 10 * time.Second,
-		Handler:           http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { current.Load().Handler.ServeHTTP(w, r) }),
+	httpSrv := srv.httpServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { current.Load().Handler.ServeHTTP(w, r) }))
+	ln, addr, err := srv.listener()
+	if err != nil {
+		return err
 	}
 	errc := make(chan error, 1)
-	go func() { errc <- httpSrv.ListenAndServe() }()
+	go func() { errc <- httpSrv.Serve(ln) }()
 	dir := a.opts.Dir
 	if dir == "" {
 		dir = "."
 	}
-	fmt.Fprintf(stderr, "grapi develop: listening on %s, watching %s\n", srv.Addr, dir)
+	fmt.Fprintf(stderr, "grapi develop: listening on %s, watching %s\n", addr, dir)
 	if onListen != nil {
-		onListen(srv.Addr)
+		onListen(addr)
 	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
