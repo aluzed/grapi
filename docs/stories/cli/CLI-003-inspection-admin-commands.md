@@ -44,7 +44,8 @@ Les mêmes commandes, qui passent par les mêmes services que l'API.
 - Banc (mode `grapi`, SQLite et Postgres) : un dump de grapi est restauré par `strapi configuration:restore`, et un dump de Strapi par `grapi configuration:restore`.
 - Mot de passe des commandes admin : sans `--password` ni `--password-stdin`, un terminal le demande sans écho (`golang.org/x/term`), comme l'invite de Strapi ; hors terminal, rien n'est demandé. `TestPasswordNeverPrinted` : ni la sortie des commandes ni les fichiers de la base (journal d'audit compris) ne contiennent le mot de passe.
 - `routes:list` garde le format de Strapi (méthode et chemin) ; `--details` ajoute le handler (action de permission) et les policies par leur nom. Un projet framework lance `go run . routes:list` : son binaire (`App.Start`) liste aussi ses routes Go, ses policies et ses réglages de `CoreRouter` (`App.Routes`, `TestAppRoutesListsGoRoutes`).
-- Reste : `policies:list` (les policies intégrées de Strapi sont celles de l'admin), `controllers:list`, `services:list`, `rename:field`.
+- `controllers:list` (les contrôleurs qu'appellent les routes), `services:list` (les services cœur des content types) et `policies:list` (les policies intégrées : celles de l'admin) (`TestCodeLists`).
+- Reste : `rename:field`.
 
 ## Notes techniques
 - Ces commandes démarrent l'application sans serveur HTTP (registres et base seulement).

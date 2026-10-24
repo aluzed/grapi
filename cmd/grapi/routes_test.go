@@ -57,3 +57,25 @@ func TestStaticLists(t *testing.T) {
 		t.Fatalf("%v %s", err, out.String())
 	}
 }
+
+func TestCodeLists(t *testing.T) {
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(t.TempDir(), "data.db"))
+	dir := filepath.Join("..", "..", "compat", "fixtures", "basic")
+	cases := map[string][]string{
+		"controllers": {"│ api::article.article ", "│ plugin::users-permissions.auth "},
+		"services":    {"│ api::article.article "},
+		"policies":    {"│ admin::hasPermissions "},
+	}
+	for kind, wants := range cases {
+		var out bytes.Buffer
+		if err := codeList(kind, []string{"-dir", dir}, &out, io.Discard); err != nil {
+			t.Fatal(kind, err)
+		}
+		for _, w := range wants {
+			if !strings.Contains(out.String(), w) {
+				t.Errorf("%s: missing %q in\n%s", kind, w, out.String())
+			}
+		}
+	}
+}
