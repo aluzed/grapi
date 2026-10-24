@@ -8,6 +8,7 @@ import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { fromItems, toItems, type Item } from '@/lib/blocks'
 import { BlocksField } from './BlocksField'
+import { MarkdownField } from './MarkdownField'
 import { MediaField, mediaItems } from './MediaField'
 import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
 import type { MediaFile } from '@/lib/types'
@@ -164,7 +165,6 @@ function ScalarField({ name, attr, text, value, error, onChange }: { name: strin
         </SelectField>
       )
     case 'text':
-    case 'richtext':
     case 'json':
       return (
         <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -484,6 +484,8 @@ export function FieldsGrid({
             return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} error={errors[name]} onChange={(v) => onChange(name, v)} />
           case 'component':
             return <ComponentField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
+          case 'richtext':
+            return <MarkdownField key={name} name={name} label={text} value={String(values[name] ?? '')} error={errors[name]} maxLength={attr.maxLength} onChange={(v) => onChange(name, v)} />
           case 'dynamiczone':
             return <DynamicZoneField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
         }

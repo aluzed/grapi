@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -13,7 +13,7 @@ const variants: Record<Variant, string> = {
   'destructive-outline': 'bg-surface text-destructive border border-destructive/40 hover:bg-destructive/5',
 }
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ComponentProps<'button'> & {
   variant?: Variant
   icon?: ReactNode
   loading?: boolean

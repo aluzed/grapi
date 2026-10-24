@@ -58,6 +58,7 @@ export type Attribute = {
   default?: unknown
   components?: string[]
   allowedTypes?: string[]
+  maxLength?: number
   pluginOptions?: { i18n?: { localized?: boolean } }
 }
 
