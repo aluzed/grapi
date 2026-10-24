@@ -5,7 +5,7 @@ status: done
 # DB-009 : Lifecycles de la base
 
 ## Contexte
-Strapi émet des événements de cycle de vie au niveau des lignes : avant et après chaque création, mise à jour, suppression, lecture et comptage. C'est le mécanisme qu'utilisait dev-freelance pour ses slugs et ses hash (aujourd'hui centralisés dans `libs/row-rules.ts` via `strapi.db.lifecycles.subscribe`). En Strapi 5, une publication **recrée** la ligne publiée, ce qui déclenche `beforeCreate` : ce comportement doit être reproduit.
+Strapi émet des événements de cycle de vie au niveau des lignes : avant et après chaque création, mise à jour, suppression, lecture et comptage. C'est le mécanisme qu'utilisait dev-freelance pour ses slugs et ses hash (aujourd'hui centralisés dans un module abonné via `strapi.db.lifecycles.subscribe`). En Strapi 5, une publication **recrée** la ligne publiée, ce qui déclenche `beforeCreate` : ce comportement doit être reproduit.
 
 ## Objectif
 Un bus de lifecycles par ligne, avec la même liste d'événements, la même forme d'événement et le même moment de déclenchement que Strapi.
@@ -41,7 +41,7 @@ Un bus de lifecycles par ligne, avec la même liste d'événements, la même for
 
 ## Avancement
 - Fait : `internal/db/query/lifecycles.go` : les 18 événements, `params` modifiables, `state` par abonné entre before et after, abonné timestamps exécuté en premier comme chez Strapi, `create` et `delete` déclenchant `findOne` comme l'entity manager de Strapi. La publication déclenche `beforeCreate` pour la ligne publiée (`TestPublishRunsBeforeCreate`). Exposé par `grapi.App.OnRowCreate`, `OnRowUpdate`, `OnRowWrite`, `OnRowDelete`, `OnRow`.
-- Règles de ligne de dev-freelance portées en hooks Go (`compat/fixtures/devfreelance/framework` : slugs de post, catégorie, média et thème, hash d'abonné, slug de thème préfixé par celui du parent sur `connect`), avec un port de `slugify` 1.6.6 vérifié contre le paquet npm (49 entrées). Banc REST `devfreelance_rules` : les 21 cas (85 requêtes, lectures du brouillon et de la version publiée) identiques à Strapi qui exécute `row-rules.ts` (`rules.js`), sous SQLite et Postgres.
+- Règles de ligne de dev-freelance portées en hooks Go (dans le dépôt privé du projet : slugs, hash, slug préfixé par celui du parent sur `connect`), avec un port de `slugify` 1.6.6 vérifié contre le paquet npm (49 entrées). Banc REST `devfreelance_rules` : les 21 cas (85 requêtes, lectures du brouillon et de la version publiée) identiques à Strapi qui exécute les règles d'origine, sous SQLite et Postgres.
 
 ## Notes techniques
 - Les `params` sont exposés comme des structures Go typées avec un accès dynamique (`Data map[string]any`). Les hooks Go des utilisateurs manipulent des maps, comme en JS.
@@ -50,7 +50,7 @@ Un bus de lifecycles par ligne, avec la même liste d'événements, la même for
 ## Référence Strapi
 - `core/database/src/lifecycles/` (`index.ts`, `subscribers/`)
 - `core/core/src/utils/transform-content-types-to-models.ts` (branchement des `lifecycles.js`)
-- dev-freelance `apps/backend/src/libs/row-rules.ts` (cas réel)
+- Règles de ligne de dev-freelance (cas réel, dépôt privé)
 
 ## Dépendances
 - `DB-001`, `DB-005`, `SCH-005`.

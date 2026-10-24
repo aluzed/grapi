@@ -31,7 +31,7 @@ Charger un projet depuis un répertoire racine et produire l'ensemble des schém
 - La configuration (`EXT-001`).
 
 ## Critères d'acceptation
-- [ ] Chaque fixture du banc et une copie du projet dev-freelance (`apps/backend`) se chargent sans erreur, avec le bon nombre de content types et de composants.
+- [ ] Chaque fixture du banc et une copie du backend de dev-freelance se chargent sans erreur, avec le bon nombre de content types et de composants.
 - [ ] Une extension de schéma de `plugin::users-permissions.user` (ajout d'un attribut) est fusionnée, et l'attribut apparaît dans le registre.
 - [ ] `grapi doctor` sur dev-freelance liste `src/index.ts`, les lifecycles restants et les controllers custom, chacun avec son action conseillée.
 - [ ] Un répertoire `content-types/<x>` sans `schema.json` produit une erreur claire.

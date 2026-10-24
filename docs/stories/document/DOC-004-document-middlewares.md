@@ -5,7 +5,7 @@ status: in-progress
 # DOC-004 : Middlewares du Document Service
 
 ## Contexte
-`strapi.documents.use(fn)` enregistre un middleware global autour de toutes les opérations de documents, quel que soit le point d'entrée (admin, REST, GraphQL, code). C'est le point d'extension recommandé par Strapi 5. dev-freelance s'en sert pour la génération IA (toggles `generateFaq`, `generateTldr`, `generateMetadescription`), la régénération de slug et l'invalidation du cache Redis.
+`strapi.documents.use(fn)` enregistre un middleware global autour de toutes les opérations de documents, quel que soit le point d'entrée (admin, REST, GraphQL, code). C'est le point d'extension recommandé par Strapi 5. dev-freelance s'en sert pour de la génération par IA, la régénération de slug et l'invalidation d'un cache.
 
 ## Objectif
 Offrir la même chaîne de middlewares, en Go (`EXT-002`) et plus tard en JS (`EXT-003`).
@@ -29,8 +29,8 @@ Offrir la même chaîne de middlewares, en Go (`EXT-002`) et plus tard en JS (`E
 - Fait : `internal/document/middleware.go` (`Use`, ordre Koa, `Params` et `documentId` modifiables, désinscription), exposé par `grapi.App.UseDocuments` et le paquet public `document`. Tests : `internal/document/middleware_test.go`, `hooks_test.go` (par HTTP).
 - Reste : la traduction des erreurs de base en erreurs applicatives, la reproduction des middlewares dev-freelance.
 
-- Middlewares de dev-freelance portés en Go (`compat/fixtures/devfreelance/framework/middlewares.go`) : slug depuis le titre quand il est vide (post, média), toggles IA (FAQ, TL;DR, meta description) remplis puis remis à `false`, repli sur le contenu enregistré quand l'update n'en porte pas, toggles remis à `false` sans génération quand le contenu est vide. Même faux LLM des deux côtés (`rules.js` pour Strapi). Banc `devfreelance_rules` identique à Strapi.
-- Reste : l'invalidation de cache par content type (Redis), absente du banc.
+- Middlewares de dev-freelance portés en Go (dans le dépôt privé du projet) : régénération de slug, génération par IA déclenchée par des toggles remis ensuite à `false`. Même faux LLM des deux côtés. Banc `devfreelance_rules` identique à Strapi.
+- Reste : l'invalidation de cache par content type, absente du banc.
 
 ## Notes techniques
 - Pas de réflexion : la chaîne est une slice de fonctions composée une fois par appel.

@@ -31,21 +31,21 @@ Une commande `grapi migrate-from-strapi <dir>` qui produit un projet grapi prêt
 - La migration des données (inutile grâce à `DB-011`).
 
 ## Critères d'acceptation
-- [ ] Sur une copie de `dev-freelance/apps/backend` :
+- [ ] Sur une copie du backend de dev-freelance :
   - la commande produit un projet qui démarre (schémas et config) ;
-  - `MIGRATION.md` liste `src/index.ts` (middlewares de slug, IA et cache), `libs/row-rules.ts`, le controller `comment` et le lifecycle `user`.
+  - `MIGRATION.md` liste `src/index.ts` (ses middlewares de documents), les règles de ligne, les controllers custom et les lifecycles.
 - [ ] Les fichiers de config générés ne contiennent aucune valeur de secret, seulement des références d'env (vérifié par un test qui injecte des secrets factices et cherche leur valeur dans la sortie).
 - [ ] Sur chaque fixture du banc, le projet migré démarre et le banc passe comme sur la fixture d'origine.
 - [ ] Une config qui appelle une fonction Node non disponible (`fs.readFileSync`) est signalée dans le rapport avec le fichier et la ligne, sans faire planter la migration.
 
 ## Notes techniques
-- La clé DKIM de dev-freelance est lue au chargement de la config (`fs.readFileSync` dans `config/plugins.ts`) : c'est un cas réel de config non évaluable dans goja. Il faut prévoir une directive `${file:path}` dans la config grapi (`EXT-001`).
+- La clé DKIM de dev-freelance est lue au chargement de la config (`fs.readFileSync` dans la config du plugin email) : c'est un cas réel de config non évaluable dans goja. Il faut prévoir une directive `${file:path}` dans la config grapi (`EXT-001`).
 - Ne jamais lire les fichiers `.env` réels. On ne lit que `.env.example`, s'il existe, et les appels `env()` du code.
 
 ## Référence Strapi
 - `core/core/src/configuration/` (`config-loader.ts`, `utils/load-config-file.ts`)
 - `utils/upgrade/` (outillage de codemods, pour l'approche)
-- dev-freelance `apps/backend/config/plugins.ts`, `apps/backend/src/index.ts`
+- La config et le `src/index.ts` de dev-freelance (dépôt privé)
 
 ## Dépendances
 - `SCH-004`, `EXT-001`, `EXT-002`. `EXT-003` pour l'évaluation de la config et l'option hooks JS.

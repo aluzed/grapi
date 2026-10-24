@@ -15,7 +15,7 @@ Pouvoir écrire, illustrer et publier les articles dev-freelance dans l'admin gr
 ## Périmètre
 - Parcours réels, chronométrés dans les deux admins : écrire un article complet (Markdown avec images), créer et lier une catégorie et un thème, illustrer depuis l'ordinateur, publier, corriger un article publié, dépublier.
 - Capture d'écran de chaque écran dans les deux admins, écarts listés et corrigés ou assumés.
-- Équivalents Go des comportements du JS Strapi : invalidation des clés `BLOG:*` du cache Redis du front à la publication, et middleware IA (`EXT-002`, `DOC-004`).
+- Équivalents Go des comportements du JS Strapi : invalidation du cache du front à la publication, et middleware IA (`EXT-002`, `DOC-004`).
 
 ## Critères d'acceptation
 - [ ] Chaque parcours se fait dans l'admin grapi, sans étape en plus par rapport à Strapi.

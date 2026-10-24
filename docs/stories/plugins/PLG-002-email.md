@@ -28,7 +28,7 @@ Un service e-mail avec une interface provider, cinq providers et des templates s
 - Files d'attente et retries d'envoi (Strapi n'en a pas). C'est une amélioration possible plus tard.
 
 ## Critères d'acceptation
-- [x] **Compat config** : la configuration nodemailer et DKIM de dev-freelance (sélecteur `sel2026`, clé lue depuis un fichier monté) se transpose en provider `smtp`. Un e-mail envoyé vers Mailpit sur le homelab est signé et vérifié (`d=dev-freelance.com`, `s=sel2026`).
+- [x] **Compat config** : la configuration nodemailer et DKIM de dev-freelance (sélecteur et clé lue depuis un fichier monté) se transpose en provider `smtp`. Un e-mail envoyé vers Mailpit sur le homelab est signé et vérifié.
 - [x] Un template contenant `<% process.exit() %>` est rendu littéralement et n'exécute rien (TU).
 - [x] `<%= USER.email %>` est remplacé, et une variable inconnue est rendue vide sans erreur, comme Strapi.
 - [x] `POST /api/email` sans permission donne 403.
@@ -36,7 +36,7 @@ Un service e-mail avec une interface provider, cinq providers et des templates s
 
 ## Avancement
 - Fait : `internal/plugins/email` (SMTP façon nodemailer avec STARTTLS et DKIM via go-msgauth, sendmail, `Template` de users-permissions), config `plugins.email.config` (`nodemailer` ou `sendmail`), `POST /api/email`.
-- 2026-10-22, homelab : forgot-password servi par grapi vers Mailpit, signature DKIM vérifiée (`d=dev-freelance.com`, `s=sel2026`, clé lue par `${file:}`).
+- 2026-10-22, homelab : forgot-password servi par grapi vers Mailpit, signature DKIM vérifiée (clé lue par `${file:}`).
 - Correction du critère 3 : chez Strapi, une variable inconnue n'est pas rendue vide, elle reste telle quelle (`template()` de users-permissions désactive `evaluate` et `escape`, seule l'interpolation stricte s'applique). grapi fait de même.
 - Providers `sendgrid` (`apiKey`, API v3 `mail/send`), `mailgun` (`key`, `username`, `url`, `domain`, formulaire `messages` en auth basique) et `amazon-ses` (`key`, `secret`, `amazon` : action `SendEmail` de l'API query, signée SigV4, région lue dans l'endpoint), avec les `providerOptions` des providers Strapi (`internal/plugins/email/http.go`, tests sur serveurs `httptest`). Une réponse en erreur de l'API remonte avec son statut.
 - Providers du projet en mode framework : `app.UseEmailProvider(nom, p)`, test `TestCustomEmailProvider` (mail de `forgot-password` reçu par le provider).

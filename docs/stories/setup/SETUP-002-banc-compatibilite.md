@@ -22,7 +22,7 @@ Construire un banc qui envoie le même corpus de requêtes à une instance Strap
   - `relations` : les 10 types de relation, dont morph, self-relation et relations bidirectionnelles ;
   - `components` : composants imbriqués (3 niveaux), répétables, zone dynamique ;
   - `i18n-dp` : draft & publish combiné à i18n sur des types localisés et non localisés ;
-  - `devfreelance` : copie des schémas de dev-freelance (post, category, theme, theme-page, medium, project, comment, subscriber, sticky-post, etc.).
+  - `devfreelance` : copie des schémas de dev-freelance, fixture privée (`GRAPI_PRIVATE_COMPAT`), hors de ce dépôt.
 - **Seed** : un script de données initiales identiques des deux côtés, passé par l'API (pas de SQL), pour que la référence produise ses propres ids.
 - **Corpus de requêtes** (`compat/corpus/*.yaml`) :
   - chaque cas décrit : méthode, chemin, query, body, token, étapes ;
