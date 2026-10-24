@@ -12,6 +12,7 @@ import (
 
 	"github.com/aluzed/grapi/hook"
 
+	"github.com/aluzed/grapi/internal/config"
 	"github.com/aluzed/grapi/internal/graphql"
 	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
@@ -60,6 +61,47 @@ type App struct {
 	uploadProviders     map[string]UploadProvider
 	emailProviders      map[string]EmailProvider
 	log                 atomic.Pointer[slog.Logger]
+	conf                atomic.Pointer[config.Config]
+}
+
+// Config reads the project's config by dotted path, as strapi.config.get
+// does: "server.port", "plugins.upload.config.sizeLimit". It is empty until
+// the project is loaded, from OnRegister on.
+type Config struct{ c *config.Config }
+
+// Config is the loaded project's config.
+func (a *App) Config() Config { return Config{a.conf.Load()} }
+
+// Get is the value at path, nil when absent.
+func (c Config) Get(path string) any {
+	if c.c == nil {
+		return nil
+	}
+	return c.c.Get(path)
+}
+
+// String is the string at path.
+func (c Config) String(path string) (string, bool) {
+	if c.c == nil {
+		return "", false
+	}
+	return c.c.String(path)
+}
+
+// Int is the number at path.
+func (c Config) Int(path string) (int, bool) {
+	if c.c == nil {
+		return 0, false
+	}
+	return c.c.Int(path)
+}
+
+// Bool is the boolean at path.
+func (c Config) Bool(path string) (bool, bool) {
+	if c.c == nil {
+		return false, false
+	}
+	return c.c.Bool(path)
 }
 
 // Log is the project's logger, with the level and format of its config

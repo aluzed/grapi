@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -74,7 +75,7 @@ func TestCoreRouterAndActionOverride(t *testing.T) {
 	}
 }
 
-func TestAppLog(t *testing.T) {
+func TestAppLogAndConfig(t *testing.T) {
 	dir := t.TempDir()
 	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
 		t.Fatal(err)
@@ -83,10 +84,21 @@ func TestAppLog(t *testing.T) {
 	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
 	t.Setenv("JWT_SECRET", "test")
 	t.Setenv("GRAPI_LOG_FORMAT", "json")
+	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config", "custom.json"), []byte(`{"feature":{"name":"beta"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var out bytes.Buffer
 	app := grapi.New(grapi.Options{Dir: dir, Stderr: &out})
+	if app.Config().Get("server.port") != nil {
+		t.Error("no config before the project is loaded")
+	}
+	var client string
 	app.OnBootstrap(func(context.Context) error {
 		app.Log().Info("from a hook", "who", "test")
+		client, _ = app.Config().String("custom.feature.name")
 		return nil
 	})
 	srv, err := app.Setup()
@@ -96,5 +108,8 @@ func TestAppLog(t *testing.T) {
 	defer func() { _ = srv.Close() }()
 	if !strings.Contains(out.String(), `"msg":"from a hook","who":"test"`) {
 		t.Fatalf("app.Log writes with the project's logger: %s", out.String())
+	}
+	if client != "beta" {
+		t.Errorf("app.Config: custom.feature.name = %q", client)
 	}
 }
