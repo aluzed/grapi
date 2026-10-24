@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
 import { api, ApiError, type FieldError } from '@/lib/api'
+import { cn } from '@/lib/cn'
 import { isEmbedded, notifySaved, withEmbed } from '@/lib/embed'
 import { showError } from '@/lib/form'
 import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
@@ -18,6 +19,7 @@ import { fromInput, isEditable, JSONError, LayoutGrid, toInput, withoutIDs, type
 import { fillableFields, isLocalizedAttribute } from './fill'
 import { FillFromLocale } from './FillFromLocale'
 import { HistoryButton } from './HistoryDialog'
+import { PreviewButton, PreviewPanel, storedPreviewMode, usePreviewURL, type PreviewMode } from './PreviewPanel'
 import { ReleaseButton } from './ReleaseButton'
 import { entryPath, useLocales, useModels } from './hooks'
 
@@ -63,6 +65,8 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     setValues(next)
   }
   const isDirty = () => saved.current !== null && saved.current !== JSON.stringify(latest.current)
+  const [preview, setPreview] = useState<PreviewMode | null>(null)
+  const [saves, setSaves] = useState(0)
   const dirty = saved.current !== null && saved.current !== JSON.stringify(values)
   const listPath = `/content-manager/collection-types/${encodeURIComponent(model.uid)}${loc}`
   const ctx: FieldContext = useMemo(
@@ -173,6 +177,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       toast.success(creating ? t('cm.created') : t('cm.saved'))
       saved.current = JSON.stringify(latest.current)
       setErrorList([])
+      setSaves((n) => n + 1)
       void refreshAll()
       if (embedded) notifySaved({ uid: model.uid, documentId: e.documentId, label: String(e[model.mainField] ?? e.documentId) })
       if (documentId === undefined && !single) {
@@ -272,9 +277,12 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   }
   const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : '-')
   const docId = String(entry.data?.documentId ?? documentId ?? '')
+  const previewURL = usePreviewURL(model, single ? undefined : documentId, locale, 'draft', !creating && !embedded)
+  const side = preview === 'side'
 
   return (
-    <form ref={form} onSubmit={submit} className="flex flex-col gap-6" noValidate>
+    <div className={side ? 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-6' : undefined}>
+    <form ref={form} onSubmit={submit} className="flex min-w-0 flex-col gap-6" noValidate>
       <div className="space-y-4">
         {!single && !embedded && (
           <div>
@@ -314,8 +322,8 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
 
       {missingLocale && <Card className="text-sm text-muted">{t('cm.missingLocale', { locale: locales.data?.find((l) => l.code === locale)?.name ?? locale })}</Card>}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <aside className="flex flex-col gap-4 lg:order-last">
+      <div className={cn('grid grid-cols-1 gap-6', side ? '2xl:grid-cols-[minmax(0,1fr)_18rem]' : 'lg:grid-cols-[minmax(0,1fr)_18rem]')}>
+        <aside className={cn('flex flex-col gap-4', side ? '2xl:order-last' : 'lg:order-last')}>
           <Card className="flex flex-col gap-3">
             {status && (
               <p className="flex items-center justify-between gap-2 text-sm">
@@ -334,6 +342,12 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
               </Button>
             )}
             {dirty && !creating && model.draftAndPublish && <p className="text-xs text-muted">{t('cm.saveBeforePublish')}</p>}
+            {previewURL.data && !preview && (
+              <PreviewButton
+                disabled={dirty}
+                onOpen={() => setPreview(storedPreviewMode() === 'side' && window.matchMedia('(min-width: 1024px)').matches ? 'side' : 'full')}
+              />
+            )}
             {model.localized && (locales.data?.length ?? 0) > 1 && (
               <SelectField
                 label={t('cm.locale')}
@@ -451,6 +465,19 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
         </div>
       </div>
     </form>
+    {preview && (
+      <PreviewPanel
+        model={model}
+        documentId={single ? undefined : documentId}
+        locale={locale}
+        everPublished={status === 'published' || status === 'modified'}
+        saves={saves}
+        mode={preview}
+        onMode={setPreview}
+        onClose={() => setPreview(null)}
+      />
+    )}
+    </div>
   )
 }
 

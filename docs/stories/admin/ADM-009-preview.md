@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # ADM-009 : Preview
@@ -44,14 +44,19 @@ Prévisualiser le document en cours d'édition dans le vrai front, en brouillon 
 - Preview des médias et des composants isolés.
 
 ## Critères d'acceptation
-- [ ] Avec le template ci-dessus, un post `slug: hello` en `fr` brouillon ouvre `.../fr/blog/hello?status=draft&token=...`.
-- [ ] Un content type sans handler n'affiche pas le bouton ; un handler Go qui renvoie `""` non plus.
-- [ ] Le bouton est désactivé après une frappe non enregistrée, et réactivé après enregistrement.
-- [ ] L'onglet Publié génère `status=published` ; il est désactivé pour un document jamais publié.
-- [ ] Le jeton de preview lit ce document en brouillon et reçoit 403 sur un autre document ; expiré, il reçoit 401.
-- [ ] Une URL hors `allowedOrigins` n'est pas chargée dans l'iframe.
-- [ ] Un front de test qui écoute `strapiUpdate` reçoit le message après enregistrement ; un message d'une origine non autorisée est ignoré par l'admin.
-- [ ] Côte à côte disponible à partir de `lg`, plein écran seul en dessous ; à 375 px, aucun scroll horizontal et boutons pleine largeur.
+- [x] Avec le template ci-dessus, un post `slug: hello` en `fr` brouillon ouvre `.../fr/blog/hello?status=draft&token=...`.
+- [x] Un content type sans handler n'affiche pas le bouton ; un handler Go qui renvoie `""` non plus.
+- [x] Le bouton est désactivé après une frappe non enregistrée, et réactivé après enregistrement.
+- [x] L'onglet Publié génère `status=published` ; il est désactivé pour un document jamais publié.
+- [x] Le jeton de preview lit ce document en brouillon et reçoit 403 sur un autre document ; expiré, il reçoit 401.
+- [x] Une URL hors `allowedOrigins` n'est pas chargée dans l'iframe.
+- [x] Un front de test qui écoute `strapiUpdate` reçoit le message après enregistrement ; un message d'une origine non autorisée est ignoré par l'admin.
+- [x] Côte à côte disponible à partir de `lg`, plein écran seul en dessous ; à 375 px, aucun scroll horizontal et boutons pleine largeur.
+
+## Avancement
+- Serveur : `admin.preview` (`enabled`, `allowedOrigins`, `handlers`), `app.PreviewHandler` prioritaire, `GET /admin/api/v1/preview/url/{uid}` (`{url, origin}`, 204 sans preview, 400 hors `allowedOrigins`), `frame-src` de la CSP de l'admin, jeton de preview signé avec la clé admin (fenêtre de 10 minutes, valable 50 minutes au moins : l'URL ne change pas entre deux enregistrements), lu en `Bearer` ou `?previewToken=`, limité à `find` (filtré sur le document) et `findOne` de ce document (`TestPreview`, `TestPreviewTokenExpires`).
+- Vue édition : bouton « Ouvrir l'aperçu » (désactivé avec explication tant que le formulaire a des modifications), panneau en plein écran ou côte à côte (à partir de `lg`, mode retenu dans le navigateur), onglets Brouillon / Publié (désactivé pour un document jamais publié), Bureau / Mobile (375 px), copie du lien, nouvel onglet. Après un enregistrement, `strapiUpdate` part vers le front qui a envoyé `previewReady` (origine et fenêtre vérifiées) ; sinon le cadre est rechargé ; une URL qui change (slug) recharge d'elle-même. Vérifié dans le navigateur avec un front de test sur une autre origine.
+- La preview en direct pendant la frappe reste hors périmètre (ticket séparé).
 
 ## Notes techniques
 - Les noms de messages `strapiUpdate` et `previewReady` sont repris de la doc publique pour qu'un front déjà branché sur Strapi marche sans changement.

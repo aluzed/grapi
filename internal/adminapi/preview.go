@@ -105,7 +105,10 @@ func (s *Server) previewURL(w http.ResponseWriter, r *http.Request, u *User) err
 			id = v
 		}
 	}
-	token, err := httpapi.SignPreviewToken(p.Secret, uid, id, time.Now())
+	// The token is signed for a 10 minute window, not the instant: the URL
+	// stays the same between two saves, and the frame gets a message
+	// instead of a reload. It lives 50 minutes at least.
+	token, err := httpapi.SignPreviewToken(p.Secret, uid, id, time.Now().Truncate(10*time.Minute))
 	if err != nil {
 		return err
 	}

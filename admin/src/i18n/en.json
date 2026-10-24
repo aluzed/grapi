@@ -770,5 +770,18 @@
   "field.count": "{n} characters",
   "field.between": "Between {min} and {max}",
   "field.min": "At least {min}",
-  "field.max": "At most {max}"
+  "field.max": "At most {max}",
+  "preview.title": "Preview",
+  "preview.open": "Open the preview",
+  "preview.saveFirst": "Save your changes to preview them",
+  "preview.desktop": "Desktop",
+  "preview.mobile": "Mobile",
+  "preview.copy": "Copy the link",
+  "preview.copied": "Link copied",
+  "preview.newTab": "Open in a new tab",
+  "preview.side": "Side by side",
+  "preview.full": "Full screen",
+  "preview.close": "Close the preview",
+  "preview.none": "No preview for this entry.",
+  "preview.neverPublished": "This entry has never been published."
 }

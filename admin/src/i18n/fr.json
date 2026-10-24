@@ -770,5 +770,18 @@
   "field.count": "{n} caractères",
   "field.between": "Entre {min} et {max}",
   "field.min": "Au moins {min}",
-  "field.max": "Au plus {max}"
+  "field.max": "Au plus {max}",
+  "preview.title": "Aperçu",
+  "preview.open": "Ouvrir l'aperçu",
+  "preview.saveFirst": "Enregistrez vos modifications pour les prévisualiser",
+  "preview.desktop": "Bureau",
+  "preview.mobile": "Mobile",
+  "preview.copy": "Copier le lien",
+  "preview.copied": "Lien copié",
+  "preview.newTab": "Ouvrir dans un nouvel onglet",
+  "preview.side": "Côte à côte",
+  "preview.full": "Plein écran",
+  "preview.close": "Fermer l'aperçu",
+  "preview.none": "Pas d'aperçu pour cette entrée.",
+  "preview.neverPublished": "Cette entrée n'a jamais été publiée."
 }
