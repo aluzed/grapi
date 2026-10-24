@@ -62,4 +62,11 @@ func TestCustomEmailProvider(t *testing.T) {
 	if len(mail.sent) != 1 || mail.sent[0].To != "ada@example.com" || !strings.Contains(mail.sent[0].HTML, "code=") {
 		t.Fatalf("sent %+v", mail.sent)
 	}
+	// Go code sends through the same provider, with the default sender.
+	if err := app.SendEmail(context.Background(), grapi.EmailMessage{To: "admin@example.com", Subject: "Contact", Text: "Hello"}); err != nil {
+		t.Fatal(err)
+	}
+	if last := mail.sent[len(mail.sent)-1]; last.To != "admin@example.com" || last.From != "no-reply@example.com" || last.Subject != "Contact" {
+		t.Fatalf("SendEmail: %+v", last)
+	}
 }

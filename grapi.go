@@ -12,6 +12,7 @@ import (
 
 	"github.com/aluzed/grapi/internal/graphql"
 	"github.com/aluzed/grapi/internal/httpapi"
+	"github.com/aluzed/grapi/internal/plugins/email"
 
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/document"
@@ -50,6 +51,7 @@ type App struct {
 	coreRouterRefs      []coreRouterRef
 	coreActions         map[string]httpapi.CoreAction
 	preview             map[string]PreviewHandler
+	email               *email.Service
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error

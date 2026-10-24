@@ -1,6 +1,8 @@
 package grapi
 
 import (
+	"context"
+
 	"github.com/aluzed/grapi/internal/media/provider"
 	"github.com/aluzed/grapi/internal/plugins/email"
 )
@@ -33,4 +35,12 @@ func (a *App) UseEmailProvider(name string, p EmailProvider) {
 		a.emailProviders = map[string]EmailProvider{}
 	}
 	a.emailProviders[name] = p
+}
+
+// SendEmail is strapi.plugin('email').service('email').send: the message
+// goes through the configured email provider, with the settings'
+// defaultFrom and defaultReplyTo when it has none. It works once the App
+// is set up.
+func (a *App) SendEmail(ctx context.Context, m EmailMessage) error {
+	return a.email.Send(ctx, m)
 }

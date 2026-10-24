@@ -734,6 +734,7 @@ func (a *App) setup(p *project.Project) (*Server, error) {
 		return nil, err
 	}
 	apiCfg.PreviewSecret = adminCfg.Preview.Secret
+	a.email = apiCfg.Email
 	adminCfg.Preview.Funcs = a.previewFuncs()
 	api := httpapi.New(apiCfg, d, res.Set, docs, log)
 	if err := a.addRoutes(api); err != nil {
