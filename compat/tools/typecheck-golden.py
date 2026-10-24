@@ -9,6 +9,8 @@ import re
 import sys
 
 golden, out = sys.argv[1], sys.argv[2]
+# "client": typed with api.d.ts instead of @strapi/types.
+client = len(sys.argv) > 3 and sys.argv[3] == 'client'
 kinds = [('seed-post-', 'api::post.post'), ('seed-category-', 'api::category.category'),
          ('seed-theme-page-', 'api::theme-page.theme-page'), ('seed-theme-', 'api::theme.theme'),
          ('seed-medium-', 'api::medium.medium')]
@@ -29,13 +31,14 @@ def denorm(v):
     return v
 
 
-lines = ["import type { Data } from '@strapi/types';", '']
+lines = ["import type { ContentTypes } from './types/api';" if client else "import type { Data } from '@strapi/types';", '']
 for f in sorted(glob.glob(os.path.join(golden, '*.json'))):
     name = os.path.basename(f)[4:-5]
     uid = next((u for p, u in kinds if name.startswith(p)), None)
     d = json.load(open(f))
     data = d.get('body', {}).get('data') if isinstance(d.get('body'), dict) else None
     if uid and d.get('status') in (200, 201) and isinstance(data, dict):
-        lines.append("export const e%d: Data.ContentType<'%s'> = %s;" % (len(lines), uid, json.dumps(denorm(data), ensure_ascii=False)))
+        t = ("ContentTypes['%s']" if client else "Data.ContentType<'%s'>") % uid
+        lines.append("export const e%d: %s = %s;" % (len(lines), t, json.dumps(denorm(data), ensure_ascii=False)))
 open(out, 'w').write('\n'.join(lines) + '\n')
 print(len(lines) - 2, 'responses')

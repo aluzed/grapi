@@ -63,3 +63,28 @@ func TestDeterministic(t *testing.T) {
 		t.Fatal("two generations differ")
 	}
 }
+
+func TestClient(t *testing.T) {
+	res, _, err := builtin.Load(os.DirFS(fixturetest.Dir("components")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := Client(res.Set)
+	if got != Client(res.Set) {
+		t.Fatal("two generations differ")
+	}
+	for _, want := range []string{
+		"  seo?: SharedSeo | null;\n",
+		"  links?: SharedLink[];\n",
+		"(BlocksHero & { __component: 'blocks.hero' }) | (BlocksRichText & { __component: 'blocks.rich-text' })",
+		"  title: string;\n  updatedAt: string;\n",
+		"  'api::post.post': ApiPostPost;\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	if strings.Contains(got, "AdminUser") || strings.Contains(got, "password") {
+		t.Error("admin types or private attributes leaked into the client types")
+	}
+}

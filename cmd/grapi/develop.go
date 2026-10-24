@@ -39,8 +39,12 @@ var openBrowser = func(url string) error {
 func develop(args []string, stderr io.Writer) error {
 	fs, dir, configDir := projectFlags("develop")
 	openAdmin := fs.Bool("open", false, "open the admin panel in the browser once started")
+	typesOut := fs.String("types-out", "", "write the TypeScript types to this directory, again on each change")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if *typesOut != "" {
+		go watchTypes(*dir, *typesOut, stderr)
 	}
 	onListen := func(addr string) {
 		if *openAdmin {

@@ -16,9 +16,10 @@ base=compat
 [ -d "compat/fixtures/$fixture" ] || base=${GRAPI_PRIVATE_COMPAT:?private fixture: set GRAPI_PRIVATE_COMPAT}
 go run ./cmd/grapi ts:generate-types -dir "$base/fixtures/$fixture" -o "$work/types" >/dev/null
 python3 compat/tools/typecheck-golden.py "$base/golden/$fixture-sqlite/$fixture" "$work/check.ts"
+python3 compat/tools/typecheck-golden.py "$base/golden/$fixture-sqlite/$fixture" "$work/client.ts" client
 cat >"$work/tsconfig.json" <<'JSON'
-{"compilerOptions": {"strict": true, "noEmit": true, "skipLibCheck": true, "moduleResolution": "node", "module": "commonjs", "target": "es2020"}, "include": ["check.ts", "types/**/*.d.ts"]}
+{"compilerOptions": {"strict": true, "noEmit": true, "skipLibCheck": true, "moduleResolution": "node", "module": "commonjs", "target": "es2020"}, "include": ["check.ts", "client.ts", "types/**/*.d.ts"]}
 JSON
 scp -q -r "$work" "$host:$remote"
 ssh "$host" "chmod -R a+rwX $remote && img=\$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^grapi-compat-strapi:' | head -1) && docker run --rm -v $remote:/app/tscheck --entrypoint sh \"\$img\" -c 'cd /app/tscheck && /app/node_modules/.bin/tsc -p tsconfig.json'"
-echo "typecheck: the responses Strapi gave match the types grapi generates"
+echo "typecheck: the responses Strapi gave match the types grapi generates (Strapi format and api.d.ts)"

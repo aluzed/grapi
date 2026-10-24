@@ -28,7 +28,8 @@ grapi admin:create-user|reset-user-password|list-users  # admins (--email, --pas
 grapi admin:delete-user|active-user|block-user  # --email; --active=false, --unblock; never the last active Super Admin
 grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]
 grapi openapi [-o file]                      # the content API's OpenAPI document
-grapi ts:generate-types [-o dir]             # types/generated/*.d.ts for @strapi/strapi
+grapi ts:generate-types [-o dir]             # types/generated/*.d.ts: @strapi/strapi format, and api.d.ts for API clients
+grapi develop --types-out <dir>              # the same types, written again on each schema change
 grapi routes:list | content-types:list | components:list | middlewares:list | hooks:list
 grapi configuration:dump [-f file] | configuration:restore [-f file] [-s replace|merge|keep]
 ```
