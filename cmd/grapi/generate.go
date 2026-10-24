@@ -57,7 +57,7 @@ func writeJSONFile(path string, v any) error {
 // the file is removed when it does not load.
 func generate(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: grapi generate content-type|component|migration|policy|route|document-middleware|lifecycle [flags]")
+		return errors.New("usage: grapi generate content-type|component|migration|api|policy|route|document-middleware|lifecycle [flags]")
 	}
 	kind, args := args[0], args[1:]
 	if kind == "migration" {

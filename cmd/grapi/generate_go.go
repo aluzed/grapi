@@ -12,13 +12,45 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/aluzed/grapi/schema"
 )
 
 // goKinds are the Go skeletons of a framework project. Each file adds a
 // setup function in init; main applies them to the App.
-var goKinds = map[string]bool{"policy": true, "route": true, "document-middleware": true, "lifecycle": true}
+var goKinds = map[string]bool{"api": true, "policy": true, "route": true, "document-middleware": true, "lifecycle": true}
 
 var goTemplates = template.Must(template.New("").Parse(`
+{{define "api"}}package main
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/aluzed/grapi"
+)
+
+// {{.Type}}Service keeps the API's logic out of its routes, as a Strapi
+// service does.
+type {{.Type}}Service struct{ app *grapi.App }
+
+func (s *{{.Type}}Service) Example(ctx context.Context) (any, error) {
+	return nil, nil
+}
+
+func init() {
+	setups = append(setups, func(app *grapi.App) {
+		svc := &{{.Type}}Service{app: app}
+		app.Route("GET", {{printf "%q" .Path}}, {{printf "%q" .Action}}, func(c *grapi.Request) error {
+			data, err := svc.Example(c.R.Context())
+			if err != nil {
+				return err
+			}
+			return c.JSON(http.StatusOK, map[string]any{"data": data})
+		})
+	})
+}
+{{end}}
 {{define "policy"}}package main
 
 import "github.com/aluzed/grapi"
@@ -92,7 +124,7 @@ func snake(parts ...string) string {
 func generateGo(kind string, args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("generate "+kind, flag.ContinueOnError)
 	dir := fs.String("dir", ".", "project directory")
-	name := fs.String("name", "", "policy or middleware name")
+	name := fs.String("name", "", "api, policy or middleware name")
 	method := fs.String("method", "GET", "route method")
 	path := fs.String("path", "", "route path, under the API prefix")
 	action := fs.String("action", "", "route action for the permissions, api::<api>.<controller>.<action>")
@@ -109,6 +141,13 @@ func generateGo(kind string, args []string, stdout io.Writer) error {
 	data := map[string]any{}
 	var file string
 	switch kind {
+	case "api":
+		if !kebab.MatchString(*name) {
+			return errors.New("--name is required, in kebab case")
+		}
+		data["Type"], data["Path"], file = schema.PascalCase(*name), "/"+*name, "api_"+snake(*name)
+		// The action of `strapi generate api`'s example route.
+		data["Action"] = "api::" + *name + "." + *name + ".exampleAction"
 	case "policy":
 		if *name == "" {
 			return errors.New("--name is required")

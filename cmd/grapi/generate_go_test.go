@@ -33,6 +33,7 @@ func TestGenerateGoSkeletons(t *testing.T) {
 		return code, out.String()
 	}
 	for _, args := range [][]string{
+		{"api", "--name", "newsletter-signup"},
 		{"policy", "--name", "is-owner"},
 		{"route", "--method", "post", "--path", "/account/anonymize", "--action", "api::account.account.anonymize"},
 		{"route", "--path", "/ping", "--public"},

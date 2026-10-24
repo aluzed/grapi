@@ -12,6 +12,7 @@ if err := app.Start(); err != nil {
 
 `grapi generate` writes the Go skeletons, each in a file of its own that adds a setup function in `init`; the generated `main.go` applies them to the App before `Start`:
 
+- `grapi generate api --name newsletter` (`api_newsletter.go`: a `NewsletterService` and the `GET /newsletter` route of `strapi generate api`, action `api::newsletter.newsletter.exampleAction`),
 - `grapi generate policy --name is-owner` (`global::is-owner`, or a full uid),
 - `grapi generate route --method POST --path /account/anonymize --action api::account.account.anonymize` (`--public` for `config.auth: false`),
 - `grapi generate document-middleware --name audit [--uid api::post.post]`,
