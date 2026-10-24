@@ -338,24 +338,21 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 	if rt.scope != "" {
 		scope = rt.scope
 	}
-	if !auth.Allowed(scope) {
-		if auth.Strategy == "users-permissions" {
-			writeError(w, errForbidden, s.log)
-		} else {
-			writeError(w, errForbidden, s.log)
-		}
-		return
-	}
-	if rt.limited && s.rateLimited(w, r) {
-		return
-	}
 	rc := &requestContext{auth: auth, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
 	delete(rc.query, "previewToken")
+	// A preview token opens its own document's routes only, whatever the
+	// public role allows elsewhere.
 	if auth.preview != nil {
 		if err := restrictToPreview(rt, rc); err != nil {
 			writeError(w, err, s.log)
 			return
 		}
+	} else if !auth.Allowed(scope) {
+		writeError(w, errForbidden, s.log)
+		return
+	}
+	if rt.limited && s.rateLimited(w, r) {
+		return
 	}
 	if err := s.runPolicies(r, rt, rc); err != nil {
 		writeError(w, err, s.log)

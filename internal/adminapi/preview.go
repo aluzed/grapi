@@ -101,7 +101,15 @@ func (s *Server) previewURL(w http.ResponseWriter, r *http.Request, u *User) err
 			return nil
 		}
 		doc = toMap(row)
-		if v, ok := doc["documentId"].(string); ok {
+		if v, ok := doc["documentId"].(string); ok && id == "" {
+			// A single type is found first: its row filter applies now.
+			ok, err := s.allows(r.Context(), ct, v, params["locale"], filter)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errNotFound
+			}
 			id = v
 		}
 	}

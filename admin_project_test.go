@@ -36,7 +36,7 @@ func TestAdminProjectLogos(t *testing.T) {
 		}
 		for k, f := range files {
 			h := textproto.MIMEHeader{}
-			h.Set("Content-Disposition", `form-data; name="`+k+`"; filename="logo.png"`)
+			h.Set("Content-Disposition", `form-data; name="`+k+`"; filename="logo.html"`)
 			h.Set("Content-Type", f[0].(string))
 			part, _ := mw.CreatePart(h)
 			_, _ = part.Write(f[1].([]byte))
@@ -56,7 +56,7 @@ func TestAdminProjectLogos(t *testing.T) {
 	}
 	s, b := post(nil, map[string][2]any{"menuLogo": {"image/png", logoPNG(40, 20)}})
 	logo, _ := dataOf(b)["menuLogo"].(map[string]any)
-	if s != 200 || logo == nil || logo["width"] != float64(40) || logo["ext"] != ".png" || dataOf(b)["authLogo"] != nil {
+	if s != 200 || logo == nil || logo["width"] != float64(40) || logo["ext"] != ".png" || logo["name"] != "logo.png" || dataOf(b)["authLogo"] != nil {
 		t.Fatalf("upload: %d %v", s, b)
 	}
 	url := logo["url"].(string)
@@ -68,6 +68,13 @@ func TestAdminProjectLogos(t *testing.T) {
 	}
 	if s, _ := post(nil, map[string][2]any{"authLogo": {"text/plain", []byte("hi")}}); s != 400 {
 		t.Fatalf("a text file: %d", s)
+	}
+	// The extension follows the checked type, not the file name: no HTML or script served by the admin.
+	if s, _ := post(nil, map[string][2]any{"authLogo": {"image/svg+xml", []byte("<html><script>alert(1)</script></html>")}}); s != 400 {
+		t.Fatalf("not an svg: %d", s)
+	}
+	if s, _ := post(nil, map[string][2]any{"authLogo": {"image/png", []byte("not a png")}}); s != 400 {
+		t.Fatalf("not a png: %d", s)
 	}
 	if s, _ := post(nil, map[string][2]any{"authLogo": {"image/png", logoPNG(800, 10)}}); s != 400 {
 		t.Fatalf("wider than 750: %d", s)

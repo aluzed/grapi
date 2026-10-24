@@ -24,6 +24,9 @@ func TestPreview(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(dir, "config", "admin.yaml"), []byte(conf), 0o600); err != nil {
 			t.Fatal(err)
 		}
+		if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte("email:\n  config:\n    provider: capture\ngraphql:\n  enabled: true\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
 		app.PreviewHandler("api::writer.writer", func(context.Context, grapi.PreviewRequest) (string, error) { return "", nil })
 		app.PreviewHandler("api::category.category", func(_ context.Context, r grapi.PreviewRequest) (string, error) {
 			return "https://elsewhere.test/c/" + r.DocumentID, nil
@@ -76,6 +79,22 @@ func TestPreview(t *testing.T) {
 	}
 	if s, _ := api("/api/tags", token); s != 403 {
 		t.Fatalf("another type: %d", s)
+	}
+	// Nothing reaches other documents: not GraphQL, not a populate of a
+	// relation to the same type (the public role reads no post here).
+	gql, _ := http.NewRequest("POST", ts.URL+"/graphql?previewToken="+url.QueryEscape(token), strings.NewReader(`{"query":"{ posts(status: DRAFT) { title } }"}`))
+	gql.Header.Set("Content-Type", "application/json")
+	if res, err := http.DefaultClient.Do(gql); err != nil || res.StatusCode != 403 {
+		t.Fatalf("graphql with a preview token: %v %v", res, err)
+	}
+	gql, _ = http.NewRequest("POST", ts.URL+"/graphql", strings.NewReader(`{"query":"{ __typename }"}`))
+	gql.Header.Set("Content-Type", "application/json")
+	if res, err := http.DefaultClient.Do(gql); err != nil || res.StatusCode == 404 {
+		t.Fatalf("graphql is on in this test: %v %v", res, err)
+	}
+	c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"related":{"set":[{"documentId":"`+other+`"}]}}}`)
+	if s, b := api("/api/posts/"+post+"?status=draft&populate=related", token); s != 200 || dataOf(b)["related"] != nil {
+		t.Fatalf("populate of another post: %d %v", s, b)
 	}
 
 	if s, _, _ := c.do("GET", "/preview/url/api::tag.tag?documentId=x", ""); s != 204 {

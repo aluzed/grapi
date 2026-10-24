@@ -586,6 +586,14 @@ func TestAdminRelations(t *testing.T) {
 	if st := status(); st != "modified" {
 		t.Fatalf("changed since its publication: %v", st)
 	}
+	// A document never published cannot be discarded: nothing would be left.
+	fresh := create("api::post.post", `{"title":"Fresh"}`)
+	if s, b, _ := c.do("POST", "/content-manager/collection-types/api::post.post/"+fresh+"/actions/discard", `{}`); s != 400 {
+		t.Fatalf("discard a draft only document: %d %v", s, b)
+	}
+	if s, _, _ := c.do("GET", "/content-manager/collection-types/api::post.post/"+fresh, ""); s != 200 {
+		t.Fatalf("the draft is still there: %d", s)
+	}
 	// Discarding the draft brings the published version back.
 	if s, _, _ := c.do("POST", "/content-manager/collection-types/api::post.post/"+post+"/actions/discard", `{}`); s != 200 {
 		t.Fatalf("discard: %d", s)

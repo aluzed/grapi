@@ -570,6 +570,24 @@ func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) erro
 	return data(w, out)
 }
 
+// requirePublished keeps a discard from deleting a document: the Document
+// Service drops the drafts and recreates them from the published versions,
+// so without one nothing would be left.
+func (s *Server) requirePublished(r *http.Request, ct *schema.ContentType, id string, p document.Params) error {
+	pp := document.Params{"status": "published"}
+	if l, ok := p["locale"]; ok {
+		pp["locale"] = l
+	}
+	row, err := s.docs.FindOne(r.Context(), string(ct.UID), id, pp)
+	if err != nil {
+		return asValidation(err)
+	}
+	if row == nil {
+		return appError("This document has never been published: there is no published version to go back to")
+	}
+	return nil
+}
+
 // cmDiscard drops the draft's changes: it becomes the published version again.
 func (s *Server) cmDiscard(w http.ResponseWriter, r *http.Request, u *User) error {
 	ct, _, filter, err := s.cmAccess(r, u, actionUpdate)
@@ -593,6 +611,9 @@ func (s *Server) cmDiscard(w http.ResponseWriter, r *http.Request, u *User) erro
 	}
 	if !ok {
 		return errNotFound
+	}
+	if err := s.requirePublished(r, ct, id, p); err != nil {
+		return err
 	}
 	if _, err := s.docs.DiscardDraft(r.Context(), string(ct.UID), id, p); err != nil {
 		return asValidation(err)
@@ -1015,7 +1036,9 @@ func (s *Server) stAction(op string) authedHandler {
 				s.recordVersion(r.Context(), ct, id, p["locale"], "published", u.ID)
 			}
 		case "discard":
-			_, err = s.docs.DiscardDraft(r.Context(), string(ct.UID), id, p)
+			if err = s.requirePublished(r, ct, id, p); err == nil {
+				_, err = s.docs.DiscardDraft(r.Context(), string(ct.UID), id, p)
+			}
 		default:
 			_, err = s.docs.Unpublish(r.Context(), string(ct.UID), id, p)
 		}

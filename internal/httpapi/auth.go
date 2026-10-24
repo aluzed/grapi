@@ -100,7 +100,14 @@ func (a *authenticator) authenticate(ctx context.Context, r *http.Request) (*Aut
 		if err != nil {
 			return nil, err
 		}
-		return &Auth{Strategy: "preview", scopes: map[string]bool{grant.uid + ".find": true, grant.uid + ".findOne": true}, preview: grant}, nil
+		// Beyond its one document, a preview token reads what the public
+		// role reads: a populate cannot reach further.
+		auth, err := a.role(ctx, "public")
+		if err != nil {
+			return nil, err
+		}
+		auth.Strategy, auth.preview = "preview", grant
+		return auth, nil
 	}
 	token := bearer(r)
 	if token != "" {

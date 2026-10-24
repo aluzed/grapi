@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"image"
+	_ "image/jpeg" // logos: DecodeConfig must know these formats
+	_ "image/png"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/db/store"
@@ -21,7 +25,26 @@ const (
 	maxLogoSide = 750
 )
 
-var logoTypes = map[string]bool{"image/jpeg": true, "image/png": true, "image/svg+xml": true}
+// logoTypes give the stored file its extension: never the uploaded name's,
+// which could make a logo an HTML or a script file served by the admin.
+var logoTypes = map[string]string{"image/jpeg": ".jpg", "image/png": ".png", "image/svg+xml": ".svg"}
+
+// logoContentMatches checks the file is what its type says: a decodable
+// PNG or JPEG, or a document with an <svg> element.
+func logoContentMatches(path, mime string) (image.Config, bool) {
+	f, err := os.Open(path) //nolint:gosec // a temporary upload file
+	if err != nil {
+		return image.Config{}, false
+	}
+	defer func() { _ = f.Close() }()
+	if mime == "image/svg+xml" {
+		head := make([]byte, 4096)
+		n, _ := io.ReadFull(f, head)
+		return image.Config{}, strings.Contains(strings.ToLower(string(head[:n])), "<svg")
+	}
+	cfg, format, err := image.DecodeConfig(f)
+	return cfg, err == nil && "image/"+format == mime
+}
 
 func (s *Server) projectRoutes() {
 	if s.cfg.Media == nil {
@@ -106,7 +129,8 @@ func (s *Server) updateProjectSettings(w http.ResponseWriter, r *http.Request, _
 		if fhs := r.MultipartForm.File[in]; len(fhs) > 0 {
 			fh := fhs[0]
 			mime := fh.Header.Get("Content-Type")
-			if !logoTypes[mime] {
+			ext, known := logoTypes[mime]
+			if !known {
 				errs = append(errs, FieldError{Path: []string{in, "mimetype"}, Message: "Invalid enum value. Expected 'image/jpeg' | 'image/png' | 'image/svg+xml'"})
 				continue
 			}
@@ -130,15 +154,17 @@ func (s *Server) updateProjectSettings(w http.ResponseWriter, r *http.Request, _
 			if err != nil {
 				return err
 			}
-			if f, err := os.Open(tmp.Name()); err == nil {
-				cfg, _, derr := image.DecodeConfig(f)
-				_ = f.Close()
-				if derr == nil && (cfg.Width > maxLogoSide || cfg.Height > maxLogoSide) {
-					errs = append(errs, FieldError{Path: []string{in, "width"}, Message: fmt.Sprintf("Number must be less than or equal to %d", maxLogoSide)})
-					continue
-				}
+			cfg, ok := logoContentMatches(tmp.Name(), mime)
+			if !ok {
+				errs = append(errs, FieldError{Path: []string{in, "mimetype"}, Message: "The file content does not match its type"})
+				continue
 			}
-			uploads = append(uploads, upload{name: in, path: tmp.Name(), mime: mime, filename: fh.Filename})
+			if cfg.Width > maxLogoSide || cfg.Height > maxLogoSide {
+				errs = append(errs, FieldError{Path: []string{in, "width"}, Message: fmt.Sprintf("Number must be less than or equal to %d", maxLogoSide)})
+				continue
+			}
+			name := strings.TrimSuffix(filepath.Base(fh.Filename), filepath.Ext(fh.Filename)) + ext
+			uploads = append(uploads, upload{name: in, path: tmp.Name(), mime: mime, filename: name})
 		} else if _, reset := r.MultipartForm.Value[in]; reset {
 			next[in] = nil
 		}

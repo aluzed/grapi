@@ -113,6 +113,14 @@ func TestUploadSecurity(t *testing.T) {
 	if s, out := postFiles(t, ts, upFile{"x.svg", "image/svg+xml", svg}); s != 400 || securityMessage(out) != "File type 'image/svg+xml' is not allowed" {
 		t.Fatalf("denied svg: %d %v", s, out)
 	}
+	// Parameters do not hide a denied type, and an image claim needs an image.
+	ts2 := uploadSecurityServer(t, "upload:\n  config:\n    security:\n      deniedTypes: ['text/html']\n")
+	if s, out := postFiles(t, ts2, upFile{"x.html", "text/html; charset=utf-8", []byte("<script>alert(1)</script>")}); s != 400 || securityMessage(out) != "File type 'text/html' is not allowed" {
+		t.Fatalf("declared type with parameters: %d %v", s, out)
+	}
+	if s, out := postFiles(t, ts, upFile{"fake.png", "image/png", svg}); s != 400 || securityMessage(out) != "Cannot verify file type for security reasons" {
+		t.Fatalf("an svg declared as png: %d %v", s, out)
+	}
 	// Refused files are left out of a batch that has allowed ones.
 	s, out := postFiles(t, ts, upFile{"b.png", "image/png", img}, upFile{"run.sh", "text/x-sh", []byte("echo")})
 	if list, _ := out.([]any); s != 201 || len(list) != 1 || list[0].(map[string]any)["name"] != "b.png" {

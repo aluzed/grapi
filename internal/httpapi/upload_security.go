@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"fmt"
+	"mime"
 	"regexp"
 	"strings"
 )
@@ -51,22 +52,46 @@ func (c UploadSecurity) allows(mime string) bool {
 	return true
 }
 
+// baseType is a media type without its parameters, lower case:
+// "text/html; charset=utf-8" is text/html.
+func baseType(t string) string {
+	if mt, _, err := mime.ParseMediaType(t); err == nil {
+		return mt
+	}
+	t, _, _ = strings.Cut(t, ";")
+	return strings.ToLower(strings.TrimSpace(t))
+}
+
+// claimsBinary is a declared type whose files have a signature: when the
+// content shows none, the declaration cannot be true.
+func claimsBinary(t string) bool {
+	if t == "image/svg+xml" {
+		return false
+	}
+	return strings.HasPrefix(t, "image/") || strings.HasPrefix(t, "video/") || strings.HasPrefix(t, "audio/")
+}
+
 // check is validateFile: the type read from the content comes first, the
-// declared one only when the content says nothing.
+// declared one only when the content says nothing. Unlike Strapi, a
+// declared image, video or audio type that the content does not show is
+// refused as unverifiable.
 func (c UploadSecurity) check(f *inputFile) error {
 	if !c.set() {
 		return nil
 	}
-	declared := f.declared
+	declared := baseType(f.declared)
+	if f.detected == "" && claimsBinary(declared) && (len(c.AllowedTypes) > 0 || len(c.DeniedTypes) > 0) {
+		return validationError("Cannot verify file type for security reasons", nil)
+	}
 	if f.detected == "" && (declared == "" || declared == "application/octet-stream") && (len(c.AllowedTypes) > 0 || len(c.DeniedTypes) > 0) {
 		return validationError("Cannot verify file type for security reasons", nil)
 	}
-	mime := f.detected
-	if mime == "" {
-		mime = declared
+	t := baseType(f.detected)
+	if t == "" {
+		t = declared
 	}
-	if mime != "" && !c.allows(mime) {
-		return validationError(fmt.Sprintf("File type '%s' is not allowed", mime), nil)
+	if t != "" && !c.allows(t) {
+		return validationError(fmt.Sprintf("File type '%s' is not allowed", t), nil)
 	}
 	return nil
 }

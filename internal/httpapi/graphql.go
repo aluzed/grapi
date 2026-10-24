@@ -70,6 +70,10 @@ func (s *Server) graphqlHandler(w http.ResponseWriter, r *http.Request, _ *reque
 	if err != nil {
 		return err
 	}
+	// Preview tokens are for the REST routes of their document.
+	if auth.preview != nil {
+		return errForbidden
+	}
 	r = r.WithContext(document.WithOrigin(r.Context(), auth.origin()))
 	if csrfBlocked(r) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"errors": []any{map[string]any{
