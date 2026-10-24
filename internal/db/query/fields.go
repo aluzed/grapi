@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,8 +34,10 @@ func toDB(attrType string, v any, sqlite bool) (any, error) {
 		schema.TypeUID, schema.TypeEnumeration:
 		return jsString(v), nil
 	case schema.TypeJSON, schema.TypeBlocks:
-		switch v.(type) {
-		case map[string]any, []any:
+		// Any Go list or object, not only decoded JSON: Go hooks write
+		// []int64 or structs.
+		switch reflect.ValueOf(v).Kind() {
+		case reflect.Map, reflect.Slice, reflect.Array, reflect.Struct, reflect.Pointer:
 			b, err := json.Marshal(v)
 			return string(b), err
 		}

@@ -39,6 +39,12 @@ func TestParseISO(t *testing.T) {
 }
 
 func TestValueConversions(t *testing.T) {
+	if v, _ := toDB("json", []int64{1, 2}, true); v != "[1,2]" {
+		t.Errorf("a typed Go list is stored as JSON: %v", v)
+	}
+	if v, _ := toDB("json", map[string][]int64{"x": {1}}, true); v != `{"x":[1]}` {
+		t.Errorf("a typed Go map is stored as JSON: %v", v)
+	}
 	if v, _ := toDB("boolean", "f", true); v != false {
 		t.Error(`"f" is false`)
 	}
