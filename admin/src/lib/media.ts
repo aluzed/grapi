@@ -28,11 +28,9 @@ export function reorder<T>(list: T[], from: number, to: number): T[] {
   return next
 }
 
-export type Preview = Kind | 'pdf'
-
-export function previewOf(mime: string): Preview {
-  return mime === 'application/pdf' ? 'pdf' : kindOf(mime)
-}
+// previewOf is how the media field shows a file; other files, PDF
+// included, get their icon, as the admin's CSP has object-src 'none'.
+export const previewOf = (mime: string): Kind => kindOf(mime)
 
 // backendUrl is Strapi's prefixFileUrlWithBackendUrl: the editors store a
 // file's URL with the server's origin when it is relative.

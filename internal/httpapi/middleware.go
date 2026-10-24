@@ -183,6 +183,17 @@ func (c *CORSConfig) apply(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+// SecurityHeaders sets the strapi::security headers. Strapi's middleware
+// runs on every response, the admin's included.
+func (s *Server) SecurityHeaders(h http.Header) {
+	if s.mw.Security == nil {
+		return
+	}
+	for _, x := range s.mw.Security.headers() {
+		h[x[0]] = []string{x[1]}
+	}
+}
+
 // wrap wraps next with the security and CORS middlewares.
 func (m Middlewares) wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

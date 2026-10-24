@@ -37,12 +37,6 @@ function Preview({ file }: { file: MediaFile }) {
           <audio src={file.url} controls preload="metadata" className="w-full" />
         </span>
       )
-    case 'pdf':
-      return (
-        <object data={file.url} type="application/pdf" className="h-full w-full">
-          <Thumb file={file} />
-        </object>
-      )
   }
   return (
     <span className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted">

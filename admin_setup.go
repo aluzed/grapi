@@ -12,6 +12,7 @@ import (
 	"github.com/aluzed/grapi/internal/auth/users"
 	"github.com/aluzed/grapi/internal/clientip"
 	"github.com/aluzed/grapi/internal/config"
+	"github.com/aluzed/grapi/internal/httpapi"
 	"github.com/aluzed/grapi/internal/plugins/email"
 	"github.com/aluzed/grapi/internal/ratelimit"
 )
@@ -114,9 +115,10 @@ func durationOf(v any) (time.Duration, error) {
 }
 
 // withAdmin routes the admin paths to the admin server.
-func withAdmin(adm *adminapi.Server, api http.Handler) http.Handler {
+func withAdmin(adm *adminapi.Server, api *httpapi.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if adm.Handles(r.URL.Path) {
+			api.SecurityHeaders(w.Header())
 			adm.ServeHTTP(w, r)
 			return
 		}

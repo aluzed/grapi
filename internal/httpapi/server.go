@@ -69,6 +69,7 @@ type Server struct {
 	upSessions *session.Manager
 	routes     []route
 	handler    http.Handler
+	mw         Middlewares
 	limiter    ratelimit.Limiter
 	gql        *graphql.Schema
 	// customOps are the OpenAPI operations of the custom routes.
@@ -154,6 +155,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	if cfg.Middlewares != nil {
 		mw = *cfg.Middlewares
 	}
+	s.mw = mw
 	s.handler = s.logRequests(mw.wrap(http.HandlerFunc(s.route)))
 	if _, ok := set.ContentType(localeUID); ok {
 		base := strings.TrimPrefix(cfg.Prefix, "/")

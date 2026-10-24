@@ -33,7 +33,7 @@ test('reorder', () => {
 })
 
 test('previewOf', () => {
-  expect(previewOf('application/pdf')).toBe('pdf')
+  expect(previewOf('application/pdf')).toBe('file')
   expect(previewOf('image/gif')).toBe('image')
   expect(previewOf('text/csv')).toBe('file')
 })
