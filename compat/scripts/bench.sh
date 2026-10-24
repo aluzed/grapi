@@ -38,21 +38,20 @@ elif [ -n "$private" ] && [ -d "$private/fixtures/$fx/framework" ]; then
 fi
 ssh "$host" 'mkdir -p ~/grapi-compat'
 rsync -a --delete --exclude report/ --exclude golden/ compat/ "$host:grapi-compat/compat/"
-privex=
 if [ -n "$private" ]; then
   for d in fixtures corpus querycases; do
     [ -d "$private/$d" ] && rsync -a "$private/$d/" "$host:grapi-compat/compat/$d/"
-  done
-  for d in "$private"/fixtures/*/; do
-    privex="$privex --exclude $(basename "$d")-*"
   done
 fi
 status=0
 ssh "$host" "~/grapi-compat/compat/scripts/remote.sh $fixture $mode $db" || status=$?
 mkdir -p compat/report
 rsync -a "$host:grapi-compat/compat/report/" compat/report/
-# shellcheck disable=SC2086 # privex is a list of --exclude options
-rsync -a $privex "$host:grapi-compat/compat/golden/" compat/golden/
+# Only the goldens of the fixture just run, and only a public one: the
+# homelab keeps the private ones, which never land in this repository.
+if [ -d "compat/fixtures/$fx" ]; then
+  rsync -a --include "$fx-*/***" --exclude '*' "$host:grapi-compat/compat/golden/" compat/golden/
+fi
 if [ -n "$private" ] && [ -d "$private/fixtures/$fx" ]; then
   mkdir -p "$private/golden"
   rsync -a --include "$fx-*/***" --exclude '*' "$host:grapi-compat/compat/golden/" "$private/golden/"
