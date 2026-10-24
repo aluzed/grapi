@@ -237,6 +237,16 @@ func TestS3ReplaceExpiryAndLargeUpload(t *testing.T) {
 		t.Fatalf("a 200 MB upload grows the peak RSS by %d MB", grown>>20)
 	}
 	t.Logf("200 MB upload: peak RSS grew by %d MB", grown>>20)
+	// It went in parts: the store gives back the whole object.
+	res, err = http.Get(big["url"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	n, _ := io.Copy(io.Discard, res.Body)
+	_ = res.Body.Close()
+	if res.StatusCode != 200 || n != size {
+		t.Fatalf("read back: %d, %d bytes", res.StatusCode, n)
+	}
 }
 
 func TestS3BaseURL(t *testing.T) {

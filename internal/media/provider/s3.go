@@ -1,10 +1,12 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -187,9 +189,24 @@ func (p *S3) do(req *http.Request) error {
 	return nil
 }
 
-// Upload is a PutObject.
+// Past multipartThreshold, an upload goes in parts of multipartPartSize,
+// read one after the other from the source: the memory stays bounded and
+// an object is not limited to the 5 GB of a single PutObject.
+const (
+	multipartThreshold = 64 << 20
+	multipartPartSize  = 16 << 20
+)
+
+// Upload is a PutObject, or a multipart upload for a large file.
 func (p *S3) Upload(ctx context.Context, f *File, r io.Reader) error {
 	key := p.Key(f)
+	if f.Size > multipartThreshold {
+		if err := p.uploadMultipart(ctx, key, f, r); err != nil {
+			return err
+		}
+		f.URL = p.fileURL(key)
+		return nil
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, p.objectURL(key).String(), r)
 	if err != nil {
 		return err
@@ -248,4 +265,112 @@ func (p *S3) SignedURL(_ context.Context, f *File) (string, error) {
 	q.Set("X-Amz-Signature", hex.EncodeToString(hmacSHA256(p.signingKey(date), toSign)))
 	u.RawQuery = canonicalQuery(q)
 	return u.String(), nil
+}
+
+// call sends a signed request and returns the answer's body (2 KB at most
+// in errors).
+func (p *S3) call(req *http.Request) ([]byte, http.Header, error) {
+	p.sign(req)
+	res, err := p.client().Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() { _ = res.Body.Close() }()
+	body, err := io.ReadAll(io.LimitReader(res.Body, 1<<20))
+	if err != nil {
+		return nil, nil, err
+	}
+	if res.StatusCode/100 != 2 {
+		if len(body) > 2048 {
+			body = body[:2048]
+		}
+		return nil, nil, fmt.Errorf("s3 %s %s: %d %s", req.Method, req.URL.Path, res.StatusCode, strings.TrimSpace(string(body)))
+	}
+	return body, res.Header, nil
+}
+
+func (p *S3) multipartURL(key string, q url.Values) string {
+	u := p.objectURL(key)
+	u.RawQuery = canonicalQuery(q)
+	return u.String()
+}
+
+type completedPart struct {
+	PartNumber int    `xml:"PartNumber"`
+	ETag       string `xml:"ETag"`
+}
+
+// uploadMultipart is CreateMultipartUpload, UploadPart for each part, then
+// CompleteMultipartUpload; any failure aborts the upload, so that no part
+// is left billed in the bucket.
+func (p *S3) uploadMultipart(ctx context.Context, key string, f *File, r io.Reader) (err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.multipartURL(key, url.Values{"uploads": {""}}), nil)
+	if err != nil {
+		return err
+	}
+	if f.Mime != "" {
+		req.Header.Set("Content-Type", f.Mime)
+	}
+	if p.ACL != "" {
+		req.Header.Set("X-Amz-Acl", p.ACL)
+	}
+	body, _, err := p.call(req)
+	if err != nil {
+		return err
+	}
+	var created struct {
+		UploadID string `xml:"UploadId"`
+	}
+	if err := xml.Unmarshal(body, &created); err != nil || created.UploadID == "" {
+		return fmt.Errorf("s3 multipart: no upload id in %q", body)
+	}
+	id := created.UploadID
+	defer func() {
+		if err == nil {
+			return
+		}
+		// The upload's context may be what failed: the abort gets its own.
+		actx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancel()
+		if areq, aerr := http.NewRequestWithContext(actx, http.MethodDelete, p.multipartURL(key, url.Values{"uploadId": {id}}), nil); aerr == nil {
+			_, _, _ = p.call(areq)
+		}
+	}()
+	var parts []completedPart
+	for n, left := 1, f.Size; left > 0; n++ {
+		size := min(left, multipartPartSize)
+		q := url.Values{"partNumber": {strconv.Itoa(n)}, "uploadId": {id}}
+		preq, err := http.NewRequestWithContext(ctx, http.MethodPut, p.multipartURL(key, q), io.LimitReader(r, size))
+		if err != nil {
+			return err
+		}
+		preq.ContentLength = size
+		_, h, err := p.call(preq)
+		if err != nil {
+			return err
+		}
+		parts = append(parts, completedPart{PartNumber: n, ETag: h.Get("ETag")})
+		left -= size
+	}
+	var done bytes.Buffer
+	if err := xml.NewEncoder(&done).Encode(struct {
+		XMLName xml.Name        `xml:"CompleteMultipartUpload"`
+		Parts   []completedPart `xml:"Part"`
+	}{Parts: parts}); err != nil {
+		return err
+	}
+	creq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.multipartURL(key, url.Values{"uploadId": {id}}), &done)
+	if err != nil {
+		return err
+	}
+	creq.Header.Set("Content-Type", "application/xml")
+	body, _, err = p.call(creq)
+	if err != nil {
+		return err
+	}
+	// S3 can answer 200 with an error document once the parts are joined.
+	if bytes.Contains(body, []byte("<Error>")) {
+		return fmt.Errorf("s3 multipart complete: %s", strings.TrimSpace(string(body)))
+	}
+	return nil
 }
