@@ -38,6 +38,7 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 ## Base de données : écritures (`internal/db/query/em.go`)
 
 - **Transaction** : une écriture et ses relations sont dans une seule transaction. Strapi insère la ligne, puis rattache les relations dans une seconde transaction et supprime la ligne à la main si cela échoue.
+- **`id` des composants répétables imbriqués** : Strapi crée les entrées d'un composant répétable en parallèle (`async.map`). Une entrée qui porte une relation fait plus de requêtes et peut être insérée après la suivante : elle reçoit alors un `id` plus grand. grapi les insère dans l'ordre du tableau. L'ordre et le contenu renvoyés sont les mêmes, seuls les `id` diffèrent (banc `components` : `024-populate-deep-nested`, `025-populate-nested-star`).
 
 ## Document Service : composants (`internal/document/components.go`)
 
