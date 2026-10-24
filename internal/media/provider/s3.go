@@ -29,8 +29,11 @@ type S3 struct {
 	BaseURL, RootPath string
 	ACL               string // "public-read" by default; "" sends none
 	SignedURLExpires  time.Duration
-	Client            *http.Client
-	now               func() time.Time
+	// Headers go with each object written: the PutObject params of
+	// s3Options.params (storage class, encryption, tags, metadata...).
+	Headers map[string]string
+	Client  *http.Client
+	now     func() time.Time
 }
 
 var unsafeKey = regexp.MustCompile(`[^a-zA-Z0-9_\-./]`)
@@ -214,12 +217,7 @@ func (p *S3) Upload(ctx context.Context, f *File, r io.Reader) error {
 	if f.Size > 0 {
 		req.ContentLength = f.Size
 	}
-	if f.Mime != "" {
-		req.Header.Set("Content-Type", f.Mime)
-	}
-	if p.ACL != "" {
-		req.Header.Set("X-Amz-Acl", p.ACL)
-	}
+	p.objectHeaders(req, f)
 	if err := p.do(req); err != nil {
 		return err
 	}
@@ -308,12 +306,7 @@ func (p *S3) uploadMultipart(ctx context.Context, key string, f *File, r io.Read
 	if err != nil {
 		return err
 	}
-	if f.Mime != "" {
-		req.Header.Set("Content-Type", f.Mime)
-	}
-	if p.ACL != "" {
-		req.Header.Set("X-Amz-Acl", p.ACL)
-	}
+	p.objectHeaders(req, f)
 	body, _, err := p.call(req)
 	if err != nil {
 		return err
@@ -373,4 +366,49 @@ func (p *S3) uploadMultipart(ctx context.Context, key string, f *File, r io.Read
 		return fmt.Errorf("s3 multipart complete: %s", strings.TrimSpace(string(body)))
 	}
 	return nil
+}
+
+func (p *S3) objectHeaders(req *http.Request, f *File) {
+	if f.Mime != "" {
+		req.Header.Set("Content-Type", f.Mime)
+	}
+	if p.ACL != "" {
+		req.Header.Set("X-Amz-Acl", p.ACL)
+	}
+	for k, v := range p.Headers {
+		req.Header.Set(k, v)
+	}
+}
+
+// paramHeaders are the PutObject params of the AWS SDK that go as headers.
+var paramHeaders = map[string]string{
+	"StorageClass":            "X-Amz-Storage-Class",
+	"ServerSideEncryption":    "X-Amz-Server-Side-Encryption",
+	"SSEKMSKeyId":             "X-Amz-Server-Side-Encryption-Aws-Kms-Key-Id",
+	"BucketKeyEnabled":        "X-Amz-Server-Side-Encryption-Bucket-Key-Enabled",
+	"Tagging":                 "X-Amz-Tagging",
+	"CacheControl":            "Cache-Control",
+	"ContentDisposition":      "Content-Disposition",
+	"ContentEncoding":         "Content-Encoding",
+	"ContentLanguage":         "Content-Language",
+	"Expires":                 "Expires",
+	"WebsiteRedirectLocation": "X-Amz-Website-Redirect-Location",
+}
+
+// HeadersFromParams turns s3Options.params into object headers: the known
+// PutObject params, and Metadata as x-amz-meta-*. Bucket, ACL and the
+// provider's own options are read elsewhere.
+func HeadersFromParams(params map[string]any) map[string]string {
+	out := map[string]string{}
+	for k, v := range params {
+		if h, ok := paramHeaders[k]; ok {
+			out[h] = fmt.Sprint(v)
+		}
+	}
+	if meta, ok := params["Metadata"].(map[string]any); ok {
+		for k, v := range meta {
+			out["X-Amz-Meta-"+k] = fmt.Sprint(v)
+		}
+	}
+	return out
 }

@@ -369,6 +369,9 @@ func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
 			if exp, ok := params["signedUrlExpires"].(int); ok {
 				p.SignedURLExpires = time.Duration(exp) * time.Second
 			}
+			if h := provider.HeadersFromParams(params); len(h) > 0 {
+				p.Headers = h
+			}
 		}
 	}
 	if p.Bucket == "" {

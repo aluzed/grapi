@@ -84,3 +84,26 @@ func (zeros) Read(p []byte) (int, error) {
 	clear(p)
 	return len(p), nil
 }
+
+func TestS3Params(t *testing.T) {
+	var got http.Header
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		got = r.Header.Clone()
+		_, _ = io.Copy(io.Discard, r.Body)
+	}))
+	defer srv.Close()
+	params := map[string]any{"StorageClass": "STANDARD_IA", "ServerSideEncryption": "AES256", "Tagging": "env=prod", "CacheControl": "max-age=60", "Metadata": map[string]any{"origin": "grapi"}, "Bucket": "ignored"}
+	p := &S3{Bucket: "b", AccessKey: "k", Secret: "s", Endpoint: srv.URL, ForcePathStyle: true, ACL: "private", Headers: HeadersFromParams(params)}
+	if err := p.Upload(context.Background(), &File{Hash: "a", Ext: ".txt", Mime: "text/plain", Size: 2}, strings.NewReader("hi")); err != nil {
+		t.Fatal(err)
+	}
+	for h, want := range map[string]string{"X-Amz-Storage-Class": "STANDARD_IA", "X-Amz-Server-Side-Encryption": "AES256", "X-Amz-Tagging": "env=prod", "Cache-Control": "max-age=60", "X-Amz-Meta-Origin": "grapi", "X-Amz-Acl": "private"} {
+		if got.Get(h) != want {
+			t.Errorf("%s: %q", h, got.Get(h))
+		}
+	}
+	// The x-amz headers are signed.
+	if auth := got.Get("Authorization"); !strings.Contains(auth, "x-amz-storage-class") || !strings.Contains(auth, "x-amz-meta-origin") {
+		t.Fatalf("signed headers: %s", auth)
+	}
+}
