@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, Plus, Sparkles, X } from 'lucide-react'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -6,12 +6,14 @@ import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
-import { fromItems, toItems, type Item } from '@/lib/blocks'
-import { BlocksField } from './BlocksField'
+import { blocksItems } from './blocks/value'
 import { MarkdownField } from './MarkdownField'
 import { MediaField, mediaItems } from './MediaField'
 import { isEditableRelation, RelationField, relationItems, type RelationItem } from './RelationField'
 import type { MediaFile } from '@/lib/types'
+
+// The blocks editor (Slate) loads with the first form that has one.
+const BlocksField = lazy(() => import('./BlocksField').then((m) => ({ default: m.BlocksField })))
 
 export type Values = Record<string, unknown>
 
@@ -38,7 +40,7 @@ export function toInput(attr: Attribute, v: unknown, ctx: FieldContext): unknown
     case 'media':
       return mediaItems(v)
     case 'blocks':
-      return toItems(v)
+      return blocksItems(v)
     case 'component': {
       const c = ctx.components.get(attr.component ?? '')
       if (!c) return attr.repeatable ? [] : null
@@ -90,10 +92,8 @@ export function fromInput(attr: Attribute, v: unknown, ctx: FieldContext): unkno
   switch (attr.type) {
     case 'relation':
       return { set: ((v as RelationItem[] | undefined) ?? []).map((i) => ({ documentId: i.documentId })) }
-    case 'blocks': {
-      const items = (v as Item[] | undefined) ?? []
-      return items.length ? fromItems(items) : null
-    }
+    case 'blocks':
+      return blocksItems(v)
     case 'media': {
       const ids = ((v as MediaFile[] | undefined) ?? []).map((f) => f.id)
       return attr.multiple ? ids : (ids[0] ?? null)
@@ -479,7 +479,11 @@ export function FieldsGrid({
             if (root) return <UIDField key={name} name={name} attr={attr} text={text} value={values[name]} values={values} error={errors[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
             break
           case 'blocks':
-            return <BlocksField key={name} label={text} value={(values[name] as Item[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
+            return (
+              <Suspense key={name} fallback={<p className="text-sm text-muted sm:col-span-2">{text}</p>}>
+                <BlocksField name={name} label={text} value={blocksItems(values[name])} error={errors[name]} onChange={(v) => onChange(name, v)} />
+              </Suspense>
+            )
           case 'media':
             return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} error={errors[name]} onChange={(v) => onChange(name, v)} />
           case 'component':

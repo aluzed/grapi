@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import { Bold, Code, Eye, Image, Italic, Link, List, ListOrdered, Maximize2, Minimize2, Pencil, Strikethrough, TextQuote, Underline } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
+import { backendUrl } from '@/lib/media'
 import { block, canIndent, enter, heading, indent, inline, insertFiles, list, type Heading, type State } from '@/lib/markdown'
 import type { MediaFile } from '@/lib/types'
 import { useI18n } from '@/providers/I18nProvider'
@@ -230,7 +231,7 @@ export function MarkdownField({
           onClose={() => setPicking(false)}
           onChoose={(files: MediaFile[]) => {
             setPicking(false)
-            run((s) => insertFiles(files.map((f) => ({ alt: f.alternativeText || f.name, url: f.url, mime: f.mime })), s))
+            run((s) => insertFiles(files.map((f) => ({ alt: f.alternativeText || f.name, url: backendUrl(f.url), mime: f.mime })), s))
           }}
         />
       )}

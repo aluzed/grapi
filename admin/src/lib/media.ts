@@ -33,3 +33,7 @@ export type Preview = Kind | 'pdf'
 export function previewOf(mime: string): Preview {
   return mime === 'application/pdf' ? 'pdf' : kindOf(mime)
 }
+
+// backendUrl is Strapi's prefixFileUrlWithBackendUrl: the editors store a
+// file's URL with the server's origin when it is relative.
+export const backendUrl = (url: string) => (url.startsWith('/') ? `${window.location.origin}${url}` : url)
