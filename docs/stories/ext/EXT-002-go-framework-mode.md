@@ -84,7 +84,8 @@ func main() {
 - Fait depuis : cron (`app.Cron`, `app.CronAt`), policies (`app.Policy`, `Route(...).Policies`, `app.RoutePolicies`), extension du schéma GraphQL (`app.GraphQL()`), documentés dans `docs/framework.md`.
 - Phases `OnRegister`, `OnBootstrap` (services prêts, `Documents()` disponible, une erreur arrête le démarrage) et `OnDestroy` (à la fermeture du serveur), test `TestPhases`. Providers d'upload et d'e-mail du projet (`UseUploadProvider`, `UseEmailProvider`).
 - `OverrideCoreAction` vaut aussi pour les routes des plugins, par action de contrôleur (`plugin::users-permissions.user`, `me`), comme une extension Strapi qui enveloppe le contrôleur du plugin (`TestOverridePluginRoute`).
-- Reste : surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
+- Surcharge des contrôleurs : `OverrideCoreAction`, routes de plugins comprises. Envoi d'e-mail depuis le code Go : `app.SendEmail`.
+- Reste : surcharge des services, accès aux services des plugins.
 
 - Exemples godoc (`example_test.go`) : `App.Setup` exécuté avec sa sortie (route publique servie par le handler), `OnRowCreate`, `UseDocuments`, `Route` avec `Policy` et `RoutePolicies`, `Cron`, `OnBootstrap` avec le hook `AfterSync`. Chaque symbole exporté a son commentaire (revive `exported`).
 - Types internes encore visibles dans l'API publique (relevé du 2026-10-23, `go doc -all`) : `App.Documents()` renvoie le `*document.Service` interne, dont les méthodes renvoient des `query.Row` ; `Project` expose `Conf`, `Res`, `MD`, `Desired` et `DB`, et `Project.Routes()` des `httpapi.RouteInfo`. Les alias (`document.Context`, `EmailProvider`, `GraphQL*`, `Upload*`) sont le motif retenu. Pour le critère 3, il faut un `document.Service` et une ligne publics, et sortir `Project` de l'API (il sert à `cmd/grapi`).
