@@ -59,6 +59,9 @@ export type Attribute = {
   components?: string[]
   allowedTypes?: string[]
   maxLength?: number
+  minLength?: number
+  min?: number | string
+  max?: number | string
   pluginOptions?: { i18n?: { localized?: boolean } }
 }
 

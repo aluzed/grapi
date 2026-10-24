@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Copy, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { AlertCircle, ArrowLeft, Copy, RotateCcw, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
 import { api, ApiError, type FieldError } from '@/lib/api'
 import { isEmbedded, notifySaved, withEmbed } from '@/lib/embed'
@@ -39,7 +39,7 @@ export function EditView() {
 }
 
 function Edit({ model, documentId, single, components }: { model: Model; documentId?: string; single: boolean; components: ComponentModel[] }) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const navigate = useNavigate()
   const confirm = useConfirm()
   const queryClient = useQueryClient()
@@ -52,6 +52,18 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const fields = model.fields.filter((f) => !readOnlyFields.has(f))
   const [values, setValues] = useState<Values>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errorList, setErrorList] = useState<FieldError[]>([])
+  // saved is the form as last loaded or saved: the view is modified when
+  // the values differ from it.
+  const saved = useRef<string | null>(null)
+  const latest = useRef(values)
+  latest.current = values
+  const load = (next: Values) => {
+    saved.current = JSON.stringify(next)
+    setValues(next)
+  }
+  const isDirty = () => saved.current !== null && saved.current !== JSON.stringify(latest.current)
+  const dirty = saved.current !== null && saved.current !== JSON.stringify(values)
   const listPath = `/content-manager/collection-types/${encodeURIComponent(model.uid)}${loc}`
   const ctx: FieldContext = useMemo(
     () => ({ model, models, components: new Map(components.map((c) => [c.uid, c])), locale: locale || undefined, labels: model.labels }),
@@ -104,7 +116,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
         if (!attr || !isEditable(attr) || attr.type === 'password') continue
         next[name] = attr.unique || attr.type === 'uid' ? toInput(attr, null, ctx) : withoutIDs(toInput(attr, original.data[name], ctx))
       }
-      setValues(next)
+      load(next)
       return
     }
     const src: Values = entry.data ?? {}
@@ -116,7 +128,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       if (missingLocale && !isLocalizedAttribute(attr) && name in shared) next[name] = toInput(attr, shared[name], ctx)
       else next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
-    setValues(next)
+    load(next)
     // ctx and fields derive from props that key this component.
   }, [entry.data, entry.isSuccess, creating, source.data, source.isPending, original.data])
 
@@ -135,12 +147,15 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       }
     }
     setErrors(errs)
+    setErrorList(Object.entries(errs).map(([name, message]) => ({ path: [name], message })))
     return Object.keys(errs).length > 0 ? null : out
   }
 
   const refreshAll = () => queryClient.invalidateQueries({ queryKey: ['cm'] })
   const showFieldErrors = (list: FieldError[]) => {
-    if (list.length > 0) setErrors(Object.fromEntries(list.filter((e) => e.path.length === 1).map((e) => [e.path[0] ?? '', e.message])))
+    if (list.length === 0) return
+    setErrors(Object.fromEntries(list.filter((e) => e.path.length === 1).map((e) => [e.path[0] ?? '', e.message])))
+    setErrorList(list)
   }
   const fail = (err: unknown) => {
     if (err instanceof ApiError) showFieldErrors(err.fieldErrors())
@@ -156,6 +171,8 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
           : api.put<Entry>(entryPath(model.uid, documentId), { data, locale: locale || undefined }),
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
+      saved.current = JSON.stringify(latest.current)
+      setErrorList([])
       void refreshAll()
       if (embedded) notifySaved({ uid: model.uid, documentId: e.documentId, label: String(e[model.mainField] ?? e.documentId) })
       if (documentId === undefined && !single) {
@@ -167,7 +184,11 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   })
 
   const action = useMutation({
-    mutationFn: async (op: 'publish' | 'unpublish' | 'delete') => {
+    mutationFn: async (op: 'publish' | 'unpublish' | 'delete' | 'discard') => {
+      if (op === 'discard') {
+        await api.post(single ? `${singlePath(model.uid)}/actions/discard` : `${entryPath(model.uid, documentId)}/actions/discard`, { locale: locale || undefined })
+        return { r: { count: 1, documentIds: [], errors: [] } as BulkResult, op }
+      }
       if (!single) return { r: await api.post<BulkResult>(`${entryPath(model.uid)}/actions/bulk-${op}`, { documentIds: [documentId], locale: locale || undefined }), op }
       if (op === 'delete') await api.del(`${singlePath(model.uid)}${loc}`)
       else await api.post(`${singlePath(model.uid)}/actions/${op}`, { locale: locale || undefined })
@@ -179,9 +200,15 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
         toast.error(r.errors.map((e) => e.message).join(', '))
         return
       }
-      toast.success(t(op === 'publish' ? 'cm.published' : op === 'unpublish' ? 'cm.unpublished' : 'cm.deleted'))
+      toast.success(t(op === 'publish' ? 'cm.published' : op === 'unpublish' ? 'cm.unpublished' : op === 'discard' ? 'cm.discarded' : 'cm.deleted'))
+      setErrorList([])
+      // The entry reloads: a discarded draft brings the published values back.
+      if (op === 'discard') saved.current = null
       void refreshAll()
-      if (op === 'delete' && !single) navigate(listPath)
+      if (op === 'delete' && !single) {
+        saved.current = null
+        navigate(listPath)
+      }
     },
     onError: fail,
   })
@@ -190,6 +217,39 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     e.preventDefault()
     const data = payload()
     if (data) save.mutate(data)
+  }
+
+  // Leaving with unsaved changes asks first: links, back, locale switch, tab close.
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => isDirty() && currentLocation.pathname + currentLocation.search !== nextLocation.pathname + nextLocation.search)
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return
+    void confirm({ title: t('cm.leave'), message: t('cm.leaveConfirm'), confirmLabel: t('cm.leave'), destructive: true }).then((ok) => (ok ? blocker.proceed() : blocker.reset()))
+  }, [blocker.state])
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
+  const form = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        // Fields that write on blur (the blocks editor) get to do it first.
+        ;(document.activeElement as HTMLElement | null)?.blur()
+        setTimeout(() => form.current?.requestSubmit(), 0)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const goToField = (name: string) => {
+    const el = document.getElementById(`field-${name}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el?.querySelector<HTMLElement>('input, textarea, select, [contenteditable="true"], button')?.focus({ preventScroll: true })
   }
 
   const originalTitle = original.data ? String(original.data[model.mainField] ?? original.data.documentId) : ''
@@ -205,9 +265,16 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   // null allows every field; a field is writable when it or one of its sub-fields is allowed.
   const otherLocales = (locales.data ?? []).filter((l) => l.code !== locale)
   const writable = (name: string) => writableFields == null || writableFields.some((f) => f === name || f.startsWith(name + '.'))
+  const fieldLabel = (path: string[]) => path.map((p, i) => (i === 0 ? model.editMeta?.[p]?.label || model.labels[p] || p : /^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' › ')
+  const person = (v: unknown) => {
+    const u = v as { firstname?: string; lastname?: string; username?: string } | null | undefined
+    return u ? u.username || [u.firstname, u.lastname].filter(Boolean).join(' ') : ''
+  }
+  const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : '-')
+  const docId = String(entry.data?.documentId ?? documentId ?? '')
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
+    <form ref={form} onSubmit={submit} className="flex flex-col gap-6" noValidate>
       <div className="space-y-4">
         {!single && !embedded && (
           <div>
@@ -216,15 +283,57 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
             </Button>
           </div>
         )}
-        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-muted">
-              {model.info.displayName}
-              {status && <StatusBadge status={status} />}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-end">
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+            {model.info.displayName}
+            {status && <StatusBadge status={status} />}
+            {dirty && <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">{t('cm.unsaved')}</span>}
+          </p>
+        </div>
+      </div>
+
+      {errorList.length > 0 && (
+        <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+          <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-destructive">
+            <AlertCircle className="h-4 w-4" aria-hidden />
+            {t('cm.errorsTitle', { count: String(errorList.length) })}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {errorList.map((e, i) => (
+              <li key={i} className="text-sm">
+                <button type="button" title={t('cm.goToField')} onClick={() => goToField(e.path[0] ?? '')} className="text-left text-destructive underline underline-offset-2">
+                  {fieldLabel(e.path)}
+                </button>
+                <span className="text-muted"> : {e.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {missingLocale && <Card className="text-sm text-muted">{t('cm.missingLocale', { locale: locales.data?.find((l) => l.code === locale)?.name ?? locale })}</Card>}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <aside className="flex flex-col gap-4 lg:order-last">
+          <Card className="flex flex-col gap-3">
+            {status && (
+              <p className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-muted">{t('cm.statusColumn')}</span>
+                <StatusBadge status={status} />
+              </p>
+            )}
+            {canSave && (
+              <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} disabled={!dirty && !creating} className="w-full">
+                {t('common.save')}
+              </Button>
+            )}
+            {!creating && model.draftAndPublish && model.permissions.publish && (
+              <Button variant="outline" title={t('cm.publish')} icon={<Send className="h-4 w-4" />} loading={action.isPending && action.variables === 'publish'} disabled={dirty || status === 'published'} onClick={() => action.mutate('publish')} className="w-full">
+                {t('cm.publish')}
+              </Button>
+            )}
+            {dirty && !creating && model.draftAndPublish && <p className="text-xs text-muted">{t('cm.saveBeforePublish')}</p>}
             {model.localized && (locales.data?.length ?? 0) > 1 && (
               <SelectField
                 label={t('cm.locale')}
@@ -242,81 +351,106 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
                 ))}
               </SelectField>
             )}
-            {model.localized && canSave && (single || documentId !== undefined) && otherLocales.length > 0 && (
-              <FillFromLocale
-                locales={otherLocales}
-                load={(code) => api.get<Entry>(single ? `${singlePath(model.uid)}?locale=${code}` : `${entryPath(model.uid, documentId)}?locale=${code}`)}
-                onFill={(src) =>
-                  setValues((current) => {
-                    const next = { ...current }
-                    for (const name of fillableFields(model.attributes, fields, writable)) next[name] = withoutIDs(toInput(model.attributes[name]!, src[name], ctx))
-                    return next
-                  })
-                }
-              />
-            )}
-            {single && model.canConfigure && (
-              <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full md:w-auto">
-                {t('cfg.open')}
-              </Button>
-            )}
-            {canSave && (
-              <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full md:w-auto">
-                {t('common.save')}
-              </Button>
-            )}
-            {!creating && (entry.data?.documentId || documentId) && (
-              <HistoryButton model={model} documentId={String(entry.data?.documentId ?? documentId)} locale={locale || undefined} title={title} />
-            )}
-            {!creating && (entry.data?.documentId || documentId) && <ReleaseButton model={model} documentIds={[String(entry.data?.documentId ?? documentId)]} locale={locale || undefined} />}
-            {!creating && !single && model.permissions.create && (
-              <Button
-                variant="outline"
-                title={t('cm.duplicate')}
-                icon={<Copy className="h-4 w-4" />}
-                onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(documentId!)}${locale ? `&locale=${locale}` : ''}`)}
-                className="w-full md:w-auto"
-              >
-                {t('cm.duplicate')}
-              </Button>
-            )}
-            {!creating && model.draftAndPublish && model.permissions.publish && (
-              <Button variant="outline" title={t('cm.publish')} icon={<Send className="h-4 w-4" />} loading={action.isPending && action.variables === 'publish'} onClick={() => action.mutate('publish')} className="w-full md:w-auto">
-                {t('cm.publish')}
-              </Button>
-            )}
-            {!creating && model.draftAndPublish && model.permissions.publish && status && status !== 'draft' && (
-              <Button variant="outline" title={t('cm.unpublish')} icon={<Undo2 className="h-4 w-4" />} onClick={() => action.mutate('unpublish')} className="w-full md:w-auto">
-                {t('cm.unpublish')}
-              </Button>
-            )}
-            {!creating && model.permissions.delete && (
-              <Button
-                variant="destructive-outline"
-                title={t('cm.delete')}
-                icon={<Trash2 className="h-4 w-4" />}
-                className="w-full md:w-auto"
-                onClick={async () => {
-                  if (await confirm({ title: t('cm.delete'), message: t('cm.deleteConfirm'), confirmLabel: t('cm.delete'), destructive: true })) action.mutate('delete')
-                }}
-              >
-                {t('cm.delete')}
-              </Button>
-            )}
-          </div>
+            <div className="flex flex-col gap-2 border-t border-border pt-3">
+              {model.localized && canSave && (single || documentId !== undefined) && otherLocales.length > 0 && (
+                <FillFromLocale
+                  locales={otherLocales}
+                  load={(code) => api.get<Entry>(single ? `${singlePath(model.uid)}?locale=${code}` : `${entryPath(model.uid, documentId)}?locale=${code}`)}
+                  onFill={(src) =>
+                    setValues((current) => {
+                      const next = { ...current }
+                      for (const name of fillableFields(model.attributes, fields, writable)) next[name] = withoutIDs(toInput(model.attributes[name]!, src[name], ctx))
+                      return next
+                    })
+                  }
+                />
+              )}
+              {!creating && docId && <HistoryButton model={model} documentId={docId} locale={locale || undefined} title={title} />}
+              {!creating && docId && <ReleaseButton model={model} documentIds={[docId]} locale={locale || undefined} />}
+              {!creating && !single && model.permissions.create && (
+                <Button
+                  variant="outline"
+                  title={t('cm.duplicate')}
+                  icon={<Copy className="h-4 w-4" />}
+                  onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(documentId!)}${locale ? `&locale=${locale}` : ''}`)}
+                  className="w-full"
+                >
+                  {t('cm.duplicate')}
+                </Button>
+              )}
+              {!creating && model.draftAndPublish && model.permissions.publish && status && status !== 'draft' && (
+                <Button variant="outline" title={t('cm.unpublish')} icon={<Undo2 className="h-4 w-4" />} onClick={() => action.mutate('unpublish')} className="w-full">
+                  {t('cm.unpublish')}
+                </Button>
+              )}
+              {!creating && model.draftAndPublish && canSave && status === 'modified' && (
+                <Button
+                  variant="outline"
+                  title={t('cm.discard')}
+                  icon={<RotateCcw className="h-4 w-4" />}
+                  onClick={async () => {
+                    if (await confirm({ title: t('cm.discard'), message: t('cm.discardConfirm'), confirmLabel: t('cm.discard'), destructive: true })) action.mutate('discard')
+                  }}
+                  className="w-full"
+                >
+                  {t('cm.discard')}
+                </Button>
+              )}
+              {single && model.canConfigure && (
+                <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full">
+                  {t('cfg.open')}
+                </Button>
+              )}
+              {!creating && model.permissions.delete && (
+                <Button
+                  variant="destructive-outline"
+                  title={t('cm.delete')}
+                  icon={<Trash2 className="h-4 w-4" />}
+                  className="w-full"
+                  onClick={async () => {
+                    if (await confirm({ title: t('cm.delete'), message: t('cm.deleteConfirm'), confirmLabel: t('cm.delete'), destructive: true })) action.mutate('delete')
+                  }}
+                >
+                  {t('cm.delete')}
+                </Button>
+              )}
+            </div>
+          </Card>
+          {!creating && entry.data && (
+            <Card>
+              <CardHeader title={t('cm.information')} />
+              <dl className="grid grid-cols-1 gap-2 text-sm">
+                <div>
+                  <dt className="text-xs text-muted">{t('cm.createdAt')}</dt>
+                  <dd>
+                    {when(entry.data.createdAt)}
+                    {person(entry.data.createdBy) && <span className="text-muted"> · {person(entry.data.createdBy)}</span>}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">{t('cm.updatedAt')}</dt>
+                  <dd>
+                    {when(entry.data.updatedAt)}
+                    {person(entry.data.updatedBy) && <span className="text-muted"> · {person(entry.data.updatedBy)}</span>}
+                  </dd>
+                </div>
+              </dl>
+            </Card>
+          )}
+        </aside>
+        <div className="min-w-0">
+          {(single || documentId !== undefined) && entry.isPending ? (
+            <p className="text-sm text-muted">{t('common.loading')}</p>
+          ) : (
+            <Card>
+              <fieldset disabled={!canSave}>
+                <LayoutGrid layout={model.editLayout ?? []} writable={writable} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
+              </fieldset>
+            </Card>
+          )}
         </div>
       </div>
-
-      {missingLocale && <Card className="text-sm text-muted">{t('cm.missingLocale', { locale: locales.data?.find((l) => l.code === locale)?.name ?? locale })}</Card>}
-      {(single || documentId !== undefined) && entry.isPending ? (
-        <p className="text-sm text-muted">{t('common.loading')}</p>
-      ) : (
-        <Card>
-          <fieldset disabled={!canSave}>
-            <LayoutGrid layout={model.editLayout ?? []} writable={writable} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
-          </fieldset>
-        </Card>
-      )}
     </form>
   )
 }
+

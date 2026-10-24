@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # ADM-015 : Vue édition au niveau de Strapi (panneau, états, garde-fous)
@@ -20,11 +20,18 @@ Une vue édition aussi agréable et sûre que celle de Strapi pour écrire au qu
 - **Aides des champs** : description, requis, longueur min/max et compteur, comme Strapi.
 
 ## Critères d'acceptation
-- [ ] Quitter une vue modifiée (lien, retour, changement de locale) demande confirmation ; après enregistrement, plus de confirmation.
-- [ ] Ctrl/Cmd+S enregistre le document.
-- [ ] Une publication refusée liste les champs fautifs en tête et chaque lien amène au champ.
-- [ ] « Informations » affiche les dates et l'auteur, identiques à l'API admin.
-- [ ] À 375 px : tout est empilé, boutons en pleine largeur, aucun scroll horizontal.
+- [x] Quitter une vue modifiée (lien, retour, changement de locale) demande confirmation ; après enregistrement, plus de confirmation.
+- [x] Ctrl/Cmd+S enregistre le document.
+- [x] Une publication refusée liste les champs fautifs en tête et chaque lien amène au champ.
+- [x] « Informations » affiche les dates et l'auteur, identiques à l'API admin.
+- [x] À 375 px : tout est empilé, boutons en pleine largeur, aucun scroll horizontal.
+
+## Avancement
+- Panneau latéral (en tête et empilé sur mobile) : statut, « Enregistrer » (désactivé sans modification), « Publier » (après enregistrement), locale, puis historique, release, duplication, dépublication, « Abandonner le brouillon » et suppression, chacun en vrai bouton plutôt que dans un menu « Plus ». « Informations » : dates de création et de modification, et leurs auteurs, que l'API admin renvoie désormais (`createdBy`, `updatedBy` : prénom, nom, nom d'utilisateur ; `TestAdminRelations`).
+- `POST .../{documentId}/actions/discard` (et pour un single type) : le brouillon redevient la version publiée, comme Strapi.
+- Modifications non enregistrées : badge, confirmation avant de quitter par un lien, le retour ou un changement de locale (`useBlocker`), et à la fermeture de l'onglet ; plus de confirmation après enregistrement. Ctrl/Cmd+S enregistre (après avoir laissé l'éditeur blocks écrire sa valeur).
+- Erreurs d'enregistrement ou de publication : récapitulatif en tête, chaque entrée amène au champ et lui donne le focus. Comme chez Strapi, un brouillon s'enregistre sans validation des champs requis ; la publication les vérifie.
+- Aides : bornes de longueur avec compteur, bornes des nombres, sous le champ.
 
 ## Référence Strapi
 - `core/content-manager/admin/src/pages/EditView/components/Panels.tsx`, `DocumentActions.tsx`, `Header.tsx` (code MIT).

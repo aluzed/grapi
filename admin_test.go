@@ -540,17 +540,17 @@ func TestAdminRelations(t *testing.T) {
 	}
 	// Lists are paged: the Document Service reads start and limit, not page.
 	for i := 0; i < 12; i++ {
-		create("api::tag.tag", fmt.Sprintf(`{"name":"t%02d"}`, i))
+		create("api::tag.tag", fmt.Sprintf(`{"name":"tagx%02d"}`, i))
 	}
 	_, b, _ = c.do("GET", "/content-manager/collection-types/api::tag.tag?page=2&pageSize=10&sort=name:asc", "")
 	if n := len(b["data"].([]any)); n != 5 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(15) {
 		t.Fatalf("list page 2: %d %v", n, b["meta"])
 	}
 	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?page=2&pageSize=10", "")
-	if got := labels(b); len(got) != 5 || got[0] != "t07" {
+	if got := labels(b); len(got) != 5 || got[0] != "tagx07" {
 		t.Fatalf("targets page 2: %v", got)
 	}
-	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?_q=t0", "")
+	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?_q=tagx0", "")
 	if got := labels(b); len(got) != 10 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(10) {
 		t.Fatalf("search: %v", b)
 	}
@@ -586,9 +586,21 @@ func TestAdminRelations(t *testing.T) {
 	if st := status(); st != "modified" {
 		t.Fatalf("changed since its publication: %v", st)
 	}
-	c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"title":"Hello"}}`)
+	// Discarding the draft brings the published version back.
+	if s, _, _ := c.do("POST", "/content-manager/collection-types/api::post.post/"+post+"/actions/discard", `{}`); s != 200 {
+		t.Fatalf("discard: %d", s)
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
+	if title := dataOf(b)["title"]; title != "Hello" || status() != "published" {
+		t.Fatalf("after discard: %v %v", title, status())
+	}
 	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
 	got := dataOf(b)
+	for _, k := range []string{"createdBy", "updatedBy"} {
+		if by, _ := got[k].(map[string]any); by == nil || by["firstname"] != "Ada" || by["email"] != nil || by["password"] != nil {
+			t.Fatalf("%s: %v", k, got[k])
+		}
+	}
 	if w, _ := got["writer"].(map[string]any); w == nil || w["name"] != "Ursula" {
 		t.Fatalf("writer: %v", got["writer"])
 	}

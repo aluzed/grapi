@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, Plus, Sparkles, X } from 'lucide-react'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
@@ -148,14 +149,32 @@ function fromObject(c: ComponentModel, item: Values, ctx: FieldContext): Values 
   return out
 }
 
+// fieldHint is Strapi's help under a field: its length bounds with a
+// counter, or its number bounds.
+function useFieldHint(attr: Attribute, value: unknown): string | undefined {
+  const { t } = useI18n()
+  const { minLength: lo, maxLength: hi } = attr
+  if (lo || hi) {
+    const n = String(value ?? '').length
+    const bounds = lo && hi ? t('field.lengthBetween', { min: String(lo), max: String(hi) }) : lo ? t('field.lengthMin', { min: String(lo) }) : t('field.lengthMax', { max: String(hi) })
+    return `${bounds} · ${t('field.count', { n: String(n) })}`
+  }
+  if (attr.min !== undefined || attr.max !== undefined) {
+    if (attr.min !== undefined && attr.max !== undefined) return t('field.between', { min: String(attr.min), max: String(attr.max) })
+    return attr.min !== undefined ? t('field.min', { min: String(attr.min) }) : t('field.max', { max: String(attr.max) })
+  }
+  return undefined
+}
+
 function ScalarField({ name, attr, text, value, error, onChange }: { name: string; attr: Attribute; text: string; value: unknown; error?: string; onChange: (v: unknown) => void }) {
-  const common = { label: text, error, name }
+  const hint = useFieldHint(attr, value)
+  const common = { label: text, error, name, hint }
   switch (attr.type) {
     case 'boolean':
       return <Checkbox label={text} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
     case 'enumeration':
       return (
-        <SelectField {...common} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
+        <SelectField label={text} error={error} name={name} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
           <option value="">-</option>
           {attr.enum?.map((o) => (
             <option key={o} value={o}>
@@ -179,6 +198,7 @@ function ScalarField({ name, attr, text, value, error, onChange }: { name: strin
               className={`mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm font-normal focus:border-primary focus:outline-none aria-[invalid=true]:border-destructive ${attr.type === 'json' ? 'font-mono' : ''}`}
             />
           </label>
+          {hint && !error && <p className="text-xs text-muted">{hint}</p>}
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
       )
@@ -409,7 +429,7 @@ export function LayoutGrid(
           {row
             .filter((f) => fields.includes(f.name))
             .map((f) => (
-              <fieldset key={f.name} disabled={writable ? !writable(f.name) : undefined} className={span[f.size] ?? 'md:col-span-12'}>
+              <fieldset key={f.name} id={`field-${f.name}`} disabled={writable ? !writable(f.name) : undefined} className={cn('scroll-mt-24', span[f.size] ?? 'md:col-span-12')}>
                 <FieldsGrid {...rest} fields={[f.name]} single />
               </fieldset>
             ))}

@@ -525,6 +525,7 @@ func (s *Server) contentManagerEditRoutes() {
 	s.authed("GET /content-manager/collection-types/{uid}/{documentId}", s.cmFindOne)
 	s.authed("POST /content-manager/collection-types/{uid}", s.cmCreate)
 	s.authed("PUT /content-manager/collection-types/{uid}/{documentId}", s.cmUpdate)
+	s.authed("POST /content-manager/collection-types/{uid}/{documentId}/actions/discard", s.cmDiscard)
 }
 
 func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) error {
@@ -545,7 +546,14 @@ func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) erro
 	if ct.DraftAndPublish() && q.Get("status") == "published" {
 		p["status"] = "published"
 	}
-	p["populate"] = s.deepPopulate(&ct.Attributes, 0)
+	pop := s.deepPopulate(&ct.Attributes, 0)
+	// The edit view shows who created and last changed the document, by name only.
+	_, stamped := ct.Attributes.Get(schema.AttrCreatedBy)
+	if stamped {
+		author := map[string]any{"fields": []any{"firstname", "lastname", "username"}}
+		pop[schema.AttrCreatedBy], pop[schema.AttrUpdatedBy] = author, author
+	}
+	p["populate"] = pop
 	row, err := s.docs.FindOne(r.Context(), string(ct.UID), id, p)
 	if err != nil {
 		return asValidation(err)
@@ -553,7 +561,44 @@ func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) erro
 	if row == nil {
 		return errNotFound
 	}
-	return data(w, visible(toMap(row), ct, string(ct.UID), a))
+	m := toMap(row)
+	created, updated := m[schema.AttrCreatedBy], m[schema.AttrUpdatedBy]
+	out := visible(m, ct, string(ct.UID), a)
+	if stamped {
+		out[schema.AttrCreatedBy], out[schema.AttrUpdatedBy] = created, updated
+	}
+	return data(w, out)
+}
+
+// cmDiscard drops the draft's changes: it becomes the published version again.
+func (s *Server) cmDiscard(w http.ResponseWriter, r *http.Request, u *User) error {
+	ct, _, filter, err := s.cmAccess(r, u, actionUpdate)
+	if err != nil {
+		return err
+	}
+	if !ct.DraftAndPublish() {
+		return appError("This content type has no draft and publish")
+	}
+	var b struct {
+		Locale string `json:"locale"`
+	}
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	id := r.PathValue("documentId")
+	p := localeParam(ct, b.Locale)
+	ok, err := s.allows(r.Context(), ct, id, p["locale"], filter)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errNotFound
+	}
+	if _, err := s.docs.DiscardDraft(r.Context(), string(ct.UID), id, p); err != nil {
+		return asValidation(err)
+	}
+	s.audit(r, u, "entry.discard", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"]})
+	return data(w, map[string]any{"documentId": id})
 }
 
 type writeBody struct {
@@ -803,6 +848,7 @@ func (s *Server) singleTypeRoutes() {
 	s.authed("DELETE /content-manager/single-types/{uid}", s.stDelete)
 	s.authed("POST /content-manager/single-types/{uid}/actions/publish", s.stAction("publish"))
 	s.authed("POST /content-manager/single-types/{uid}/actions/unpublish", s.stAction("unpublish"))
+	s.authed("POST /content-manager/single-types/{uid}/actions/discard", s.stAction("discard"))
 }
 
 // singleAccess is cmAccess for a single type: its document id, empty when
@@ -948,7 +994,11 @@ func (s *Server) stAction(op string) authedHandler {
 		if err := decode(r, &b); err != nil {
 			return err
 		}
-		ct, _, id, err := s.singleAccess(r, u, actionPublish, b.Locale)
+		action := actionPublish
+		if op == "discard" {
+			action = actionUpdate
+		}
+		ct, _, id, err := s.singleAccess(r, u, action, b.Locale)
 		if err != nil {
 			return err
 		}
@@ -959,11 +1009,14 @@ func (s *Server) stAction(op string) authedHandler {
 			return errNotFound
 		}
 		p := localeParam(ct, b.Locale)
-		if op == "publish" {
+		switch op {
+		case "publish":
 			if _, err = s.docs.Publish(r.Context(), string(ct.UID), id, p); err == nil {
 				s.recordVersion(r.Context(), ct, id, p["locale"], "published", u.ID)
 			}
-		} else {
+		case "discard":
+			_, err = s.docs.DiscardDraft(r.Context(), string(ct.UID), id, p)
+		default:
 			_, err = s.docs.Unpublish(r.Context(), string(ct.UID), id, p)
 		}
 		if err != nil {
