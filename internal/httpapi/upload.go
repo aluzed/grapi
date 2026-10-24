@@ -49,6 +49,8 @@ type UploadConfig struct {
 	// ProviderName, the value of files.provider.
 	Provider     provider.Provider
 	ProviderName string
+	// Security restricts the mime types of the uploads.
+	Security UploadSecurity
 }
 
 // Breakpoint is one responsive format.
@@ -317,6 +319,9 @@ func (s *Server) replaceFile(w http.ResponseWriter, r *http.Request, rc *request
 	if err != nil {
 		return err
 	}
+	if _, _, err := s.enforceUploadSecurity(req.files, infos); err != nil {
+		return err
+	}
 	file, err := s.fileByParam(ctx, id)
 	if err != nil {
 		return err
@@ -345,6 +350,9 @@ func (s *Server) uploadFiles(w http.ResponseWriter, r *http.Request, rc *request
 	}
 	infos, err := fileInfos(req.fields["fileInfo"], len(req.files))
 	if err != nil {
+		return err
+	}
+	if req.files, infos, err = s.enforceUploadSecurity(req.files, infos); err != nil {
 		return err
 	}
 	folder := uploadTarget(ctx)

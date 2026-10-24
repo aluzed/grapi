@@ -41,7 +41,8 @@ Le modèle de fichier, la réception multipart et les routes d'upload du Content
 - Fait aussi : remplacement (`?id=`, même hash et même URL, formats régénérés, formats obsolètes supprimés), mise à jour des infos (`?id=` sans fichier), événements `media.create`, `media.update`, `media.delete`. Test : `upload_test.go`.
 - Correction du périmètre : l'upload à la création d'une entrée (`files.<champ>`) n'existe plus dans Strapi 5 (changement cassant de la v5). Un corps multipart y donne `Missing "data" payload in the request body`, comme dans grapi.
 - `GET /api/upload/files/page` (`findAndCountPage` : pagination REST, `defaultLimit`, `maxLimit`, `withCount`, `{data, meta.pagination}`), corpus `devfreelance_upload` (7 cas, SQLite et Postgres) identique à Strapi.
-- Reste : allow/deny lists de `security`, routes admin.
+- Fait : `security.allowedTypes` et `security.deniedTypes` (`TestUploadSecurity`), comme `mime-validation` de Strapi : type lu dans le contenu (signatures binaires, comme `file-type`), sinon type déclaré ; fichier invérifiable refusé ; fichiers refusés écartés d'un envoi, 400 `ValidationError` quand il n'en reste aucun ; config invalide refusée à chaque envoi. S'applique aussi au remplacement et à l'import par URL de l'admin. Les routes admin de la médiathèque sont faites (`ADM-007`).
+- Reste : le critère D3 sur la copie de la base dev-freelance.
 
 - Banc `devfreelance_media` (SQLite et Postgres, identique à Strapi) : envoi d'un JPEG de 800 x 600 (le runner génère un JPEG pour un nom en `.jpg`), formats compris ; `cover` (média simple) peuplé en objet, puis `null` ; `pictures` (multiple) en tableau dans l'ordre donné, puis réordonné par une mise à jour.
 - `TestUploadSizeLimitLeavesNoTempFile` : au-delà de `sizeLimit`, 413 `PayloadTooLargeError` « noise.png exceeds size limit of 2 KB », et aucun dossier `grapi-upload-*` ne reste.

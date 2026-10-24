@@ -196,6 +196,7 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	if n, ok := c.Int("plugins.upload.config.sizeLimit"); ok {
 		cfg.Upload.SizeLimit = int64(n)
 	}
+	cfg.Upload.Security = uploadSecurity(c.Get("plugins.upload.config.security"))
 	if name, _ := c.String("plugins.upload.config.provider"); name != "" && name != "local" {
 		// An unknown name may be a provider of the Go project: setup reports it.
 		if prov, err := uploadProvider(c, name); err == nil {
@@ -289,6 +290,40 @@ var errUnknownUploadProvider = errors.New("unknown upload provider")
 
 // uploadProvider builds the provider of plugins.upload.config: aws-s3
 // takes @strapi/provider-upload-aws-s3's providerOptions.
+// uploadSecurity reads plugins.upload.config.security; a list that holds
+// anything but strings makes every upload fail, as in Strapi.
+func uploadSecurity(v any) httpapi.UploadSecurity {
+	var sec httpapi.UploadSecurity
+	m, _ := v.(map[string]any)
+	read := func(key string) ([]string, bool) {
+		raw, set := m[key]
+		if !set || raw == nil {
+			return nil, true
+		}
+		list, ok := raw.([]any)
+		if !ok {
+			return nil, false
+		}
+		out := make([]string, 0, len(list))
+		for _, x := range list {
+			s, ok := x.(string)
+			if !ok {
+				return nil, false
+			}
+			out = append(out, s)
+		}
+		return out, true
+	}
+	var ok bool
+	if sec.AllowedTypes, ok = read("allowedTypes"); !ok {
+		sec.Invalid = "Invalid configuration: allowedTypes must be an array of strings."
+	}
+	if sec.DeniedTypes, ok = read("deniedTypes"); !ok && sec.Invalid == "" {
+		sec.Invalid = "Invalid configuration: deniedTypes must be an array of strings."
+	}
+	return sec
+}
+
 func uploadProvider(c *config.Config, name string) (provider.Provider, error) {
 	if name == "cloudinary" {
 		base := "plugins.upload.config."
