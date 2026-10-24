@@ -3,7 +3,8 @@ import { ArrowDown, ArrowUp, Plus, Sparkles, X } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
-import { Checkbox, SelectField, TextField } from '@/components/ui/field'
+import { SelectField, Switch, TextField } from '@/components/ui/field'
+import { fieldLabel } from '@/lib/humanize'
 import type { Attribute, ComponentModel, Model } from '@/lib/types'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
@@ -171,7 +172,7 @@ function ScalarField({ name, attr, text, value, error, onChange }: { name: strin
   const common = { label: text, error, name, hint }
   switch (attr.type) {
     case 'boolean':
-      return <Checkbox label={text} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
+      return <Switch label={text} checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
     case 'enumeration':
       return (
         <SelectField label={text} error={error} name={name} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
@@ -191,11 +192,11 @@ function ScalarField({ name, attr, text, value, error, onChange }: { name: strin
             {text}
             <textarea
               name={name}
-              rows={attr.type === 'text' ? 4 : 10}
+              rows={attr.type === 'text' ? 3 : 10}
               value={String(value ?? '')}
               onChange={(e) => onChange(e.target.value)}
               aria-invalid={error ? true : undefined}
-              className={`mt-1.5 block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm font-normal focus:border-primary focus:outline-none aria-[invalid=true]:border-destructive ${attr.type === 'json' ? 'font-mono' : ''}`}
+              className={`mt-1.5 block max-h-96 min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm font-normal [field-sizing:content] focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none aria-[invalid=true]:border-destructive ${attr.type === 'json' ? 'font-mono' : ''}`}
             />
           </label>
           {hint && !error && <p className="text-xs text-muted">{hint}</p>}
@@ -408,7 +409,16 @@ function UIDField({ name, attr, text, value, values, error, onChange, ctx }: { n
   )
 }
 
-const span: Record<number, string> = { 4: 'md:col-span-4', 6: 'md:col-span-6', 8: 'md:col-span-8', 12: 'md:col-span-12' }
+const span: Record<number, string> = {
+  2: 'md:col-span-2',
+  3: 'md:col-span-3',
+  4: 'md:col-span-4',
+  6: 'md:col-span-6',
+  8: 'md:col-span-8',
+  9: 'md:col-span-9',
+  10: 'md:col-span-10',
+  12: 'md:col-span-12',
+}
 
 // LayoutGrid renders the root fields along the configured edit layout:
 // rows of 12 columns on desktop, stacked on mobile.
@@ -470,7 +480,7 @@ export function FieldsGrid({
         if (!attr) return null
         const meta = root ? ctx.model.editMeta?.[name] : undefined
         if (meta && !meta.visible) return null
-        const text = (meta?.label || name) + (attr.required ? ' *' : '')
+        const text = fieldLabel(name, meta?.label) + (attr.required ? ' *' : '')
         if (!isEditable(attr)) {
           return (
             <div key={name} className="flex flex-col gap-1.5">

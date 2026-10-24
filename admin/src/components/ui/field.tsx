@@ -48,6 +48,26 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HT
   )
 })
 
+// Switch is a boolean that reads as an on/off setting, its label on the left.
+export const Switch = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { label: string; description?: ReactNode }>(function Switch(
+  { label, description, className, ...props },
+  ref,
+) {
+  return (
+    <label className={cn('flex min-h-10 cursor-pointer items-center justify-between gap-3 text-sm has-[:disabled]:cursor-not-allowed', className)}>
+      <span className="min-w-0">
+        <span className="block font-medium">{label}</span>
+        {description && <span className="block text-xs text-muted">{description}</span>}
+      </span>
+      <input ref={ref} type="checkbox" role="switch" className="peer sr-only" {...props} />
+      <span
+        aria-hidden
+        className="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-300 transition-colors after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50"
+      />
+    </label>
+  )
+})
+
 export const Checkbox = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { label: string }>(function Checkbox(
   { label, className, ...props },
   ref,

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { cn } from '@/lib/cn'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
@@ -249,20 +250,27 @@ function List({ model }: { model: Model }) {
           </thead>
           <tbody>
             {entries.map((e) => (
-              <Tr key={e.documentId}>
+              <Tr
+                key={e.documentId}
+                // The whole row opens the entry; its own controls keep their action.
+                onClick={(ev) => {
+                  if (!(ev.target as HTMLElement).closest('a, button, input, label, [role="menu"]')) navigate(editPath(e))
+                }}
+                className="cursor-pointer"
+              >
                 {bulkable && (
                   <Td>
                     <input type="checkbox" title={t('cm.select')} aria-label={t('cm.select')} checked={selected.includes(e.documentId)} onChange={() => toggle(e.documentId)} className="h-4 w-4 accent-primary" />
                   </Td>
                 )}
                 {columns.map((c, i) => (
-                  <Td key={c} className="max-w-xs">
+                  <Td key={c} className={cn(c === 'id' ? 'w-16 text-muted tabular-nums' : c === model.mainField ? 'max-w-md min-w-56' : 'max-w-xs min-w-24')}>
                     {i === 0 || c === model.mainField ? (
                       <Link to={editPath(e)} className="font-medium hover:text-primary">
-                        <Cell value={e[c]} attr={model.attributes[c]} models={models} />
+                        <Cell value={e[c]} attr={model.attributes[c]} models={models} compact />
                       </Link>
                     ) : (
-                      <Cell value={e[c]} attr={model.attributes[c]} models={models} />
+                      <Cell value={e[c]} attr={model.attributes[c]} models={models} compact />
                     )}
                   </Td>
                 ))}

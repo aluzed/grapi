@@ -83,6 +83,11 @@ Deux erreurs sont plus tôt que chez Strapi, sans changer le verdict : un cycle 
 - `GET /api/content-type-builder/content-types` ne liste pas les types Enterprise (content-releases, review-workflows).
 - `GET /api/content-type-builder/components` liste les composants dans l'ordre du chargement de grapi (catégories et fichiers triés) ; Strapi suit l'ordre du système de fichiers.
 
+## Admin (`admin/`)
+
+- Vue d'édition : les champs sont rangés par nature, dans l'ordre de la configuration de vue. Les champs courts sont sur une grille, et le dernier d'une ligne s'élargit jusqu'au bout. Les textes riches sont dans « Contenu ». Les relations, le média simple et les booléens (en interrupteurs) sont dans la colonne de droite. Le JSON est replié dans « Avancé ». Strapi suit les lignes configurées telles quelles (`ADM-017`).
+- Un champ dont le libellé n'est pas configuré affiche son nom en mots (`hideOnHomepage` : « Hide on homepage ») ; Strapi affiche le nom brut (`ADM-017`).
+
 ## À trancher
 
 - `biginteger` sous SQLite : Strapi perd la précision au-delà de 2^53 (voir `compat/README.md`). Le reproduire ou non se décide dans `DB-001`.

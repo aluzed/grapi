@@ -119,7 +119,7 @@ export function MediaField({
   }
 
   return (
-    <fieldset ref={root} className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
+    <fieldset ref={root} className="@container flex min-w-0 flex-col gap-1.5 sm:col-span-2">
       <legend className="mb-1.5 text-sm font-medium">{label}</legend>
       <div
         className={cn('flex flex-col overflow-hidden rounded-md border bg-surface', dragging ? 'border-primary ring-2 ring-primary' : error ? 'border-destructive' : 'border-border')}
@@ -138,7 +138,7 @@ export function MediaField({
       >
         {current ? (
           <>
-            <div className="relative flex h-56 items-center justify-center bg-background md:h-64">
+            <div className="relative flex h-56 items-center justify-center bg-background @md:h-64">
               <Preview key={current.id} file={current} />
               {value.length > 1 && (
                 <span className="absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">{`${at + 1} / ${value.length}`}</span>
@@ -159,30 +159,30 @@ export function MediaField({
             <div className="h-full bg-primary" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
         )}
-        <div className="flex flex-col gap-2 border-t border-border p-2 md:flex-row md:flex-wrap md:items-center">
+        <div className="flex flex-col gap-2 border-t border-border p-2 @md:flex-row @md:flex-wrap @md:items-center">
           {value.length > 1 && (
             <>
-              <Button variant="outline" title={t('media.previous')} icon={<ArrowLeft className="h-4 w-4" />} disabled={at === 0} onClick={() => setIndex(at - 1)} className="w-full md:w-auto">
+              <Button variant="outline" title={t('media.previous')} icon={<ArrowLeft className="h-4 w-4" />} disabled={at === 0} onClick={() => setIndex(at - 1)} className="w-full @md:w-auto">
                 {t('media.previous')}
               </Button>
-              <Button variant="outline" title={t('media.next')} icon={<ArrowRight className="h-4 w-4" />} disabled={at === value.length - 1} onClick={() => setIndex(at + 1)} className="w-full md:w-auto">
+              <Button variant="outline" title={t('media.next')} icon={<ArrowRight className="h-4 w-4" />} disabled={at === value.length - 1} onClick={() => setIndex(at + 1)} className="w-full @md:w-auto">
                 {t('media.next')}
               </Button>
             </>
           )}
           {(multiple || !current) && (
-            <Button variant="outline" title={t('media.add')} icon={<ImagePlus className="h-4 w-4" />} onClick={() => setPicking(true)} className="w-full md:w-auto">
+            <Button variant="outline" title={t('media.add')} icon={<ImagePlus className="h-4 w-4" />} onClick={() => setPicking(true)} className="w-full @md:w-auto">
               {t('media.add')}
             </Button>
           )}
           {!multiple && current && (
-            <Button variant="outline" title={t('media.change')} icon={<ImagePlus className="h-4 w-4" />} onClick={() => setPicking(true)} className="w-full md:w-auto">
+            <Button variant="outline" title={t('media.change')} icon={<ImagePlus className="h-4 w-4" />} onClick={() => setPicking(true)} className="w-full @md:w-auto">
               {t('media.change')}
             </Button>
           )}
           {current && (
             <>
-              <Button variant="outline" title={t('media.edit')} icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(current)} className="w-full md:w-auto">
+              <Button variant="outline" title={t('media.edit')} icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(current)} className="w-full @md:w-auto">
                 {t('media.edit')}
               </Button>
               <Button
@@ -190,11 +190,11 @@ export function MediaField({
                 title={t('media.copy')}
                 icon={<Copy className="h-4 w-4" />}
                 onClick={() => void navigator.clipboard?.writeText(absolute(current.url)).then(() => toast.success(t('media.copied')))}
-                className="w-full md:w-auto"
+                className="w-full @md:w-auto"
               >
                 {t('media.copy')}
               </Button>
-              <Button variant="destructive-outline" title={t('rel.remove')} icon={<X className="h-4 w-4" />} onClick={() => void remove(current)} className="w-full md:w-auto">
+              <Button variant="destructive-outline" title={t('rel.remove')} icon={<X className="h-4 w-4" />} onClick={() => void remove(current)} className="w-full @md:w-auto">
                 {t('rel.remove')}
               </Button>
             </>
@@ -241,7 +241,7 @@ export function MediaField({
           ))}
         </ol>
       )}
-      {canUpload && <p className="hidden text-xs text-muted md:block">{t('media.fieldDrop')}</p>}
+      {canUpload && <p className="hidden text-xs text-muted @md:block">{t('media.fieldDrop')}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
       {picking && (
         <MediaPicker

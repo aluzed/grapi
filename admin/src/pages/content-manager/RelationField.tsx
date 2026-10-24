@@ -156,7 +156,7 @@ export function RelationField({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 sm:col-span-2">
+    <div className="@container flex flex-col gap-1.5 sm:col-span-2">
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
@@ -183,7 +183,7 @@ export function RelationField({
                   e.preventDefault()
                   move(Number(e.dataTransfer.getData(dragType)), i)
                 }}
-                className={cn('flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center md:justify-between', dragFrom === i && 'opacity-50')}
+                className={cn('flex items-center justify-between gap-2 px-3 py-2', dragFrom === i && 'opacity-50')}
               >
                 <span className="flex min-w-0 items-center gap-2">
                   {multiple && <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted" aria-hidden />}
@@ -203,11 +203,11 @@ export function RelationField({
                     <>
                       <button type="button" title={t('rel.up')} disabled={i === 0} onClick={() => move(i, i - 1)} className={`${small} border-border bg-surface`}>
                         <ArrowUp className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{t('rel.up')}</span>
+                        <span className="hidden @md:inline">{t('rel.up')}</span>
                       </button>
                       <button type="button" title={t('rel.down')} disabled={i === value.length - 1} onClick={() => move(i, i + 1)} className={`${small} border-border bg-surface`}>
                         <ArrowDown className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{t('rel.down')}</span>
+                        <span className="hidden @md:inline">{t('rel.down')}</span>
                       </button>
                     </>
                   )}
@@ -220,7 +220,7 @@ export function RelationField({
                     className={`${small} border-destructive/40 bg-surface text-destructive`}
                   >
                     <X className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{t('rel.remove')}</span>
+                    <span className="hidden @md:inline">{t('rel.remove')}</span>
                   </button>
                 </span>
               </li>
@@ -230,12 +230,12 @@ export function RelationField({
       )}
       {value.length > visible && (
         <div>
-          <Button variant="outline" title={t('rel.more')} icon={<ChevronDown className="h-4 w-4" />} onClick={() => setVisible(visible + step)} className="w-full md:w-auto">
+          <Button variant="outline" title={t('rel.more')} icon={<ChevronDown className="h-4 w-4" />} onClick={() => setVisible(visible + step)} className="w-full @md:w-auto">
             {t('rel.more')} ({value.length - visible})
           </Button>
         </div>
       )}
-      <div className="flex flex-col gap-2 md:flex-row md:items-start">
+      <div className="flex flex-col gap-2 @md:flex-row @md:items-start">
         <div className="relative flex-1">
           <input
             id={id}
@@ -281,13 +281,13 @@ export function RelationField({
             </ul>
           )}
         </div>
-        {target?.permissions.create && target.kind === 'collectionType' && (
+        {target?.permissions.create && target.kind === 'collectionType' && (multiple || value.length === 0) && (
           <Button
             variant="outline"
             title={t('rel.create', { name: target.info.displayName })}
             icon={<Plus className="h-4 w-4" />}
             onClick={() => setEmbedded({ title: t('rel.create', { name: target.info.displayName }), path: `${cmPath(target.kind, target.uid)}/create${locale ? `?locale=${locale}` : ''}`, create: true })}
-            className="w-full md:w-auto"
+            className="w-full @md:w-auto"
           >
             {t('rel.create', { name: target.info.displayName })}
           </Button>

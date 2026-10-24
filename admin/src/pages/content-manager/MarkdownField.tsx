@@ -180,7 +180,7 @@ export function MarkdownField({
   )
 
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
+    <div className="@container flex min-w-0 flex-col gap-1.5 sm:col-span-2">
       <label htmlFor={`md-${name}`} className="text-sm font-medium">
         {label}
       </label>
@@ -188,19 +188,19 @@ export function MarkdownField({
         {!expanded && toolbar}
         {!expanded && (preview ? <div className="md-preview min-h-40 px-4 py-3 text-sm" dangerouslySetInnerHTML={{ __html: html || `<p class="text-muted">${t('md.empty')}</p>` }} /> : editor)}
         {expanded && <p className="px-3 py-6 text-center text-sm text-muted">{t('md.editingExpanded')}</p>}
-        <div className="flex flex-col gap-2 border-t border-border p-1.5 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2 md:flex-row">
+        <div className="flex flex-col gap-2 border-t border-border p-1.5 @md:flex-row @md:items-center @md:justify-between">
+          <div className="flex flex-col gap-2 @md:flex-row">
             <Button
               variant="outline"
               title={preview ? t('md.edit') : t('md.preview')}
               icon={preview ? <Pencil className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               disabled={expanded}
               onClick={() => setPreview(!preview)}
-              className="w-full md:w-auto"
+              className="w-full @md:w-auto"
             >
               {preview ? t('md.edit') : t('md.preview')}
             </Button>
-            <Button ref={expandButton} variant="outline" title={t('md.expand')} icon={<Maximize2 className="h-4 w-4" />} onClick={() => setExpanded(true)} className="w-full md:w-auto">
+            <Button ref={expandButton} variant="outline" title={t('md.expand')} icon={<Maximize2 className="h-4 w-4" />} onClick={() => setExpanded(true)} className="w-full @md:w-auto">
               {t('md.expand')}
             </Button>
           </div>

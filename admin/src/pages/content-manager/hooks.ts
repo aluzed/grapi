@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { fieldLabel } from '@/lib/humanize'
 import type { Locale, Model } from '@/lib/types'
 
 export const cmBase = '/content-manager/collection-types'
@@ -15,5 +16,5 @@ export function useLocales(enabled: boolean) {
 export const entryPath = (uid: string, documentId?: string) => `${cmBase}/${encodeURIComponent(uid)}${documentId ? `/${encodeURIComponent(documentId)}` : ''}`
 
 export function label(model: Model, field: string): string {
-  return model.labels[field] ?? field
+  return fieldLabel(field, model.labels[field])
 }

@@ -56,17 +56,20 @@ export function ContentManager() {
   const navigate = useNavigate()
   const uid = useMatch('/content-manager/:kind/:uid/*')?.params.uid
   const location = useLocation()
+  // An entry being edited takes the whole width: the back button leads to its list.
+  const documentId = useMatch('/content-manager/collection-types/:uid/:documentId')?.params.documentId
+  const editing = documentId !== undefined && documentId !== 'configurations'
   if (isEmbedded(location.search)) return <Outlet />
   if (models.isPending) return <p className="text-sm text-muted">{t('common.loading')}</p>
   const list = models.data ?? []
   if (list.length === 0) return <p className="text-sm text-muted">{t('cm.none')}</p>
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
-      <aside className="hidden w-60 shrink-0 lg:block">
+      <aside className={cn('hidden w-60 shrink-0', !editing && 'lg:block')}>
         <h2 className="mb-3 text-lg font-semibold">{t('nav.contentManager')}</h2>
         <TypeMenu models={list} />
       </aside>
-      <div className="lg:hidden">
+      <div className={editing ? 'hidden' : 'lg:hidden'}>
         <SelectField
           label={t('cm.types')}
           value={uid ?? ''}

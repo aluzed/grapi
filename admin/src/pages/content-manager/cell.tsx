@@ -1,3 +1,4 @@
+import { cn } from '@/lib/cn'
 import type { Attribute, Model } from '@/lib/types'
 import { useI18n } from '@/providers/I18nProvider'
 
@@ -12,12 +13,13 @@ function MediaThumb({ m }: { m: Media }) {
   return <span className="text-xs text-muted">{m.name}</span>
 }
 
-export function Cell({ value, attr, models }: { value: unknown; attr?: Attribute; models: Model[] }) {
+// compact keeps a table row to one line; the full text shows on hover.
+export function Cell({ value, attr, models, compact }: { value: unknown; attr?: Attribute; models: Model[]; compact?: boolean }) {
   const { t, language } = useI18n()
   if (value === null || value === undefined || value === '') return <span className="text-muted">-</span>
   switch (attr?.type) {
     case 'boolean':
-      return <>{value ? t('cm.yes') : t('cm.no')}</>
+      return <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${value ? 'border-primary/20 bg-primary/10 text-primary' : 'border-border bg-background text-muted'}`}>{value ? t('cm.yes') : t('cm.no')}</span>
     case 'date':
       return <>{new Date(String(value)).toLocaleDateString(language)}</>
     case 'datetime':
@@ -46,7 +48,11 @@ export function Cell({ value, attr, models }: { value: unknown; attr?: Attribute
       return <code className="line-clamp-1 text-xs">{JSON.stringify(value)}</code>
   }
   if (typeof value === 'object') return <code className="line-clamp-1 text-xs">{JSON.stringify(value)}</code>
-  return <span className="line-clamp-2 break-words">{String(value)}</span>
+  return (
+    <span className={cn('break-words', compact ? 'line-clamp-1' : 'line-clamp-2')} title={compact ? String(value) : undefined}>
+      {String(value)}
+    </span>
+  )
 }
 
 export function StatusBadge({ status }: { status?: string }) {

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, ArrowLeft, Copy, RotateCcw, Save, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { AlertCircle, AlignLeft, ArrowLeft, Braces, ChevronDown, Copy, FileText, Image as ImageIcon, Images, Link2, RotateCcw, Save, Send, Settings2, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
 import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
 import { api, ApiError, type FieldError } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { fieldLabel as labelOf } from '@/lib/humanize'
 import { isEmbedded, notifySaved, withEmbed } from '@/lib/embed'
 import { showError } from '@/lib/form'
 import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
@@ -21,6 +22,7 @@ import { FillFromLocale } from './FillFromLocale'
 import { HistoryButton } from './HistoryDialog'
 import { PreviewButton, PreviewPanel, storedPreviewMode, usePreviewURL, type PreviewMode } from './PreviewPanel'
 import { ReleaseButton } from './ReleaseButton'
+import { splitLayout, type Section as SectionName } from './sections'
 import { entryPath, useLocales, useModels } from './hooks'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
@@ -272,13 +274,16 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       ? t('cm.duplicateOf', { name: originalTitle })
       : creating
         ? t('cm.newEntry')
-        : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
+        : // An entry without a readable main field reads as its type and number.
+          (model.mainField === 'documentId' || model.mainField === 'id') && entry.data
+          ? `${model.info.displayName} #${String(entry.data.id)}`
+          : String(entry.data?.[model.mainField] ?? entry.data?.documentId ?? '')
   const canSave = creating ? model.permissions.create : model.permissions.update
   const writableFields = creating ? model.permissions.createFields : model.permissions.updateFields
   // null allows every field; a field is writable when it or one of its sub-fields is allowed.
   const otherLocales = (locales.data ?? []).filter((l) => l.code !== locale)
   const writable = (name: string) => writableFields == null || writableFields.some((f) => f === name || f.startsWith(name + '.'))
-  const fieldLabel = (path: string[]) => path.map((p, i) => (i === 0 ? model.editMeta?.[p]?.label || model.labels[p] || p : /^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' › ')
+  const fieldLabel = (path: string[]) => path.map((p, i) => (i === 0 ? labelOf(p, model.editMeta?.[p]?.label || model.labels[p]) : /^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' › ')
   const person = (v: unknown) => {
     const u = v as { firstname?: string; lastname?: string; username?: string } | null | undefined
     return u ? u.username || [u.firstname, u.lastname].filter(Boolean).join(' ') : ''
@@ -287,26 +292,60 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const docId = String(entry.data?.documentId ?? documentId ?? '')
   const previewURL = usePreviewURL(model, single ? undefined : documentId, locale, 'draft', !creating && !embedded)
   const side = preview === 'side'
+  const sections = useMemo(() => splitLayout(model.editLayout ?? [], model.attributes), [model])
+  const shown = (name: string) => fields.includes(name) && model.editMeta?.[name]?.visible !== false
+  const has = (s: SectionName) => sections[s].some((row) => row.some((c) => shown(c.name)))
+  const grid = (s: SectionName, rows = sections[s]) => (
+    <fieldset disabled={!canSave}>
+      <LayoutGrid layout={rows} writable={writable} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((cur) => ({ ...cur, [name]: v }))} ctx={ctx} root errors={errors} />
+    </fieldset>
+  )
 
   return (
     <div className={side ? 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-6' : undefined}>
-    <form ref={form} onSubmit={submit} className="flex min-w-0 flex-col gap-6" noValidate>
-      <div className="space-y-4">
-        {!single && !embedded && (
-          <div>
-            <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
-              {t('cm.backToList')}
-            </Button>
-          </div>
-        )}
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-            {model.info.displayName}
-            {status && <StatusBadge status={status} />}
-            {dirty && <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">{t('cm.unsaved')}</span>}
-          </p>
+    <form ref={form} onSubmit={submit} className="flex min-w-0 flex-col gap-6 pb-24 md:pb-0" noValidate>
+      {!single && !embedded && (
+        <div>
+          <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
+            {t('cm.backToList')}
+          </Button>
         </div>
+      )}
+      {/* A direct child of the form, so that it sticks while the whole form scrolls. */}
+      <div
+          className={cn(
+            '-mt-2 flex flex-col gap-4 md:sticky md:top-0 md:z-20 md:flex-row md:items-center md:justify-between md:border-b md:border-border md:bg-background/95 md:py-3 md:backdrop-blur',
+            embedded ? 'md:-mx-4 md:px-4' : 'md:-mx-8 md:px-8',
+          )}
+        >
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{title || '-'}</h1>
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+              {model.info.displayName}
+              {status && <StatusBadge status={status} />}
+              {dirty && <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">{t('cm.unsaved')}</span>}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 md:flex-row md:items-center">
+            {!creating && model.draftAndPublish && model.permissions.publish && (
+              <Button
+                variant="outline"
+                title={dirty ? t('cm.saveBeforePublish') : t('cm.publish')}
+                icon={<Send className="h-4 w-4" />}
+                loading={action.isPending && action.variables === 'publish'}
+                disabled={dirty || status === 'published'}
+                onClick={() => action.mutate('publish')}
+                className="w-full md:w-auto"
+              >
+                {t('cm.publish')}
+              </Button>
+            )}
+            {canSave && (
+              <Button type="submit" title={`${t('common.save')} (Ctrl/⌘ S)`} icon={<Save className="h-4 w-4" />} loading={save.isPending} disabled={!dirty && !creating} className="w-full md:w-auto">
+                {t('common.save')}
+              </Button>
+            )}
+          </div>
       </div>
 
       {errorList.length > 0 && (
@@ -330,148 +369,193 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
 
       {missingLocale && <Card className="text-sm text-muted">{t('cm.missingLocale', { locale: locales.data?.find((l) => l.code === locale)?.name ?? locale })}</Card>}
 
-      <div className={cn('grid grid-cols-1 gap-6', side ? '2xl:grid-cols-[minmax(0,1fr)_18rem]' : 'lg:grid-cols-[minmax(0,1fr)_18rem]')}>
-        <aside className={cn('flex flex-col gap-4', side ? '2xl:order-last' : 'lg:order-last')}>
-          <Card className="flex flex-col gap-3">
-            {status && (
-              <p className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-muted">{t('cm.statusColumn')}</span>
-                <StatusBadge status={status} />
-              </p>
-            )}
-            {canSave && (
-              <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} disabled={!dirty && !creating} className="w-full">
-                {t('common.save')}
-              </Button>
-            )}
-            {!creating && model.draftAndPublish && model.permissions.publish && (
-              <Button variant="outline" title={t('cm.publish')} icon={<Send className="h-4 w-4" />} loading={action.isPending && action.variables === 'publish'} disabled={dirty || status === 'published'} onClick={() => action.mutate('publish')} className="w-full">
-                {t('cm.publish')}
-              </Button>
-            )}
-            {dirty && !creating && model.draftAndPublish && <p className="text-xs text-muted">{t('cm.saveBeforePublish')}</p>}
-            {previewURL.data && !preview && (
-              <PreviewButton
-                disabled={dirty}
-                onOpen={() => setPreview(storedPreviewMode() === 'side' && window.matchMedia('(min-width: 1024px)').matches ? 'side' : 'full')}
-              />
-            )}
-            {model.localized && (locales.data?.length ?? 0) > 1 && (
-              <SelectField
-                label={t('cm.locale')}
-                value={locale}
-                onChange={(e) => {
-                  const next = new URLSearchParams(params)
-                  next.set('locale', e.target.value)
-                  setParams(next, { replace: true })
-                }}
-              >
-                {locales.data?.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.name}
-                  </option>
-                ))}
-              </SelectField>
-            )}
-            <div className="flex flex-col gap-2 border-t border-border pt-3">
-              {model.localized && canSave && (single || documentId !== undefined) && otherLocales.length > 0 && (
-                <FillFromLocale
-                  locales={otherLocales}
-                  load={(code) => api.get<Entry>(single ? `${singlePath(model.uid)}?locale=${code}` : `${entryPath(model.uid, documentId)}?locale=${code}`)}
-                  onFill={(src) =>
-                    setValues((current) => {
-                      const next = { ...current }
-                      for (const name of fillableFields(model.attributes, fields, writable)) next[name] = withoutIDs(toInput(model.attributes[name]!, src[name], ctx))
-                      return next
-                    })
-                  }
-                />
-              )}
-              {!creating && docId && <HistoryButton model={model} documentId={docId} locale={locale || undefined} title={title} />}
-              {!creating && docId && <ReleaseButton model={model} documentIds={[docId]} locale={locale || undefined} />}
-              {!creating && !single && model.permissions.create && (
-                <Button
-                  variant="outline"
-                  title={t('cm.duplicate')}
-                  icon={<Copy className="h-4 w-4" />}
-                  onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(documentId!)}${locale ? `&locale=${locale}` : ''}`)}
-                  className="w-full"
-                >
-                  {t('cm.duplicate')}
-                </Button>
-              )}
-              {!creating && model.draftAndPublish && model.permissions.publish && status && status !== 'draft' && (
-                <Button variant="outline" title={t('cm.unpublish')} icon={<Undo2 className="h-4 w-4" />} onClick={() => action.mutate('unpublish')} className="w-full">
-                  {t('cm.unpublish')}
-                </Button>
-              )}
-              {!creating && model.draftAndPublish && canSave && status === 'modified' && (
-                <Button
-                  variant="outline"
-                  title={t('cm.discard')}
-                  icon={<RotateCcw className="h-4 w-4" />}
-                  onClick={async () => {
-                    if (await confirm({ title: t('cm.discard'), message: t('cm.discardConfirm'), confirmLabel: t('cm.discard'), destructive: true })) action.mutate('discard')
-                  }}
-                  className="w-full"
-                >
-                  {t('cm.discard')}
-                </Button>
-              )}
-              {single && model.canConfigure && (
-                <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full">
-                  {t('cfg.open')}
-                </Button>
-              )}
-              {!creating && model.permissions.delete && (
-                <Button
-                  variant="destructive-outline"
-                  title={t('cm.delete')}
-                  icon={<Trash2 className="h-4 w-4" />}
-                  className="w-full"
-                  onClick={async () => {
-                    if (await confirm({ title: t('cm.delete'), message: t('cm.deleteConfirm'), confirmLabel: t('cm.delete'), destructive: true })) action.mutate('delete')
-                  }}
-                >
-                  {t('cm.delete')}
-                </Button>
-              )}
-            </div>
-          </Card>
-          {!creating && entry.data && (
-            <Card>
-              <CardHeader title={t('cm.information')} />
-              <dl className="grid grid-cols-1 gap-2 text-sm">
-                <div>
-                  <dt className="text-xs text-muted">{t('cm.createdAt')}</dt>
-                  <dd>
-                    {when(entry.data.createdAt)}
-                    {person(entry.data.createdBy) && <span className="text-muted"> · {person(entry.data.createdBy)}</span>}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted">{t('cm.updatedAt')}</dt>
-                  <dd>
-                    {when(entry.data.updatedAt)}
-                    {person(entry.data.updatedBy) && <span className="text-muted"> · {person(entry.data.updatedBy)}</span>}
-                  </dd>
-                </div>
-              </dl>
-            </Card>
-          )}
-        </aside>
-        <div className="min-w-0">
+      <div className={cn('grid grid-cols-1 gap-6', side ? '2xl:grid-cols-[minmax(0,1fr)_20rem]' : 'lg:grid-cols-[minmax(0,1fr)_20rem]')}>
+        <div className="flex min-w-0 flex-col gap-6">
           {(single || documentId !== undefined) && entry.isPending ? (
-            <p className="text-sm text-muted">{t('common.loading')}</p>
+            <Card className="text-sm text-muted">{t('common.loading')}</Card>
           ) : (
-            <Card>
-              <fieldset disabled={!canSave}>
-                <LayoutGrid layout={model.editLayout ?? []} writable={writable} attrs={model.attributes} fields={fields} values={values} onChange={(name, v) => setValues((s) => ({ ...s, [name]: v }))} ctx={ctx} root errors={errors} />
-              </fieldset>
-            </Card>
+            <>
+              {has('general') && (
+                <Section title={t('cm.section.general')} icon={<FileText className="h-4 w-4" />}>
+                  {grid('general')}
+                </Section>
+              )}
+              {has('content') && (
+                <Section title={t('cm.section.content')} icon={<AlignLeft className="h-4 w-4" />}>
+                  {grid('content')}
+                </Section>
+              )}
+              {sections.structure.map((row) => (
+                <Card key={row[0]!.name}>{grid('structure', [row])}</Card>
+              ))}
+              {has('media') && (
+                <Section title={t('cm.section.media')} icon={<Images className="h-4 w-4" />}>
+                  {grid('media')}
+                </Section>
+              )}
+              {has('advanced') && (
+                <div className="rounded-lg border border-border bg-surface shadow-sm">
+                  <details className="group">
+                    <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold tracking-wide text-muted uppercase sm:px-6">
+                      <Braces className="h-4 w-4" aria-hidden />
+                      {t('cm.section.advanced')}
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
+                    </summary>
+                    <div className="border-t border-border p-4 sm:p-6">{grid('advanced')}</div>
+                  </details>
+                </div>
+              )}
+            </>
           )}
         </div>
+
+        <aside className="flex flex-col gap-6">
+          {(!creating || (model.localized && (locales.data?.length ?? 0) > 1)) && (
+          <Section title={t('cm.section.publication')} icon={<Send className="h-4 w-4" />}>
+            <div className="flex flex-col gap-3">
+              {status && (
+                <p className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-muted">{t('cm.statusColumn')}</span>
+                  <StatusBadge status={status} />
+                </p>
+              )}
+              {model.localized && (locales.data?.length ?? 0) > 1 && (
+                <SelectField
+                  label={t('cm.locale')}
+                  value={locale}
+                  onChange={(e) => {
+                    const next = new URLSearchParams(params)
+                    next.set('locale', e.target.value)
+                    setParams(next, { replace: true })
+                  }}
+                >
+                  {locales.data?.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.name}
+                    </option>
+                  ))}
+                </SelectField>
+              )}
+              {!creating && entry.data && (
+                <dl className="grid grid-cols-1 gap-2 border-t border-border pt-3 text-sm">
+                  <div>
+                    <dt className="text-xs text-muted">{t('cm.createdAt')}</dt>
+                    <dd>
+                      {when(entry.data.createdAt)}
+                      {person(entry.data.createdBy) && <span className="text-muted"> · {person(entry.data.createdBy)}</span>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">{t('cm.updatedAt')}</dt>
+                    <dd>
+                      {when(entry.data.updatedAt)}
+                      {person(entry.data.updatedBy) && <span className="text-muted"> · {person(entry.data.updatedBy)}</span>}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+              <div className="flex flex-col gap-2 border-t border-border pt-3 empty:hidden">
+                {previewURL.data && !preview && (
+                  <PreviewButton
+                    disabled={dirty}
+                    onOpen={() => setPreview(storedPreviewMode() === 'side' && window.matchMedia('(min-width: 1024px)').matches ? 'side' : 'full')}
+                  />
+                )}
+                {model.localized && canSave && (single || documentId !== undefined) && otherLocales.length > 0 && (
+                  <FillFromLocale
+                    locales={otherLocales}
+                    load={(code) => api.get<Entry>(single ? `${singlePath(model.uid)}?locale=${code}` : `${entryPath(model.uid, documentId)}?locale=${code}`)}
+                    onFill={(src) =>
+                      setValues((current) => {
+                        const next = { ...current }
+                        for (const name of fillableFields(model.attributes, fields, writable)) next[name] = withoutIDs(toInput(model.attributes[name]!, src[name], ctx))
+                        return next
+                      })
+                    }
+                  />
+                )}
+                {!creating && docId && <HistoryButton model={model} documentId={docId} locale={locale || undefined} title={title} />}
+                {!creating && docId && <ReleaseButton model={model} documentIds={[docId]} locale={locale || undefined} />}
+                {!creating && !single && model.permissions.create && (
+                  <Button
+                    variant="outline"
+                    title={t('cm.duplicate')}
+                    icon={<Copy className="h-4 w-4" />}
+                    onClick={() => navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/create?from=${encodeURIComponent(documentId!)}${locale ? `&locale=${locale}` : ''}`)}
+                    className="w-full"
+                  >
+                    {t('cm.duplicate')}
+                  </Button>
+                )}
+                {!creating && model.draftAndPublish && model.permissions.publish && status && status !== 'draft' && (
+                  <Button variant="outline" title={t('cm.unpublish')} icon={<Undo2 className="h-4 w-4" />} onClick={() => action.mutate('unpublish')} className="w-full">
+                    {t('cm.unpublish')}
+                  </Button>
+                )}
+                {!creating && model.draftAndPublish && canSave && status === 'modified' && (
+                  <Button
+                    variant="outline"
+                    title={t('cm.discard')}
+                    icon={<RotateCcw className="h-4 w-4" />}
+                    onClick={async () => {
+                      if (await confirm({ title: t('cm.discard'), message: t('cm.discardConfirm'), confirmLabel: t('cm.discard'), destructive: true })) action.mutate('discard')
+                    }}
+                    className="w-full"
+                  >
+                    {t('cm.discard')}
+                  </Button>
+                )}
+                {single && model.canConfigure && (
+                  <Button variant="outline" title={t('cfg.open')} icon={<Settings2 className="h-4 w-4" />} onClick={() => navigate(`/content-manager/single-types/${encodeURIComponent(model.uid)}/configurations`)} className="w-full">
+                    {t('cfg.open')}
+                  </Button>
+                )}
+                {!creating && model.permissions.delete && (
+                  <Button
+                    variant="destructive-outline"
+                    title={t('cm.delete')}
+                    icon={<Trash2 className="h-4 w-4" />}
+                    className="w-full"
+                    onClick={async () => {
+                      if (await confirm({ title: t('cm.delete'), message: t('cm.deleteConfirm'), confirmLabel: t('cm.delete'), destructive: true })) action.mutate('delete')
+                    }}
+                  >
+                    {t('cm.delete')}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Section>
+          )}
+          {!entry.isPending || creating ? (
+            <>
+              {has('cover') && (
+                <Section title={t('cm.section.media')} icon={<ImageIcon className="h-4 w-4" />}>
+                  {grid('cover')}
+                </Section>
+              )}
+              {has('relations') && (
+                <Section title={t('cm.section.relations')} icon={<Link2 className="h-4 w-4" />}>
+                  {grid('relations')}
+                </Section>
+              )}
+              {has('options') && (
+                <Section title={t('cm.section.options')} icon={<SlidersHorizontal className="h-4 w-4" />}>
+                  {grid('options')}
+                </Section>
+              )}
+            </>
+          ) : null}
+        </aside>
       </div>
+
+      {canSave && (dirty || creating) && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 p-3 backdrop-blur md:hidden">
+          <Button type="submit" title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} className="w-full">
+            {t('common.save')}
+          </Button>
+        </div>
+      )}
     </form>
     {preview && (
       <PreviewPanel
@@ -489,3 +573,14 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   )
 }
 
+function Section({ title, icon, children }: { title: string; icon: ReactNode; children: ReactNode }) {
+  return (
+    <Card>
+      <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide text-muted uppercase">
+        <span aria-hidden>{icon}</span>
+        {title}
+      </h2>
+      {children}
+    </Card>
+  )
+}
