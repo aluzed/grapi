@@ -28,6 +28,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tailwind 4 leaves buttons with the default cursor: anything clickable shows the hand. */
+:is(button, [role='button'], [role='menuitem'], [role='option'], [role='tab'], summary, select, a[href], label:has(input:not([type='text'])), input:is([type='checkbox'], [type='radio'], [type='file'])):not(:disabled) {
+  cursor: pointer;
+}
+
 /* Fields a user may not change are disabled through their fieldset. */
 :is(input, textarea, select):disabled {
   background: var(--color-zinc-100);
