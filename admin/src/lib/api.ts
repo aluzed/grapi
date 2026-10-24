@@ -1,6 +1,6 @@
 import { apiBase } from './paths'
 
-export type FieldError = { path: string[]; message: string }
+export type FieldError = { path: string[]; message: string; value?: unknown }
 
 export class ApiError extends Error {
   status: number
