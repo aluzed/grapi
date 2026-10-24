@@ -164,6 +164,18 @@ app.OverrideCoreAction("api::post.post", "find", func(c *grapi.Request, next fun
 
 A removed action answers 405 when its path serves other methods, as Koa's `allowedMethods`. An overridden action keeps the core status; its keys are re-encoded in name order.
 
+A plugin's route is overridden the same way, by its controller action, as a Strapi extension (`src/extensions/<plugin>/strapi-server`) wraps `plugin.controllers.<controller>.<action>`:
+
+```go
+app.OverrideCoreAction("plugin::users-permissions.user", "me", func(c *grapi.Request, next func() (map[string]any, error)) (map[string]any, error) {
+	body, err := next()
+	if err == nil && body != nil && c.User != nil {
+		body["email"] = c.User["email"] // the owner sees a private field
+	}
+	return body, err
+})
+```
+
 ## Upload and email providers
 
 ```go

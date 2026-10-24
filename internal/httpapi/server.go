@@ -159,6 +159,15 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 		base := strings.TrimPrefix(cfg.Prefix, "/")
 		s.routes = append(s.routes, route{"GET", []string{base, "i18n", "locales"}, "plugin::i18n.locales", "listLocales", s.listLocales, "", false, false, nil})
 	}
+	// Overrides apply to every route by uid.action, plugin routes
+	// included ("plugin::users-permissions.user.me"), as Strapi's
+	// extensions replace a plugin's controller.
+	for i := range s.routes {
+		rt := &s.routes[i]
+		if a, ok := cfg.CoreActions[rt.uid+"."+rt.action]; ok {
+			rt.handler = s.overridden(rt.handler, a)
+		}
+	}
 	return s
 }
 
@@ -212,16 +221,12 @@ func (s *Server) addContentType(uid string, ct *schema.ContentType) {
 	)
 }
 
-// addCoreRoutes applies the core router's only and except, and the action
-// overrides.
+// addCoreRoutes applies the core router's only and except.
 func (s *Server) addCoreRoutes(uid string, routes ...route) {
 	conf := s.cfg.CoreRouters[uid]
 	for _, rt := range routes {
 		if !conf.keeps(rt.action) {
 			continue
-		}
-		if a, ok := s.cfg.CoreActions[uid+"."+rt.action]; ok {
-			rt.handler = s.overridden(rt.handler, a)
 		}
 		s.routes = append(s.routes, rt)
 	}

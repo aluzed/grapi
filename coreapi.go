@@ -41,7 +41,9 @@ func (r *CoreRouterRef) Except(actions ...string) *CoreRouterRef {
 type CoreAction func(c *Request, next func() (map[string]any, error)) (map[string]any, error)
 
 // OverrideCoreAction overrides the action (find, findOne, create, update,
-// delete) of uid's core controller.
+// delete) of uid's core controller, or a plugin's route by its controller
+// action ("plugin::users-permissions.user", "me"), as a Strapi extension
+// wraps the plugin's controller.
 func (a *App) OverrideCoreAction(uid, action string, fn CoreAction) {
 	if a.coreActions == nil {
 		a.coreActions = map[string]httpapi.CoreAction{}

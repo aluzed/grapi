@@ -83,6 +83,7 @@ func main() {
 - Fait aussi : routes custom (`Route`, `PublicRoute`, `Request`, `Error`) et `Documents()`.
 - Fait depuis : cron (`app.Cron`, `app.CronAt`), policies (`app.Policy`, `Route(...).Policies`, `app.RoutePolicies`), extension du schéma GraphQL (`app.GraphQL()`), documentés dans `docs/framework.md`.
 - Phases `OnRegister`, `OnBootstrap` (services prêts, `Documents()` disponible, une erreur arrête le démarrage) et `OnDestroy` (à la fermeture du serveur), test `TestPhases`. Providers d'upload et d'e-mail du projet (`UseUploadProvider`, `UseEmailProvider`).
+- `OverrideCoreAction` vaut aussi pour les routes des plugins, par action de contrôleur (`plugin::users-permissions.user`, `me`), comme une extension Strapi qui enveloppe le contrôleur du plugin (`TestOverridePluginRoute`).
 - Reste : surcharge de contrôleurs et de services, accès aux autres services. Les alias de `document` exposent encore des types de `internal/` (critère « aucun type interne » non tenu).
 
 - Exemples godoc (`example_test.go`) : `App.Setup` exécuté avec sa sortie (route publique servie par le handler), `OnRowCreate`, `UseDocuments`, `Route` avec `Policy` et `RoutePolicies`, `Cron`, `OnBootstrap` avec le hook `AfterSync`. Chaque symbole exporté a son commentaire (revive `exported`).
