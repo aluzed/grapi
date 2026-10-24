@@ -65,6 +65,8 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     setValues(next)
   }
   const isDirty = () => saved.current !== null && saved.current !== JSON.stringify(latest.current)
+  // submitted is the form as sent: once saved, it is the saved state.
+  const submitted = useRef<string | null>(null)
   const [preview, setPreview] = useState<PreviewMode | null>(null)
   const [saves, setSaves] = useState(0)
   const dirty = saved.current !== null && saved.current !== JSON.stringify(values)
@@ -132,7 +134,10 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
       if (missingLocale && !isLocalizedAttribute(attr) && name in shared) next[name] = toInput(attr, shared[name], ctx)
       else next[name] = toInput(attr, attr.type === 'password' ? null : creating ? (attr.default ?? null) : src[name], ctx)
     }
-    load(next)
+    // Changes typed while a save was on its way stay: the server copy only
+    // becomes the saved state they are compared with.
+    if (isDirty()) saved.current = JSON.stringify(next)
+    else load(next)
     // ctx and fields derive from props that key this component.
   }, [entry.data, entry.isSuccess, creating, source.data, source.isPending, original.data])
 
@@ -175,7 +180,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
           : api.put<Entry>(entryPath(model.uid, documentId), { data, locale: locale || undefined }),
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
-      saved.current = JSON.stringify(latest.current)
+      saved.current = submitted.current
       setErrorList([])
       setSaves((n) => n + 1)
       void refreshAll()
@@ -221,7 +226,10 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const data = payload()
-    if (data) save.mutate(data)
+    if (data) {
+      submitted.current = JSON.stringify(values)
+      save.mutate(data)
+    }
   }
 
   // Leaving with unsaved changes asks first: links, back, locale switch, tab close.

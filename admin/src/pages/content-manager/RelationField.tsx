@@ -87,6 +87,7 @@ export function RelationField({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const id = useId()
+  const dragType = `application/x-grapi-relation-${id.replace(/[^a-z0-9]/gi, '')}`
   const multiple = isMultiple(attr)
   const target = models.find((m) => m.uid === attr.target)
   const [q, setQ] = useState('')
@@ -171,16 +172,16 @@ export function RelationField({
                 key={item.documentId}
                 draggable={multiple}
                 onDragStart={(e) => {
-                  e.dataTransfer.setData('application/x-grapi-relation', String(i))
+                  e.dataTransfer.setData(dragType, String(i))
                   e.dataTransfer.effectAllowed = 'move'
                   setDragFrom(i)
                 }}
                 onDragEnd={() => setDragFrom(null)}
-                onDragOver={(e) => e.dataTransfer.types.includes('application/x-grapi-relation') && e.preventDefault()}
+                onDragOver={(e) => e.dataTransfer.types.includes(dragType) && e.preventDefault()}
                 onDrop={(e) => {
-                  if (!e.dataTransfer.types.includes('application/x-grapi-relation')) return
+                  if (!e.dataTransfer.types.includes(dragType)) return
                   e.preventDefault()
-                  move(Number(e.dataTransfer.getData('application/x-grapi-relation')), i)
+                  move(Number(e.dataTransfer.getData(dragType)), i)
                 }}
                 className={cn('flex flex-col gap-2 px-3 py-2 md:flex-row md:items-center md:justify-between', dragFrom === i && 'opacity-50')}
               >

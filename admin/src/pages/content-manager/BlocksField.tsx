@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Bold, Code, GripVertical, Italic, Link as LinkIcon, List, ListOrdered, Maximize2, Minimize2, Save, Strikethrough, Trash2, Underline } from 'lucide-react'
 import { Editor, Element as SlateElement, Node, Path, Transforms, type Descendant } from 'slate'
 import { Editable, ReactEditor, Slate, useFocused, useSelected, useSlate, useSlateStatic, withReact, type RenderElementProps, type RenderLeafProps } from 'slate-react'
@@ -297,7 +297,7 @@ function LinkDialog({ editor, path, onClose }: { editor: BlocksEditor; path: Pat
 
 // DragHandle moves a top level block by drag and drop; the keyboard does
 // the same with Ctrl/Cmd+Shift+Up/Down.
-function DragHandle({ index, onDrop }: { index: number; onDrop: (from: number, to: number) => void }) {
+function DragHandle({ index, type, onDrop }: { index: number; type: string; onDrop: (from: number, to: number) => void }) {
   const { t } = useI18n()
   return (
     <span
@@ -306,13 +306,13 @@ function DragHandle({ index, onDrop }: { index: number; onDrop: (from: number, t
       title={t('blocks.drag')}
       aria-hidden
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/x-grapi-block', String(index))
+        e.dataTransfer.setData(type, String(index))
         e.dataTransfer.effectAllowed = 'move'
       }}
-      onDragOver={(e) => e.dataTransfer.types.includes('application/x-grapi-block') && e.preventDefault()}
+      onDragOver={(e) => e.dataTransfer.types.includes(type) && e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault()
-        onDrop(Number(e.dataTransfer.getData('application/x-grapi-block')), index)
+        onDrop(Number(e.dataTransfer.getData(type)), index)
       }}
       className="absolute top-1 -left-7 hidden cursor-grab rounded p-0.5 text-muted select-none group-hover/block:block hover:bg-background md:block md:opacity-0 md:group-hover/block:opacity-100"
     >
@@ -325,6 +325,8 @@ export function BlocksField({ name, label, value, error, onChange }: { name: str
   const { t } = useI18n()
   const [editor] = useState(() => createBlocksEditor((e) => withReact(e) as BlocksEditor))
   const root = useRef<HTMLDivElement>(null)
+  // Each editor has its own drag type: a block dropped from another one does nothing.
+  const dragType = `application/x-grapi-block-${useId().replace(/[^a-z0-9]/gi, '')}`
   const [readOnly, setReadOnly] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [picking, setPicking] = useState(false)
@@ -385,13 +387,13 @@ export function BlocksField({ name, label, value, error, onChange }: { name: str
       if (path.length !== 1 || readOnly) return el
       return (
         <div className="group/block relative">
-          <DragHandle index={path[0]!} onDrop={moveTo} />
+          <DragHandle index={path[0]!} type={dragType} onDrop={moveTo} />
           {el}
         </div>
       )
     },
     // moveTo and setLinkAt only use refs and stable setters.
-    [editor, readOnly],
+    [editor, readOnly, dragType],
   )
 
   const onKeyDown = (e: React.KeyboardEvent) => {

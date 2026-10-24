@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Copy, File as FileIcon, ImagePlus, Pencil, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -17,8 +17,6 @@ import { Thumb } from '../media/MediaBrowser'
 
 const small =
   'inline-flex min-h-9 items-center gap-1 rounded-md border px-2 text-xs font-medium disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500'
-
-const reorderType = 'application/x-grapi-media-index'
 
 export function mediaItems(v: unknown): MediaFile[] {
   if (!v) return []
@@ -71,6 +69,10 @@ export function MediaField({
   const [progress, setProgress] = useState<number | null>(null)
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const root = useRef<HTMLFieldSetElement>(null)
+  // An upload ends after other changes: it adds to the field as it is then.
+  const current_ = useRef(value)
+  current_.current = value
+  const reorderType = `application/x-grapi-media-${useId().replace(/[^a-z0-9]/gi, '')}`
   const current = value[Math.min(index, value.length - 1)]
   const at = Math.min(index, Math.max(value.length - 1, 0))
   // A field made read only sits in a disabled fieldset, which does not stop drops.
@@ -88,10 +90,13 @@ export function MediaField({
       setIndex(0)
       return
     }
-    const known = new Set(value.map((f) => f.id))
+    const now = current_.current
+    const known = new Set(now.map((f) => f.id))
     const fresh = files.filter((f) => !known.has(f.id))
-    onChange([...value, ...fresh])
-    if (fresh.length) setIndex(value.length)
+    const next = [...now, ...fresh]
+    current_.current = next
+    onChange(next)
+    if (fresh.length) setIndex(now.length)
   }
   const dropFiles = async (list: File[]) => {
     const err = checkDrop(list, { multiple, allowedTypes: attr.allowedTypes })
