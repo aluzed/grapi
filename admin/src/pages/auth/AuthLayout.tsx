@@ -7,7 +7,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
     <main className="flex min-h-full items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Logo />
+          <Logo variant="auth" />
         </div>
         <Card>
           <h1 className="text-xl font-semibold">{title}</h1>

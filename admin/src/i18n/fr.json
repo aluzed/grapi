@@ -783,5 +783,14 @@
   "preview.full": "Plein écran",
   "preview.close": "Fermer l'aperçu",
   "preview.none": "Pas d'aperçu pour cette entrée.",
-  "preview.neverPublished": "Cette entrée n'a jamais été publiée."
+  "preview.neverPublished": "Cette entrée n'a jamais été publiée.",
+  "settings.logo.title": "Personnalisation",
+  "settings.logo.menuLogo": "Logo du menu",
+  "settings.logo.authLogo": "Logo de l'écran de connexion",
+  "settings.logo.help": "JPEG, PNG ou SVG, 750 × 750 et 1 Mo au plus.",
+  "settings.logo.default": "Logo de grapi",
+  "settings.logo.change": "Changer le logo",
+  "settings.logo.reset": "Réinitialiser le logo",
+  "settings.logo.resetConfirm": "Revenir au logo de grapi ?",
+  "settings.logo.saved": "Logo enregistré"
 }

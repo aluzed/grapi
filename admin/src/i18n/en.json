@@ -783,5 +783,14 @@
   "preview.full": "Full screen",
   "preview.close": "Close the preview",
   "preview.none": "No preview for this entry.",
-  "preview.neverPublished": "This entry has never been published."
+  "preview.neverPublished": "This entry has never been published.",
+  "settings.logo.title": "Customization",
+  "settings.logo.menuLogo": "Menu logo",
+  "settings.logo.authLogo": "Login page logo",
+  "settings.logo.help": "JPEG, PNG or SVG, 750 × 750 and 1 MB at most.",
+  "settings.logo.default": "grapi's logo",
+  "settings.logo.change": "Change the logo",
+  "settings.logo.reset": "Reset the logo",
+  "settings.logo.resetConfirm": "Go back to grapi's logo?",
+  "settings.logo.saved": "Logo saved"
 }

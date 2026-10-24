@@ -220,6 +220,7 @@ func (s *Server) routes() {
 	s.releaseRoutes()
 	s.mediaSettingsRoutes()
 	s.previewRoutes()
+	s.projectRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

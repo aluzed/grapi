@@ -109,7 +109,9 @@ func (s *Server) initInfo(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return data(w, map[string]any{"hasAdmin": n > 0})
+	out := s.logoURLs(r.Context())
+	out["hasAdmin"] = n > 0
+	return data(w, out)
 }
 
 type loginBody struct {

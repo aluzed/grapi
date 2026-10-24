@@ -30,6 +30,8 @@ type MediaService interface {
 	AdminUpload(w http.ResponseWriter, r *http.Request)
 	AdminDeleteFile(ctx context.Context, id any) (query.Row, error)
 	SignFile(ctx context.Context, row query.Row)
+	StoreProjectFile(ctx context.Context, src, filename, mimeType string) (map[string]any, error)
+	DeleteProjectFile(ctx context.Context, file map[string]any) error
 }
 
 func (s *Server) mediaRoutes() {

@@ -8,9 +8,14 @@ import { useI18n } from './I18nProvider'
 
 type Status = 'loading' | 'anonymous' | 'authenticated'
 
+export type Logos = { menuLogo: string | null; authLogo: string | null }
+
 type Auth = {
   status: Status
   hasAdmin: boolean
+  logos: Logos
+  // reloadLogos reads the project's logos again, after they changed.
+  reloadLogos: () => Promise<void>
   user: AdminUser | null
   permissions: Permission[]
   information: Information | null
@@ -28,6 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { setLanguage } = useI18n()
   const [status, setStatus] = useState<Status>('loading')
   const [hasAdmin, setHasAdmin] = useState(true)
+  const [logos, setLogos] = useState<Logos>({ menuLogo: null, authLogo: null })
+  const reloadLogos = useCallback(async () => {
+    const init = await publicRequest<Logos>('GET', '/auth/init')
+    setLogos({ menuLogo: init.menuLogo ?? null, authLogo: init.authLogo ?? null })
+  }, [])
   const [user, setUser] = useState<AdminUser | null>(null)
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [information, setInformation] = useState<Information | null>(null)
@@ -58,9 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       try {
-        const init = await publicRequest<{ hasAdmin: boolean }>('GET', '/auth/init')
+        const init = await publicRequest<{ hasAdmin: boolean } & Logos>('GET', '/auth/init')
         if (cancelled) return
         setHasAdmin(init.hasAdmin)
+        setLogos({ menuLogo: init.menuLogo ?? null, authLogo: init.authLogo ?? null })
         if (init.hasAdmin && (await refresh())) {
           await load()
           return
@@ -96,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       hasAdmin,
+      logos,
+      reloadLogos,
       user,
       permissions,
       information,
@@ -104,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       reload: load,
     }),
-    [status, hasAdmin, user, permissions, information, signIn, logout, load],
+    [status, hasAdmin, logos, reloadLogos, user, permissions, information, signIn, logout, load],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

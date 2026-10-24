@@ -65,7 +65,8 @@ Exposer tous ces réglages dans l'admin, chaque section étant protégée par sa
 - Conditions « créées par l'utilisateur » (`admin::is-creator`) et « créées par son rôle » (`admin::has-same-role-as-creator`) dans l'éditeur, communes aux actions d'un type et combinées en OU comme Strapi ; vérifié dans Chrome.
 - Suppression groupée des administrateurs (sélection, confirmation, `batch-delete`), vérifiée dans Chrome.
 - Rôles users-permissions : la ou les routes ouvertes par chaque action s'affichent sous sa case (`GET /users-permissions/routes`, `TestAdminUPRoutes`).
-- Reste : événements par content type des webhooks, transfer tokens, section projet (les sections e-mail et médiathèque sont faites).
+- Projet : logo du menu et logo de l'écran de connexion (`GET/POST /project-settings`, permissions `admin::project-settings.read|update`), stockés par le provider d'upload et décrits dans le core store (`core_admin_project-settings`) comme Strapi ; JPEG, PNG ou SVG, 1 Mo et 750 × 750 au plus ; l'ancien fichier est supprimé ; `/auth/init` donne leurs URL à l'écran de connexion (`TestAdminProjectLogos`).
+- Reste : événements par content type des webhooks, transfer tokens.
 
 ## Hors périmètre
 - Les réglages des fonctions `XTR` (SSO, audit logs, review workflows, releases) : ils sont dans leurs tickets.
