@@ -27,6 +27,7 @@ const (
 	Publish      Action = "publish"
 	Unpublish    Action = "unpublish"
 	DiscardDraft Action = "discardDraft"
+	Clone        Action = "clone"
 )
 
 // Context is a Document Service call going through the middlewares. Params
@@ -48,6 +49,13 @@ type Middleware func(c *Context, next Next) (any, error)
 
 // DeleteResult is what Delete removed: the document and its entries.
 type DeleteResult struct {
+	DocumentID string
+	Entries    []*schema.OrderedMap[any]
+}
+
+// CloneResult is what Clone created: the documentId of its first entry,
+// and the entries.
+type CloneResult struct {
 	DocumentID string
 	Entries    []*schema.OrderedMap[any]
 }

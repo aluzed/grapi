@@ -36,7 +36,8 @@ Exposer `document.Service(uid)` avec la même surface fonctionnelle que `strapi.
 ## Avancement
 - `internal/document` : `FindMany`, `FindFirst`, `FindOne`, `Count`, `Create`, `Update`, `Delete`, `Publish`, `Unpublish`, `DiscardDraft`, conversion des paramètres (`params.go`, port de `convert-query-params`), résolution documentId vers id dans les données (`relations.go`), composants (`components.go`).
 - Banc : opérations `doc*` dans le mode `query` (`components--docs.yaml`, identique à Strapi sur SQLite et Postgres).
-- Reste : `clone`, la copie des champs non localisés (`copyNonLocalizedFields`), les événements (`DOC-005`), le validateur d'entrées (`DOC-003`).
+- `Clone` (`documents(uid).clone`, action `clone` des middlewares) : chaque brouillon (ou la seule version sans draft & publish) est recopié en brouillon, `data` fusionné à la manière de `_.merge` (objets par clé, tableaux par indice), relations vers les mêmes lignes, composants recopiés ; comme Strapi, chaque entrée clonée reçoit son propre `documentId`, locales comprises (`TestDocumentClone`, `TestDocumentCloneComponents`). La copie des champs non localisés est faite (`copyNonLocalizedFields`), comme les événements (`DOC-005`) et le validateur (`DOC-003`).
+- Reste : le banc sur les cas de caractérisation pour delete, clone et le chemin admin.
 
 - Les 21 cas de caractérisation de dev-freelance passent à l'identique par REST (`devfreelance_rules`) et par le Document Service (`devfreelance--rules` : create, update, publish, unpublish, findOne, findMany, count) ; restent le chemin admin, delete et clone.
 

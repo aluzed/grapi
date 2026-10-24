@@ -27,7 +27,8 @@ Offrir la même chaîne de middlewares, en Go (`EXT-002`) et plus tard en JS (`E
 
 ## Avancement
 - Fait : `internal/document/middleware.go` (`Use`, ordre Koa, `Params` et `documentId` modifiables, désinscription), exposé par `grapi.App.UseDocuments` et le paquet public `document`. Tests : `internal/document/middleware_test.go`, `hooks_test.go` (par HTTP).
-- Reste : la traduction des erreurs de base en erreurs applicatives, la reproduction des middlewares dev-freelance.
+- Middlewares de dev-freelance reproduits en entier dans le dépôt privé du projet : génération par un vrai LLM et invalidation du cache, testées là-bas.
+- Reste : la traduction des erreurs de base en erreurs applicatives, et la comparaison au golden master de la session de caractérisation.
 
 - Middlewares de dev-freelance portés en Go (dans le dépôt privé du projet) : régénération de slug, génération par IA déclenchée par des toggles remis ensuite à `false`. Même faux LLM des deux côtés. Banc `devfreelance_rules` identique à Strapi.
 - Reste : l'invalidation de cache par content type, absente du banc.

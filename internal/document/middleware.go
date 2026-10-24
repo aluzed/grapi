@@ -34,6 +34,7 @@ const (
 	Publish      = document.Publish
 	Unpublish    = document.Unpublish
 	DiscardDraft = document.DiscardDraft
+	Clone        = document.Clone
 )
 
 type middlewares struct {
@@ -157,6 +158,13 @@ func (s *Service) Unpublish(ctx context.Context, uid, documentID string, p Param
 		return nil, err
 	}
 	return asRows(s.run(ctx, uid, Unpublish, p, &documentID, func(ctx context.Context, p Params) (any, error) { return s.unpublishCore(ctx, uid, documentID, p) }))
+}
+
+// Clone copies a document into a new draft one, data merged in.
+func (s *Service) Clone(ctx context.Context, uid, documentID string, p Params) (*document.CloneResult, error) {
+	v, err := s.run(ctx, uid, Clone, p, &documentID, func(ctx context.Context, p Params) (any, error) { return s.cloneCore(ctx, uid, documentID, p) })
+	r, _ := v.(*document.CloneResult)
+	return r, err
 }
 
 // DiscardDraft replaces a document's drafts with its published versions.

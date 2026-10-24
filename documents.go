@@ -63,3 +63,9 @@ func (d *DocumentService) Unpublish(ctx context.Context, uid, documentID string,
 func (d *DocumentService) DiscardDraft(ctx context.Context, uid, documentID string, p document.Params) ([]Entry, error) {
 	return d.s.DiscardDraft(ctx, uid, documentID, p)
 }
+
+// Clone is documents(uid).clone: a copy of the document as a new draft,
+// with p's data merged in.
+func (d *DocumentService) Clone(ctx context.Context, uid, documentID string, p document.Params) (*document.CloneResult, error) {
+	return d.s.Clone(ctx, uid, documentID, p)
+}

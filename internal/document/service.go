@@ -1001,3 +1001,94 @@ func documentParam(p Params) string {
 	}
 	return ""
 }
+
+// cloneCore is the Document Service's clone: each draft entry (or the only
+// version, without draft and publish) is copied, data merged in, and
+// created as a draft. Relations keep pointing at the same rows.
+func (s *Service) cloneCore(ctx context.Context, uid, documentID string, p Params) (*document.CloneResult, error) {
+	ct, err := s.contentType(uid)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateParams(p); err != nil {
+		return nil, err
+	}
+	qp := filterDataPublishedAt(clone(p))
+	qp = s.withDefaultLocale(ctx, ct, qp)
+	qp = s.multiLocaleToLookup(ct, qp)
+	where := merge(lookupOf(qp), map[string]any{schema.AttrDocumentID: documentID, schema.AttrPublishedAt: map[string]any{"$null": ct.DraftAndPublish()}})
+	res := &document.CloneResult{}
+	err = s.E.DB.Tx(ctx, func(ctx context.Context) error {
+		entries, err := s.E.FindMany(ctx, uid, query.Params{Where: where, Populate: s.deepPopulate(uid, []any{"id"})})
+		if err != nil {
+			return err
+		}
+		for _, e := range entries {
+			data := rowToData(e)
+			delete(data, "id")
+			delete(data, schema.AttrCreatedAt)
+			delete(data, schema.AttrUpdatedAt)
+			// As in Strapi, every cloned entry gets its own documentId, even
+			// the locales of one document.
+			data[schema.AttrDocumentID] = query.NewDocumentID()
+			if extra, ok := qp["data"].(map[string]any); ok {
+				data = lodashMerge(data, extra).(map[string]any)
+			}
+			cp := clone(qp)
+			delete(cp, "lookup")
+			cp["data"] = data
+			cp["status"] = "draft"
+			if loc, ok := data[schema.AttrLocale]; ok && loc != nil {
+				cp["locale"] = loc
+			}
+			cp["allowMissingId"] = true
+			row, err := s.createEntry(ctx, ct, cp)
+			if err != nil {
+				return err
+			}
+			res.Entries = append(res.Entries, row)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range res.Entries {
+		s.emit(ctx, "entry.create", uid, row)
+	}
+	if len(res.Entries) > 0 {
+		id, _ := res.Entries[0].Get(schema.AttrDocumentID)
+		res.DocumentID = fmt.Sprint(id)
+	}
+	return res, nil
+}
+
+// lodashMerge is _.merge: src goes into dst recursively, objects by key and
+// arrays by index; an undefined (here, missing) value does not overwrite.
+func lodashMerge(dst, src any) any {
+	switch s := src.(type) {
+	case map[string]any:
+		d, ok := dst.(map[string]any)
+		if !ok {
+			d = map[string]any{}
+		}
+		out := make(map[string]any, len(d)+len(s))
+		for k, v := range d {
+			out[k] = v
+		}
+		for k, v := range s {
+			out[k] = lodashMerge(out[k], v)
+		}
+		return out
+	case []any:
+		d, _ := dst.([]any)
+		n := max(len(d), len(s))
+		out := make([]any, n)
+		copy(out, d)
+		for i, v := range s {
+			out[i] = lodashMerge(out[i], v)
+		}
+		return out
+	}
+	return src
+}
