@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # ADM-012 : Champ média abouti (téléversement, sélecteur, édition)
@@ -29,13 +29,13 @@ Gérer les médias d'un document entièrement depuis la vue édition, comme dans
 - Les providers de stockage (`MEDIA-003` à `MEDIA-005`).
 
 ## Critères d'acceptation
-- [ ] Déposer 3 images sur un champ multiple les téléverse et les ajoute au champ dans l'ordre de dépôt ; sur un champ simple, le dépôt de plusieurs fichiers est refusé avec un message.
-- [ ] Depuis l'onglet « Ajouter des fichiers », un fichier téléversé dans un dossier choisi apparaît dans ce dossier et est sélectionné à la fermeture.
-- [ ] Un fichier d'un type hors `allowedTypes` est refusé au dépôt comme dans la modale.
-- [ ] Modifier le texte alternatif depuis le champ met à jour le fichier (vérifié par l'API) sans perdre les modifications en cours du document.
-- [ ] Réordonner à la souris et au clavier donne le même ordre enregistré.
-- [ ] Un utilisateur sans droit de création ne voit pas l'onglet « Ajouter ».
-- [ ] À 375 px : carrousel en pleine largeur, actions empilées en pleine largeur, modale en plein écran.
+- [x] Déposer 3 images sur un champ multiple les téléverse et les ajoute au champ dans l'ordre de dépôt ; sur un champ simple, le dépôt de plusieurs fichiers est refusé avec un message.
+- [x] Depuis l'onglet « Ajouter des fichiers », un fichier téléversé dans un dossier choisi apparaît dans ce dossier et est sélectionné à la fermeture.
+- [x] Un fichier d'un type hors `allowedTypes` est refusé au dépôt comme dans la modale.
+- [x] Modifier le texte alternatif depuis le champ met à jour le fichier (vérifié par l'API) sans perdre les modifications en cours du document.
+- [x] Réordonner à la souris et au clavier donne le même ordre enregistré.
+- [x] Un utilisateur sans droit de création ne voit pas l'onglet « Ajouter ».
+- [x] À 375 px : carrousel en pleine largeur, actions empilées en pleine largeur, modale en plein écran.
 
 ## Référence Strapi
 - `core/upload/admin/src/components/MediaLibraryInput/`, `MediaLibraryDialog/`, `UploadAssetDialog/`, `EditAssetDialog/` (code MIT).

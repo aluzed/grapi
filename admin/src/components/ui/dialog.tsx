@@ -16,9 +16,9 @@ export function Dialog({ open, title, onClose, children, footer, closeLabel, wid
       ref={ref}
       onClose={onClose}
       onCancel={onClose}
-      className={`m-auto w-[calc(100%-2rem)] ${wide ? 'max-w-5xl' : 'max-w-lg'} rounded-lg border border-border bg-surface p-0 text-foreground shadow-xl backdrop:bg-black/40`}
+      className={`m-auto ${wide ? 'h-dvh max-h-dvh w-full max-w-full rounded-none sm:h-auto sm:max-h-[85vh] sm:w-[calc(100%-2rem)] sm:max-w-5xl sm:rounded-lg' : 'w-[calc(100%-2rem)] max-w-lg rounded-lg'} border border-border bg-surface p-0 text-foreground shadow-xl backdrop:bg-black/40`}
     >
-      <div className="flex max-h-[85vh] flex-col">
+      <div className={`flex flex-col ${wide ? 'h-full max-h-dvh sm:max-h-[85vh]' : 'max-h-[85vh]'}`}>
         <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
           <h2 className="text-base font-semibold">{title}</h2>
           <button type="button" onClick={onClose} title={closeLabel} aria-label={closeLabel} className="rounded p-1 text-muted hover:text-foreground">

@@ -11,6 +11,7 @@ import { Tabs } from '@/components/ui/tabs'
 import { SelectField, TextField } from '@/components/ui/field'
 import { api, ApiError, requestWithMeta, upload } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { accepts } from '@/lib/media'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import type { MediaFile, MediaFolder, Pagination } from '@/lib/types'
@@ -189,11 +190,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
   const [type, setType] = useState(initialType)
   // A picker for a field with allowedTypes offers only those kinds.
   const kinds = (['image', 'video', 'audio', 'file'] as const).filter((k) => !pick?.allowedTypes?.length || pick.allowedTypes.includes(`${k}s`))
-  const allowed = (f: MediaFile) => {
-    if (!pick?.allowedTypes?.length) return true
-    const kind = ['image', 'video', 'audio'].find((k) => f.mime.startsWith(`${k}/`)) ?? 'file'
-    return pick.allowedTypes.includes(`${kind}s`)
-  }
+  const allowed = (f: MediaFile) => accepts(pick?.allowedTypes, f.mime)
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [view, setViewState] = useState<'grid' | 'list'>(() => {
@@ -254,6 +251,11 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
     onSuccess: (res) => {
       toast.success(t('media.uploaded', { count: String(res.length) }))
       void queryClient.invalidateQueries({ queryKey: ['media'] })
+      // In a picker, what was just uploaded is what the user wants to pick.
+      if (pick) {
+        const fresh = res.filter(allowed)
+        if (fresh.length) pick.onChange(pick.multiple ? [...pick.selected, ...fresh] : fresh.slice(0, 1))
+      }
     },
     onError: (err) => (err instanceof DOMException && err.name === 'AbortError' ? toast.info(t('media.uploadCancelled')) : showError(err, undefined, t('common.error'))),
     onSettled: () => {
@@ -380,12 +382,12 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
               {t('media.newFolder')}
             </Button>
             )}
-            {canUpload && (
+            {canUpload && !pick && (
             <Button title={t('media.upload')} icon={<Upload className="h-4 w-4" />} loading={send.isPending} onClick={() => input.current?.click()} className="w-full md:w-auto">
               {send.isPending ? t('media.uploading') : t('media.upload')}
             </Button>
             )}
-            {canUpload && (
+            {canUpload && !pick && (
               <Button variant="outline" title={t('media.fromUrl')} icon={<Link2 className="h-4 w-4" />} onClick={() => setImporting(true)} className="w-full md:w-auto">
                 {t('media.fromUrl')}
               </Button>

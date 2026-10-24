@@ -481,7 +481,7 @@ export function FieldsGrid({
           case 'blocks':
             return <BlocksField key={name} label={text} value={(values[name] as Item[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
           case 'media':
-            return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} onChange={(v) => onChange(name, v)} />
+            return <MediaField key={name} attr={attr} label={text} value={(values[name] as MediaFile[] | undefined) ?? []} error={errors[name]} onChange={(v) => onChange(name, v)} />
           case 'component':
             return <ComponentField key={name} attr={attr} text={text} value={values[name]} onChange={(v) => onChange(name, v)} ctx={ctx} />
           case 'dynamiczone':
