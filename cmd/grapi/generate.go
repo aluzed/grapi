@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -11,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"golang.org/x/term"
 
 	"github.com/aluzed/grapi/internal/builtin"
 	"github.com/aluzed/grapi/schema"
@@ -52,8 +55,51 @@ func writeJSONFile(path string, v any) error {
 	return os.WriteFile(path, append(b, '\n'), 0o600) //nolint:gosec // names are checked in kebab case
 }
 
-// generate is `grapi generate content-type|component`, non interactive:
-// the schema is written, then the project is loaded to validate it, and
+// promptInput is where `grapi generate` asks for what the flags leave out:
+// a terminal only, so that scripts and CI are never asked anything.
+var promptInput = func() io.Reader {
+	if term.IsTerminal(int(os.Stdin.Fd())) { //nolint:gosec // a file descriptor fits an int
+		return os.Stdin
+	}
+	return nil
+}
+
+type interview struct {
+	r *bufio.Scanner
+	w io.Writer
+}
+
+func (in interview) ask(question, def string) string {
+	if def != "" {
+		fmt.Fprintf(in.w, "%s [%s]: ", question, def)
+	} else {
+		fmt.Fprintf(in.w, "%s: ", question)
+	}
+	if !in.r.Scan() {
+		return def
+	}
+	if v := strings.TrimSpace(in.r.Text()); v != "" {
+		return v
+	}
+	return def
+}
+
+func (in interview) yes(question string, def bool) bool {
+	d := "y/N"
+	if def {
+		d = "Y/n"
+	}
+	switch strings.ToLower(in.ask(question, d)) {
+	case "y", "yes":
+		return true
+	case "n", "no":
+		return false
+	}
+	return def
+}
+
+// generate is `grapi generate content-type|component`: the questions of
+// `strapi generate` for what the flags leave out, in a terminal. The schema is written, then the project is loaded to validate it, and
 // the file is removed when it does not load.
 func generate(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
@@ -78,6 +124,35 @@ func generate(args []string, stdout io.Writer) error {
 	fs.Var(&attrs, "attr", "attribute name:type[:required] (repeatable)")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if r := promptInput(); r != nil && *name == "" && (kind == "content-type" || kind == "component") {
+		set := map[string]bool{}
+		fs.Visit(func(f *flag.Flag) { set[f.Name] = true })
+		in := interview{r: bufio.NewScanner(r), w: stdout}
+		if kind == "component" {
+			*name = in.ask("Component name (category.name)", "")
+		} else {
+			*name = in.ask("Singular name (kebab case)", "")
+			if !set["plural"] {
+				*plural = in.ask("Plural name", *name+"s")
+			}
+			if !set["kind"] {
+				*ctKind = in.ask("Kind (collectionType or singleType)", *ctKind)
+			}
+			if !set["draft-and-publish"] {
+				*dp = in.yes("Draft and publish", *dp)
+			}
+			if !set["i18n"] {
+				*i18n = in.yes("Localized (i18n)", *i18n)
+			}
+		}
+		for {
+			a := in.ask("Attribute name:type[:required] (empty to finish)", "")
+			if a == "" {
+				break
+			}
+			attrs = append(attrs, a)
+		}
 	}
 	attributesMap, err := attributes(attrs)
 	if err != nil {

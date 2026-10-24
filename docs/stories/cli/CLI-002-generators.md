@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # CLI-002 : Générateurs (`generate api|content-type|controller|policy|middleware|migration`)
@@ -32,7 +32,7 @@ Des générateurs interactifs et non interactifs qui produisent des fichiers pr�
 - `grapi generate migration --name <n>` : `database/migrations/<YYYY.MM.DDTHH.mm.ss>.<n>.sql` (nommage de Strapi, qui ordonne les migrations), exécutée au démarrage suivant (`TestGenerate`).
 - Squelettes Go d'un projet framework : `policy`, `route` (l'équivalent Go d'un controller), `document-middleware`, `lifecycle` (`cmd/grapi/generate_go.go`). Chaque fichier ajoute sa fonction de configuration dans `init`, le `main.go` généré les applique à l'App ; un fichier existant n'est jamais écrasé, un projet sans `go.mod`/`main.go` est refusé. `TestGenerateGoSkeletons` : projet `grapi new --framework` (qui écrit maintenant aussi `go.mod`), les cinq squelettes, puis `gofmt -l`, `go vet` et `go build`.
 - `grapi generate api --name <n>` (framework) : `api_<n>.go` avec un service Go et la route d'exemple de `strapi generate api` (`GET /<n>`, action `api::<n>.<n>.exampleAction`), couvert par `TestGenerateGoSkeletons`. Un projet sans framework n'exécute pas de code JS : rien à générer pour lui.
-- Reste : le mode interactif.
+- Mode interactif : dans un terminal, `generate content-type` et `generate component` sans `--name` posent les questions de `strapi generate` (nom, pluriel, kind, draft and publish, i18n, puis les attributs un par un) et seulement pour les flags absents ; hors terminal, rien n'est demandé (`TestGenerateInteractive`).
 
 ## Notes techniques
 - `charmbracelet/huh` pour les questions interactives, `text/template` pour les squelettes (il n'y a ici que des données internes, pas d'entrée utilisateur non maîtrisée dans les templates de code).

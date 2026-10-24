@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -63,5 +64,34 @@ func TestGenerate(t *testing.T) {
 	_ = res.Body.Close()
 	if res.StatusCode != 200 {
 		t.Fatalf("the generated content type is served: %d", res.StatusCode)
+	}
+}
+
+func TestGenerateInteractive(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	var out bytes.Buffer
+	if code := run([]string{"new", "demo"}, &out, &out); code != 0 {
+		t.Fatalf("new: %s", out.String())
+	}
+	project := filepath.Join(dir, "demo")
+	answers := "article\n\n\ny\ntitle:string:required\nviews:integer\n\n"
+	promptInput = func() io.Reader { return strings.NewReader(answers) }
+	t.Cleanup(func() { promptInput = func() io.Reader { return nil } })
+	out.Reset()
+	if code := run([]string{"generate", "content-type", "-dir", project, "--i18n"}, &out, &out); code != 0 {
+		t.Fatalf("generate: %s", out.String())
+	}
+	if strings.Contains(out.String(), "Localized") {
+		t.Error("a flag given on the command line is not asked again")
+	}
+	raw, err := os.ReadFile(filepath.Join(project, "src/api/article/content-types/article/schema.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"pluralName": "articles"`, `"draftAndPublish": true`, `"localized": true`, `"title": {`, `"required": true`, `"views": {`} {
+		if !strings.Contains(string(raw), want) {
+			t.Errorf("schema lacks %s:\n%s", want, raw)
+		}
 	}
 }

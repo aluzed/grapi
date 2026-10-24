@@ -26,7 +26,8 @@ grapi api-token:create|list|delete|regenerate # content API tokens
 grapi permissions:list|grant|revoke <role>   # users-permissions role permissions
 grapi admin:create-user|reset-user-password|list-users  # admins (--email, --password-stdin)
 grapi admin:delete-user|active-user|block-user  # --email; --active=false, --unblock; never the last active Super Admin
-grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]
+grapi generate content-type|component|migration --name <n> [--attr name:type[:required]]  # in a terminal, asks what the flags leave out
+grapi generate api|policy|route|document-middleware|lifecycle  # Go skeletons of a framework project (docs/framework.md)
 grapi openapi [-o file]                      # the content API's OpenAPI document
 grapi ts:generate-types [-o dir]             # types/generated/*.d.ts: @strapi/strapi format, and api.d.ts for API clients
 grapi develop --types-out <dir>              # the same types, written again on each schema change
