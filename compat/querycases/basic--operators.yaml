@@ -1,0 +1,398 @@
+fixture: basic
+seed:
+  - uid: api::article.article
+    data: { title: "Été à Paris", slug: "ete", views: 42, bigCounter: "123456789012", rating: 4.5, price: 10.5, releaseDate: "2026-01-15", releaseTime: "14:30:00", scheduledAt: "2026-03-01T10:00:00.000Z", importedAt: "2026-02-01T00:00:00.000Z", featured: true, stage: "draft", meta: { a: 1, tags: ["x", "y"] }, contact: "Alice@Example.com", summary: "100% sure_thing" }
+  - uid: api::article.article
+    data: { title: "été à paris", slug: "ete-2", views: 7, rating: 1.25, price: 99.99, releaseDate: "2025-12-31", featured: false, stage: "review", contact: "bob@example.com", summary: "back\\slash" }
+  - uid: api::article.article
+    data: { title: "Hello World", slug: "hello", views: 42, rating: 3, featured: true, stage: "published", scheduledAt: "2026-01-01T00:00:00.000Z", summary: "plain" }
+  - uid: api::article.article
+    data: { title: "hello world", slug: "hello-2", views: 0, featured: false, stage: "draft" }
+  - uid: api::article.article
+    data: { title: "Zebra 42", slug: "zebra", views: 1000, rating: 0.5, price: 0, releaseDate: "2026-06-30", releaseTime: "08:05:09.120", stage: "review" }
+  - uid: api::article.article
+    data: { title: null, slug: "untitled", views: null, featured: null }
+  - uid: api::article.article
+    data: { title: "_underscore", slug: "under", views: 5, summary: "50%" }
+  - uid: api::tag.tag
+    data: { name: "go", weight: 2 }
+  - uid: api::tag.tag
+    data: { name: "Go", weight: 10 }
+  - uid: api::tag.tag
+    data: { name: "rust", weight: null }
+cases:
+  - { name: title-eq, uid: api::article.article, params: { where: { title: { $eq: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-eqi, uid: api::article.article, params: { where: { title: { $eqi: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-ne, uid: api::article.article, params: { where: { title: { $ne: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-nei, uid: api::article.article, params: { where: { title: { $nei: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-lt, uid: api::article.article, params: { where: { title: { $lt: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-lte, uid: api::article.article, params: { where: { title: { $lte: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-gt, uid: api::article.article, params: { where: { title: { $gt: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-gte, uid: api::article.article, params: { where: { title: { $gte: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-contains, uid: api::article.article, params: { where: { title: { $contains: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-notcontains, uid: api::article.article, params: { where: { title: { $notContains: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-containsi, uid: api::article.article, params: { where: { title: { $containsi: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-notcontainsi, uid: api::article.article, params: { where: { title: { $notContainsi: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-startswith, uid: api::article.article, params: { where: { title: { $startsWith: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-startswithi, uid: api::article.article, params: { where: { title: { $startsWithi: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-endswith, uid: api::article.article, params: { where: { title: { $endsWith: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-endswithi, uid: api::article.article, params: { where: { title: { $endsWithi: "Hello World" } }, orderBy: [{ id: asc }] } }
+  - { name: title-in, uid: api::article.article, params: { where: { title: { $in: ["Hello World", "Zebra 42"] } }, orderBy: [{ id: asc }] } }
+  - { name: title-notin, uid: api::article.article, params: { where: { title: { $notIn: ["Hello World", "Zebra 42"] } }, orderBy: [{ id: asc }] } }
+  - { name: title-between, uid: api::article.article, params: { where: { title: { $between: ["Hello World", "Zebra 42"] } }, orderBy: [{ id: asc }] } }
+  - { name: title-between-reversed, uid: api::article.article, params: { where: { title: { $between: ["Zebra 42", "Hello World"] } }, orderBy: [{ id: asc }] } }
+  - { name: title-null, uid: api::article.article, params: { where: { title: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: title-notnull, uid: api::article.article, params: { where: { title: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: title-not, uid: api::article.article, params: { where: { $not: { title: { $eq: "Hello World" } } }, orderBy: [{ id: asc }] } }
+  - { name: title-or, uid: api::article.article, params: { where: { $or: [{ title: "Hello World" }, { title: "Zebra 42" }] }, orderBy: [{ id: asc }] } }
+  - { name: title-and, uid: api::article.article, params: { where: { $and: [{ title: { $notNull: true } }, { title: { $ne: "Hello World" } }] }, orderBy: [{ id: asc }] } }
+  - { name: slug-eq, uid: api::article.article, params: { where: { slug: { $eq: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-eqi, uid: api::article.article, params: { where: { slug: { $eqi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-ne, uid: api::article.article, params: { where: { slug: { $ne: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-nei, uid: api::article.article, params: { where: { slug: { $nei: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-lt, uid: api::article.article, params: { where: { slug: { $lt: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-lte, uid: api::article.article, params: { where: { slug: { $lte: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-gt, uid: api::article.article, params: { where: { slug: { $gt: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-gte, uid: api::article.article, params: { where: { slug: { $gte: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-contains, uid: api::article.article, params: { where: { slug: { $contains: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-notcontains, uid: api::article.article, params: { where: { slug: { $notContains: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-containsi, uid: api::article.article, params: { where: { slug: { $containsi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-notcontainsi, uid: api::article.article, params: { where: { slug: { $notContainsi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-startswith, uid: api::article.article, params: { where: { slug: { $startsWith: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-startswithi, uid: api::article.article, params: { where: { slug: { $startsWithi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-endswith, uid: api::article.article, params: { where: { slug: { $endsWith: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-endswithi, uid: api::article.article, params: { where: { slug: { $endsWithi: "hello" } }, orderBy: [{ id: asc }] } }
+  - { name: slug-in, uid: api::article.article, params: { where: { slug: { $in: ["hello", "zebra"] } }, orderBy: [{ id: asc }] } }
+  - { name: slug-notin, uid: api::article.article, params: { where: { slug: { $notIn: ["hello", "zebra"] } }, orderBy: [{ id: asc }] } }
+  - { name: slug-between, uid: api::article.article, params: { where: { slug: { $between: ["hello", "zebra"] } }, orderBy: [{ id: asc }] } }
+  - { name: slug-between-reversed, uid: api::article.article, params: { where: { slug: { $between: ["zebra", "hello"] } }, orderBy: [{ id: asc }] } }
+  - { name: slug-null, uid: api::article.article, params: { where: { slug: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: slug-notnull, uid: api::article.article, params: { where: { slug: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: slug-not, uid: api::article.article, params: { where: { $not: { slug: { $eq: "hello" } } }, orderBy: [{ id: asc }] } }
+  - { name: slug-or, uid: api::article.article, params: { where: { $or: [{ slug: "hello" }, { slug: "zebra" }] }, orderBy: [{ id: asc }] } }
+  - { name: slug-and, uid: api::article.article, params: { where: { $and: [{ slug: { $notNull: true } }, { slug: { $ne: "hello" } }] }, orderBy: [{ id: asc }] } }
+  - { name: summary-eq, uid: api::article.article, params: { where: { summary: { $eq: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-eqi, uid: api::article.article, params: { where: { summary: { $eqi: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-ne, uid: api::article.article, params: { where: { summary: { $ne: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-nei, uid: api::article.article, params: { where: { summary: { $nei: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-lt, uid: api::article.article, params: { where: { summary: { $lt: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-lte, uid: api::article.article, params: { where: { summary: { $lte: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-gt, uid: api::article.article, params: { where: { summary: { $gt: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-gte, uid: api::article.article, params: { where: { summary: { $gte: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-contains, uid: api::article.article, params: { where: { summary: { $contains: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-notcontains, uid: api::article.article, params: { where: { summary: { $notContains: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-containsi, uid: api::article.article, params: { where: { summary: { $containsi: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-notcontainsi, uid: api::article.article, params: { where: { summary: { $notContainsi: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-startswith, uid: api::article.article, params: { where: { summary: { $startsWith: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-startswithi, uid: api::article.article, params: { where: { summary: { $startsWithi: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-endswith, uid: api::article.article, params: { where: { summary: { $endsWith: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-endswithi, uid: api::article.article, params: { where: { summary: { $endsWithi: "plain" } }, orderBy: [{ id: asc }] } }
+  - { name: summary-in, uid: api::article.article, params: { where: { summary: { $in: ["plain", "50%"] } }, orderBy: [{ id: asc }] } }
+  - { name: summary-notin, uid: api::article.article, params: { where: { summary: { $notIn: ["plain", "50%"] } }, orderBy: [{ id: asc }] } }
+  - { name: summary-between, uid: api::article.article, params: { where: { summary: { $between: ["plain", "50%"] } }, orderBy: [{ id: asc }] } }
+  - { name: summary-between-reversed, uid: api::article.article, params: { where: { summary: { $between: ["50%", "plain"] } }, orderBy: [{ id: asc }] } }
+  - { name: summary-null, uid: api::article.article, params: { where: { summary: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: summary-notnull, uid: api::article.article, params: { where: { summary: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: summary-not, uid: api::article.article, params: { where: { $not: { summary: { $eq: "plain" } } }, orderBy: [{ id: asc }] } }
+  - { name: summary-or, uid: api::article.article, params: { where: { $or: [{ summary: "plain" }, { summary: "50%" }] }, orderBy: [{ id: asc }] } }
+  - { name: summary-and, uid: api::article.article, params: { where: { $and: [{ summary: { $notNull: true } }, { summary: { $ne: "plain" } }] }, orderBy: [{ id: asc }] } }
+  - { name: body-eq, uid: api::article.article, params: { where: { body: { $eq: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-eqi, uid: api::article.article, params: { where: { body: { $eqi: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-ne, uid: api::article.article, params: { where: { body: { $ne: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-nei, uid: api::article.article, params: { where: { body: { $nei: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-lt, uid: api::article.article, params: { where: { body: { $lt: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-lte, uid: api::article.article, params: { where: { body: { $lte: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-gt, uid: api::article.article, params: { where: { body: { $gt: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-gte, uid: api::article.article, params: { where: { body: { $gte: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-contains, uid: api::article.article, params: { where: { body: { $contains: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-notcontains, uid: api::article.article, params: { where: { body: { $notContains: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-containsi, uid: api::article.article, params: { where: { body: { $containsi: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-notcontainsi, uid: api::article.article, params: { where: { body: { $notContainsi: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-startswith, uid: api::article.article, params: { where: { body: { $startsWith: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-startswithi, uid: api::article.article, params: { where: { body: { $startsWithi: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-endswith, uid: api::article.article, params: { where: { body: { $endsWith: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-endswithi, uid: api::article.article, params: { where: { body: { $endsWithi: "x" } }, orderBy: [{ id: asc }] } }
+  - { name: body-in, uid: api::article.article, params: { where: { body: { $in: ["x", "y"] } }, orderBy: [{ id: asc }] } }
+  - { name: body-notin, uid: api::article.article, params: { where: { body: { $notIn: ["x", "y"] } }, orderBy: [{ id: asc }] } }
+  - { name: body-between, uid: api::article.article, params: { where: { body: { $between: ["x", "y"] } }, orderBy: [{ id: asc }] } }
+  - { name: body-between-reversed, uid: api::article.article, params: { where: { body: { $between: ["y", "x"] } }, orderBy: [{ id: asc }] } }
+  - { name: body-null, uid: api::article.article, params: { where: { body: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: body-notnull, uid: api::article.article, params: { where: { body: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: body-not, uid: api::article.article, params: { where: { $not: { body: { $eq: "x" } } }, orderBy: [{ id: asc }] } }
+  - { name: body-or, uid: api::article.article, params: { where: { $or: [{ body: "x" }, { body: "y" }] }, orderBy: [{ id: asc }] } }
+  - { name: body-and, uid: api::article.article, params: { where: { $and: [{ body: { $notNull: true } }, { body: { $ne: "x" } }] }, orderBy: [{ id: asc }] } }
+  - { name: contact-eq, uid: api::article.article, params: { where: { contact: { $eq: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-eqi, uid: api::article.article, params: { where: { contact: { $eqi: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-ne, uid: api::article.article, params: { where: { contact: { $ne: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-nei, uid: api::article.article, params: { where: { contact: { $nei: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-lt, uid: api::article.article, params: { where: { contact: { $lt: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-lte, uid: api::article.article, params: { where: { contact: { $lte: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-gt, uid: api::article.article, params: { where: { contact: { $gt: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-gte, uid: api::article.article, params: { where: { contact: { $gte: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-contains, uid: api::article.article, params: { where: { contact: { $contains: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-notcontains, uid: api::article.article, params: { where: { contact: { $notContains: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-containsi, uid: api::article.article, params: { where: { contact: { $containsi: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-notcontainsi, uid: api::article.article, params: { where: { contact: { $notContainsi: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-startswith, uid: api::article.article, params: { where: { contact: { $startsWith: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-startswithi, uid: api::article.article, params: { where: { contact: { $startsWithi: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-endswith, uid: api::article.article, params: { where: { contact: { $endsWith: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-endswithi, uid: api::article.article, params: { where: { contact: { $endsWithi: "bob@example.com" } }, orderBy: [{ id: asc }] } }
+  - { name: contact-in, uid: api::article.article, params: { where: { contact: { $in: ["bob@example.com", "Alice@Example.com"] } }, orderBy: [{ id: asc }] } }
+  - { name: contact-notin, uid: api::article.article, params: { where: { contact: { $notIn: ["bob@example.com", "Alice@Example.com"] } }, orderBy: [{ id: asc }] } }
+  - { name: contact-between, uid: api::article.article, params: { where: { contact: { $between: ["bob@example.com", "Alice@Example.com"] } }, orderBy: [{ id: asc }] } }
+  - { name: contact-between-reversed, uid: api::article.article, params: { where: { contact: { $between: ["Alice@Example.com", "bob@example.com"] } }, orderBy: [{ id: asc }] } }
+  - { name: contact-null, uid: api::article.article, params: { where: { contact: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: contact-notnull, uid: api::article.article, params: { where: { contact: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: contact-not, uid: api::article.article, params: { where: { $not: { contact: { $eq: "bob@example.com" } } }, orderBy: [{ id: asc }] } }
+  - { name: contact-or, uid: api::article.article, params: { where: { $or: [{ contact: "bob@example.com" }, { contact: "Alice@Example.com" }] }, orderBy: [{ id: asc }] } }
+  - { name: contact-and, uid: api::article.article, params: { where: { $and: [{ contact: { $notNull: true } }, { contact: { $ne: "bob@example.com" } }] }, orderBy: [{ id: asc }] } }
+  - { name: views-eq, uid: api::article.article, params: { where: { views: { $eq: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-eqi, uid: api::article.article, params: { where: { views: { $eqi: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-ne, uid: api::article.article, params: { where: { views: { $ne: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-nei, uid: api::article.article, params: { where: { views: { $nei: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-lt, uid: api::article.article, params: { where: { views: { $lt: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-lte, uid: api::article.article, params: { where: { views: { $lte: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-gt, uid: api::article.article, params: { where: { views: { $gt: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-gte, uid: api::article.article, params: { where: { views: { $gte: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-contains, uid: api::article.article, params: { where: { views: { $contains: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-notcontains, uid: api::article.article, params: { where: { views: { $notContains: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-containsi, uid: api::article.article, params: { where: { views: { $containsi: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-notcontainsi, uid: api::article.article, params: { where: { views: { $notContainsi: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-startswith, uid: api::article.article, params: { where: { views: { $startsWith: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-startswithi, uid: api::article.article, params: { where: { views: { $startsWithi: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-endswith, uid: api::article.article, params: { where: { views: { $endsWith: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-endswithi, uid: api::article.article, params: { where: { views: { $endsWithi: 42 } }, orderBy: [{ id: asc }] } }
+  - { name: views-in, uid: api::article.article, params: { where: { views: { $in: [42, 1000] } }, orderBy: [{ id: asc }] } }
+  - { name: views-notin, uid: api::article.article, params: { where: { views: { $notIn: [42, 1000] } }, orderBy: [{ id: asc }] } }
+  - { name: views-between, uid: api::article.article, params: { where: { views: { $between: [42, 1000] } }, orderBy: [{ id: asc }] } }
+  - { name: views-between-reversed, uid: api::article.article, params: { where: { views: { $between: [1000, 42] } }, orderBy: [{ id: asc }] } }
+  - { name: views-null, uid: api::article.article, params: { where: { views: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: views-notnull, uid: api::article.article, params: { where: { views: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: views-not, uid: api::article.article, params: { where: { $not: { views: { $eq: 42 } } }, orderBy: [{ id: asc }] } }
+  - { name: views-or, uid: api::article.article, params: { where: { $or: [{ views: 42 }, { views: 1000 }] }, orderBy: [{ id: asc }] } }
+  - { name: views-and, uid: api::article.article, params: { where: { $and: [{ views: { $notNull: true } }, { views: { $ne: 42 } }] }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-eq, uid: api::article.article, params: { where: { bigCounter: { $eq: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-eqi, uid: api::article.article, params: { where: { bigCounter: { $eqi: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-ne, uid: api::article.article, params: { where: { bigCounter: { $ne: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-nei, uid: api::article.article, params: { where: { bigCounter: { $nei: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-lt, uid: api::article.article, params: { where: { bigCounter: { $lt: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-lte, uid: api::article.article, params: { where: { bigCounter: { $lte: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-gt, uid: api::article.article, params: { where: { bigCounter: { $gt: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-gte, uid: api::article.article, params: { where: { bigCounter: { $gte: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-contains, uid: api::article.article, params: { where: { bigCounter: { $contains: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-notcontains, uid: api::article.article, params: { where: { bigCounter: { $notContains: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-containsi, uid: api::article.article, params: { where: { bigCounter: { $containsi: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-notcontainsi, uid: api::article.article, params: { where: { bigCounter: { $notContainsi: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-startswith, uid: api::article.article, params: { where: { bigCounter: { $startsWith: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-startswithi, uid: api::article.article, params: { where: { bigCounter: { $startsWithi: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-endswith, uid: api::article.article, params: { where: { bigCounter: { $endsWith: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-endswithi, uid: api::article.article, params: { where: { bigCounter: { $endsWithi: "123456789012" } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-in, uid: api::article.article, params: { where: { bigCounter: { $in: ["123456789012", "1"] } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-notin, uid: api::article.article, params: { where: { bigCounter: { $notIn: ["123456789012", "1"] } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-between, uid: api::article.article, params: { where: { bigCounter: { $between: ["123456789012", "1"] } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-between-reversed, uid: api::article.article, params: { where: { bigCounter: { $between: ["1", "123456789012"] } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-null, uid: api::article.article, params: { where: { bigCounter: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-notnull, uid: api::article.article, params: { where: { bigCounter: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-not, uid: api::article.article, params: { where: { $not: { bigCounter: { $eq: "123456789012" } } }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-or, uid: api::article.article, params: { where: { $or: [{ bigCounter: "123456789012" }, { bigCounter: "1" }] }, orderBy: [{ id: asc }] } }
+  - { name: bigCounter-and, uid: api::article.article, params: { where: { $and: [{ bigCounter: { $notNull: true } }, { bigCounter: { $ne: "123456789012" } }] }, orderBy: [{ id: asc }] } }
+  - { name: rating-eq, uid: api::article.article, params: { where: { rating: { $eq: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-eqi, uid: api::article.article, params: { where: { rating: { $eqi: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-ne, uid: api::article.article, params: { where: { rating: { $ne: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-nei, uid: api::article.article, params: { where: { rating: { $nei: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-lt, uid: api::article.article, params: { where: { rating: { $lt: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-lte, uid: api::article.article, params: { where: { rating: { $lte: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-gt, uid: api::article.article, params: { where: { rating: { $gt: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-gte, uid: api::article.article, params: { where: { rating: { $gte: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-contains, uid: api::article.article, params: { where: { rating: { $contains: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-notcontains, uid: api::article.article, params: { where: { rating: { $notContains: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-containsi, uid: api::article.article, params: { where: { rating: { $containsi: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-notcontainsi, uid: api::article.article, params: { where: { rating: { $notContainsi: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-startswith, uid: api::article.article, params: { where: { rating: { $startsWith: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-startswithi, uid: api::article.article, params: { where: { rating: { $startsWithi: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-endswith, uid: api::article.article, params: { where: { rating: { $endsWith: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-endswithi, uid: api::article.article, params: { where: { rating: { $endsWithi: 3 } }, orderBy: [{ id: asc }] } }
+  - { name: rating-in, uid: api::article.article, params: { where: { rating: { $in: [3, 0.5] } }, orderBy: [{ id: asc }] } }
+  - { name: rating-notin, uid: api::article.article, params: { where: { rating: { $notIn: [3, 0.5] } }, orderBy: [{ id: asc }] } }
+  - { name: rating-between, uid: api::article.article, params: { where: { rating: { $between: [3, 0.5] } }, orderBy: [{ id: asc }] } }
+  - { name: rating-between-reversed, uid: api::article.article, params: { where: { rating: { $between: [0.5, 3] } }, orderBy: [{ id: asc }] } }
+  - { name: rating-null, uid: api::article.article, params: { where: { rating: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: rating-notnull, uid: api::article.article, params: { where: { rating: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: rating-not, uid: api::article.article, params: { where: { $not: { rating: { $eq: 3 } } }, orderBy: [{ id: asc }] } }
+  - { name: rating-or, uid: api::article.article, params: { where: { $or: [{ rating: 3 }, { rating: 0.5 }] }, orderBy: [{ id: asc }] } }
+  - { name: rating-and, uid: api::article.article, params: { where: { $and: [{ rating: { $notNull: true } }, { rating: { $ne: 3 } }] }, orderBy: [{ id: asc }] } }
+  - { name: price-eq, uid: api::article.article, params: { where: { price: { $eq: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-eqi, uid: api::article.article, params: { where: { price: { $eqi: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-ne, uid: api::article.article, params: { where: { price: { $ne: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-nei, uid: api::article.article, params: { where: { price: { $nei: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-lt, uid: api::article.article, params: { where: { price: { $lt: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-lte, uid: api::article.article, params: { where: { price: { $lte: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-gt, uid: api::article.article, params: { where: { price: { $gt: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-gte, uid: api::article.article, params: { where: { price: { $gte: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-contains, uid: api::article.article, params: { where: { price: { $contains: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-notcontains, uid: api::article.article, params: { where: { price: { $notContains: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-containsi, uid: api::article.article, params: { where: { price: { $containsi: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-notcontainsi, uid: api::article.article, params: { where: { price: { $notContainsi: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-startswith, uid: api::article.article, params: { where: { price: { $startsWith: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-startswithi, uid: api::article.article, params: { where: { price: { $startsWithi: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-endswith, uid: api::article.article, params: { where: { price: { $endsWith: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-endswithi, uid: api::article.article, params: { where: { price: { $endsWithi: 10.5 } }, orderBy: [{ id: asc }] } }
+  - { name: price-in, uid: api::article.article, params: { where: { price: { $in: [10.5, 99.99] } }, orderBy: [{ id: asc }] } }
+  - { name: price-notin, uid: api::article.article, params: { where: { price: { $notIn: [10.5, 99.99] } }, orderBy: [{ id: asc }] } }
+  - { name: price-between, uid: api::article.article, params: { where: { price: { $between: [10.5, 99.99] } }, orderBy: [{ id: asc }] } }
+  - { name: price-between-reversed, uid: api::article.article, params: { where: { price: { $between: [99.99, 10.5] } }, orderBy: [{ id: asc }] } }
+  - { name: price-null, uid: api::article.article, params: { where: { price: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: price-notnull, uid: api::article.article, params: { where: { price: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: price-not, uid: api::article.article, params: { where: { $not: { price: { $eq: 10.5 } } }, orderBy: [{ id: asc }] } }
+  - { name: price-or, uid: api::article.article, params: { where: { $or: [{ price: 10.5 }, { price: 99.99 }] }, orderBy: [{ id: asc }] } }
+  - { name: price-and, uid: api::article.article, params: { where: { $and: [{ price: { $notNull: true } }, { price: { $ne: 10.5 } }] }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-eq, uid: api::article.article, params: { where: { releaseDate: { $eq: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-eqi, uid: api::article.article, params: { where: { releaseDate: { $eqi: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-ne, uid: api::article.article, params: { where: { releaseDate: { $ne: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-nei, uid: api::article.article, params: { where: { releaseDate: { $nei: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-lt, uid: api::article.article, params: { where: { releaseDate: { $lt: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-lte, uid: api::article.article, params: { where: { releaseDate: { $lte: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-gt, uid: api::article.article, params: { where: { releaseDate: { $gt: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-gte, uid: api::article.article, params: { where: { releaseDate: { $gte: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-contains, uid: api::article.article, params: { where: { releaseDate: { $contains: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-notcontains, uid: api::article.article, params: { where: { releaseDate: { $notContains: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-containsi, uid: api::article.article, params: { where: { releaseDate: { $containsi: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-notcontainsi, uid: api::article.article, params: { where: { releaseDate: { $notContainsi: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-startswith, uid: api::article.article, params: { where: { releaseDate: { $startsWith: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-startswithi, uid: api::article.article, params: { where: { releaseDate: { $startsWithi: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-endswith, uid: api::article.article, params: { where: { releaseDate: { $endsWith: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-endswithi, uid: api::article.article, params: { where: { releaseDate: { $endsWithi: "2026-01-15" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-in, uid: api::article.article, params: { where: { releaseDate: { $in: ["2026-01-15", "2026-06-30"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-notin, uid: api::article.article, params: { where: { releaseDate: { $notIn: ["2026-01-15", "2026-06-30"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-between, uid: api::article.article, params: { where: { releaseDate: { $between: ["2026-01-15", "2026-06-30"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-between-reversed, uid: api::article.article, params: { where: { releaseDate: { $between: ["2026-06-30", "2026-01-15"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-null, uid: api::article.article, params: { where: { releaseDate: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-notnull, uid: api::article.article, params: { where: { releaseDate: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-not, uid: api::article.article, params: { where: { $not: { releaseDate: { $eq: "2026-01-15" } } }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-or, uid: api::article.article, params: { where: { $or: [{ releaseDate: "2026-01-15" }, { releaseDate: "2026-06-30" }] }, orderBy: [{ id: asc }] } }
+  - { name: releaseDate-and, uid: api::article.article, params: { where: { $and: [{ releaseDate: { $notNull: true } }, { releaseDate: { $ne: "2026-01-15" } }] }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-eq, uid: api::article.article, params: { where: { releaseTime: { $eq: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-eqi, uid: api::article.article, params: { where: { releaseTime: { $eqi: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-ne, uid: api::article.article, params: { where: { releaseTime: { $ne: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-nei, uid: api::article.article, params: { where: { releaseTime: { $nei: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-lt, uid: api::article.article, params: { where: { releaseTime: { $lt: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-lte, uid: api::article.article, params: { where: { releaseTime: { $lte: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-gt, uid: api::article.article, params: { where: { releaseTime: { $gt: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-gte, uid: api::article.article, params: { where: { releaseTime: { $gte: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-contains, uid: api::article.article, params: { where: { releaseTime: { $contains: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-notcontains, uid: api::article.article, params: { where: { releaseTime: { $notContains: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-containsi, uid: api::article.article, params: { where: { releaseTime: { $containsi: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-notcontainsi, uid: api::article.article, params: { where: { releaseTime: { $notContainsi: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-startswith, uid: api::article.article, params: { where: { releaseTime: { $startsWith: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-startswithi, uid: api::article.article, params: { where: { releaseTime: { $startsWithi: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-endswith, uid: api::article.article, params: { where: { releaseTime: { $endsWith: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-endswithi, uid: api::article.article, params: { where: { releaseTime: { $endsWithi: "14:30:00" } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-in, uid: api::article.article, params: { where: { releaseTime: { $in: ["14:30:00", "08:05:09.120"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-notin, uid: api::article.article, params: { where: { releaseTime: { $notIn: ["14:30:00", "08:05:09.120"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-between, uid: api::article.article, params: { where: { releaseTime: { $between: ["14:30:00", "08:05:09.120"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-between-reversed, uid: api::article.article, params: { where: { releaseTime: { $between: ["08:05:09.120", "14:30:00"] } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-null, uid: api::article.article, params: { where: { releaseTime: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-notnull, uid: api::article.article, params: { where: { releaseTime: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-not, uid: api::article.article, params: { where: { $not: { releaseTime: { $eq: "14:30:00" } } }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-or, uid: api::article.article, params: { where: { $or: [{ releaseTime: "14:30:00" }, { releaseTime: "08:05:09.120" }] }, orderBy: [{ id: asc }] } }
+  - { name: releaseTime-and, uid: api::article.article, params: { where: { $and: [{ releaseTime: { $notNull: true } }, { releaseTime: { $ne: "14:30:00" } }] }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-eq, uid: api::article.article, params: { where: { scheduledAt: { $eq: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-eqi, uid: api::article.article, params: { where: { scheduledAt: { $eqi: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-ne, uid: api::article.article, params: { where: { scheduledAt: { $ne: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-nei, uid: api::article.article, params: { where: { scheduledAt: { $nei: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-lt, uid: api::article.article, params: { where: { scheduledAt: { $lt: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-lte, uid: api::article.article, params: { where: { scheduledAt: { $lte: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-gt, uid: api::article.article, params: { where: { scheduledAt: { $gt: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-gte, uid: api::article.article, params: { where: { scheduledAt: { $gte: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-contains, uid: api::article.article, params: { where: { scheduledAt: { $contains: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-notcontains, uid: api::article.article, params: { where: { scheduledAt: { $notContains: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-containsi, uid: api::article.article, params: { where: { scheduledAt: { $containsi: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-notcontainsi, uid: api::article.article, params: { where: { scheduledAt: { $notContainsi: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-startswith, uid: api::article.article, params: { where: { scheduledAt: { $startsWith: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-startswithi, uid: api::article.article, params: { where: { scheduledAt: { $startsWithi: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-endswith, uid: api::article.article, params: { where: { scheduledAt: { $endsWith: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-endswithi, uid: api::article.article, params: { where: { scheduledAt: { $endsWithi: "2026-03-01T10:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-in, uid: api::article.article, params: { where: { scheduledAt: { $in: ["2026-03-01T10:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-notin, uid: api::article.article, params: { where: { scheduledAt: { $notIn: ["2026-03-01T10:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-between, uid: api::article.article, params: { where: { scheduledAt: { $between: ["2026-03-01T10:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-between-reversed, uid: api::article.article, params: { where: { scheduledAt: { $between: ["2026-01-01T00:00:00.000Z", "2026-03-01T10:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-null, uid: api::article.article, params: { where: { scheduledAt: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-notnull, uid: api::article.article, params: { where: { scheduledAt: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-not, uid: api::article.article, params: { where: { $not: { scheduledAt: { $eq: "2026-03-01T10:00:00.000Z" } } }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-or, uid: api::article.article, params: { where: { $or: [{ scheduledAt: "2026-03-01T10:00:00.000Z" }, { scheduledAt: "2026-01-01T00:00:00.000Z" }] }, orderBy: [{ id: asc }] } }
+  - { name: scheduledAt-and, uid: api::article.article, params: { where: { $and: [{ scheduledAt: { $notNull: true } }, { scheduledAt: { $ne: "2026-03-01T10:00:00.000Z" } }] }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-eq, uid: api::article.article, params: { where: { importedAt: { $eq: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-eqi, uid: api::article.article, params: { where: { importedAt: { $eqi: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-ne, uid: api::article.article, params: { where: { importedAt: { $ne: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-nei, uid: api::article.article, params: { where: { importedAt: { $nei: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-lt, uid: api::article.article, params: { where: { importedAt: { $lt: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-lte, uid: api::article.article, params: { where: { importedAt: { $lte: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-gt, uid: api::article.article, params: { where: { importedAt: { $gt: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-gte, uid: api::article.article, params: { where: { importedAt: { $gte: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-contains, uid: api::article.article, params: { where: { importedAt: { $contains: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-notcontains, uid: api::article.article, params: { where: { importedAt: { $notContains: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-containsi, uid: api::article.article, params: { where: { importedAt: { $containsi: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-notcontainsi, uid: api::article.article, params: { where: { importedAt: { $notContainsi: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-startswith, uid: api::article.article, params: { where: { importedAt: { $startsWith: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-startswithi, uid: api::article.article, params: { where: { importedAt: { $startsWithi: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-endswith, uid: api::article.article, params: { where: { importedAt: { $endsWith: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-endswithi, uid: api::article.article, params: { where: { importedAt: { $endsWithi: "2026-02-01T00:00:00.000Z" } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-in, uid: api::article.article, params: { where: { importedAt: { $in: ["2026-02-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-notin, uid: api::article.article, params: { where: { importedAt: { $notIn: ["2026-02-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-between, uid: api::article.article, params: { where: { importedAt: { $between: ["2026-02-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-between-reversed, uid: api::article.article, params: { where: { importedAt: { $between: ["2026-01-01T00:00:00.000Z", "2026-02-01T00:00:00.000Z"] } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-null, uid: api::article.article, params: { where: { importedAt: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-notnull, uid: api::article.article, params: { where: { importedAt: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-not, uid: api::article.article, params: { where: { $not: { importedAt: { $eq: "2026-02-01T00:00:00.000Z" } } }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-or, uid: api::article.article, params: { where: { $or: [{ importedAt: "2026-02-01T00:00:00.000Z" }, { importedAt: "2026-01-01T00:00:00.000Z" }] }, orderBy: [{ id: asc }] } }
+  - { name: importedAt-and, uid: api::article.article, params: { where: { $and: [{ importedAt: { $notNull: true } }, { importedAt: { $ne: "2026-02-01T00:00:00.000Z" } }] }, orderBy: [{ id: asc }] } }
+  - { name: featured-eq, uid: api::article.article, params: { where: { featured: { $eq: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-eqi, uid: api::article.article, params: { where: { featured: { $eqi: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-ne, uid: api::article.article, params: { where: { featured: { $ne: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-nei, uid: api::article.article, params: { where: { featured: { $nei: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-lt, uid: api::article.article, params: { where: { featured: { $lt: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-lte, uid: api::article.article, params: { where: { featured: { $lte: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-gt, uid: api::article.article, params: { where: { featured: { $gt: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-gte, uid: api::article.article, params: { where: { featured: { $gte: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-contains, uid: api::article.article, params: { where: { featured: { $contains: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-notcontains, uid: api::article.article, params: { where: { featured: { $notContains: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-containsi, uid: api::article.article, params: { where: { featured: { $containsi: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-notcontainsi, uid: api::article.article, params: { where: { featured: { $notContainsi: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-startswith, uid: api::article.article, params: { where: { featured: { $startsWith: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-startswithi, uid: api::article.article, params: { where: { featured: { $startsWithi: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-endswith, uid: api::article.article, params: { where: { featured: { $endsWith: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-endswithi, uid: api::article.article, params: { where: { featured: { $endsWithi: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-in, uid: api::article.article, params: { where: { featured: { $in: [true, false] } }, orderBy: [{ id: asc }] } }
+  - { name: featured-notin, uid: api::article.article, params: { where: { featured: { $notIn: [true, false] } }, orderBy: [{ id: asc }] } }
+  - { name: featured-between, uid: api::article.article, params: { where: { featured: { $between: [true, false] } }, orderBy: [{ id: asc }] } }
+  - { name: featured-between-reversed, uid: api::article.article, params: { where: { featured: { $between: [false, true] } }, orderBy: [{ id: asc }] } }
+  - { name: featured-null, uid: api::article.article, params: { where: { featured: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-notnull, uid: api::article.article, params: { where: { featured: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: featured-not, uid: api::article.article, params: { where: { $not: { featured: { $eq: true } } }, orderBy: [{ id: asc }] } }
+  - { name: featured-or, uid: api::article.article, params: { where: { $or: [{ featured: true }, { featured: false }] }, orderBy: [{ id: asc }] } }
+  - { name: featured-and, uid: api::article.article, params: { where: { $and: [{ featured: { $notNull: true } }, { featured: { $ne: true } }] }, orderBy: [{ id: asc }] } }
+  - { name: stage-eq, uid: api::article.article, params: { where: { stage: { $eq: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-eqi, uid: api::article.article, params: { where: { stage: { $eqi: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-ne, uid: api::article.article, params: { where: { stage: { $ne: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-nei, uid: api::article.article, params: { where: { stage: { $nei: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-lt, uid: api::article.article, params: { where: { stage: { $lt: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-lte, uid: api::article.article, params: { where: { stage: { $lte: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-gt, uid: api::article.article, params: { where: { stage: { $gt: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-gte, uid: api::article.article, params: { where: { stage: { $gte: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-contains, uid: api::article.article, params: { where: { stage: { $contains: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-notcontains, uid: api::article.article, params: { where: { stage: { $notContains: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-containsi, uid: api::article.article, params: { where: { stage: { $containsi: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-notcontainsi, uid: api::article.article, params: { where: { stage: { $notContainsi: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-startswith, uid: api::article.article, params: { where: { stage: { $startsWith: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-startswithi, uid: api::article.article, params: { where: { stage: { $startsWithi: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-endswith, uid: api::article.article, params: { where: { stage: { $endsWith: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-endswithi, uid: api::article.article, params: { where: { stage: { $endsWithi: "review" } }, orderBy: [{ id: asc }] } }
+  - { name: stage-in, uid: api::article.article, params: { where: { stage: { $in: ["review", "published"] } }, orderBy: [{ id: asc }] } }
+  - { name: stage-notin, uid: api::article.article, params: { where: { stage: { $notIn: ["review", "published"] } }, orderBy: [{ id: asc }] } }
+  - { name: stage-between, uid: api::article.article, params: { where: { stage: { $between: ["review", "published"] } }, orderBy: [{ id: asc }] } }
+  - { name: stage-between-reversed, uid: api::article.article, params: { where: { stage: { $between: ["published", "review"] } }, orderBy: [{ id: asc }] } }
+  - { name: stage-null, uid: api::article.article, params: { where: { stage: { $null: true } }, orderBy: [{ id: asc }] } }
+  - { name: stage-notnull, uid: api::article.article, params: { where: { stage: { $notNull: true } }, orderBy: [{ id: asc }] } }
+  - { name: stage-not, uid: api::article.article, params: { where: { $not: { stage: { $eq: "review" } } }, orderBy: [{ id: asc }] } }
+  - { name: stage-or, uid: api::article.article, params: { where: { $or: [{ stage: "review" }, { stage: "published" }] }, orderBy: [{ id: asc }] } }
+  - { name: stage-and, uid: api::article.article, params: { where: { $and: [{ stage: { $notNull: true } }, { stage: { $ne: "review" } }] }, orderBy: [{ id: asc }] } }

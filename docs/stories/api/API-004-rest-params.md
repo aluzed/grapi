@@ -31,9 +31,11 @@ Traduire l'arbre qs (`API-003`) en `document.Params` validés, avec les mêmes r
 - [x] `?pagination[page]=1&pagination[limit]=5` renvoie la même erreur que Strapi.
 - [x] `populate=*` en profondeur 1 refusé comme chez Strapi.
 - [x] `fields[0]=password` ou `filters[password][$eq]=x` refusés.
-- [ ] Test des 25 opérateurs sur chaque type d'attribut compatible.
+- [x] Test des 25 opérateurs sur chaque type d'attribut compatible.
 
 - Banc `basic_core` (SQLite et Postgres) identique à Strapi : page et offset mélangés (400 `PaginationError`), page négative, `pageSize` à 0, page non numérique, `start` et `limit` ; `populate=*` accepté seul mais refusé dans un tableau (`populate[0]=*` : 400 « Invalid key * », grapi l'acceptait, corrigé) et sous un champ scalaire. `password` refusé dans `fields` et `filters` : banc `devfreelance_sanitize`.
+
+- Matrice des opérateurs (`compat/tools/gen-operator-matrix.py`, `querycases/basic--operators.yaml`) : les 16 opérateurs de comparaison et de texte, `$in`, `$notIn`, `$between` (dans les deux ordres), `$null`, `$notNull`, `$not`, `$or` et `$and`, sur les 15 types filtrables de la fixture basic (string, uid, text, richtext, email, integer, biginteger, float, decimal, date, time, datetime, timestamp, boolean, enumeration), soit 375 cas. Mode `query` du banc (Strapi 5.59 `db.query` contre le moteur de grapi sur la même base) : 375 identiques sur SQLite et sur Postgres (2026-10-24). Le richtext n'a aucune valeur dans le jeu de données : ses cas ne prouvent que l'absence d'erreur.
 
 ## Notes techniques
 - Parse en deux temps : arbre qs vers AST typé, puis validation contre le schéma. Les erreurs gardent le chemin (`filters.author.name.$foo`).

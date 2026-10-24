@@ -46,7 +46,8 @@ Un service clé-valeur typé au-dessus de `strapi_core_store_settings`, avec le 
 ## Avancement
 - Fait : `internal/db/store` (Get, Set, Delete, types `typeof` de Strapi, clé `<type>_<name>_<key>`, environment et tag), utilisé par users-permissions, upload et i18n.
 - Relecture croisée au banc (mode `grapi`, fixture `basic`, SQLite et Postgres) : des entrées `object`, `string`, `boolean`, `number` et `array` restaurées par grapi sont relues à l'identique par `strapi configuration:dump`, et inversement (`compat/scripts/core-store.py`).
-- Reste : le cache mémoire, et la relecture sur la copie de la base dev-freelance.
+- Cache mémoire : pas fait, volontairement pour l'instant. Strapi 5 ne cache pas son core store et relit la table à chaque appel. Tant qu'un Strapi écrit dans la même base que grapi (bascule progressive), un cache par instance servirait des réglages périmés (users-permissions, upload, i18n) jusqu'au redémarrage. À reprendre quand grapi sera seul sur sa base, en option.
+- Reste : la relecture sur la copie de la base dev-freelance, et la décision sur le cache.
 
 ## Notes techniques
 - La colonne `value` est du texte qui contient du JSON, même pour une chaîne (`"\"en\""`). Le relever exactement, sinon la relecture côté Strapi échoue.
