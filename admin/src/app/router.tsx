@@ -1,3 +1,4 @@
+import { lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter } from 'react-router'
 import { routerBasename } from '@/lib/paths'
 import { ForgotPassword } from '@/pages/auth/ForgotPassword'
@@ -12,29 +13,45 @@ import { ConfigureView } from '@/pages/content-manager/ConfigureView'
 import { ContentManager, FirstModel } from '@/pages/content-manager/ContentManager'
 import { EditView } from '@/pages/content-manager/EditView'
 import { ListView } from '@/pages/content-manager/ListView'
-import { ApiTokens } from '@/pages/settings/ApiTokens'
-import { AuditLogs } from '@/pages/settings/AuditLogs'
-import { Email } from '@/pages/settings/Email'
-import { MediaSettings } from '@/pages/settings/MediaSettings'
-import { ReleaseSettings } from '@/pages/settings/ReleaseSettings'
-import { Locales } from '@/pages/settings/Locales'
 import { Overview } from '@/pages/settings/Overview'
-import { RoleEditor } from '@/pages/settings/RoleEditor'
-import { Roles } from '@/pages/settings/Roles'
 import { Settings, sections } from '@/pages/settings/Settings'
 
 const settingsAllowed = (to: string) => sections.find((s) => s.to === to)!.allowed
-import { UPRoleEditor, UPRoles } from '@/pages/settings/up/UPRoles'
-import { UPAdvanced, UPEmails, UPProviders } from '@/pages/settings/up/UPSettings'
-import { Users } from '@/pages/settings/Users'
-import { Webhooks } from '@/pages/settings/Webhooks'
-import { ContentTypeBuilder } from '@/pages/ctb/ContentTypeBuilder'
-import { MediaLibrary } from '@/pages/media/MediaLibrary'
-import { ReleaseDetail } from '@/pages/releases/ReleaseDetail'
-import { Releases } from '@/pages/releases/Releases'
 import { RequireAnonymous, RequireAuth, RequirePermission } from './guards'
 import { Layout } from './Layout'
 import { navItems } from './nav'
+
+function lazyPage(load: () => Promise<{ default: ComponentType }>) {
+  const Page = lazy(load)
+  return function LazyPage() {
+    return (
+      <Suspense fallback={<p className="text-sm text-muted">…</p>}>
+        <Page />
+      </Suspense>
+    )
+  }
+}
+
+// The pages away from the content manager load when first opened.
+const ApiTokens = lazyPage(() => import('@/pages/settings/ApiTokens').then((m) => ({ default: m.ApiTokens })))
+const AuditLogs = lazyPage(() => import('@/pages/settings/AuditLogs').then((m) => ({ default: m.AuditLogs })))
+const Email = lazyPage(() => import('@/pages/settings/Email').then((m) => ({ default: m.Email })))
+const MediaSettings = lazyPage(() => import('@/pages/settings/MediaSettings').then((m) => ({ default: m.MediaSettings })))
+const ReleaseSettings = lazyPage(() => import('@/pages/settings/ReleaseSettings').then((m) => ({ default: m.ReleaseSettings })))
+const Locales = lazyPage(() => import('@/pages/settings/Locales').then((m) => ({ default: m.Locales })))
+const RoleEditor = lazyPage(() => import('@/pages/settings/RoleEditor').then((m) => ({ default: m.RoleEditor })))
+const Roles = lazyPage(() => import('@/pages/settings/Roles').then((m) => ({ default: m.Roles })))
+const Users = lazyPage(() => import('@/pages/settings/Users').then((m) => ({ default: m.Users })))
+const Webhooks = lazyPage(() => import('@/pages/settings/Webhooks').then((m) => ({ default: m.Webhooks })))
+const ContentTypeBuilder = lazyPage(() => import('@/pages/ctb/ContentTypeBuilder').then((m) => ({ default: m.ContentTypeBuilder })))
+const MediaLibrary = lazyPage(() => import('@/pages/media/MediaLibrary').then((m) => ({ default: m.MediaLibrary })))
+const ReleaseDetail = lazyPage(() => import('@/pages/releases/ReleaseDetail').then((m) => ({ default: m.ReleaseDetail })))
+const Releases = lazyPage(() => import('@/pages/releases/Releases').then((m) => ({ default: m.Releases })))
+const UPRoleEditor = lazyPage(() => import('@/pages/settings/up/UPRoles').then((m) => ({ default: m.UPRoleEditor })))
+const UPRoles = lazyPage(() => import('@/pages/settings/up/UPRoles').then((m) => ({ default: m.UPRoles })))
+const UPAdvanced = lazyPage(() => import('@/pages/settings/up/UPSettings').then((m) => ({ default: m.UPAdvanced })))
+const UPEmails = lazyPage(() => import('@/pages/settings/up/UPSettings').then((m) => ({ default: m.UPEmails })))
+const UPProviders = lazyPage(() => import('@/pages/settings/up/UPSettings').then((m) => ({ default: m.UPProviders })))
 
 export const router = createBrowserRouter(
   [
