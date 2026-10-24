@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Navigate, NavLink, Outlet, useMatch, useNavigate, useParams } from 'react-router'
+import { Navigate, NavLink, Outlet, useLocation, useMatch, useNavigate, useParams } from 'react-router'
 import { SelectField } from '@/components/ui/field'
 import { cn } from '@/lib/cn'
 import type { Model } from '@/lib/types'
+import { isEmbedded } from '@/lib/embed'
 import { useI18n } from '@/providers/I18nProvider'
 import { useModels } from './hooks'
 
@@ -54,6 +55,8 @@ export function ContentManager() {
   const models = useModels()
   const navigate = useNavigate()
   const uid = useMatch('/content-manager/:kind/:uid/*')?.params.uid
+  const location = useLocation()
+  if (isEmbedded(location.search)) return <Outlet />
   if (models.isPending) return <p className="text-sm text-muted">{t('common.loading')}</p>
   const list = models.data ?? []
   if (list.length === 0) return <p className="text-sm text-muted">{t('cm.none')}</p>

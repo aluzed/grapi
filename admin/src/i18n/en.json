@@ -741,5 +741,15 @@
   "blocks.drag": "Drag to move the block",
   "blocks.moved": "Block {from} moved. New position: {to} of {count}.",
   "blocks.dndHelp": "To move a block, press Ctrl or Cmd with Shift and the Up or Down arrow.",
-  "blocks.placeholder": "Start writing… Markdown shortcuts work: # , - , 1. , > , ```"
+  "blocks.placeholder": "Start writing… Markdown shortcuts work: # , - , 1. , > , ```",
+  "rel.leave": "Leave the page",
+  "rel.leaveConfirm": "Changes not saved on this page are lost.",
+  "rel.open": "Open {name}",
+  "rel.more": "Show more",
+  "rel.create": "Create a {name} entry",
+  "cfg.relationOpenMode": "Open related entries",
+  "cfg.relationOpenModeHelp": "How an entry opens when it is clicked in a relation field.",
+  "cfg.relationOpenMode.modal": "In a dialog (default)",
+  "cfg.relationOpenMode.newTab": "In a new tab",
+  "cfg.relationOpenMode.page": "In this page"
 }

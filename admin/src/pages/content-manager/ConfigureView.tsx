@@ -15,7 +15,7 @@ import { useModel } from './ContentManager'
 type Meta = { edit: { label: string; description: string; placeholder: string; visible: boolean; editable: boolean; mainField?: string }; list: { label: string; searchable: boolean; sortable: boolean } }
 type Config = {
   uid: string
-  settings: { bulkable: boolean; filterable: boolean; searchable: boolean; pageSize: number; mainField: string; defaultSortBy: string; defaultSortOrder: 'ASC' | 'DESC' }
+  settings: { bulkable: boolean; filterable: boolean; searchable: boolean; pageSize: number; mainField: string; defaultSortBy: string; defaultSortOrder: 'ASC' | 'DESC'; relationOpenMode?: string }
   metadatas: Record<string, Meta>
   layouts: { list: string[]; edit: { name: string; size: number }[][] }
 }
@@ -162,6 +162,11 @@ function Configure({ model }: { model: Model }) {
               <option value="DESC">{t('cfg.desc')}</option>
             </SelectField>
           </div>
+          <SelectField label={t('cfg.relationOpenMode')} hint={t('cfg.relationOpenModeHelp')} value={c.settings.relationOpenMode || 'modal'} onChange={(e) => setSettings({ relationOpenMode: e.target.value })}>
+            <option value="modal">{t('cfg.relationOpenMode.modal')}</option>
+            <option value="newTab">{t('cfg.relationOpenMode.newTab')}</option>
+            <option value="page">{t('cfg.relationOpenMode.page')}</option>
+          </SelectField>
         </div>
       </Card>
       {model.kind !== 'singleType' && (

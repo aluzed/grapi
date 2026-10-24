@@ -482,6 +482,11 @@ func (s *Server) putViewConfig(w http.ResponseWriter, r *http.Request, u *User) 
 			errs = append(errs, FieldError{Path: []string{"settings", "mainField"}, Message: "mainField must be a sortable field"})
 		}
 	}
+	switch set.RelationOpenMode {
+	case "", "modal", "newTab", "page":
+	default:
+		errs = append(errs, FieldError{Path: []string{"settings", "relationOpenMode"}, Message: "relationOpenMode must be modal, newTab or page"})
+	}
 	if set.DefaultSortOrder != "ASC" && set.DefaultSortOrder != "DESC" {
 		errs = append(errs, FieldError{Path: []string{"settings", "defaultSortOrder"}, Message: "defaultSortOrder must be ASC or DESC"})
 	}

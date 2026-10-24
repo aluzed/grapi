@@ -741,5 +741,15 @@
   "blocks.drag": "Faire glisser pour déplacer le bloc",
   "blocks.moved": "Bloc {from} déplacé. Nouvelle position : {to} sur {count}.",
   "blocks.dndHelp": "Pour déplacer un bloc, appuyez sur Ctrl ou Cmd avec Maj et la flèche haut ou bas.",
-  "blocks.placeholder": "Commencez à écrire… Les raccourcis Markdown marchent : # , - , 1. , > , ```"
+  "blocks.placeholder": "Commencez à écrire… Les raccourcis Markdown marchent : # , - , 1. , > , ```",
+  "rel.leave": "Quitter la page",
+  "rel.leaveConfirm": "Les modifications non enregistrées de cette page seront perdues.",
+  "rel.open": "Ouvrir {name}",
+  "rel.more": "Afficher plus",
+  "rel.create": "Créer une entrée {name}",
+  "cfg.relationOpenMode": "Ouverture des entrées liées",
+  "cfg.relationOpenModeHelp": "Comment s'ouvre une entrée cliquée dans un champ relation.",
+  "cfg.relationOpenMode.modal": "Dans une fenêtre (par défaut)",
+  "cfg.relationOpenMode.newTab": "Dans un nouvel onglet",
+  "cfg.relationOpenMode.page": "Dans cette page"
 }

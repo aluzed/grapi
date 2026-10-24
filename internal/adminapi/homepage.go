@@ -64,7 +64,7 @@ func (s *Server) homepage(w http.ResponseWriter, r *http.Request, u *User) error
 		}
 		counts = append(counts, count{UID: uid, Kind: string(ct.Kind), DisplayName: ct.Info.DisplayName, Total: total})
 		recent := func(status, sortBy string, into *[]RecentDocument) error {
-			p := document.Params{"sort": sortBy + ":desc", "pageSize": n, "page": 1}
+			p := document.Params{"sort": sortBy + ":desc", "limit": n}
 			for k, v := range base {
 				p[k] = v
 			}

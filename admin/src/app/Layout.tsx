@@ -3,6 +3,7 @@ import { LogOut, Menu, UserRound, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
+import { isEmbedded } from '@/lib/embed'
 import { useAuth } from '@/providers/AuthProvider'
 import { useI18n } from '@/providers/I18nProvider'
 import { Logo } from './Logo'
@@ -55,6 +56,13 @@ export function Layout() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
   useEffect(() => setOpen(false), [location.pathname])
+  if (isEmbedded(location.search)) {
+    return (
+      <main className="min-w-0 px-4 py-4">
+        <Outlet />
+      </main>
+    )
+  }
   return (
     <div className="min-h-full md:flex">
       <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-border bg-surface p-4 md:sticky md:top-0 md:flex md:h-screen">

@@ -41,6 +41,9 @@ type ModelSettings struct {
 	Searchable       bool   `json:"searchable"`
 	Filterable       bool   `json:"filterable"`
 	Bulkable         bool   `json:"bulkable"`
+	// RelationOpenMode is how the edit view opens a related document:
+	// modal (the default), newTab or page.
+	RelationOpenMode string `json:"relationOpenMode"`
 }
 
 // ModelPermissions are the Content Manager actions the user has on a type.
@@ -123,7 +126,10 @@ func (s *Server) model(ctx context.Context, uid string, a *permissions.Ability) 
 	m.MainField = set.MainField
 	m.Settings = ModelSettings{
 		PageSize: set.PageSize, DefaultSortBy: set.DefaultSortBy, DefaultSortOrder: strings.ToUpper(set.DefaultSortOrder),
-		Searchable: set.Searchable, Filterable: set.Filterable, Bulkable: set.Bulkable,
+		Searchable: set.Searchable, Filterable: set.Filterable, Bulkable: set.Bulkable, RelationOpenMode: set.RelationOpenMode,
+	}
+	if m.Settings.RelationOpenMode == "" {
+		m.Settings.RelationOpenMode = "modal"
 	}
 	if m.Settings.DefaultSortBy == "" {
 		m.Settings.DefaultSortBy = m.MainField
@@ -330,7 +336,7 @@ func (s *Server) cmList(w http.ResponseWriter, r *http.Request, u *User) error {
 	if err != nil {
 		return asValidation(err)
 	}
-	p["page"], p["pageSize"] = page, size
+	window(p, page, size)
 	rows, err := s.docs.FindMany(ctx, uid, p)
 	if err != nil {
 		return asValidation(err)
@@ -669,6 +675,29 @@ type RelationTarget struct {
 	ID         any    `json:"id"`
 	DocumentID string `json:"documentId"`
 	Label      string `json:"label"`
+	// Status is draft, published or modified, for a target with draft & publish.
+	Status string `json:"status,omitempty"`
+	Locale string `json:"locale,omitempty"`
+}
+
+// window turns a page into the start and limit the Document Service reads:
+// like Strapi's, it ignores page and pageSize, which its callers convert.
+func window(p document.Params, page, size int) {
+	p["start"], p["limit"] = (page-1)*size, size
+}
+
+// documentIDsParam reads a list of document ids given as repeated or comma
+// separated query values.
+func documentIDsParam(r *http.Request, name string) []any {
+	var out []any
+	for _, v := range r.URL.Query()[name] {
+		for _, id := range strings.Split(v, ",") {
+			if id = strings.TrimSpace(id); id != "" {
+				out = append(out, id)
+			}
+		}
+	}
+	return out
 }
 
 // cmRelationTargets lists the documents the relation field of uid can link,
@@ -702,35 +731,66 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 	}
 	mainField := cfg.Settings.MainField
 	page, size := pageParams(r)
-	p := document.Params{"page": page, "pageSize": size, "sort": mainField + ":asc"}
+	p := document.Params{"sort": mainField + ":asc"}
+	fields := []any{schema.AttrUpdatedAt}
 	if mainField != "id" {
-		p["fields"] = []any{mainField}
+		fields = append(fields, mainField)
 	}
+	p["fields"] = fields
 	if q := strings.TrimSpace(r.URL.Query().Get("_q")); q != "" {
 		p["_q"] = q
+	}
+	// idsToOmit leaves out the documents the field already holds, so that
+	// every page of the picker brings new ones; documentIds reads back the
+	// held ones, for their label and status.
+	filter := map[string]any{}
+	if ids := documentIDsParam(r, "idsToOmit"); len(ids) > 0 {
+		filter["$notIn"] = ids
+	}
+	if ids := documentIDsParam(r, "documentIds"); len(ids) > 0 {
+		filter["$in"] = ids
+		page, size = 1, len(ids)
+		delete(p, "sort")
+	}
+	if len(filter) > 0 {
+		p["filters"] = map[string]any{schema.AttrDocumentID: filter}
 	}
 	if target.Localized() {
 		if l := r.URL.Query().Get("locale"); l != "" {
 			p["locale"] = l
 		}
 	}
-	rows, err := s.docs.FindMany(ctx, attr.Target, p)
-	if err != nil {
-		return asValidation(err)
-	}
 	total, err := s.docs.Count(ctx, attr.Target, p)
 	if err != nil {
 		return asValidation(err)
 	}
-	out := make([]RelationTarget, 0, len(rows))
+	window(p, page, size)
+	rows, err := s.docs.FindMany(ctx, attr.Target, p)
+	if err != nil {
+		return asValidation(err)
+	}
+	maps := make([]map[string]any, 0, len(rows))
+	ids := make([]any, 0, len(rows))
 	for _, row := range rows {
 		m := toMap(row)
+		maps = append(maps, m)
+		ids = append(ids, m[schema.AttrDocumentID])
+	}
+	if target.DraftAndPublish() && len(maps) > 0 {
+		if err := s.withStatus(ctx, attr.Target, p["locale"], "draft", maps, ids); err != nil {
+			return err
+		}
+	}
+	out := make([]RelationTarget, 0, len(maps))
+	for _, m := range maps {
 		label := ""
 		if v := m[mainField]; v != nil {
 			label = fmt.Sprint(v)
 		}
 		id, _ := m[schema.AttrDocumentID].(string)
-		out = append(out, RelationTarget{ID: m["id"], DocumentID: id, Label: label})
+		st, _ := m["status"].(string)
+		loc, _ := m["locale"].(string)
+		out = append(out, RelationTarget{ID: m["id"], DocumentID: id, Label: label, Status: st, Locale: loc})
 	}
 	pages := int((total + int64(size) - 1) / int64(size))
 	writeJSON(w, http.StatusOK, map[string]any{"data": out, "meta": map[string]any{"pagination": Pagination{Page: page, PageSize: size, PageCount: pages, Total: total}, "mainField": mainField}})

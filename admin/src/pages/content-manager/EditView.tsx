@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
 import { api, ApiError, type FieldError } from '@/lib/api'
+import { isEmbedded, notifySaved, withEmbed } from '@/lib/embed'
 import { showError } from '@/lib/form'
 import type { BulkResult, ComponentModel, Entry, Model } from '@/lib/types'
 import { useConfirm } from '@/providers/ConfirmProvider'
@@ -44,6 +45,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   const queryClient = useQueryClient()
   const models = useModels().data ?? []
   const [params, setParams] = useSearchParams()
+  const embedded = isEmbedded(`?${params}`)
   const locales = useLocales(model.localized)
   const locale = params.get('locale') ?? (model.localized ? (locales.data?.find((l) => l.isDefault)?.code ?? '') : '')
   const loc = locale ? `?locale=${locale}` : ''
@@ -155,7 +157,11 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     onSuccess: (e) => {
       toast.success(creating ? t('cm.created') : t('cm.saved'))
       void refreshAll()
-      if (documentId === undefined && !single) navigate(`/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${loc}`, { replace: true })
+      if (embedded) notifySaved({ uid: model.uid, documentId: e.documentId, label: String(e[model.mainField] ?? e.documentId) })
+      if (documentId === undefined && !single) {
+        const path = `/content-manager/collection-types/${encodeURIComponent(model.uid)}/${encodeURIComponent(e.documentId)}${loc}`
+        navigate(embedded ? withEmbed(path) : path, { replace: true })
+      }
     },
     onError: fail,
   })
@@ -203,7 +209,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
       <div className="space-y-4">
-        {!single && (
+        {!single && !embedded && (
           <div>
             <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
               {t('cm.backToList')}

@@ -472,6 +472,8 @@ export function FieldsGrid({
                 label={text}
                 value={(values[name] as RelationItem[] | undefined) ?? []}
                 locale={ctx.locale}
+                models={ctx.models}
+                openMode={ctx.model.settings.relationOpenMode}
                 onChange={(v) => onChange(name, v)}
               />
             )

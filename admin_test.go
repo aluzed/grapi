@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -530,8 +531,62 @@ func TestAdminRelations(t *testing.T) {
 	if s, _, _ := c.do("GET", "/content-manager/relations/api::post.post/title", ""); s != 404 {
 		t.Fatalf("not a relation: %d", s)
 	}
+	labels := func(b map[string]any) []string {
+		var out []string
+		for _, e := range b["data"].([]any) {
+			out = append(out, e.(map[string]any)["label"].(string))
+		}
+		return out
+	}
+	// Lists are paged: the Document Service reads start and limit, not page.
+	for i := 0; i < 12; i++ {
+		create("api::tag.tag", fmt.Sprintf(`{"name":"t%02d"}`, i))
+	}
+	_, b, _ = c.do("GET", "/content-manager/collection-types/api::tag.tag?page=2&pageSize=10&sort=name:asc", "")
+	if n := len(b["data"].([]any)); n != 5 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(15) {
+		t.Fatalf("list page 2: %d %v", n, b["meta"])
+	}
+	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?page=2&pageSize=10", "")
+	if got := labels(b); len(got) != 5 || got[0] != "t07" {
+		t.Fatalf("targets page 2: %v", got)
+	}
+	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?_q=t0", "")
+	if got := labels(b); len(got) != 10 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(10) {
+		t.Fatalf("search: %v", b)
+	}
+	// The picker leaves out what the field holds, and reads it back by id.
+	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?idsToOmit="+tags[0]+"&idsToOmit="+tags[1], "")
+	if got := labels(b); len(got) == 0 || got[0] != "admin" || slices.Contains(got, "go") || slices.Contains(got, "cms") || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(13) {
+		t.Fatalf("idsToOmit: %v", b)
+	}
+	_, b, _ = c.do("GET", "/content-manager/relations/api::post.post/tags?documentIds="+tags[2]+","+tags[0], "")
+	if got := labels(b); len(got) != 2 || b["meta"].(map[string]any)["pagination"].(map[string]any)["total"] != float64(2) {
+		t.Fatalf("documentIds: %v", b)
+	}
+	if _, has := b["data"].([]any)[0].(map[string]any)["status"]; has {
+		t.Fatalf("no status without draft & publish: %v", b)
+	}
 
 	post := create("api::post.post", `{"title":"Hello","writer":{"set":[{"documentId":"`+writer+`"}]},"tags":{"set":[{"documentId":"`+tags[2]+`"},{"documentId":"`+tags[0]+`"}]}}`)
+	// A target's status follows its publication.
+	status := func() any {
+		t.Helper()
+		_, b, _ := c.do("GET", "/content-manager/relations/api::post.post/related?documentIds="+post, "")
+		return b["data"].([]any)[0].(map[string]any)["status"]
+	}
+	if st := status(); st != "draft" {
+		t.Fatalf("never published: %v", st)
+	}
+	c.do("POST", "/content-manager/collection-types/api::post.post/actions/bulk-publish", `{"documentIds":["`+post+`"]}`)
+	if st := status(); st != "published" {
+		t.Fatalf("published: %v", st)
+	}
+	time.Sleep(10 * time.Millisecond)
+	c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"title":"Hello again"}}`)
+	if st := status(); st != "modified" {
+		t.Fatalf("changed since its publication: %v", st)
+	}
+	c.do("PUT", "/content-manager/collection-types/api::post.post/"+post, `{"data":{"title":"Hello"}}`)
 	_, b, _ = c.do("GET", "/content-manager/collection-types/api::post.post/"+post, "")
 	got := dataOf(b)
 	if w, _ := got["writer"].(map[string]any); w == nil || w["name"] != "Ursula" {

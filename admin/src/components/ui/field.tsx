@@ -29,7 +29,7 @@ export const TextField = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLIn
 })
 
 export const SelectField = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement> & FieldProps>(function SelectField(
-  { label, error, className, id, children, ...props },
+  { label, error, hint, className, id, children, ...props },
   ref,
 ) {
   const auto = useId()
@@ -42,6 +42,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HT
       <select ref={ref} id={selectId} aria-invalid={error ? true : undefined} className={control} {...props}>
         {children}
       </select>
+      {hint && !error && <p className="text-xs text-muted">{hint}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
