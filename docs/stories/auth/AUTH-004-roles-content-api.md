@@ -31,6 +31,7 @@ Reproduire le modèle rôles et permissions de users-permissions et son applicat
 - [x] Banc `SETUP-002` : avec Public sans `find` sur `api::post.post`, `GET /api/posts` donne 403 avec le même corps d'erreur que Strapi.
 - [x] Après avoir ajouté `find` à Public, la même requête donne 200.
 - [ ] Un contrôleur supprimé du projet voit ses permissions purgées au boot (intégration).
+  - Décision (2026-10-24) : pas de purge par défaut. Strapi supprime au démarrage les permissions dont l'action n'est plus dans ses contrôleurs (`syncPermissions`). grapi peut tourner à côté de Strapi sur la même base, sans connaître tous les contrôleurs JS du projet : une purge supprimerait des permissions dont Strapi se sert encore. À faire en option explicite, une fois Strapi arrêté.
 - [x] Un populate vers un type non lisible par le rôle est retiré de la réponse (banc).
 - [x] **Compat DB (D3)** : les rôles et permissions d'une base Strapi existante s'appliquent sans conversion.
 
