@@ -197,6 +197,8 @@ app.UseEmailProvider("my-mailer", myMailer)    // grapi.EmailProvider: Send(ctx,
 
 They are used when `plugins.upload.config.provider` or `plugins.email.config.provider` names them, like an installed Strapi provider. An upload provider sets `UploadFile.URL`, and `UploadFile.Metadata` when it needs it back on delete (`provider_metadata`). A provider with a `CheckFileSize(f *grapi.UploadFile, sizeLimit int64) error` method replaces the `sizeLimit` check, as `checkFileSize` does in Strapi.
 
+`app.Log()` is `strapi.log`: the project's `*slog.Logger`, with the level and format of its config, from `OnRegister` on (before that, `slog.Default()`).
+
 `app.SendEmail(ctx, grapi.EmailMessage{To, Subject, Text, HTML...})` is `strapi.plugin('email').service('email').send`: the configured provider, with `settings.defaultFrom` and `defaultReplyTo` when the message has none.
 
 ## Cron (`server.cron.tasks`)

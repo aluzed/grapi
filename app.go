@@ -613,6 +613,7 @@ func (a *App) Setup() (*Server, error) {
 func (a *App) setup(p *project.Project) (*Server, error) {
 	dir, conf, res, md, desired, d, log := &p.Dir, p.Conf, p.Res, p.MD, p.Desired, p.DB, p.Log
 	ctx := context.Background()
+	a.log.Store(log)
 	for _, fn := range a.onRegister {
 		if err := fn(ctx); err != nil {
 			return nil, fmt.Errorf("register: %w", err)

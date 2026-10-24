@@ -6,7 +6,9 @@ package grapi
 import (
 	"context"
 	"io"
+	"log/slog"
 	"os"
+	"sync/atomic"
 
 	"github.com/aluzed/grapi/hook"
 
@@ -57,6 +59,17 @@ type App struct {
 	onDestroy           []func(context.Context) error
 	uploadProviders     map[string]UploadProvider
 	emailProviders      map[string]EmailProvider
+	log                 atomic.Pointer[slog.Logger]
+}
+
+// Log is the project's logger, with the level and format of its config
+// (logger.format, GRAPI_LOG_LEVEL, GRAPI_LOG_FORMAT), once the project is
+// loaded: from OnRegister on. Before that, slog.Default().
+func (a *App) Log() *slog.Logger {
+	if l := a.log.Load(); l != nil {
+		return l
+	}
+	return slog.Default()
 }
 
 // New returns an App for the project in opts.Dir.

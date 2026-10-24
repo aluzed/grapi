@@ -1,10 +1,12 @@
 package grapi_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/aluzed/grapi"
@@ -69,5 +71,30 @@ func TestCoreRouterAndActionOverride(t *testing.T) {
 	// The path still answers GET and PUT: Koa's allowedMethods gives 405.
 	if s, b := c.do("DELETE", "/api/tags/"+id, "", ""); s != 405 {
 		t.Fatalf("except delete removes the route: %d %v", s, b)
+	}
+}
+
+func TestAppLog(t *testing.T) {
+	dir := t.TempDir()
+	if err := copyDir(filepath.Join("compat", "fixtures", "basic", "src"), filepath.Join(dir, "src")); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	t.Setenv("JWT_SECRET", "test")
+	t.Setenv("GRAPI_LOG_FORMAT", "json")
+	var out bytes.Buffer
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &out})
+	app.OnBootstrap(func(context.Context) error {
+		app.Log().Info("from a hook", "who", "test")
+		return nil
+	})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = srv.Close() }()
+	if !strings.Contains(out.String(), `"msg":"from a hook","who":"test"`) {
+		t.Fatalf("app.Log writes with the project's logger: %s", out.String())
 	}
 }
