@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # ADM-016 : Recette de l'admin sur dev-freelance
@@ -21,6 +21,10 @@ Pouvoir écrire, illustrer et publier les articles dev-freelance dans l'admin gr
 - [ ] Chaque parcours se fait dans l'admin grapi, sans étape en plus par rapport à Strapi.
 - [ ] Après une publication dans grapi, le site affiche la nouvelle version (cache vidé comme par Strapi).
 - [ ] La liste des écarts est vide ou chaque écart restant est validé par l'utilisateur.
+
+## Avancement
+- Fait : les équivalents Go du JS du projet (invalidation du cache du front après chaque changement, champs générés par IA), dans le dépôt privé du projet, testés (cache contre un vrai Redis, appel au LLM contre un serveur de test). Les tickets d'admin `ADM-011` à `ADM-015` sont livrés.
+- Reste : les parcours chronométrés et les captures dans les deux admins, sur une copie des données ; la liste des écarts à faire valider par l'utilisateur.
 
 ## Dépendances
 - `ADM-011`, `ADM-012`, `ADM-014`, `ADM-015`, `DOC-004`, `EXT-002`
