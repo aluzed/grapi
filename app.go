@@ -728,13 +728,15 @@ func (a *App) setup(p *project.Project) (*Server, error) {
 		stopWebhooks()
 	}
 	a.docs = docs
-	api := httpapi.New(apiCfg, d, res.Set, docs, log)
-	if err := a.addRoutes(api); err != nil {
-		return nil, err
-	}
 	adminCfg, err := adminConfig(conf, *dir, apiCfg.Email, apiCfg.Proxy, log)
 	if err != nil {
 		a.stopWebhooks()
+		return nil, err
+	}
+	apiCfg.PreviewSecret = adminCfg.Preview.Secret
+	adminCfg.Preview.Funcs = a.previewFuncs()
+	api := httpapi.New(apiCfg, d, res.Set, docs, log)
+	if err := a.addRoutes(api); err != nil {
 		return nil, err
 	}
 	adminCfg.Version, adminCfg.Environment = a.opts.Version, conf.Environment

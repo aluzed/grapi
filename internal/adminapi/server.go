@@ -99,6 +99,8 @@ type Config struct {
 	// Version is grapi's version, Environment the project's (NODE_ENV).
 	Version     string
 	Environment string
+	// Preview is admin.preview.
+	Preview Preview
 }
 
 // Server serves the admin.
@@ -217,6 +219,7 @@ func (s *Server) routes() {
 	s.auditRoutes()
 	s.releaseRoutes()
 	s.mediaSettingsRoutes()
+	s.previewRoutes()
 	s.mux.HandleFunc(s.cfg.Path+"/api/", func(w http.ResponseWriter, _ *http.Request) {
 		s.writeError(w, errNotFound)
 	})

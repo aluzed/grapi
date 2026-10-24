@@ -49,6 +49,7 @@ type App struct {
 	sanitizers          httpapi.Sanitizers
 	coreRouterRefs      []coreRouterRef
 	coreActions         map[string]httpapi.CoreAction
+	preview             map[string]PreviewHandler
 	onRegister          []func(context.Context) error
 	onBootstrap         []func(context.Context) error
 	onDestroy           []func(context.Context) error

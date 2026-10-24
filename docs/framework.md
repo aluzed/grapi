@@ -176,6 +176,17 @@ app.OverrideCoreAction("plugin::users-permissions.user", "me", func(c *grapi.Req
 })
 ```
 
+## Preview (`config/admin` `preview.config.handler`)
+
+```go
+app.PreviewHandler("api::post.post", func(ctx context.Context, r grapi.PreviewRequest) (string, error) {
+	slug, _ := r.Document["slug"].(string)
+	return "https://front.example/blog/" + slug + "?status=" + r.Status + "&token=" + r.Token, nil
+})
+```
+
+It takes over the URL template of `admin.preview.handlers` (see `configuration.md`); `""` hides the preview of that document. `admin.preview.enabled` must be true and the URL's origin in `allowedOrigins`.
+
 ## Upload and email providers
 
 ```go

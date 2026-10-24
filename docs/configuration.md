@@ -56,6 +56,18 @@ A key that is set but empty counts as set, as with Strapi's `env()`.
 
 Without `config/database.*`, grapi falls back to the `DATABASE_*` variables of a generated Strapi project.
 
+`admin.preview`: the edit view's preview, as Strapi's. `enabled`, `allowedOrigins` (the front's origins: the admin's CSP gets them in `frame-src`, and a URL on another origin is refused) and `handlers`, a URL template by content type:
+
+```yaml
+preview:
+  enabled: true
+  allowedOrigins: [${env:CLIENT_URL}]
+  handlers:
+    api::post.post: "${env:CLIENT_URL}/blog/{slug}?status={status}&token={previewToken}"
+```
+
+The placeholders are `{documentId}`, `{locale}`, `{status}` (`draft` or `published`), `{uid}`, `{previewToken}` and any scalar attribute of the document, URL encoded. `{previewToken}` reads that document only from the content API, drafts included, for an hour, as `Authorization: Bearer` or `?previewToken=`. A Go handler (`app.PreviewHandler`, see `framework.md`) takes over the template. After a save, the admin posts `{type: 'strapiUpdate'}` to the preview frame (once the front has posted `{type: 'previewReady'}`; otherwise it reloads the frame), the message names Strapi's documentation gives.
+
 ## Variables
 
 `GRAPI_LOG_LEVEL` (or `STRAPI_LOG_LEVEL`): `debug`, `http` (default, as Strapi: one line per request), `info`, `warn`, `error`. At `debug`, every rejected request is logged with its error.

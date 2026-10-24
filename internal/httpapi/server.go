@@ -56,6 +56,8 @@ type Config struct {
 	GraphQL *GraphQLConfig
 	// OpenAPI serves the content API's document, nil when access is disabled.
 	OpenAPI *OpenAPIConfig
+	// PreviewSecret signs the admin's preview tokens (the admin JWT secret).
+	PreviewSecret string
 }
 
 // Server serves the content API of every api:: content type.
@@ -112,7 +114,7 @@ func New(cfg Config, d *db.DB, set *schema.Set, docs *document.Service, log *slo
 	if cfg.Users.JWTExpiresIn == "" {
 		cfg.Users.JWTExpiresIn = "30d"
 	}
-	s := &Server{cfg: cfg, set: set, docs: docs, auth: &authenticator{db: d, engine: docs.E, salt: cfg.APITokenSalt, users: cfg.Users}, log: log}
+	s := &Server{cfg: cfg, set: set, docs: docs, auth: &authenticator{db: d, engine: docs.E, salt: cfg.APITokenSalt, users: cfg.Users, previewSecret: cfg.PreviewSecret}, log: log}
 	if cfg.Users.JWTManagement == "refresh" {
 		s.upSessions = newUPSessions(docs.E, cfg.Users)
 		s.auth.up = s.upSessions
@@ -348,6 +350,13 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params
 		return
 	}
 	rc := &requestContext{auth: auth, params: params, query: ParseQuery(r.URL.RawQuery), model: s.schemaOf(rt.uid)}
+	delete(rc.query, "previewToken")
+	if auth.preview != nil {
+		if err := restrictToPreview(rt, rc); err != nil {
+			writeError(w, err, s.log)
+			return
+		}
+	}
 	if err := s.runPolicies(r, rt, rc); err != nil {
 		writeError(w, err, s.log)
 		return

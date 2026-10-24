@@ -31,6 +31,7 @@ type Auth struct {
 	// SessionID is the session of a refresh-mode access token.
 	SessionID string
 	scopes    map[string]bool
+	preview   *previewGrant
 }
 
 // Allowed reports whether the request may run the action scope
@@ -60,6 +61,8 @@ type authenticator struct {
 	users  UsersConfig
 	// up verifies the access tokens in jwtManagement "refresh".
 	up *session.Manager
+	// previewSecret verifies the admin's preview tokens.
+	previewSecret string
 }
 
 func (a *authenticator) hash(key string) string {
@@ -93,6 +96,12 @@ func (a *Auth) origin() string {
 }
 
 func (a *authenticator) authenticate(ctx context.Context, r *http.Request) (*Auth, error) {
+	if grant, ok, err := a.previewToken(previewTokenOf(r)); ok {
+		if err != nil {
+			return nil, err
+		}
+		return &Auth{Strategy: "preview", scopes: map[string]bool{grant.uid + ".find": true, grant.uid + ".findOne": true}, preview: grant}, nil
+	}
 	token := bearer(r)
 	if token != "" {
 		auth, err := a.apiToken(ctx, token)

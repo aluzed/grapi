@@ -45,6 +45,7 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, proxy client
 	}
 	sp := "admin.auth.sessions."
 	cfg.Sessions.Secret = secret
+	cfg.Preview = previewConfig(c, secret)
 	cfg.Sessions.AccessTokenLifespan = seconds(c, sp+"accessTokenLifespan")
 	cfg.Sessions.MaxRefreshTokenLifespan = seconds(c, sp+"maxRefreshTokenLifespan")
 	cfg.Sessions.IdleRefreshTokenLifespan = seconds(c, sp+"idleRefreshTokenLifespan")
@@ -115,10 +116,50 @@ func durationOf(v any) (time.Duration, error) {
 }
 
 // withAdmin routes the admin paths to the admin server.
+// previewConfig reads admin.preview: enabled, allowedOrigins, and the URL
+// templates by content type (handlers).
+func previewConfig(c *config.Config, secret string) adminapi.Preview {
+	p := adminapi.Preview{Secret: secret, Handlers: map[string]string{}}
+	p.Enabled, _ = c.Get("admin.preview.enabled").(bool)
+	if list, ok := c.Get("admin.preview.allowedOrigins").([]any); ok {
+		for _, o := range list {
+			if s, ok := o.(string); ok && s != "" {
+				p.AllowedOrigins = append(p.AllowedOrigins, strings.TrimRight(s, "/"))
+			}
+		}
+	}
+	if m, ok := c.Get("admin.preview.handlers").(map[string]any); ok {
+		for uid, v := range m {
+			if s, ok := v.(string); ok {
+				p.Handlers[uid] = s
+			}
+		}
+	}
+	return p
+}
+
+// withFrameSrc lets the admin frame the preview origins: frame-src is set
+// in the CSP that strapi::security wrote.
+func withFrameSrc(h http.Header, sources []string) {
+	csp := h.Get("Content-Security-Policy")
+	if csp == "" || len(sources) == 0 {
+		return
+	}
+	var parts []string
+	for _, d := range strings.Split(csp, ";") {
+		if !strings.HasPrefix(strings.TrimSpace(d), "frame-src ") {
+			parts = append(parts, d)
+		}
+	}
+	parts = append(parts, "frame-src "+strings.Join(sources, " "))
+	h.Set("Content-Security-Policy", strings.Join(parts, ";"))
+}
+
 func withAdmin(adm *adminapi.Server, api *httpapi.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if adm.Handles(r.URL.Path) {
 			api.SecurityHeaders(w.Header())
+			withFrameSrc(w.Header(), adm.FrameSources())
 			adm.ServeHTTP(w, r)
 			return
 		}
