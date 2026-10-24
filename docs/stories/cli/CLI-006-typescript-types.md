@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # CLI-006 : Génération des types TypeScript pour les clients
@@ -33,7 +33,7 @@ Générer des types TypeScript qui décrivent les réponses et les entrées de l
 - `tsc --strict` (TypeScript de l'image de référence, contre `@strapi/strapi`) passe sur les déclarations de devfreelance, components et i18n-dp, avec un fichier qui instancie `Data.ContentType<K>` et `Data.Component<K>` pour tous les UID (2026-10-22).
 - `api.d.ts` (`typegen.Client`), écrit à côté des fichiers Strapi plutôt que derrière une option `--strapi-compat` : les deux formats sortent à chaque fois, sans casser les projets qui attendent ceux de Strapi. Types autonomes, sans dépendance : une interface par content type et composant (`id`, `documentId`, timestamps, `publishedAt`, `locale` des types localisés, attributs privés et types admin exclus), relations, médias et composants optionnels, unions `__component` pour les zones dynamiques, enums en unions littérales, `CollectionResponse<T>`, `SingleResponse<T>`, `ErrorResponse`, `Media`, et les tables `ContentTypes` et `Components` indexées par UID. `make typecheck-compat` type aussi les 30 réponses réelles avec `ContentTypes[uid]` ; contre-épreuve faite (mauvais type rejeté). `TestClient`.
 - `grapi develop --types-out <dossier>` écrit les types au démarrage puis à chaque changement de `src/` ou `config/` (mode framework compris).
-- Reste : les types d'entrée (`data` des créations et mises à jour : relations par `documentId` ou `connect`, médias par id).
+- Types d'entrée : `<Nom>Input` par content type et composant (tous les champs optionnels, champs gérés et en lecture seule exclus, `publishedAt` et `locale` des types localisés acceptés), relations en `ToOneInput` / `ToManyInput` (`documentId`, id, objet avec `locale`, `status`, `position`, `__type`, ou `connect` / `disconnect` / `set`), médias par id, table `ContentTypeInputs`. `compat/tools/typecheck-inputs.py` type le `data` de chaque création et mise à jour du corpus que Strapi a acceptée : 173 écritures sur relations, components, i18n-dp, basic et devfreelance passent `tsc --strict`. Deux cas acceptés par Strapi sont refusés exprès par les types (`@ts-expect-error`) : un composant hors de la liste d'une zone dynamique, une `locale` envoyée à un type non localisé.
 
 - `make typecheck-compat` (`compat/scripts/typecheck.sh`) : 30 réponses réelles de Strapi sur devfreelance (posts, catégories, thèmes, pages de thème, médias), typées `Data.ContentType<uid>` avec les types générés par grapi, passent `tsc --strict` dans l'image de référence. `tsc` plutôt que ts-to-zod : le contrôle des propriétés en trop des littéraux suffit ; contre-épreuve faite, un champ inconnu et un mauvais type sont rejetés.
 
@@ -48,4 +48,4 @@ Générer des types TypeScript qui décrivent les réponses et les entrées de l
 - `SCH-001`, `SCH-002`, `CLI-001`
 
 ## Fichiers
-- `internal/cli/tsgen/{generator.go,templates/}`
+- `internal/typegen/{typegen.go,client.go}`, `cmd/grapi/typegen.go`

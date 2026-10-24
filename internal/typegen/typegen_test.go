@@ -79,12 +79,20 @@ func TestClient(t *testing.T) {
 		"(BlocksHero & { __component: 'blocks.hero' }) | (BlocksRichText & { __component: 'blocks.rich-text' })",
 		"  title: string;\n  updatedAt: string;\n",
 		"  'api::post.post': ApiPostPost;\n",
+		"export interface SharedSeoInput {\n  id?: number;\n",
+		"  links?: SharedLinkInput[];\n",
+		"  'api::post.post': ApiPostPostInput;\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q", want)
 		}
 	}
-	if strings.Contains(got, "AdminUser") || strings.Contains(got, "password") {
+	user := got[strings.Index(got, "export interface PluginUsersPermissionsUser {"):]
+	user = user[:strings.Index(user, "\n}\n")]
+	if strings.Contains(got, "AdminUser") || strings.Contains(user, "password") {
 		t.Error("admin types or private attributes leaked into the client types")
+	}
+	if !strings.Contains(got, "export interface PluginUsersPermissionsUserInput {") {
+		t.Error("no input type for users")
 	}
 }

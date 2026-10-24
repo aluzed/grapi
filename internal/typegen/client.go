@@ -74,6 +74,28 @@ export interface ErrorResponse {
   error: { status: number; name: string; message: string; details?: JSONValue };
 }
 
+export interface RelationPosition {
+  before?: string | number;
+  after?: string | number;
+  start?: boolean;
+  end?: boolean;
+}
+
+export type RelationRef =
+  | string
+  | number
+  | { documentId?: string; id?: number; locale?: string | null; status?: 'draft' | 'published'; position?: RelationPosition; __type?: string };
+
+export interface RelationChanges {
+  connect?: RelationRef | RelationRef[];
+  disconnect?: RelationRef | RelationRef[];
+  set?: RelationRef | RelationRef[];
+}
+
+export type ToOneInput = RelationRef | null | RelationChanges;
+
+export type ToManyInput = RelationRef[] | RelationChanges;
+
 `
 
 // Client writes api.d.ts: the JSON the Content API answers, with no
@@ -107,6 +129,16 @@ func Client(set *schema.Set) string {
 		writeClientFields(&b, &ct.Attributes, known)
 		b.WriteString("}\n\n")
 	}
+	for _, c := range comps {
+		fmt.Fprintf(&b, "export interface %sInput {\n  id?: number;\n", known[string(c.UID)])
+		writeInputFields(&b, &c.Attributes, known)
+		b.WriteString("}\n\n")
+	}
+	for _, ct := range cts {
+		fmt.Fprintf(&b, "export interface %sInput {\n", known[string(ct.UID)])
+		writeInputFields(&b, &ct.Attributes, known)
+		b.WriteString("}\n\n")
+	}
 	b.WriteString("export interface ContentTypes {\n")
 	for _, ct := range cts {
 		fmt.Fprintf(&b, "  %s: %s;\n", quote(string(ct.UID)), known[string(ct.UID)])
@@ -114,6 +146,10 @@ func Client(set *schema.Set) string {
 	b.WriteString("}\n\nexport interface Components {\n")
 	for _, c := range comps {
 		fmt.Fprintf(&b, "  %s: %s;\n", quote(string(c.UID)), known[string(c.UID)])
+	}
+	b.WriteString("}\n\nexport interface ContentTypeInputs {\n")
+	for _, ct := range cts {
+		fmt.Fprintf(&b, "  %s: %sInput;\n", quote(string(ct.UID)), known[string(ct.UID)])
 	}
 	b.WriteString("}\n")
 	return b.String()
@@ -233,4 +269,61 @@ func scalarType(a *schema.Attribute) string {
 		return "string"
 	}
 	return "unknown"
+}
+
+// writeInputFields writes what a create or an update takes as data: every
+// field is optional, managed and read-only ones are left out.
+func writeInputFields(b *strings.Builder, attrs *schema.OrderedMap[*schema.Attribute], known map[string]string) {
+	var names []string
+	for n, a := range attrs.All() {
+		writable := !a.Auto && a.IsWritable() || n == schema.AttrPublishedAt || n == schema.AttrLocale && !a.IsPrivate()
+		if writable && n != schema.AttrID && n != schema.AttrDocumentID && n != schema.AttrLocalizations {
+			names = append(names, n)
+		}
+	}
+	sort.Slice(names, func(i, j int) bool { return localeLess(names[i], names[j]) })
+	for _, n := range names {
+		a, _ := attrs.Get(n)
+		fmt.Fprintf(b, "  %s?: %s;\n", identifier(n), inputType(a, known))
+	}
+}
+
+func inputType(a *schema.Attribute, known map[string]string) string {
+	input := func(uid string) string {
+		if name, ok := known[uid]; ok {
+			return name + "Input"
+		}
+		return "Record<string, unknown>"
+	}
+	switch a.Type {
+	case schema.TypeRelation:
+		if toMany[a.Relation] {
+			return "ToManyInput"
+		}
+		return "ToOneInput"
+	case schema.TypeMedia:
+		if a.IsMultiple() {
+			return "number[] | null"
+		}
+		return "number | null"
+	case schema.TypeComponent:
+		if a.IsRepeatable() {
+			return input(a.Component) + "[]"
+		}
+		return input(a.Component) + " | null"
+	case schema.TypeDynamicZone:
+		parts := make([]string, len(a.Components))
+		for i, c := range a.Components {
+			parts[i] = fmt.Sprintf("(%s & { __component: %s })", input(c), quote(c))
+		}
+		if len(parts) == 0 {
+			return "never[]"
+		}
+		return "(" + strings.Join(parts, " | ") + ")[]"
+	}
+	t := scalarType(a)
+	if a.Type == schema.TypeBigInteger || a.Type == schema.TypeDecimal {
+		t = "string | number"
+	}
+	return t + " | null"
 }
