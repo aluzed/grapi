@@ -324,8 +324,42 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
           </span>
         ))}
       </nav>
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+      {(canUpload || (!pick && canUpdate)) && (
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap *:whitespace-nowrap">
+          {canUpload && !pick && (
+            <Button title={t('media.upload')} icon={<Upload className="h-4 w-4" />} loading={send.isPending} onClick={() => input.current?.click()} className="w-full md:w-auto">
+              {send.isPending ? t('media.uploading') : t('media.upload')}
+            </Button>
+          )}
+          {canUpload && !pick && (
+            <Button variant="outline" title={t('media.fromUrl')} icon={<Link2 className="h-4 w-4" />} onClick={() => setImporting(true)} className="w-full md:w-auto">
+              {t('media.fromUrl')}
+            </Button>
+          )}
+          {canUpload && (
+            <Button variant="outline" title={t('media.newFolder')} icon={<FolderPlus className="h-4 w-4" />} onClick={() => setCreating(true)} className="w-full md:w-auto">
+              {t('media.newFolder')}
+            </Button>
+          )}
+          {!pick && canUpdate && (
+            <Button
+              variant="outline"
+              title={selecting ? t('media.cancelSelection') : t('media.selectMode')}
+              icon={selecting ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
+              onClick={() => {
+                setSelecting(!selecting)
+                setChosen([])
+              }}
+              className="w-full md:w-auto"
+            >
+              {selecting ? t('media.cancelSelection') : t('media.selectMode')}
+            </Button>
+          )}
+          {canUpload && <input ref={input} type="file" multiple hidden onChange={(e) => onFiles(e.target.files)} />}
+        </div>
+      )}
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))]">
           <input
             type="search"
             value={q}
@@ -335,7 +369,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
               setQ(e.target.value)
               setPage(1)
             }}
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none md:w-64"
+            className="w-full self-end rounded-md border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
           <SelectField
             label={t('media.sort')}
@@ -344,7 +378,6 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
               setSort(e.target.value)
               setPage(1)
             }}
-            className="md:w-48"
           >
             {(['createdAt:DESC', 'createdAt:ASC', 'name:ASC', 'name:DESC', 'updatedAt:DESC', 'updatedAt:ASC'] as const).map((k) => (
               <option key={k} value={k}>
@@ -352,7 +385,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
               </option>
             ))}
           </SelectField>
-          <SelectField label={t('media.type')} value={type} onChange={(e) => setType(e.target.value)} className="md:w-40">
+          <SelectField label={t('media.type')} value={type} onChange={(e) => setType(e.target.value)}>
             {kinds.length !== 1 && <option value="">{t('media.type.all')}</option>}
             {kinds.map((k) => (
               <option key={k} value={k}>
@@ -361,70 +394,36 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
             ))}
           </SelectField>
         </div>
-        {(canUpload || (!pick && canUpdate)) && (
-          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap *:whitespace-nowrap">
-            {!pick && canUpdate && (
-              <Button
-                variant="outline"
-                title={selecting ? t('media.cancelSelection') : t('media.selectMode')}
-                icon={selecting ? <X className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
-                onClick={() => {
-                  setSelecting(!selecting)
-                  setChosen([])
-                }}
-                className="w-full md:w-auto"
-              >
-                {selecting ? t('media.cancelSelection') : t('media.selectMode')}
-              </Button>
-            )}
-            {canUpload && (
-            <Button variant="outline" title={t('media.newFolder')} icon={<FolderPlus className="h-4 w-4" />} onClick={() => setCreating(true)} className="w-full md:w-auto">
-              {t('media.newFolder')}
-            </Button>
-            )}
-            {canUpload && !pick && (
-            <Button title={t('media.upload')} icon={<Upload className="h-4 w-4" />} loading={send.isPending} onClick={() => input.current?.click()} className="w-full md:w-auto">
-              {send.isPending ? t('media.uploading') : t('media.upload')}
-            </Button>
-            )}
-            {canUpload && !pick && (
-              <Button variant="outline" title={t('media.fromUrl')} icon={<Link2 className="h-4 w-4" />} onClick={() => setImporting(true)} className="w-full md:w-auto">
-                {t('media.fromUrl')}
-              </Button>
-            )}
-            {canUpload && <input ref={input} type="file" multiple hidden onChange={(e) => onFiles(e.target.files)} />}
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:w-[28rem]">
+            <TextField
+              label={t('media.from')}
+              type="datetime-local"
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value)
+                setPage(1)
+              }}
+            />
+            <TextField
+              label={t('media.to')}
+              type="datetime-local"
+              value={to}
+              onChange={(e) => {
+                setTo(e.target.value)
+                setPage(1)
+              }}
+            />
           </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:w-[28rem]">
-          <TextField
-            label={t('media.from')}
-            type="datetime-local"
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value)
-              setPage(1)
-            }}
-          />
-          <TextField
-            label={t('media.to')}
-            type="datetime-local"
-            value={to}
-            onChange={(e) => {
-              setTo(e.target.value)
-              setPage(1)
-            }}
+          <Tabs
+            tabs={[
+              { id: 'grid', label: t('media.viewGrid') },
+              { id: 'list', label: t('media.viewList') },
+            ]}
+            value={view}
+            onChange={(id) => setView(id as 'grid' | 'list')}
           />
         </div>
-        <Tabs
-          tabs={[
-            { id: 'grid', label: t('media.viewGrid') },
-            { id: 'list', label: t('media.viewList') },
-          ]}
-          value={view}
-          onChange={(id) => setView(id as 'grid' | 'list')}
-        />
       </div>
       {progress !== null && (
         <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 md:flex-row md:items-center">
