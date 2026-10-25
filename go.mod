@@ -10,7 +10,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/vektah/gqlparser/v2 v2.5.63
 	golang.org/x/crypto v0.58.0
-	golang.org/x/image v0.33.0
+	golang.org/x/image v0.47.0
 	golang.org/x/term v0.47.0
 	golang.org/x/text v0.43.0
 	modernc.org/sqlite v1.61.0
