@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Pencil, Plus, Send, Settings2, Trash2, Undo2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { Pager } from '@/components/Pager'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
@@ -334,15 +335,7 @@ function List({ model }: { model: Model }) {
               </option>
             ))}
           </SelectField>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <span className="text-center text-sm text-muted">{t('cm.page', { page: String(page), pages: String(pagination.pageCount) })}</span>
-            <Button variant="outline" title={t('cm.previous')} icon={<ChevronLeft className="h-4 w-4" />} disabled={page <= 1} onClick={() => update({ page: page - 1 }, false)} className="w-full md:w-auto">
-              {t('cm.previous')}
-            </Button>
-            <Button variant="outline" title={t('cm.next')} icon={<ChevronRight className="h-4 w-4" />} disabled={page >= pagination.pageCount} onClick={() => update({ page: page + 1 }, false)} className="w-full md:w-auto">
-              {t('cm.next')}
-            </Button>
-          </div>
+          <Pager page={page} pageCount={pagination.pageCount} onPage={(n) => update({ page: n }, false)} />
         </div>
       )}
     </div>

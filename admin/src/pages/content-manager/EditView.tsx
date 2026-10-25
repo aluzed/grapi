@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, AlignLeft, ArrowLeft, Braces, ChevronDown, Copy, FileText, Image as ImageIcon, Images, Link2, RotateCcw, Save, Send, Settings2, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
+import { AlertCircle, AlignLeft, Braces, ChevronDown, Copy, FileText, Image as ImageIcon, Images, Link2, RotateCcw, Save, Send, Settings2, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
 import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { SelectField } from '@/components/ui/field'
@@ -305,11 +306,7 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     <div className={side ? 'lg:grid lg:grid-cols-2 lg:items-start lg:gap-6' : undefined}>
     <form ref={form} onSubmit={submit} className="flex min-w-0 flex-col gap-6 pb-24 md:pb-0" noValidate>
       {!single && !embedded && (
-        <div>
-          <Button variant="outline" title={t('cm.backToList')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
-            {t('cm.backToList')}
-          </Button>
-        </div>
+        <BackButton label={t('cm.backToList')} onClick={() => navigate(listPath)} />
       )}
       {/* A direct child of the form, so that it sticks while the whole form scrolls. */}
       <div

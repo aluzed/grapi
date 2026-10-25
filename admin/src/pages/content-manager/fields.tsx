@@ -272,6 +272,15 @@ function Group({ title, tools, children }: { title: string; tools: React.ReactNo
   )
 }
 
+// ListEntry is one entry of a repeatable component or a dynamic zone.
+function ListEntry({ title, list, index, onChange, component, ctx }: { title: string; list: Values[]; index: number; onChange: (v: Values[]) => void; component: ComponentModel; ctx: FieldContext }) {
+  return (
+    <Group title={title} tools={<ItemTools index={index} count={list.length} onMove={(d) => onChange(move(list, index, d))} onRemove={() => onChange(list.filter((_, j) => j !== index))} />}>
+      <FieldsGrid attrs={component.attributes} fields={component.fields} values={list[index]!} onChange={(name, x) => onChange(list.map((it, j) => (j === index ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} component={component.uid} />
+    </Group>
+  )
+}
+
 function ComponentField({ attr, text, value, onChange, ctx }: { attr: Attribute; text: string; value: unknown; onChange: (v: unknown) => void; ctx: FieldContext }) {
   const { t } = useI18n()
   const c = ctx.components.get(attr.component ?? '')
@@ -299,13 +308,7 @@ function ComponentField({ attr, text, value, onChange, ctx }: { attr: Attribute;
     <fieldset className="flex flex-col gap-2 sm:col-span-2">
       <legend className="mb-1.5 text-sm font-medium">{text}</legend>
       {list.map((item, i) => (
-        <Group
-          key={String(item.id ?? `new-${i}`)}
-          title={`${c.info.displayName} · ${t('comp.entry', { n: String(i + 1) })}`}
-          tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
-        >
-          <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} component={c.uid} />
-        </Group>
+        <ListEntry key={String(item.id ?? `new-${i}`)} title={`${c.info.displayName} · ${t('comp.entry', { n: String(i + 1) })}`} list={list} index={i} onChange={onChange} component={c} ctx={ctx} />
       ))}
       <Button variant="outline" title={t('comp.addEntry')} icon={<Plus className="h-4 w-4" />} onClick={() => onChange([...list, empty()])} className="w-full md:w-auto">
         {t('comp.addEntry')}
@@ -330,13 +333,7 @@ function DynamicZoneField({ attr, text, value, onChange, ctx }: { attr: Attribut
         const c = ctx.components.get(String(item.__component))
         if (!c) return null
         return (
-          <Group
-            key={`${c.uid}-${String(item.id ?? `new-${i}`)}`}
-            title={c.info.displayName}
-            tools={<ItemTools index={i} count={list.length} onMove={(d) => onChange(move(list, i, d))} onRemove={() => onChange(list.filter((_, j) => j !== i))} />}
-          >
-            <FieldsGrid attrs={c.attributes} fields={c.fields} values={item} onChange={(name, x) => onChange(list.map((it, j) => (j === i ? { ...it, [name]: x } : it)))} ctx={ctx} root={false} component={c.uid} />
-          </Group>
+          <ListEntry key={`${c.uid}-${String(item.id ?? `new-${i}`)}`} title={c.info.displayName} list={list} index={i} onChange={onChange} component={c} ctx={ctx} />
         )
       })}
       {allowed.length > 0 && (

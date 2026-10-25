@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Check } from 'lucide-react'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
@@ -96,12 +97,7 @@ export function FieldDialog({
               {t('ctb.back')}
             </Button>
           )}
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('ctb.done')} icon={<Check className="h-4 w-4" />} onClick={done} className="w-full md:w-auto">
-            {t('ctb.done')}
-          </Button>
+          <DialogActions onCancel={onClose} onConfirm={done} label={t('ctb.done')} icon={<Check className="h-4 w-4" />} />
         </>
       }
     >

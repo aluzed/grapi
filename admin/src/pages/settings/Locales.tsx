@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Save, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { EntityActionsMenu } from '@/components/ui/entity-actions-menu'
@@ -39,16 +40,7 @@ function LocaleDialog({ locale, existing, onClose }: { locale: Locale | null; ex
       title={locale ? locale.name : t('locales.add')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} disabled={!locale && !code} onClick={() => save.mutate()} className="w-full md:w-auto">
-            {t('common.save')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => save.mutate()} loading={save.isPending} disabled={!locale && !code} />}
     >
       <div className="flex flex-col gap-4">
         {!locale && (

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { DialogActions } from '@/components/DialogActions'
 import { Dialog } from '@/components/ui/dialog'
 import { Tabs } from '@/components/ui/tabs'
 import { can } from '@/lib/permissions'
@@ -28,12 +28,7 @@ export function MediaPicker({ multiple, allowedTypes, onChoose, onClose }: { mul
       footer={
         <>
           <span className="text-sm text-muted md:mr-auto">{t('media.selected', { count: String(selection.length) })}</span>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('media.choose')} icon={<Check className="h-4 w-4" />} disabled={selection.length === 0} onClick={() => onChoose(selection)} className="w-full md:w-auto">
-            {t('media.choose')}
-          </Button>
+          <DialogActions onCancel={onClose} onConfirm={() => onChoose(selection)} label={t('media.choose')} icon={<Check className="h-4 w-4" />} disabled={selection.length === 0} />
         </>
       }
     >

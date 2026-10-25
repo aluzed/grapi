@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Download, Eye } from 'lucide-react'
 import { PageHeader } from '@/app/PageHeader'
+import { Pager } from '@/components/Pager'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -156,17 +157,7 @@ export function AuditLogs() {
         ))}
       </ul>
       {!logs.isPending && list.length === 0 && <Card className="text-center text-sm text-muted">{t('audit.empty')}</Card>}
-      {pagination && pagination.pageCount > 1 && (
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
-          <span className="text-center text-sm text-muted">{t('cm.page', { page: String(page), pages: String(pagination.pageCount) })}</span>
-          <Button variant="outline" title={t('cm.previous')} disabled={page <= 1} onClick={() => setPage(page - 1)} className="w-full md:w-auto">
-            {t('cm.previous')}
-          </Button>
-          <Button variant="outline" title={t('cm.next')} disabled={page >= pagination.pageCount} onClick={() => setPage(page + 1)} className="w-full md:w-auto">
-            {t('cm.next')}
-          </Button>
-        </div>
-      )}
+      {pagination && pagination.pageCount > 1 && <Pager page={page} pageCount={pagination.pageCount} onPage={setPage} className="md:justify-end" />}
       {open !== null && <Detail id={open} onClose={() => setOpen(null)} />}
     </div>
   )

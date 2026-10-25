@@ -2,6 +2,7 @@ import { useRef, useState, type PointerEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Copy, Crop } from 'lucide-react'
 import { toast } from 'sonner'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { upload } from '@/lib/api'
@@ -57,17 +58,11 @@ export function CropDialog({ file, folder, onClose, onDone }: { file: MediaFile;
       onClose={onClose}
       closeLabel={t('common.cancel')}
       footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
+        <DialogActions onCancel={onClose} onConfirm={() => send.mutate(false)} label={t('media.cropReplace')} icon={<Crop className="h-4 w-4" />} loading={send.isPending && !send.variables} disabled={!ready}>
           <Button variant="outline" title={t('media.cropCopy')} icon={<Copy className="h-4 w-4" />} disabled={!ready} loading={send.isPending && send.variables} onClick={() => send.mutate(true)} className="w-full md:w-auto">
             {t('media.cropCopy')}
           </Button>
-          <Button title={t('media.cropReplace')} icon={<Crop className="h-4 w-4" />} disabled={!ready} loading={send.isPending && !send.variables} onClick={() => send.mutate(false)} className="w-full md:w-auto">
-            {t('media.cropReplace')}
-          </Button>
-        </>
+        </DialogActions>
       }
     >
       <p className="mb-3 text-sm text-muted">{t('media.cropHelp')}</p>

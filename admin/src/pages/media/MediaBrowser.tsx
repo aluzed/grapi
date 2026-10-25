@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, CheckSquare, ChevronRight, File, Folder, FolderInput, FolderPlus, Link2, Pencil, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { DialogActions } from '@/components/DialogActions'
+import { Pager } from '@/components/Pager'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -55,16 +57,7 @@ function NewFolder({ parent, folder, onClose }: { parent: number | null; folder?
       title={folder ? t('media.renameFolder') : t('media.newFolder')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={folder ? t('common.save') : t('media.create')} icon={<FolderPlus className="h-4 w-4" />} loading={create.isPending} onClick={() => create.mutate()} className="w-full md:w-auto">
-            {folder ? t('common.save') : t('media.create')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => create.mutate()} label={folder ? t('common.save') : t('media.create')} icon={<FolderPlus className="h-4 w-4" />} loading={create.isPending} />}
     >
       <TextField label={t('media.folderName')} value={name} error={error} autoFocus onChange={(e) => setName(e.target.value)} />
     </Dialog>
@@ -101,16 +94,7 @@ function UrlDialog({ folder, onClose }: { folder: number | null; onClose: () => 
       title={t('media.fromUrl')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('media.import')} icon={<Link2 className="h-4 w-4" />} loading={send.isPending} disabled={!urls.trim()} onClick={() => send.mutate()} className="w-full md:w-auto">
-            {t('media.import')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => send.mutate()} label={t('media.import')} icon={<Link2 className="h-4 w-4" />} loading={send.isPending} disabled={!urls.trim()} />}
     >
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium">{t('media.urls')}</span>
@@ -149,16 +133,7 @@ function MoveDialog({ ids, folder, onClose }: { ids: number[]; folder?: MediaFol
       title={folder ? t('media.moveFolder', { name: folder.name }) : t('media.move')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('media.move')} icon={<FolderInput className="h-4 w-4" />} loading={move.isPending} onClick={() => move.mutate()} className="w-full md:w-auto">
-            {t('media.move')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => move.mutate()} label={t('media.move')} icon={<FolderInput className="h-4 w-4" />} loading={move.isPending} />}
     >
       <SelectField label={t('media.moveTo')} value={dest} onChange={(e) => setDest(e.target.value)}>
         <option value="root">{t('media.root')}</option>
@@ -601,17 +576,7 @@ export function MediaBrowser({ onOpen, pick }: BrowserProps) {
         </ul>
         )
       )}
-      {pagination && pagination.pageCount > 1 && (
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
-          <span className="text-center text-sm text-muted">{t('cm.page', { page: String(page), pages: String(pagination.pageCount) })}</span>
-          <Button variant="outline" title={t('cm.previous')} disabled={page <= 1} onClick={() => setPage(page - 1)} className="w-full md:w-auto">
-            {t('cm.previous')}
-          </Button>
-          <Button variant="outline" title={t('cm.next')} disabled={page >= pagination.pageCount} onClick={() => setPage(page + 1)} className="w-full md:w-auto">
-            {t('cm.next')}
-          </Button>
-        </div>
-      )}
+      {pagination && pagination.pageCount > 1 && <Pager page={page} pageCount={pagination.pageCount} onPage={setPage} className="md:justify-end" />}
       {creating && <NewFolder parent={folder} onClose={() => setCreating(false)} />}
       {renaming && <NewFolder parent={folder} folder={renaming} onClose={() => setRenaming(null)} />}
       {importing && <UrlDialog folder={folder} onClose={() => setImporting(false)} />}

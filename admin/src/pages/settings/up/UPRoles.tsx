@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Pencil, Plus, Save, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Save, Trash2 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
-import { EntityActionsMenu } from '@/components/ui/entity-actions-menu'
+import type { EntityAction } from '@/components/ui/entity-actions-menu'
 import { Checkbox, TextField } from '@/components/ui/field'
-import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { api } from '@/lib/api'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import { useAuth } from '@/providers/AuthProvider'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
+import { RolesTable } from '../RolesTable'
 
 type UPRole = { id: number; name: string; description: string; type: string; usersCount: number; permissions?: string[] }
 
@@ -36,11 +37,12 @@ export function UPRoles() {
     onError: (e) => showError(e),
   })
   const actions = (r: UPRole) => {
-    const out = [{ label: t('roles.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => navigate(`${base}/${r.id}`) }]
+    const out: EntityAction[] = [{ label: t('roles.edit'), icon: <Pencil className="h-4 w-4" />, onSelect: () => navigate(`${base}/${r.id}`) }]
     if (can(permissions, 'plugin::users-permissions.roles.delete') && r.type !== 'public' && r.type !== 'authenticated')
       out.push({
         label: t('roles.delete'),
         icon: <Trash2 className="h-4 w-4" />,
+        destructive: true,
         onSelect: async () => {
           if (await confirm({ title: t('roles.delete'), message: t('up.role.deleteConfirm', { name: r.name }), confirmLabel: t('roles.delete'), destructive: true })) remove.mutate(r)
         },
@@ -60,44 +62,7 @@ export function UPRoles() {
           )
         }
       />
-      <div className="hidden md:block">
-        <Table>
-          <thead>
-            <tr>
-              <Th>{t('roles.name')}</Th>
-              <Th>{t('roles.description')}</Th>
-              <Th>{t('settings.users')}</Th>
-              <Th className="w-16">
-                <span className="sr-only">{t('cm.actions')}</span>
-              </Th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((r) => (
-              <Tr key={r.id}>
-                <Td className="font-medium">{r.name}</Td>
-                <Td className="text-muted">{r.description}</Td>
-                <Td>{r.usersCount}</Td>
-                <Td className="text-right">
-                  <EntityActionsMenu actions={actions(r)} label={t('cm.actions')} />
-                </Td>
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-      <ul className="flex flex-col gap-3 md:hidden">
-        {list.map((r) => (
-          <li key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="min-w-0">
-              <p className="font-medium">{r.name}</p>
-              <p className="text-sm text-muted">{r.description}</p>
-              <p className="mt-1 text-xs text-muted">{t('up.role.users', { count: String(r.usersCount) })}</p>
-            </div>
-            <EntityActionsMenu actions={actions(r)} label={t('cm.actions')} />
-          </li>
-        ))}
-      </ul>
+      <RolesTable roles={list} actions={actions} usersLabel={(n) => t('up.role.users', { count: String(n) })} />
     </div>
   )
 }
@@ -157,11 +122,7 @@ export function UPRoleEditor() {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-4">
-        <div>
-          <Button variant="outline" title={t('up.role.back')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(base)} className="w-full md:w-auto">
-            {t('up.role.back')}
-          </Button>
-        </div>
+        <BackButton label={t('up.role.back')} onClick={() => navigate(base)} />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">{creating ? t('up.role.create') : (role.data?.name ?? '-')}</h1>
           {editable && (

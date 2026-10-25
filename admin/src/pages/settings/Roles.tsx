@@ -4,11 +4,11 @@ import { Copy, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import { EntityActionsMenu, type EntityAction } from '@/components/ui/entity-actions-menu'
+import type { EntityAction } from '@/components/ui/entity-actions-menu'
 import { TextField } from '@/components/ui/field'
-import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { api, ApiError } from '@/lib/api'
 import { showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
@@ -16,6 +16,7 @@ import type { Permission, RoleWithCount } from '@/lib/types'
 import { useAuth } from '@/providers/AuthProvider'
 import { useConfirm } from '@/providers/ConfirmProvider'
 import { useI18n } from '@/providers/I18nProvider'
+import { RolesTable } from './RolesTable'
 
 function CreateRole({ onClose }: { onClose: () => void }) {
   const { t } = useI18n()
@@ -42,16 +43,7 @@ function CreateRole({ onClose }: { onClose: () => void }) {
       title={t('roles.create')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('roles.create')} icon={<Plus className="h-4 w-4" />} loading={create.isPending} onClick={() => create.mutate()} className="w-full md:w-auto">
-            {t('roles.create')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => create.mutate()} label={t('roles.create')} icon={<Plus className="h-4 w-4" />} loading={create.isPending} />}
     >
       <div className="flex flex-col gap-4">
         <TextField label={t('roles.name')} value={name} error={error} onChange={(e) => setName(e.target.value)} autoFocus />
@@ -119,44 +111,7 @@ export function Roles() {
           )
         }
       />
-      <div className="hidden md:block">
-        <Table>
-          <thead>
-            <tr>
-              <Th>{t('roles.name')}</Th>
-              <Th>{t('roles.description')}</Th>
-              <Th>{t('settings.users')}</Th>
-              <Th className="w-16">
-                <span className="sr-only">{t('cm.actions')}</span>
-              </Th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((r) => (
-              <Tr key={r.id}>
-                <Td className="font-medium">{r.name}</Td>
-                <Td className="text-muted">{r.description}</Td>
-                <Td>{r.usersCount}</Td>
-                <Td className="text-right">
-                  <EntityActionsMenu actions={actions(r)} label={t('cm.actions')} />
-                </Td>
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-      <ul className="flex flex-col gap-3 md:hidden">
-        {list.map((r) => (
-          <li key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="min-w-0">
-              <p className="font-medium">{r.name}</p>
-              <p className="text-sm text-muted">{r.description}</p>
-              <p className="mt-1 text-xs text-muted">{t('roles.users', { count: String(r.usersCount) })}</p>
-            </div>
-            <EntityActionsMenu actions={actions(r)} label={t('cm.actions')} />
-          </li>
-        ))}
-      </ul>
+      <RolesTable roles={list} actions={actions} usersLabel={(n) => t('roles.users', { count: String(n) })} />
       {creating && <CreateRole onClose={() => setCreating(false)} />}
     </div>
   )

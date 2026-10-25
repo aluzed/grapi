@@ -19,3 +19,10 @@ export function showError<T extends FieldValues>(err: unknown, setError?: UseFor
   }
   toast.error(fallback)
 }
+
+// fieldErrorMap keys each validation message by its field (the first path
+// segment, or the last one when leaf is set).
+export function fieldErrorMap(err: unknown, leaf = false): Record<string, string> {
+  if (!(err instanceof ApiError)) return {}
+  return Object.fromEntries(err.fieldErrors().map((e) => [(leaf ? e.path[e.path.length - 1] : e.path[0]) ?? '', e.message]))
+}

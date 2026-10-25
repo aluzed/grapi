@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Save } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
 import { Table, Td, Th, Tr } from '@/components/ui/table'
 import { Tabs } from '@/components/ui/tabs'
-import { api, ApiError } from '@/lib/api'
-import { showError } from '@/lib/form'
+import { api } from '@/lib/api'
+import { fieldErrorMap, showError } from '@/lib/form'
 import { can } from '@/lib/permissions'
 import { isoToZoned, localTimeZone, timeZones, zonedToISO } from '@/lib/tz'
 import { useReleaseSettings } from '@/pages/settings/ReleaseSettings'
@@ -59,7 +60,7 @@ export function ReleaseDialog({ release, onClose, onSaved }: { release: Release 
       onSaved?.(r)
     },
     onError: (err) => {
-      if (err instanceof ApiError) setErrors(Object.fromEntries(err.fieldErrors().map((e) => [e.path[0] ?? '', e.message])))
+      setErrors(fieldErrorMap(err))
       showError(err, undefined, t('common.error'))
     },
   })
@@ -69,16 +70,7 @@ export function ReleaseDialog({ release, onClose, onSaved }: { release: Release 
       title={release ? release.name : t('releases.create')}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('common.save')} icon={<Save className="h-4 w-4" />} loading={save.isPending} disabled={scheduled && !at} onClick={() => save.mutate()} className="w-full md:w-auto">
-            {t('common.save')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={() => save.mutate()} loading={save.isPending} disabled={scheduled && !at} />}
     >
       <div className="flex flex-col gap-4">
         <TextField label={t('releases.name')} value={name} error={errors.name} onChange={(e) => setName(e.target.value)} />

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowLeft, ArrowUp, Plus, Save, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Save, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Checkbox, SelectField, TextField } from '@/components/ui/field'
@@ -114,11 +115,7 @@ function Configure({ model }: { model: Model }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-4">
-        <div>
-          <Button variant="outline" title={t('cfg.back')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(listPath)} className="w-full md:w-auto">
-            {t('cfg.back')}
-          </Button>
-        </div>
+        <BackButton label={t('cfg.back')} onClick={() => navigate(listPath)} />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t('cfg.title')}</h1>

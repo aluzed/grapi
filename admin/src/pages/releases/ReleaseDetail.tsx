@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ExternalLink, Pencil, Rocket, Trash2 } from 'lucide-react'
+import { ExternalLink, Pencil, Rocket, Trash2 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EntityActionsMenu, type EntityAction } from '@/components/ui/entity-actions-menu'
@@ -96,11 +97,7 @@ export function ReleaseDetail() {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-4">
-        <div>
-          <Button variant="outline" title={t('releases.back')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate('/releases')} className="w-full md:w-auto">
-            {t('releases.back')}
-          </Button>
-        </div>
+        <BackButton label={t('releases.back')} onClick={() => navigate('/releases')} />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">{r?.name ?? '-'}</h1>

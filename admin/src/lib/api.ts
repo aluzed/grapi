@@ -43,13 +43,18 @@ async function send(method: string, path: string, body?: unknown, withAuth = tru
   })
 }
 
-async function parse<T>(res: Response): Promise<T> {
+// readBody returns the whole JSON envelope, or throws the API error it holds.
+async function readBody(res: Response): Promise<{ data?: unknown; meta?: unknown } | null> {
   const json = await res.json().catch(() => null)
   if (!res.ok) {
     const e = json?.error ?? {}
     throw new ApiError(res.status, e.name ?? 'Error', e.message ?? res.statusText, e.details ?? {})
   }
-  return json?.data as T
+  return json
+}
+
+async function parse<T>(res: Response): Promise<T> {
+  return (await readBody(res))?.data as T
 }
 
 // refresh exchanges the httpOnly refresh cookie for a new access token. One
@@ -75,31 +80,24 @@ export function refresh(): Promise<boolean> {
   return refreshing
 }
 
+// withRefresh sends, and on a 401 sends again once the access token is
+// rotated.
+async function withRefresh(send: () => Promise<Response>): Promise<Response> {
+  const res = await send()
+  if (res.status !== 401 || accessToken === null) return res
+  if (await refresh()) return send()
+  onSessionLost()
+  return res
+}
+
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  let res = await send(method, path, body)
-  if (res.status === 401 && accessToken !== null) {
-    if (await refresh()) {
-      res = await send(method, path, body)
-    } else {
-      onSessionLost()
-    }
-  }
-  return parse<T>(res)
+  return parse<T>(await withRefresh(() => send(method, path, body)))
 }
 
 // requestWithMeta returns data and meta (paginated lists).
 export async function requestWithMeta<T, M>(path: string): Promise<{ data: T; meta: M }> {
-  let res = await send('GET', path)
-  if (res.status === 401 && accessToken !== null) {
-    if (await refresh()) res = await send('GET', path)
-    else onSessionLost()
-  }
-  const json = await res.json().catch(() => null)
-  if (!res.ok) {
-    const e = json?.error ?? {}
-    throw new ApiError(res.status, e.name ?? 'Error', e.message ?? res.statusText, e.details ?? {})
-  }
-  return { data: json.data as T, meta: json.meta as M }
+  const json = await readBody(await withRefresh(() => send('GET', path)))
+  return { data: json?.data as T, meta: json?.meta as M }
 }
 
 // upload posts a multipart form, with the same refresh-on-401 as request.
@@ -130,23 +128,12 @@ export async function upload<T>(path: string, form: FormData, options?: UploadOp
     options
       ? xhrPost(`${apiBase()}${path}`, form, options)
       : fetch(`${apiBase()}${path}`, { method: 'POST', credentials: 'same-origin', headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, body: form })
-  let res = await post()
-  if (res.status === 401 && accessToken !== null) {
-    if (await refresh()) res = await post()
-    else onSessionLost()
-  }
-  const json = await res.json().catch(() => null)
-  if (!res.ok) {
-    const e = json?.error ?? {}
-    throw new ApiError(res.status, e.name ?? 'Error', e.message ?? res.statusText, e.details ?? {})
-  }
-  return json as T
+  return (await readBody(await withRefresh(post))) as T
 }
 
 // download saves an authenticated GET as a file.
 export async function download(path: string, filename: string) {
-  let res = await send('GET', path)
-  if (res.status === 401 && accessToken !== null && (await refresh())) res = await send('GET', path)
+  const res = await withRefresh(() => send('GET', path))
   if (!res.ok) throw new ApiError(res.status, 'Error', res.statusText, {})
   const url = URL.createObjectURL(await res.blob())
   const a = document.createElement('a')

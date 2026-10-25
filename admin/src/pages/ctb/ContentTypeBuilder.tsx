@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Save, Trash2, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
+import { DialogActions } from '@/components/DialogActions'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -61,16 +62,7 @@ function TypeDialog({ initial, kind, onClose, onDone }: { initial: SchemaFile | 
       title={title}
       onClose={onClose}
       closeLabel={t('common.cancel')}
-      footer={
-        <>
-          <Button variant="outline" title={t('common.cancel')} onClick={onClose} className="w-full md:w-auto">
-            {t('common.cancel')}
-          </Button>
-          <Button title={t('ctb.done')} icon={<Pencil className="h-4 w-4" />} disabled={!displayName || (component ? !category : !singular || !plural)} onClick={done} className="w-full md:w-auto">
-            {t('ctb.done')}
-          </Button>
-        </>
-      }
+      footer={<DialogActions onCancel={onClose} onConfirm={done} label={t('ctb.done')} icon={<Pencil className="h-4 w-4" />} disabled={!displayName || (component ? !category : !singular || !plural)} />}
     >
       <div className="flex flex-col gap-4">
         <TextField label={t('ctb.displayName')} value={displayName} autoFocus onChange={(e) => auto(e.target.value)} />

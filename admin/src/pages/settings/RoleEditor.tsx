@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Save, SlidersHorizontal } from 'lucide-react'
+import { Save, SlidersHorizontal } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { BackButton } from '@/components/BackButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -137,11 +138,7 @@ export function RoleEditor() {
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-4">
-        <div>
-          <Button variant="outline" title={t('roles.back')} icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate('/settings/roles')} className="w-full md:w-auto">
-            {t('roles.back')}
-          </Button>
-        </div>
+        <BackButton label={t('roles.back')} onClick={() => navigate('/settings/roles')} />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">{role.data?.name ?? '-'}</h1>
           {editable && (
