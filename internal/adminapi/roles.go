@@ -87,7 +87,7 @@ type roleBody struct {
 func (s *Server) checkRoleName(ctx context.Context, name string, except any) []FieldError {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return []FieldError{{Path: []string{"name"}, Message: "name is a required field"}}
+		return []FieldError{required("name")}
 	}
 	if len(name) > 255 {
 		return []FieldError{{Path: []string{"name"}, Message: "name must be at most 255 characters"}}

@@ -273,6 +273,15 @@ func (c *Config) String(path string) (string, bool) {
 	return s, ok
 }
 
+// StringOrEnv reads a string, falling back to the env variable key when it
+// is empty or absent.
+func (c *Config) StringOrEnv(path, key string) string {
+	if s, _ := c.String(path); s != "" {
+		return s
+	}
+	return c.Env[key]
+}
+
 // Int reads an integer.
 func (c *Config) Int(path string) (int, bool) {
 	switch x := c.Get(path).(type) {

@@ -133,7 +133,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request, me *User, _ 
 	b.Email = normalizeEmail(b.Email)
 	var errs []FieldError
 	if strings.TrimSpace(b.Firstname) == "" {
-		errs = append(errs, FieldError{Path: []string{"firstname"}, Message: "firstname is a required field"})
+		errs = append(errs, required("firstname"))
 	}
 	errs = append(errs, checkEmail("email", b.Email)...)
 	if len(b.Roles) == 0 {
@@ -200,45 +200,20 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request, me *User, _ 
 		return err
 	}
 	var b struct {
-		Firstname *string  `json:"firstname"`
-		Lastname  *string  `json:"lastname"`
-		Username  *string  `json:"username"`
-		Email     *string  `json:"email"`
-		IsActive  *bool    `json:"isActive"`
-		Blocked   *bool    `json:"blocked"`
-		Roles     *[]int64 `json:"roles"`
-		Password  string   `json:"password"`
+		profileBody
+		IsActive *bool    `json:"isActive"`
+		Blocked  *bool    `json:"blocked"`
+		Roles    *[]int64 `json:"roles"`
+		Password string   `json:"password"`
 	}
 	if err := decode(r, &b); err != nil {
 		return err
 	}
 	ctx := r.Context()
 	set := query.Data{}
-	var errs []FieldError
-	if b.Firstname != nil {
-		if strings.TrimSpace(*b.Firstname) == "" {
-			errs = append(errs, FieldError{Path: []string{"firstname"}, Message: "firstname is a required field"})
-		}
-		set["firstname"] = *b.Firstname
-	}
-	if b.Lastname != nil {
-		set["lastname"] = nullable(*b.Lastname)
-	}
-	if b.Username != nil {
-		set["username"] = nullable(*b.Username)
-	}
-	if b.Email != nil {
-		e := normalizeEmail(*b.Email)
-		if fe := checkEmail("email", e); fe != nil {
-			errs = append(errs, fe...)
-		} else if e != target.Email {
-			if other, err := s.findUser(ctx, map[string]any{"email": e}); err != nil {
-				return err
-			} else if other != nil {
-				errs = append(errs, FieldError{Path: []string{"email"}, Message: "Email already taken"})
-			}
-		}
-		set["email"] = e
+	errs, err := s.setProfile(ctx, b.profileBody, target.Email, set)
+	if err != nil {
+		return err
 	}
 	if b.Password != "" {
 		errs = append(errs, checkPassword("password", b.Password)...)

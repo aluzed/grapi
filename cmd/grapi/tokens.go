@@ -67,12 +67,9 @@ func apiTokenCreate(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	defer func() { _ = p.DB.Close() }()
-	salt, _ := p.Conf.String("admin.apiToken.salt")
-	if salt == "" {
-		salt = p.Conf.Env["API_TOKEN_SALT"]
-	}
-	if salt == "" {
-		return errors.New("admin.apiToken.salt (API_TOKEN_SALT) is not set")
+	salt, err := tokenSalt(p)
+	if err != nil {
+		return err
 	}
 	ctx := context.Background()
 	if n, err := e.Count(ctx, apiTokenUID, query.Params{Where: map[string]any{"name": *name}}); err != nil || n > 0 {
@@ -144,6 +141,13 @@ func apiTokenList(args []string, stdout, stderr io.Writer) error {
 	return w.Flush()
 }
 
+func tokenSalt(p *project.Project) (string, error) {
+	if salt := p.Conf.StringOrEnv("admin.apiToken.salt", "API_TOKEN_SALT"); salt != "" {
+		return salt, nil
+	}
+	return "", errors.New("admin.apiToken.salt (API_TOKEN_SALT) is not set")
+}
+
 // newAccessKey is the api-token service's key, see apitoken.New.
 func newAccessKey(p *project.Project, salt string) (string, query.Data, error) {
 	secret, _ := p.Conf.String("admin.secrets.encryptionKey")
@@ -167,12 +171,9 @@ func apiTokenRegenerate(args []string, stdout, stderr io.Writer) error {
 		return err
 	}
 	defer func() { _ = p.DB.Close() }()
-	salt, _ := p.Conf.String("admin.apiToken.salt")
-	if salt == "" {
-		salt = p.Conf.Env["API_TOKEN_SALT"]
-	}
-	if salt == "" {
-		return errors.New("admin.apiToken.salt (API_TOKEN_SALT) is not set")
+	salt, err := tokenSalt(p)
+	if err != nil {
+		return err
 	}
 	accessKey, keys, err := newAccessKey(p, salt)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aluzed/grapi/internal/jsnum"
 )
 
 // Env is the process environment as Strapi's env() helper sees it: a key
@@ -82,42 +84,6 @@ func parseDotenvLine(line string) (string, string, bool) {
 	return k, v, true
 }
 
-// parseInt is JavaScript's parseInt(s, 10): NaN when no digit leads.
-func parseInt(s string) float64 {
-	t := strings.TrimLeft(s, " \t\n\r\v\f")
-	end := 0
-	if end < len(t) && (t[end] == '+' || t[end] == '-') {
-		end++
-	}
-	digits := end
-	for end < len(t) && t[end] >= '0' && t[end] <= '9' {
-		end++
-	}
-	if end == digits {
-		return math.NaN()
-	}
-	f, _ := strconv.ParseFloat(t[:end], 64)
-	return f
-}
-
-var floatPrefix = regexp.MustCompile(`^[+-]?(Infinity|(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?)`)
-
-// parseFloat is JavaScript's parseFloat: the longest numeric prefix.
-func parseFloat(s string) float64 {
-	m := floatPrefix.FindString(strings.TrimLeft(s, " \t\n\r\v\f"))
-	switch strings.TrimLeft(m, "+-") {
-	case "":
-		return math.NaN()
-	case "Infinity":
-		if strings.HasPrefix(m, "-") {
-			return math.Inf(-1)
-		}
-		return math.Inf(1)
-	}
-	f, _ := strconv.ParseFloat(m, 64)
-	return f
-}
-
 // number turns a JS number into the int a typed config expects when it
 // is one.
 func number(f float64) any {
@@ -169,9 +135,9 @@ func (e Env) envCall(fn, key, def string, hasDef bool, choices []string) (any, e
 	case "":
 		return raw, nil
 	case "int":
-		return number(parseInt(raw)), nil
+		return number(jsnum.ParseInt(raw)), nil
 	case "float":
-		return number(parseFloat(raw)), nil
+		return number(jsnum.ParseFloat(raw)), nil
 	case "bool":
 		return raw == "true", nil
 	case "json":

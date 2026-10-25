@@ -151,7 +151,7 @@ func (b *registerAdminBody) validate() []FieldError {
 	var errs []FieldError
 	b.Email = normalizeEmail(b.Email)
 	if strings.TrimSpace(b.Firstname) == "" {
-		errs = append(errs, FieldError{Path: []string{"firstname"}, Message: "firstname is a required field"})
+		errs = append(errs, required("firstname"))
 	}
 	errs = append(errs, checkEmail("email", b.Email)...)
 	return append(errs, checkPassword("password", b.Password)...)
@@ -414,7 +414,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) error {
 	}
 	var errs []FieldError
 	if strings.TrimSpace(b.UserInfo.Firstname) == "" {
-		errs = append(errs, FieldError{Path: []string{"userInfo", "firstname"}, Message: "firstname is a required field"})
+		errs = append(errs, required("userInfo", "firstname"))
 	}
 	errs = append(errs, checkPassword("password", b.UserInfo.Password)...)
 	if len(errs) > 0 {

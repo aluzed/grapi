@@ -37,6 +37,23 @@ type FilterFunc func(m *metadata.Model) any
 // Row is a row read back, keyed by attribute name in column order.
 type Row = *schema.OrderedMap[any]
 
+// Rows reads a populated relation, which comes back as []Row or []any.
+func Rows(v any) []Row {
+	switch x := v.(type) {
+	case []Row:
+		return x
+	case []any:
+		var out []Row
+		for _, e := range x {
+			if r, ok := e.(Row); ok {
+				out = append(out, r)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
 type join struct {
 	alias, table, column, rootAlias, rootColumn string
 	on                                          []entry

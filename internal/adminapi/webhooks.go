@@ -98,7 +98,7 @@ func (b *webhookBody) webhook(ctx context.Context, production bool) (webhooks.We
 	var errs []FieldError
 	b.Name = strings.TrimSpace(b.Name)
 	if b.Name == "" {
-		errs = append(errs, FieldError{Path: []string{"name"}, Message: "name is a required field"})
+		errs = append(errs, required("name"))
 	}
 	if u, err := url.Parse(b.URL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		errs = append(errs, FieldError{Path: []string{"url"}, Message: "url must be a valid http or https URL"})

@@ -32,10 +32,7 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, proxy client
 		cfg.Path = "/admin"
 	}
 	_, cfg.AdminURL = absoluteURLs(c)
-	secret, _ := c.String("admin.auth.secret")
-	if secret == "" {
-		secret = c.Env["ADMIN_JWT_SECRET"]
-	}
+	secret := c.StringOrEnv("admin.auth.secret", "ADMIN_JWT_SECRET")
 	if secret == "" {
 		var err error
 		if secret, err = generateSecret(c, dir, "ADMIN_JWT_SECRET"); err != nil {

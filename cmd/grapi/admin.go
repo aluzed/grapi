@@ -187,19 +187,9 @@ func adminListUsers(args []string, stdout, stderr io.Writer) error {
 			return v
 		}
 		var roles []string
-		switch list := get("roles").(type) {
-		case []query.Row:
-			for _, role := range list {
-				n, _ := role.Get("name")
-				roles = append(roles, fmt.Sprint(n))
-			}
-		case []any:
-			for _, e := range list {
-				if role, ok := e.(query.Row); ok {
-					n, _ := role.Get("name")
-					roles = append(roles, fmt.Sprint(n))
-				}
-			}
+		for _, role := range query.Rows(get("roles")) {
+			n, _ := role.Get("name")
+			roles = append(roles, fmt.Sprint(n))
 		}
 		name := strings.TrimSpace(fmt.Sprint(get("firstname"), " ", get("lastname")))
 		fmt.Fprintf(w, "%v\t%v\t%s\t%v\t%v\t%s\n", get("id"), get("email"), name, get("isActive"), get("blocked"), strings.Join(roles, ", "))

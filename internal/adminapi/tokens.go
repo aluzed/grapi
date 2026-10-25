@@ -1,7 +1,9 @@
 package adminapi
 
 import (
+	"context"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -126,27 +128,56 @@ type tokenBody struct {
 	Permissions []string `json:"permissions"`
 }
 
+// checkName trims name, required on creation and never empty, and refuses
+// one that matches another row than except.
+func (s *Server) checkName(ctx context.Context, name *string, creating bool, uid string, match func(string) map[string]any, except any, taken string) ([]FieldError, error) {
+	if name != nil {
+		*name = strings.TrimSpace(*name)
+	}
+	if name == nil {
+		if creating {
+			return []FieldError{required("name")}, nil
+		}
+		return nil, nil
+	}
+	if *name == "" {
+		return []FieldError{required("name")}, nil
+	}
+	where := match(*name)
+	if except != nil {
+		where["id"] = map[string]any{"$ne": except}
+	}
+	n, err := s.e.Count(ctx, uid, query.Params{Where: where})
+	if err != nil || n == 0 {
+		return nil, err
+	}
+	return []FieldError{{Path: []string{"name"}, Message: taken}}, nil
+}
+
+func (s *Server) unknownActions(actions []string) []FieldError {
+	var known []string
+	if s.cfg.ContentActions != nil {
+		known = s.cfg.ContentActions()
+	}
+	var errs []FieldError
+	for i, a := range actions {
+		if !slices.Contains(known, a) {
+			errs = append(errs, FieldError{Path: []string{"permissions", strconv.Itoa(i)}, Message: "Unknown action " + a})
+		}
+	}
+	return errs
+}
+
 // check validates the body; name is required on creation.
 func (s *Server) check(r *http.Request, b *tokenBody, creating bool, except any) error {
-	var errs []FieldError
-	if b.Name != nil {
-		*b.Name = strings.TrimSpace(*b.Name)
-	}
-	if creating && (b.Name == nil || *b.Name == "") || b.Name != nil && *b.Name == "" {
-		errs = append(errs, FieldError{Path: []string{"name"}, Message: "name is a required field"})
-	} else if b.Name != nil {
-		where := map[string]any{"name": *b.Name, "kind": "content-api"}
-		if except != nil {
-			where["id"] = map[string]any{"$ne": except}
-		}
-		if n, err := s.e.Count(r.Context(), apiTokenUID, query.Params{Where: where}); err != nil {
-			return err
-		} else if n > 0 {
-			errs = append(errs, FieldError{Path: []string{"name"}, Message: "Name already taken"})
-		}
+	errs, err := s.checkName(r.Context(), b.Name, creating, apiTokenUID, func(n string) map[string]any {
+		return map[string]any{"name": n, "kind": "content-api"}
+	}, except, "Name already taken")
+	if err != nil {
+		return err
 	}
 	if creating && b.Type == nil {
-		errs = append(errs, FieldError{Path: []string{"type"}, Message: "type is a required field"})
+		errs = append(errs, required("type"))
 	}
 	if b.Type != nil && *b.Type != "read-only" && *b.Type != "full-access" && *b.Type != "custom" {
 		errs = append(errs, FieldError{Path: []string{"type"}, Message: "type must be one of read-only, full-access, custom"})
@@ -154,17 +185,7 @@ func (s *Server) check(r *http.Request, b *tokenBody, creating bool, except any)
 	if b.Lifespan != nil && !apitoken.Lifespans[*b.Lifespan] {
 		errs = append(errs, FieldError{Path: []string{"lifespan"}, Message: "lifespan must be 7, 30, 90 days or unlimited"})
 	}
-	known := map[string]bool{}
-	if s.cfg.ContentActions != nil {
-		for _, a := range s.cfg.ContentActions() {
-			known[a] = true
-		}
-	}
-	for i, a := range b.Permissions {
-		if !known[a] {
-			errs = append(errs, FieldError{Path: []string{"permissions", strconv.Itoa(i)}, Message: "Unknown action " + a})
-		}
-	}
+	errs = append(errs, s.unknownActions(b.Permissions)...)
 	if len(errs) > 0 {
 		return validation(errs)
 	}

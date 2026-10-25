@@ -273,6 +273,10 @@ type FieldError struct {
 	Message string   `json:"message"`
 }
 
+func required(path ...string) FieldError {
+	return FieldError{Path: path, Message: path[len(path)-1] + " is a required field"}
+}
+
 func validation(errs []FieldError) *Error {
 	msg := errs[0].Message
 	if len(errs) > 1 {

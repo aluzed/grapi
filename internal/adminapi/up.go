@@ -3,7 +3,6 @@ package adminapi
 import (
 	"context"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -123,32 +122,13 @@ type upRoleBody struct {
 }
 
 func (s *Server) upCheck(r *http.Request, b *upRoleBody, creating bool, except any) error {
-	var errs []FieldError
-	if b.Name != nil {
-		*b.Name = strings.TrimSpace(*b.Name)
+	errs, err := s.checkName(r.Context(), b.Name, creating, upRoleUID, func(n string) map[string]any {
+		return map[string]any{"name": map[string]any{"$eqi": n}}
+	}, except, "A role with this name already exists")
+	if err != nil {
+		return err
 	}
-	if creating && (b.Name == nil || *b.Name == "") || b.Name != nil && *b.Name == "" {
-		errs = append(errs, FieldError{Path: []string{"name"}, Message: "name is a required field"})
-	} else if b.Name != nil {
-		where := map[string]any{"name": map[string]any{"$eqi": *b.Name}}
-		if except != nil {
-			where["id"] = map[string]any{"$ne": except}
-		}
-		if n, err := s.e.Count(r.Context(), upRoleUID, query.Params{Where: where}); err != nil {
-			return err
-		} else if n > 0 {
-			errs = append(errs, FieldError{Path: []string{"name"}, Message: "A role with this name already exists"})
-		}
-	}
-	var known []string
-	if s.cfg.ContentActions != nil {
-		known = s.cfg.ContentActions()
-	}
-	for i, a := range b.Permissions {
-		if !slices.Contains(known, a) {
-			errs = append(errs, FieldError{Path: []string{"permissions", strconv.Itoa(i)}, Message: "Unknown action " + a})
-		}
-	}
+	errs = append(errs, s.unknownActions(b.Permissions)...)
 	if len(errs) > 0 {
 		return validation(errs)
 	}

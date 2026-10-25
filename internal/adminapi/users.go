@@ -86,22 +86,6 @@ func getBool(r query.Row, k string) bool {
 	return false
 }
 
-func rows(v any) []query.Row {
-	switch x := v.(type) {
-	case []query.Row:
-		return x
-	case []any:
-		var out []query.Row
-		for _, e := range x {
-			if r, ok := e.(query.Row); ok {
-				out = append(out, r)
-			}
-		}
-		return out
-	}
-	return nil
-}
-
 func roleFromRow(r query.Row) Role {
 	return Role{ID: get(r, "id"), Name: getString(r, "name"), Code: getString(r, "code"), Description: getString(r, "description")}
 }
@@ -113,7 +97,7 @@ func userFromRow(r query.Row) *User {
 		PreferedLanguage: getString(r, "preferedLanguage"), CreatedAt: get(r, "createdAt"), UpdatedAt: get(r, "updatedAt"),
 		password: getString(r, "password"), Roles: []Role{},
 	}
-	for _, role := range rows(get(r, "roles")) {
+	for _, role := range query.Rows(get(r, "roles")) {
 		u.Roles = append(u.Roles, roleFromRow(role))
 	}
 	return u

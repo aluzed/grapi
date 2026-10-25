@@ -118,15 +118,9 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 	if wc, ok := c.Bool("api.rest.withCount"); ok {
 		cfg.WithCount = &wc
 	}
-	cfg.APITokenSalt, _ = c.String("admin.apiToken.salt")
-	if cfg.APITokenSalt == "" {
-		cfg.APITokenSalt = c.Env["API_TOKEN_SALT"]
-	}
+	cfg.APITokenSalt = c.StringOrEnv("admin.apiToken.salt", "API_TOKEN_SALT")
 	up := "plugins.users-permissions.config."
-	cfg.Users.JWTSecret, _ = c.String(up + "jwtSecret")
-	if cfg.Users.JWTSecret == "" {
-		cfg.Users.JWTSecret = c.Env["JWT_SECRET"]
-	}
+	cfg.Users.JWTSecret = c.StringOrEnv(up+"jwtSecret", "JWT_SECRET")
 	cfg.Users.JWTExpiresIn, _ = c.String(up + "jwt.expiresIn")
 	if n, ok := c.Int(up + "jwt.expiresIn"); ok {
 		cfg.Users.JWTExpiresIn = strconv.Itoa(n)

@@ -119,6 +119,22 @@ func (s *Server) loadRelease(ctx context.Context, id int64) (*Release, error) {
 	return r, rows.Err()
 }
 
+// openRelease loads the release of the path, refusing one already published.
+func (s *Server) openRelease(r *http.Request) (*Release, error) {
+	id, err := releaseID(r, "id")
+	if err != nil {
+		return nil, err
+	}
+	rel, err := s.loadRelease(r.Context(), id)
+	if err != nil {
+		return nil, err
+	}
+	if rel.ReleasedAt != nil {
+		return nil, errReleased
+	}
+	return rel, nil
+}
+
 func releaseID(r *http.Request, key string) (int64, error) {
 	id, err := strconv.ParseInt(r.PathValue(key), 10, 64)
 	if err != nil {
@@ -308,7 +324,7 @@ func (s *Server) createRelease(w http.ResponseWriter, r *http.Request, u *User, 
 		return err
 	}
 	if b.Name == nil || strings.TrimSpace(*b.Name) == "" {
-		return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
+		return validation([]FieldError{required("name")})
 	}
 	at, tz, err := s.scheduled(r.Context(), b)
 	if err != nil {
@@ -350,18 +366,11 @@ func (s *Server) getRelease(w http.ResponseWriter, r *http.Request, _ *User, _ *
 var errReleased = &Error{Status: http.StatusConflict, Name: "ConflictError", Message: "This release is published and cannot change"}
 
 func (s *Server) updateRelease(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
-	id, err := releaseID(r, "id")
+	rel, err := s.openRelease(r)
 	if err != nil {
 		return err
 	}
-	ctx := r.Context()
-	rel, err := s.loadRelease(ctx, id)
-	if err != nil {
-		return err
-	}
-	if rel.ReleasedAt != nil {
-		return errReleased
-	}
+	id, ctx := rel.ID, r.Context()
 	var b releaseBody
 	if err := decode(r, &b); err != nil {
 		return err
@@ -408,18 +417,11 @@ func (s *Server) deleteRelease(w http.ResponseWriter, r *http.Request, u *User, 
 }
 
 func (s *Server) addReleaseAction(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
-	id, err := releaseID(r, "id")
+	rel, err := s.openRelease(r)
 	if err != nil {
 		return err
 	}
-	ctx := r.Context()
-	rel, err := s.loadRelease(ctx, id)
-	if err != nil {
-		return err
-	}
-	if rel.ReleasedAt != nil {
-		return errReleased
-	}
+	id, ctx := rel.ID, r.Context()
 	var b struct {
 		Type       string `json:"type"`
 		UID        string `json:"uid"`
@@ -474,22 +476,15 @@ func (s *Server) addReleaseAction(w http.ResponseWriter, r *http.Request, u *Use
 }
 
 func (s *Server) removeReleaseAction(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
-	id, err := releaseID(r, "id")
-	if err != nil {
-		return err
-	}
 	actionID, err := releaseID(r, "actionId")
 	if err != nil {
 		return err
 	}
-	ctx := r.Context()
-	rel, err := s.loadRelease(ctx, id)
+	rel, err := s.openRelease(r)
 	if err != nil {
 		return err
 	}
-	if rel.ReleasedAt != nil {
-		return errReleased
-	}
+	id, ctx := rel.ID, r.Context()
 	if _, err := s.e.DB.Exec(ctx, fmt.Sprintf(`delete from %s where id = %s and release_id = %s`, s.q(actionsTable), s.ph(1), s.ph(2)), actionID, id); err != nil {
 		return err
 	}
@@ -594,18 +589,11 @@ func (s *Server) emitRelease(ctx context.Context, id int64, published bool) {
 }
 
 func (s *Server) publishReleaseHandler(w http.ResponseWriter, r *http.Request, u *User, a *permissions.Ability) error {
-	id, err := releaseID(r, "id")
+	rel, err := s.openRelease(r)
 	if err != nil {
 		return err
 	}
-	ctx := r.Context()
-	rel, err := s.loadRelease(ctx, id)
-	if err != nil {
-		return err
-	}
-	if rel.ReleasedAt != nil {
-		return errReleased
-	}
+	id, ctx := rel.ID, r.Context()
 	for _, x := range rel.Actions {
 		if !canPublish(a, x.UID, deref(x.Locale)) {
 			return errForbidden

@@ -1,6 +1,7 @@
 package adminapi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -23,24 +24,20 @@ func (s *Server) meRoutes() {
 	s.authed("GET /information", s.information)
 }
 
-func (s *Server) updateMe(w http.ResponseWriter, r *http.Request, u *User) error {
-	var b struct {
-		Firstname        *string `json:"firstname"`
-		Lastname         *string `json:"lastname"`
-		Username         *string `json:"username"`
-		Email            *string `json:"email"`
-		PreferedLanguage *string `json:"preferedLanguage"`
-		CurrentPassword  string  `json:"currentPassword"`
-		Password         string  `json:"password"`
-	}
-	if err := decode(r, &b); err != nil {
-		return err
-	}
-	set := query.Data{}
+type profileBody struct {
+	Firstname *string `json:"firstname"`
+	Lastname  *string `json:"lastname"`
+	Username  *string `json:"username"`
+	Email     *string `json:"email"`
+}
+
+// setProfile puts the profile fields of b into set; email is the user's
+// current one, which stays free to keep.
+func (s *Server) setProfile(ctx context.Context, b profileBody, email string, set query.Data) ([]FieldError, error) {
 	var errs []FieldError
 	if b.Firstname != nil {
 		if strings.TrimSpace(*b.Firstname) == "" {
-			errs = append(errs, FieldError{Path: []string{"firstname"}, Message: "firstname is a required field"})
+			errs = append(errs, required("firstname"))
 		}
 		set["firstname"] = *b.Firstname
 	}
@@ -50,21 +47,39 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request, u *User) error
 	if b.Username != nil {
 		set["username"] = nullable(*b.Username)
 	}
-	ctx := r.Context()
 	if b.Email != nil {
 		e := normalizeEmail(*b.Email)
 		if fe := checkEmail("email", e); fe != nil {
 			errs = append(errs, fe...)
-		} else if e != u.Email {
+		} else if e != email {
 			other, err := s.findUser(ctx, map[string]any{"email": e})
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if other != nil {
 				errs = append(errs, FieldError{Path: []string{"email"}, Message: "Email already taken"})
 			}
 		}
 		set["email"] = e
+	}
+	return errs, nil
+}
+
+func (s *Server) updateMe(w http.ResponseWriter, r *http.Request, u *User) error {
+	var b struct {
+		profileBody
+		PreferedLanguage *string `json:"preferedLanguage"`
+		CurrentPassword  string  `json:"currentPassword"`
+		Password         string  `json:"password"`
+	}
+	if err := decode(r, &b); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	set := query.Data{}
+	errs, err := s.setProfile(ctx, b.profileBody, u.Email, set)
+	if err != nil {
+		return err
 	}
 	if b.PreferedLanguage != nil {
 		if *b.PreferedLanguage != "" && !contains(Languages, *b.PreferedLanguage) {

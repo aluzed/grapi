@@ -107,19 +107,7 @@ func (s *Server) roleWithPermissions(ctx context.Context, id any) (query.Row, er
 
 func permissionRows(role query.Row) []query.Row {
 	v, _ := role.Get("permissions")
-	switch x := v.(type) {
-	case []query.Row:
-		return x
-	case []any:
-		var out []query.Row
-		for _, e := range x {
-			if r, ok := e.(query.Row); ok {
-				out = append(out, r)
-			}
-		}
-		return out
-	}
-	return nil
+	return query.Rows(v)
 }
 
 func (s *Server) roleFindOne(w http.ResponseWriter, r *http.Request, rc *requestContext) error {
@@ -316,7 +304,7 @@ func (s *Server) roleDelete(w http.ResponseWriter, r *http.Request, rc *requestC
 		return errRoleNotFound
 	}
 	users, _ := role.Get("users")
-	for _, u := range toRowList(users) {
+	for _, u := range query.Rows(users) {
 		uid, _ := u.Get("id")
 		if _, err := s.docs.E.Update(ctx, userUID, map[string]any{"id": uid}, query.Data{"role": publicID}, query.Params{}); err != nil {
 			return err
@@ -333,21 +321,5 @@ func (s *Server) roleDelete(w http.ResponseWriter, r *http.Request, rc *requestC
 		return err
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
-	return nil
-}
-
-func toRowList(v any) []query.Row {
-	switch x := v.(type) {
-	case []query.Row:
-		return x
-	case []any:
-		var out []query.Row
-		for _, e := range x {
-			if r, ok := e.(query.Row); ok {
-				out = append(out, r)
-			}
-		}
-		return out
-	}
 	return nil
 }

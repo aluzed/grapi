@@ -314,7 +314,7 @@ func (s *Server) updateFile(w http.ResponseWriter, r *http.Request, u *User, a *
 	set := query.Data{"updatedBy": u.ID}
 	if b.Name != nil {
 		if strings.TrimSpace(*b.Name) == "" {
-			return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
+			return validation([]FieldError{required("name")})
 		}
 		set["name"] = *b.Name
 	}
@@ -475,7 +475,7 @@ func (s *Server) createFolder(w http.ResponseWriter, r *http.Request, u *User, _
 	}
 	name := strings.TrimSpace(b.Name)
 	if name == "" {
-		return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
+		return validation([]FieldError{required("name")})
 	}
 	ctx := r.Context()
 	parentPath := ""
@@ -558,7 +558,7 @@ func (s *Server) renameFolder(w http.ResponseWriter, r *http.Request, u *User, _
 	}
 	name := strings.TrimSpace(b.Name)
 	if name == "" {
-		return validation([]FieldError{{Path: []string{"name"}, Message: "name is a required field"}})
+		return validation([]FieldError{required("name")})
 	}
 	ctx := r.Context()
 	parent, err := s.e.FindOne(ctx, folderUID, query.Params{Where: map[string]any{"id": get(row, "id")}, Populate: map[string]any{"parent": true}})
