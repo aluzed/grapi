@@ -208,6 +208,7 @@ func apiConfig(c *config.Config, dir string) httpapi.Config {
 		sort.Slice(cfg.Upload.Breakpoints, func(i, j int) bool { return cfg.Upload.Breakpoints[i].Size > cfg.Upload.Breakpoints[j].Size })
 	}
 	cfg.ServerURL, cfg.AdminURL = absoluteURLs(c)
+	cfg.RootRedirect = adminConfigURL(c)
 	if e, err := emailService(c); err == nil {
 		cfg.Email = e
 	}
@@ -426,6 +427,24 @@ func absoluteURLs(c *config.Config) (string, string) {
 		return server, adminURL
 	}
 	return server, strings.TrimRight(server, "/") + "/" + strings.TrimLeft(adminURL, "/")
+}
+
+// adminConfigURL is the admin.url of Strapi's getConfigUrls.
+func adminConfigURL(c *config.Config) string {
+	serverURL, _ := c.String("server.url")
+	serverURL = strings.Trim(serverURL, "/ ")
+	if serverURL != "" && !strings.HasPrefix(serverURL, "http") {
+		serverURL = "/" + serverURL
+	}
+	adminURL, ok := c.String("admin.url")
+	if !ok {
+		adminURL = "/admin"
+	}
+	adminURL = strings.Trim(adminURL, "/ ")
+	if strings.HasPrefix(adminURL, "http") {
+		return adminURL
+	}
+	return serverURL + "/" + adminURL
 }
 
 // emailService reads plugins.email.config: nodemailer (smtp) or sendmail,

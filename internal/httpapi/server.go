@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"github.com/aluzed/grapi/internal/auth/session"
@@ -44,6 +45,9 @@ type Config struct {
 	Email *email.Service
 	// ServerURL and AdminURL are server.absoluteUrl and admin.absoluteUrl.
 	ServerURL, AdminURL string
+	// RootRedirect is admin.url as Strapi resolves it (relative when
+	// server.url is): GET / redirects there.
+	RootRedirect string
 	// Sanitizers are the registered content API sanitizers.
 	Sanitizers Sanitizers
 	// CoreRouters are createCoreRouter's only and except, by content type.
@@ -297,8 +301,14 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 		s.serve(w, r, rt, params)
 		return
 	}
-	if (r.Method == http.MethodGet || r.Method == http.MethodHead) && s.servePublic(w, r) {
-		return
+	if r.Method == http.MethodGet || r.Method == http.MethodHead {
+		if r.URL.Path == "/" && s.cfg.RootRedirect != "" {
+			redirect(w, r, s.cfg.RootRedirect)
+			return
+		}
+		if s.servePublic(w, r) {
+			return
+		}
 	}
 	// Strapi serves public files on GET /*, so any other method on an
 	// unknown path is a 405.
@@ -313,6 +323,52 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeError(w, errNotFound, s.log)
+}
+
+var escapeHTML = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&#39;")
+
+// redirect is Koa's ctx.redirect: a 302 whose body is HTML only when the
+// client accepts it.
+func redirect(w http.ResponseWriter, r *http.Request, url string) {
+	w.Header().Set("Location", url)
+	body := "Redirecting to " + url + "."
+	if acceptsHTML(r.Header.Get("Accept")) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		body = "Redirecting to " + escapeHTML.Replace(url) + "."
+	} else {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	}
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.WriteHeader(http.StatusFound)
+	if r.Method != http.MethodHead {
+		_, _ = io.WriteString(w, body)
+	}
+}
+
+// acceptsHTML is Koa's ctx.accepts("html"): no Accept header accepts
+// anything.
+func acceptsHTML(accept string) bool {
+	if strings.TrimSpace(accept) == "" {
+		return true
+	}
+	for _, part := range strings.Split(accept, ",") {
+		params := strings.Split(part, ";")
+		switch strings.ToLower(strings.TrimSpace(params[0])) {
+		case "text/html", "text/*", "*/*":
+		default:
+			continue
+		}
+		q := 1.0
+		for _, p := range params[1:] {
+			if k, v, ok := strings.Cut(strings.TrimSpace(p), "="); ok && strings.EqualFold(k, "q") {
+				q, _ = strconv.ParseFloat(v, 64)
+			}
+		}
+		if q > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) serve(w http.ResponseWriter, r *http.Request, rt *route, params map[string]string) {
