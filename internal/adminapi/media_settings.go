@@ -124,6 +124,9 @@ var cgnat = func() *net.IPNet { _, n, _ := net.ParseCIDR("100.64.0.0/10"); retur
 // localIP reports an address that is not reachable over the public
 // internet: loopback, private, link-local, CGNAT, unspecified or multicast.
 func localIP(ip net.IP) bool {
+	if v4 := ip.To4(); v4 != nil && v4[0] == 0 {
+		return true
+	}
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() || cgnat.Contains(ip)
 }
 

@@ -2190,6 +2190,10 @@ func TestAdminHistoryAfterFieldRemoval(t *testing.T) {
 	if u, _ := dataOf(b)["unknownFields"].(map[string]any); u["summary"] != "Old summary" {
 		t.Fatalf("the removed field is unknown: %v", dataOf(b))
 	}
+	reader := newReader(t, ts2.URL, c2, `["title"]`)
+	if status, b, _ := reader.do("GET", "/content-manager/history/versions/"+vid, ""); status != 200 || dataOf(b)["unknownFields"] != nil {
+		t.Fatalf("a reader cannot recover removed fields from history: %d %v", status, b)
+	}
 	if s, b, _ := c2.do("POST", "/content-manager/history/versions/"+vid+"/restore", ""); s != 200 {
 		t.Fatalf("restore ignores it: %d %v", s, b)
 	}
@@ -2986,6 +2990,11 @@ func TestAdminLoginRateLimit(t *testing.T) {
 	}
 	if s, b := login("Ada@example.com"); s != 429 || fmt.Sprint(b["error"]) != fmt.Sprint(map[string]any{"status": float64(429), "name": "RateLimitError", "message": "Too many requests, please try again later.", "details": map[string]any{}}) {
 		t.Fatalf("6th attempt, the email case aside: %d %v", s, b)
+	}
+	for _, email := range []string{" ada@example.com", "ada@example.com ", "  Ada@Example.com  "} {
+		if s, b := login(email); s != 429 {
+			t.Errorf("whitespace cannot bypass the login counter: %d %v", s, b)
+		}
 	}
 	if s, _ := login("bob@example.com"); s != 400 {
 		t.Fatalf("another email has its own counter: %d", s)

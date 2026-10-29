@@ -31,7 +31,7 @@ func (s *Server) rateLimited(h handler) handler {
 		_ = json.Unmarshal(body, &b)
 		email := "unknownEmail"
 		if e, ok := b.Email.(string); ok {
-			email = strings.ToLower(e)
+			email = normalizeEmail(e)
 		}
 		p := strings.TrimSuffix(strings.ToLower(path.Clean(r.URL.Path)), "/")
 		if !s.limiter.Allow(w, email+":"+p+":"+s.cfg.Proxy.IP(r), cfg, time.Now()) {

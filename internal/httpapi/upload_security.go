@@ -3,6 +3,7 @@ package httpapi
 import (
 	"fmt"
 	"mime"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -71,6 +72,39 @@ func claimsBinary(t string) bool {
 	return strings.HasPrefix(t, "image/") || strings.HasPrefix(t, "video/") || strings.HasPrefix(t, "audio/")
 }
 
+// Active content is served according to its stored extension by the local
+// provider. A caller-supplied MIME type must not bypass the policy for that
+// extension. JavaScript and XML have commonly used MIME aliases.
+func (c UploadSecurity) checkExtension(ext string) error {
+	if !c.set() {
+		return nil
+	}
+	var types []string
+	switch strings.ToLower(ext) {
+	case ".html", ".htm", ".shtml":
+		types = []string{"text/html"}
+	case ".svg", ".svgz":
+		types = []string{"image/svg+xml"}
+	case ".xhtml", ".xht":
+		types = []string{"application/xhtml+xml"}
+	case ".js", ".mjs":
+		types = []string{"application/javascript", "text/javascript"}
+	case ".xml", ".xsl":
+		types = []string{"application/xml", "text/xml"}
+	}
+	allowed := len(c.AllowedTypes) == 0
+	for _, t := range types {
+		if matchesMimePattern(t, c.DeniedTypes) {
+			return validationError(fmt.Sprintf("File type '%s' is not allowed", t), nil)
+		}
+		allowed = allowed || matchesMimePattern(t, c.AllowedTypes)
+	}
+	if len(types) > 0 && !allowed {
+		return validationError(fmt.Sprintf("File type '%s' is not allowed", types[0]), nil)
+	}
+	return nil
+}
+
 // check is validateFile: the type read from the content comes first, the
 // declared one only when the content says nothing. Unlike Strapi, a
 // declared image, video or audio type that the content does not show is
@@ -93,7 +127,7 @@ func (c UploadSecurity) check(f *inputFile) error {
 	if t != "" && !c.allows(t) {
 		return validationError(fmt.Sprintf("File type '%s' is not allowed", t), nil)
 	}
-	return nil
+	return c.checkExtension(path.Ext(f.filename))
 }
 
 // enforceUploadSecurity keeps the files the security config allows, with

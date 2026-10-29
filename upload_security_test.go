@@ -135,6 +135,23 @@ func TestUploadSecurityInvalidConfig(t *testing.T) {
 	}
 }
 
+func TestUploadSecurityChecksActiveFileExtensions(t *testing.T) {
+	ts := uploadSecurityServer(t, "upload:\n  config:\n    security:\n      deniedTypes: ['text/html', 'image/svg+xml', 'application/javascript', 'text/javascript']\n")
+	for _, file := range []upFile{
+		{"attack.html", "text/plain", []byte(`<script>alert(document.domain)</script>`)},
+		{"attack.SVG", "text/plain", []byte(`<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`)},
+		{"attack.js", "text/plain", []byte(`alert(document.domain)`)},
+	} {
+		if status, out := postFiles(t, ts, file); status != 400 {
+			t.Errorf("a false declared MIME type cannot allow %s: %d %v", file.name, status, out)
+		}
+	}
+	allowed := uploadSecurityServer(t, "upload:\n  config:\n    security:\n      allowedTypes: ['application/javascript']\n")
+	if status, out := postFiles(t, allowed, upFile{"allowed.js", "application/javascript", []byte("export const value = 1")}); status != 201 {
+		t.Fatalf("an explicitly allowed JavaScript MIME alias remains usable: %d %v", status, out)
+	}
+}
+
 func TestUploadWithoutSecurity(t *testing.T) {
 	ts := uploadSecurityServer(t, "upload:\n  config:\n    sizeLimit: 1000000\n")
 	if s, out := postFiles(t, ts, upFile{"run.sh", "text/x-sh", []byte("echo")}); s != 201 {

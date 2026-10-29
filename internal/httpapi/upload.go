@@ -523,6 +523,10 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 		hash, _ = h.(string)
 		ext, _ = e.(string)
 	}
+	// Replacement keeps the old extension, which may differ from the input.
+	if err := s.cfg.Upload.Security.checkExtension(ext); err != nil {
+		return nil, err
+	}
 	file := query.Data{
 		"name":            usedName,
 		"alternativeText": info["alternativeText"],

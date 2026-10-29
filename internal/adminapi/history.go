@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
 
+	"github.com/aluzed/grapi/internal/auth/permissions"
 	"github.com/aluzed/grapi/internal/db"
 	"github.com/aluzed/grapi/internal/document"
 	"github.com/aluzed/grapi/schema"
@@ -251,6 +253,21 @@ func (s *Server) versionAccess(r *http.Request, u *User, uid, action string) (*s
 	return ct, nil
 }
 
+// versionAllowed applies the same row and locale restrictions as the Content
+// Manager to the live document. A historical snapshot cannot grant access to
+// a document the user can no longer read or update.
+func (s *Server) versionAllowed(ctx context.Context, ct *schema.ContentType, v *HistoryVersion, a *permissions.Ability, action string) (bool, error) {
+	filter, allowed := a.Filter(action, v.UID)
+	if !allowed {
+		return false, nil
+	}
+	var locale any
+	if v.Locale != nil {
+		locale = *v.Locale
+	}
+	return s.allows(ctx, ct, v.DocumentID, locale, filter)
+}
+
 func (s *Server) authorName(ctx context.Context, id *int64, cache map[int64]map[string]any) map[string]any {
 	if id == nil {
 		return nil
@@ -274,6 +291,10 @@ func (s *Server) listVersions(w http.ResponseWriter, r *http.Request, u *User) e
 		return err
 	}
 	ctx := r.Context()
+	a, err := s.Ability(ctx, u)
+	if err != nil {
+		return err
+	}
 	q := fmt.Sprintf(`select id, locale, status, created_at, created_by_id from %s where uid = %s and document_id = %s`, s.e.DB.Dialect.Quote(historyTable), s.ph(1), s.ph(2))
 	args := []any{uid, documentID}
 	if l := r.URL.Query().Get("locale"); l != "" && ct.Localized() {
@@ -288,11 +309,27 @@ func (s *Server) listVersions(w http.ResponseWriter, r *http.Request, u *User) e
 	defer func() { _ = rows.Close() }()
 	out := []HistoryVersion{}
 	cache := map[int64]map[string]any{}
+	access := map[string]bool{}
 	for rows.Next() {
 		v := HistoryVersion{UID: uid, DocumentID: documentID}
 		var by *int64
 		if err := rows.Scan(&v.ID, &v.Locale, &v.Status, &v.CreatedAt, &by); err != nil {
 			return err
+		}
+		locale := ""
+		if v.Locale != nil {
+			locale = *v.Locale
+		}
+		allowed, checked := access[locale]
+		if !checked {
+			allowed, err = s.versionAllowed(ctx, ct, &v, a, actionRead)
+			if err != nil {
+				return err
+			}
+			access[locale] = allowed
+		}
+		if !allowed {
+			continue
 		}
 		v.CreatedBy = s.authorName(ctx, by, cache)
 		out = append(out, v)
@@ -363,7 +400,19 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request, u *User) err
 	if err != nil {
 		return err
 	}
+	if ok, err := s.versionAllowed(r.Context(), ct, v, a, actionRead); err != nil {
+		return err
+	} else if !ok {
+		return errNotFound
+	}
 	splitFields(v, ct)
+	// Removed attributes have no schema with which to sanitize their values.
+	// Keep them available only to super admins; field permissions must still
+	// apply to the names of attributes added since the snapshot.
+	if !a.IsSuperAdmin() {
+		v.Unknown = nil
+		v.Missing = slices.DeleteFunc(v.Missing, func(name string) bool { return !a.Can(actionRead, v.UID, name) })
+	}
 	v.Data = s.visible(v.Data, ct, a)
 	v.Dangling = s.prune(r.Context(), v.Data, &ct.Attributes, "")
 	return data(w, v)
@@ -477,6 +526,11 @@ func (s *Server) restoreVersion(w http.ResponseWriter, r *http.Request, u *User)
 	a, err := s.Ability(ctx, u)
 	if err != nil {
 		return err
+	}
+	if ok, err := s.versionAllowed(ctx, ct, v, a, actionUpdate); err != nil {
+		return err
+	} else if !ok {
+		return errNotFound
 	}
 	splitFields(v, ct)
 	s.prune(ctx, v.Data, &ct.Attributes, "")

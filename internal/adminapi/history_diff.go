@@ -235,6 +235,11 @@ func (s *Server) diffVersion(w http.ResponseWriter, r *http.Request, u *User) er
 	if err != nil {
 		return err
 	}
+	if ok, err := s.versionAllowed(ctx, ct, v, a, actionRead); err != nil {
+		return err
+	} else if !ok {
+		return errNotFound
+	}
 	var other map[string]any
 	against := r.URL.Query().Get("against")
 	if against == "" || against == "current" {
@@ -258,6 +263,11 @@ func (s *Server) diffVersion(w http.ResponseWriter, r *http.Request, u *User) er
 			return err
 		}
 		if o.UID != v.UID || o.DocumentID != v.DocumentID {
+			return errNotFound
+		}
+		if ok, err := s.versionAllowed(ctx, ct, o, a, actionRead); err != nil {
+			return err
+		} else if !ok {
 			return errNotFound
 		}
 		other = o.Data

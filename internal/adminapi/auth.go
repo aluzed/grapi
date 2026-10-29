@@ -184,10 +184,29 @@ func (s *Server) registerAdmin(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	row, err := s.e.Create(ctx, userUID, query.Data{
-		"firstname": b.Firstname, "lastname": nullable(b.Lastname), "email": b.Email, "password": hash,
-		"isActive": true, "blocked": false, "roles": []any{get(super, "id")},
-	}, query.Params{})
+	var row query.Row
+	err = s.e.DB.Tx(ctx, func(ctx context.Context) error {
+		// Serialize first-admin registration across server instances. SQLite
+		// has one writer; Postgres needs a row lock shared by all contenders.
+		if s.e.DB.Dialect.Name() == "postgres" {
+			var id int64
+			if err := s.e.DB.QueryRow(ctx, `select "id" from "admin_roles" where "id" = `+s.ph(1)+` for update`, get(super, "id")).Scan(&id); err != nil {
+				return err
+			}
+		}
+		n, err := s.countUsers(ctx)
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return appError("You cannot register a new super admin")
+		}
+		row, err = s.e.Create(ctx, userUID, query.Data{
+			"firstname": b.Firstname, "lastname": nullable(b.Lastname), "email": b.Email, "password": hash,
+			"isActive": true, "blocked": false, "roles": []any{get(super, "id")},
+		}, query.Params{})
+		return err
+	})
 	if err != nil {
 		return err
 	}
