@@ -64,12 +64,69 @@ func Probe(path string) (Info, error) {
 		if _, err := f.Seek(0, io.SeekStart); err != nil {
 			return Info{}, err
 		}
-		if all, err := gif.DecodeAll(f); err == nil && len(all.Image) > 1 {
-			info.PageHeight = all.Config.Height
-			info.Height = all.Config.Height * len(all.Image)
+		if n := gifFrames(bufio.NewReader(f)); n > 1 {
+			info.PageHeight = cfg.Height
+			info.Height = cfg.Height * n
 		}
 	}
 	return info, nil
+}
+
+// gifFrames counts a GIF's frames by walking its blocks: decoding them
+// would allocate every frame before the pixel limit is checked.
+func gifFrames(r *bufio.Reader) int {
+	head := make([]byte, 13)
+	if _, err := io.ReadFull(r, head); err != nil {
+		return 0
+	}
+	if head[10]&0x80 != 0 {
+		if _, err := r.Discard(3 << (head[10]&7 + 1)); err != nil {
+			return 0
+		}
+	}
+	skipSubBlocks := func() bool {
+		for {
+			n, err := r.ReadByte()
+			if err != nil {
+				return false
+			}
+			if n == 0 {
+				return true
+			}
+			if _, err := r.Discard(int(n)); err != nil {
+				return false
+			}
+		}
+	}
+	frames := 0
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			return frames
+		}
+		switch b {
+		case 0x21:
+			if _, err := r.ReadByte(); err != nil || !skipSubBlocks() {
+				return frames
+			}
+		case 0x2C:
+			desc := make([]byte, 9)
+			if _, err := io.ReadFull(r, desc); err != nil {
+				return frames
+			}
+			if desc[8]&0x80 != 0 {
+				if _, err := r.Discard(3 << (desc[8]&7 + 1)); err != nil {
+					return frames
+				}
+			}
+			if _, err := r.ReadByte(); err != nil || !skipSubBlocks() {
+				return frames
+			}
+			frames++
+		default:
+			return frames
+		}
+	}
 }
 
 func isAVIF(head []byte) bool {

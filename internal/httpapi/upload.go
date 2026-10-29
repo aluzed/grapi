@@ -586,7 +586,10 @@ func (s *Server) uploadOne(ctx context.Context, f *inputFile, info map[string]an
 	if meta != nil {
 		file["provider_metadata"] = meta
 	}
-	if isImage && media.CanResize(img.Format) {
+	// The formats of an animated GIF decode every frame, so all of them
+	// together must fit in the pixel limit.
+	framesTooLarge := img.PageHeight > 0 && s.cfg.Upload.LimitInputPixels > 0 && int64(img.Width)*int64(img.Height) > s.cfg.Upload.LimitInputPixels
+	if isImage && media.CanResize(img.Format) && !framesTooLarge {
 		// One decode for every format; an animated GIF goes frame by frame.
 		if decoded == nil && img.Format != "gif" {
 			if d, err := media.Decode(src); err == nil {
