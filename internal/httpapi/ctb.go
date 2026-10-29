@@ -47,7 +47,7 @@ func formatAttributes(attrs *schema.OrderedMap[*schema.Attribute]) map[string]an
 		_ = json.Unmarshal(b, &m)
 		switch a.Type {
 		case schema.TypeMedia:
-			f := map[string]any{"type": "media", "multiple": a.IsMultiple(), "required": a.IsRequired(), "private": a.IsPrivate()}
+			f := map[string]any{"type": "media", "multiple": a.IsMultiple(), "required": a.IsRequired(), "private": a.Private != nil && *a.Private}
 			if a.Configurable != nil && !*a.Configurable {
 				f["configurable"] = false
 			}
@@ -69,7 +69,7 @@ func formatAttributes(attrs *schema.OrderedMap[*schema.Attribute]) map[string]an
 			} else if a.MappedBy != "" {
 				target = a.MappedBy
 			}
-			m["targetAttribute"], m["required"], m["private"] = target, a.IsRequired(), a.IsPrivate()
+			m["targetAttribute"], m["required"], m["private"] = target, a.IsRequired(), a.Private != nil && *a.Private
 		}
 		out[name] = m
 	}

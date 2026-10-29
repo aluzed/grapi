@@ -114,6 +114,7 @@ type Attribute struct {
 	Virtual bool `json:"-"`
 
 	resolvedCustomField bool
+	storedPrivate       bool
 	empty               emptyKeys
 }
 
@@ -194,7 +195,7 @@ func (a *Attribute) IsMorph() bool {
 }
 
 // IsPrivate reports whether the attribute is hidden from API responses.
-func (a *Attribute) IsPrivate() bool { return is(a.Private, false) }
+func (a *Attribute) IsPrivate() bool { return is(a.Private, false) || a.storedPrivate }
 
 // IsRequired reports whether a value is mandatory (enforced at publish for drafts).
 func (a *Attribute) IsRequired() bool { return is(a.Required, false) }

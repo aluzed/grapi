@@ -561,6 +561,15 @@ func loadProject(dir, configDir string, stderr io.Writer) (*project.Project, err
 	if err != nil {
 		return nil, err
 	}
+	var private []string
+	if list, ok := conf.Get("api.responses.privateAttributes").([]any); ok {
+		for _, v := range list {
+			if s, ok := v.(string); ok {
+				private = append(private, s)
+			}
+		}
+	}
+	res.Set.MarkPrivateAttributes(private)
 	for _, w := range res.Warnings {
 		log.Warn(w)
 	}

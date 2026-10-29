@@ -1,5 +1,7 @@
 package schema
 
+import "encoding/json"
+
 // Set is every content type and component of an application, once prepared.
 type Set struct {
 	ContentTypes OrderedMap[*ContentType]
@@ -27,4 +29,32 @@ func (s *Set) attributesOf(uid string) (*OrderedMap[*Attribute], bool) {
 		return &c.Attributes, true
 	}
 	return nil, false
+}
+
+// MarkPrivateAttributes is Strapi's getStoredPrivateAttributes: the names of
+// api.responses.privateAttributes and of a model's options.privateAttributes
+// are private too, without changing what the schema files say.
+func (s *Set) MarkPrivateAttributes(global []string) {
+	mark := func(attrs *OrderedMap[*Attribute], opts *OrderedMap[json.RawMessage]) {
+		names := append([]string(nil), global...)
+		if opts != nil {
+			if raw, ok := opts.Get("privateAttributes"); ok {
+				var own []string
+				if json.Unmarshal(raw, &own) == nil {
+					names = append(names, own...)
+				}
+			}
+		}
+		for _, n := range names {
+			if a, ok := attrs.Get(n); ok {
+				a.storedPrivate = true
+			}
+		}
+	}
+	for _, ct := range s.ContentTypes.All() {
+		mark(&ct.Attributes, ct.Options)
+	}
+	for _, c := range s.Components.All() {
+		mark(&c.Attributes, c.Options)
+	}
 }

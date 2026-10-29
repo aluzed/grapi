@@ -39,7 +39,7 @@ func (m *schemaModel) attr(key string) *schema.Attribute {
 	return a
 }
 
-func isPrivate(a *schema.Attribute) bool { return a != nil && a.Private != nil && *a.Private }
+func isPrivate(a *schema.Attribute) bool { return a != nil && a.IsPrivate() }
 
 func isScalar(a *schema.Attribute) bool {
 	if a == nil {
