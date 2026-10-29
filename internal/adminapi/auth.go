@@ -24,7 +24,7 @@ func (s *Server) authRoutes() {
 	s.handle("POST /auth/login", s.rateLimited(s.login))
 	s.handle("POST /auth/access-token", s.accessToken)
 	s.handle("POST /auth/logout", s.logout)
-	s.handle("POST /auth/forgot-password", s.forgotPassword)
+	s.handle("POST /auth/forgot-password", s.rateLimited(s.forgotPassword))
 	s.handle("POST /auth/reset-password", s.resetPassword)
 	s.handle("GET /auth/registration-info", s.registrationInfo)
 	s.handle("POST /auth/register", s.register)

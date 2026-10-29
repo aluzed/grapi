@@ -222,3 +222,25 @@ func TestAdminOwnFilesOnlyReadsOwnFileByID(t *testing.T) {
 		t.Fatalf("its creator reads it: %d", s)
 	}
 }
+
+func TestAdminForgotPasswordIsRateLimited(t *testing.T) {
+	ts, mail, stop := newAdminProject(t)
+	defer stop()
+	adminLogin(t, ts.URL)
+	anon := newAdminClient(t, ts.URL)
+	for i := range 5 {
+		if s, b, _ := anon.do("POST", "/auth/forgot-password", `{"email":"ada@example.com"}`); s != 200 {
+			t.Fatalf("request %d: %d %v", i+1, s, b)
+		}
+	}
+	s, b, _ := anon.do("POST", "/auth/forgot-password", `{"email":"Ada@example.com"}`)
+	if s != 429 || b["error"].(map[string]any)["name"] != "RateLimitError" {
+		t.Fatalf("sixth request in 5 minutes: %d %v", s, b)
+	}
+	if len(mail.sent) != 5 {
+		t.Fatalf("mails sent: %d", len(mail.sent))
+	}
+	if s, _, _ := anon.do("POST", "/auth/forgot-password", `{"email":"other@example.com"}`); s != 200 {
+		t.Fatalf("another email has its own bucket: %d", s)
+	}
+}
