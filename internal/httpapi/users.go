@@ -3,6 +3,9 @@ package httpapi
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,6 +42,14 @@ type UsersConfig struct {
 	// AppKeys are server.app.keys: koa signs the refresh cookie with the
 	// first one (a ".sig" cookie), as Strapi does.
 	AppKeys []string
+	// ResetPasswordTTL and EmailConfirmationTTL are the grapi options
+	// resetPassword.expiresIn and emailConfirmation.expiresIn: zero keeps
+	// Strapi's tokens, which never expire.
+	ResetPasswordTTL     time.Duration
+	EmailConfirmationTTL time.Duration
+	// RevokeOnPasswordChange is the grapi option jwt.revokeOnPasswordChange:
+	// a legacy JWT is refused once the password it was issued with changes.
+	RevokeOnPasswordChange bool
 }
 
 func (s *Server) addUsersRoutes() {
@@ -82,8 +93,30 @@ func readBody(r *http.Request) (map[string]any, []string, error) {
 	return body, objectKeys(raw), nil
 }
 
-func (s *Server) issueJWT(id any) (string, error) {
-	return users.Sign([]users.KV{{Key: "id", Value: id}}, s.cfg.Users.JWTSecret, s.cfg.Users.JWTAlgorithm, s.cfg.Users.JWTExpiresIn, time.Now())
+func (s *Server) issueJWT(ctx context.Context, id any) (string, error) {
+	payload := []users.KV{{Key: "id", Value: id}}
+	if s.cfg.Users.RevokeOnPasswordChange {
+		// Read the stored hash: the caller's row may predate a password change.
+		user, err := s.docs.E.FindOne(ctx, userUID, query.Params{Where: map[string]any{"id": id}})
+		if err != nil {
+			return "", err
+		}
+		if user == nil {
+			return "", errNotFound
+		}
+		hash, _ := user.Get("password")
+		payload = append(payload, users.KV{Key: "pwd", Value: passwordStamp(s.cfg.Users.JWTSecret, hash)})
+	}
+	return users.Sign(payload, s.cfg.Users.JWTSecret, s.cfg.Users.JWTAlgorithm, s.cfg.Users.JWTExpiresIn, time.Now())
+}
+
+// passwordStamp ties a legacy JWT to the password hash it was issued with,
+// without storing anything: a new password gives another stamp.
+func passwordStamp(secret string, hash any) string {
+	h, _ := hash.(string)
+	m := hmac.New(sha256.New, []byte(secret))
+	m.Write([]byte("pwd:" + h))
+	return base64.RawURLEncoding.EncodeToString(m.Sum(nil)[:16])
 }
 
 // sendAuth answers {jwt, user}; in refresh mode the jwt is a session's
@@ -93,7 +126,7 @@ func (s *Server) sendAuth(w http.ResponseWriter, r *http.Request, user query.Row
 		return s.sendRefreshAuth(w, r, user, auth, body, how)
 	}
 	id, _ := user.Get("id")
-	jwt, err := s.issueJWT(id)
+	jwt, err := s.issueJWT(r.Context(), id)
 	if err != nil {
 		return err
 	}

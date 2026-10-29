@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-010 : Restreindre les modifications sensibles des utilisateurs finaux
@@ -49,3 +49,7 @@ Users-permissions, contrat de `AUTH-002` et `AUTH-004` ; dérogations du projet 
 - `docs/configuration.md`
 - `Routes, policies et permissions du projet cible`
 
+## Avancement
+
+- `DEPLOY.md` liste les permissions à retirer à Public et Authenticated (`user.update`, `user.create`, `user.destroy`) et la marche à suivre pour une page de profil : route custom limitée à l'appelant et à une liste de champs. Le contrat générique de `PUT /api/users/:id` reste celui de Strapi.
+- Reste : auditer les permissions effectives du projet déployé, y compris les écritures publiques comme `subscriber.update`, et les consigner sans secrets. Aucune policy intégrée n'a été ajoutée au moteur : à décider si le besoin d'édition de profil existe.

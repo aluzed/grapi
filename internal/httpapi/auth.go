@@ -129,6 +129,7 @@ func (a *authenticator) authenticate(ctx context.Context, r *http.Request) (*Aut
 
 func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error) {
 	var id any
+	var payload map[string]any
 	sessionID := ""
 	if a.up != nil {
 		// Refresh mode takes only the access tokens of a live session.
@@ -141,7 +142,8 @@ func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error
 			id = n
 		}
 	} else {
-		payload, err := users.Verify(token, a.users.JWTSecret, a.users.JWTAlgorithm, time.Now())
+		var err error
+		payload, err = users.Verify(token, a.users.JWTSecret, a.users.JWTAlgorithm, time.Now())
 		if err != nil {
 			return nil, errUnauthorized
 		}
@@ -157,6 +159,15 @@ func (a *authenticator) jwtUser(ctx context.Context, token string) (*Auth, error
 	}
 	if user == nil {
 		return nil, invalid
+	}
+	if payload != nil && a.users.RevokeOnPasswordChange {
+		// Tokens issued before the option or a password change carry no
+		// stamp or another one.
+		stamp, _ := payload["pwd"].(string)
+		hash, _ := user.Get("password")
+		if !hmac.Equal([]byte(stamp), []byte(passwordStamp(a.users.JWTSecret, hash))) {
+			return nil, errUnauthorized
+		}
 	}
 	var advanced upAdvanced
 	if err := a.store(ctx, "advanced", &advanced); err != nil {

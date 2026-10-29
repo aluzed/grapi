@@ -95,6 +95,9 @@ type Options struct {
 	Extensions []Extension
 	// DepthLimit rejects deeper operations (graphql-depth-limit); 0 is none.
 	DepthLimit int
+	// MaxAliases rejects operations with more aliased fields, fragments
+	// included (a grapi option, as graphql-armor's maxAliases); 0 is none.
+	MaxAliases int
 	// NoShadowCRUD is shadowCRUD: false: nothing is generated from the
 	// content types, the schema is the extensions'.
 	NoShadowCRUD bool
@@ -169,6 +172,7 @@ type Schema struct {
 	componentOf map[string]schema.UID
 	set         *schema.Set
 	depthLimit  int
+	maxAliases  int
 }
 
 // Def returns the definition named name.
@@ -248,7 +252,7 @@ type builder struct {
 
 // Build derives the schema of set.
 func Build(set *schema.Set, opts Options) (*Schema, error) {
-	b := &builder{opts: opts, set: set, out: &Schema{defs: map[string]*Def{}, typeOf: map[schema.UID]string{}, componentOf: map[string]schema.UID{}, set: set, depthLimit: opts.DepthLimit}}
+	b := &builder{opts: opts, set: set, out: &Schema{defs: map[string]*Def{}, typeOf: map[schema.UID]string{}, componentOf: map[string]schema.UID{}, set: set, depthLimit: opts.DepthLimit, maxAliases: opts.MaxAliases}}
 	_, b.i18n = set.ContentType(localeUID)
 	b.scalars()
 	b.internals()

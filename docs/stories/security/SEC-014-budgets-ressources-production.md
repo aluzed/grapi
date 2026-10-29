@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-014 : Adapter les limites de ressources au déploiement
@@ -49,3 +49,9 @@ Paramètres d'image compatibles sharp et protections HTTP propres au déploiemen
 - `DEPLOY.md`
 - `Configuration du serveur HTTP, du proxy et du conteneur cible`
 
+## Avancement
+
+- Délais HTTP par défaut alignés sur Node : 5 minutes pour recevoir une requête entière et 5 secondes d'inactivité keep-alive. Les en-têtes restent à 10 secondes. Avant, le corps n'avait aucune limite de temps. `requestTimeout: 0` et `keepAliveTimeout: 0` lèvent la limite, comme dans Node. Test : `TestHTTPServerTimeouts`.
+- Une image au-delà de `sharp.limitInputPixels` est déjà stockée sans formats ni décodage (contrat documenté, `MEDIA-002`).
+- `DEPLOY.md` propose `limitInputPixels: 40000000` et `sizeLimit` de 20 Mio, et explique le calcul mémoire pour dimensionner le conteneur.
+- Reste : fixer les budgets du conteneur déployé et mesurer un upload et une requête lente en préproduction.

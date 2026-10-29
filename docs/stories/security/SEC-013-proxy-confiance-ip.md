@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-013 : Fiabiliser l'IP client derrière le proxy de confiance
@@ -25,8 +25,8 @@ Reconfiguration générale du réseau et compteur de limitation distribué.
 
 ## Critères d'acceptation
 
-- [ ] Un en-tête forgé par le client ne change pas l'identité utilisée par le rate limit.
-- [ ] Deux clients distincts conservent des compteurs indépendants derrière le proxy.
+- [x] Un en-tête forgé par le client ne change pas l'identité utilisée par le rate limit.
+- [x] Deux clients distincts conservent des compteurs indépendants derrière le proxy.
 - [ ] Le port interne est inaccessible depuis l'extérieur de la chaîne de confiance.
 - [ ] La configuration et les tests correspondent au nombre réel de proxys ; `maxIpsCount: 1` n'est utilisé que pour un seul proxy.
 
@@ -50,3 +50,9 @@ Résolution d'IP compatible Koa ; voir `AUTH-006`.
 - `DEPLOY.md`
 - `Configuration réseau et proxy du projet cible`
 
+## Avancement
+
+- Correctif moteur : un en-tête `X-Forwarded-For` répété n'était lu que par sa première ligne, celle qu'un client peut forger, alors que Node les concatène. Si un proxy ajoute sa propre ligne au lieu de compléter la première, le client choisissait son IP. Les lignes sont maintenant jointes comme dans Node.
+- `TestIPForgedBehindProxy` : avec `koa: true` et `maxIpsCount: 1`, aucune valeur forgée (même ligne ou ligne séparée) ne devient l'identité, et deux clients gardent des IP distinctes.
+- `DEPLOY.md` documente `maxIpsCount` selon le nombre de proxys et la fermeture du port interne.
+- Reste : décrire la chaîne réelle (Traefik seul ?) et vérifier que le port 1337 n'est pas joignable de l'extérieur.

@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-008 : Activer la protection réseau des webhooks du projet
@@ -49,3 +49,7 @@ Configuration `server.webhooks` ; protection de connexion ajoutée par grapi.
 - `DEPLOY.md`
 - `Configuration serveur du projet cible`
 
+## Avancement
+
+- `DEPLOY.md` documente `server.webhooks.blockPrivateNetworks: true`, l'inventaire préalable des destinations internes et les cas à vérifier. Le blocage à la connexion (adresse privée directe, nom résolu vers le privé, redirection) est couvert côté moteur par `TestPublicOnlyAddresses` et `TestPublicOnlyTransport`.
+- Reste : activer l'option dans le projet déployé après inventaire des webhooks existants.

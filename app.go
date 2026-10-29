@@ -109,6 +109,30 @@ func dbFromEnv(e config.Env) db.Config {
 	return cfg
 }
 
+// usersTokenPolicy reads the grapi options that harden users-permissions
+// tokens: Strapi has none, so all are off by default. A wrong value stops
+// the start rather than leaving the tokens without the expected limit.
+func usersTokenPolicy(c *config.Config, u *httpapi.UsersConfig) error {
+	up := "plugins.users-permissions.config."
+	for key, ttl := range map[string]*time.Duration{"resetPassword.expiresIn": &u.ResetPasswordTTL, "emailConfirmation.expiresIn": &u.EmailConfirmationTTL} {
+		if v := c.Get(up + key); v != nil {
+			d, err := durationOf(v)
+			if err != nil || d <= 0 {
+				return fmt.Errorf("%s%s: expected a positive duration, got %v", up, key, v)
+			}
+			*ttl = d
+		}
+	}
+	switch v := c.Get(up + "jwt.revokeOnPasswordChange").(type) {
+	case nil:
+	case bool:
+		u.RevokeOnPasswordChange = v
+	default:
+		return fmt.Errorf("%sjwt.revokeOnPasswordChange: expected a boolean, got %v", up, v)
+	}
+	return nil
+}
+
 // apiConfig reads api.rest and admin.apiToken.salt.
 func apiConfig(c *config.Config, dir string) httpapi.Config {
 	cfg := httpapi.Config{}
@@ -272,6 +296,7 @@ func graphQLConfig(c *config.Config, dir string) *httpapi.GraphQLConfig {
 	g.DefaultLimit, _ = c.Int(base + "defaultLimit")
 	g.MaxLimit, _ = c.Int(base + "maxLimit")
 	g.Options.DepthLimit, _ = c.Int(base + "depthLimit")
+	g.Options.MaxAliases, _ = c.Int(base + "maxAliases")
 	if v, ok := c.Bool(base + "shadowCRUD"); ok && !v {
 		g.Options.NoShadowCRUD = true
 	}
@@ -680,6 +705,9 @@ func (a *App) setup(p *project.Project) (*Server, error) {
 	if apiCfg.Upload.LimitInputPixels, err = limitInputPixels(conf); err != nil {
 		return nil, err
 	}
+	if err := usersTokenPolicy(conf, &apiCfg.Users); err != nil {
+		return nil, err
+	}
 	if list, ok := conf.Get("middlewares").([]any); ok {
 		if err := httpapi.CheckRequiredMiddlewares(list); err != nil {
 			return nil, fmt.Errorf("config middlewares: %w", err)
@@ -718,6 +746,7 @@ func (a *App) setup(p *project.Project) (*Server, error) {
 		fromConfig := apiCfg.GraphQL.Options
 		apiCfg.GraphQL.Options = a.graphql
 		apiCfg.GraphQL.Options.DepthLimit, apiCfg.GraphQL.Options.NoShadowCRUD = fromConfig.DepthLimit, fromConfig.NoShadowCRUD
+		apiCfg.GraphQL.Options.MaxAliases = fromConfig.MaxAliases
 	}
 	docs := document.New(engine, res.Set)
 	switch v := conf.Get("api.documents.strictRelations").(type) {

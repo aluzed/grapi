@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-007 : Configurer une politique d'upload explicite en production
@@ -49,3 +49,7 @@ Configuration du plugin upload ; préserver le contrat du moteur hors du projet 
 - `DEPLOY.md`
 - `Configuration upload et permissions du projet cible (hors dépôt si nécessaire)`
 
+## Avancement
+
+- `DEPLOY.md` (section « Production hardening ») donne la configuration de départ (`allowedTypes` JPEG, PNG, WebP, PDF, `sizeLimit`) et la liste des vérifications : permission d'upload par rôle, refus des contenus actifs même avec un MIME trompeur (couvert côté moteur par `TestUploadSecurityChecksActiveFileExtensions`), inventaire des fichiers actifs déjà stockés sans suppression.
+- Reste : appliquer et vérifier la configuration du projet déployé, consigner l'inventaire. La configuration du projet cible n'est pas dans ce dépôt.

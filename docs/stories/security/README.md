@@ -6,7 +6,7 @@ L'audit initial recense 15 failles déjà corrigées dans l'historique Git. La r
 
 Les recommandations de configuration deviennent des stories `todo` propres au projet déployé. Leur priorité reflète le risque si les conditions décrites sont réunies ; elle ne prouve pas une exposition actuelle en production. La revue complémentaire n'a interrogé ni production ni backend privé.
 
-| Ticket | Priorité | Statut initial | Objet |
+| Ticket | Priorité | Statut | Objet |
 |---|---|---|---|
 | [SEC-001](./SEC-001-premier-admin-atomique.md) | Haute | `in-progress` | Garantir une seule inscription du premier super administrateur |
 | [SEC-002](./SEC-002-historique-droits-document-locale.md) | Haute | `in-progress` | Appliquer les droits par document et par langue à l'historique |
@@ -14,15 +14,15 @@ Les recommandations de configuration deviennent des stories `todo` propres au pr
 | [SEC-004](./SEC-004-normalisation-rate-limit-admin.md) | Moyenne | `in-progress` | Partager le compteur de connexion entre les variantes d'un e-mail |
 | [SEC-005](./SEC-005-historique-champs-supprimes.md) | Moyenne | `in-progress` | Protéger les valeurs historiques des champs supprimés |
 | [SEC-006](./SEC-006-ssrf-plages-non-publiques.md) | Moyenne | `in-progress` | Bloquer les plages non publiques oubliées dans les connexions sortantes |
-| [SEC-007](./SEC-007-politique-upload-production.md) | Haute | `todo` | Configurer une politique d'upload explicite en production |
-| [SEC-008](./SEC-008-webhooks-protection-connexion.md) | Haute | `todo` | Activer la protection réseau des webhooks du projet |
-| [SEC-009](./SEC-009-cors-origines-explicites.md) | Moyenne | `todo` | Restreindre CORS aux origines utilisées par les applications |
-| [SEC-010](./SEC-010-permissions-utilisateurs-sensibles.md) | Haute | `todo` | Restreindre les modifications sensibles des utilisateurs finaux |
-| [SEC-011](./SEC-011-expiration-jetons-revocation-sessions.md) | Moyenne | `todo` | Définir l'expiration des jetons et la révocation après changement de mot de passe |
-| [SEC-012](./SEC-012-graphql-limites.md) | Moyenne | `todo` | Borner les requêtes GraphQL du projet |
-| [SEC-013](./SEC-013-proxy-confiance-ip.md) | Moyenne | `todo` | Fiabiliser l'IP client derrière le proxy de confiance |
-| [SEC-014](./SEC-014-budgets-ressources-production.md) | Moyenne | `todo` | Adapter les limites de ressources au déploiement |
-| [SEC-015](./SEC-015-validation-correctifs-securite.md) | Haute | `todo` | Valider les correctifs sauvegardés avant livraison |
+| [SEC-007](./SEC-007-politique-upload-production.md) | Haute | `in-progress` | Configurer une politique d'upload explicite en production |
+| [SEC-008](./SEC-008-webhooks-protection-connexion.md) | Haute | `in-progress` | Activer la protection réseau des webhooks du projet |
+| [SEC-009](./SEC-009-cors-origines-explicites.md) | Moyenne | `in-progress` | Restreindre CORS aux origines utilisées par les applications |
+| [SEC-010](./SEC-010-permissions-utilisateurs-sensibles.md) | Haute | `in-progress` | Restreindre les modifications sensibles des utilisateurs finaux |
+| [SEC-011](./SEC-011-expiration-jetons-revocation-sessions.md) | Moyenne | `in-progress` | Définir l'expiration des jetons et la révocation après changement de mot de passe |
+| [SEC-012](./SEC-012-graphql-limites.md) | Moyenne | `in-progress` | Borner les requêtes GraphQL du projet |
+| [SEC-013](./SEC-013-proxy-confiance-ip.md) | Moyenne | `in-progress` | Fiabiliser l'IP client derrière le proxy de confiance |
+| [SEC-014](./SEC-014-budgets-ressources-production.md) | Moyenne | `in-progress` | Adapter les limites de ressources au déploiement |
+| [SEC-015](./SEC-015-validation-correctifs-securite.md) | Haute | `in-progress` | Valider les correctifs sauvegardés avant livraison |
 
 ## Ordre de traitement
 

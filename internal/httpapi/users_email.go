@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aluzed/grapi/internal/db/query"
 	"github.com/aluzed/grapi/internal/plugins/email"
@@ -55,6 +57,30 @@ func randomHex(n int) string {
 	return hex.EncodeToString(b)
 }
 
+// expiringToken is randomHex with, when the project sets a lifetime, its
+// expiry in Unix seconds after a dot. The stored value is the whole token,
+// so the expiry cannot be changed without knowing it.
+func expiringToken(n int, ttl time.Duration, now time.Time) string {
+	t := randomHex(n)
+	if ttl > 0 {
+		t += "." + strconv.FormatInt(now.Add(ttl).Unix(), 10)
+	}
+	return t
+}
+
+// tokenValid checks a token's expiry. A token without one never expires,
+// as Strapi's, unless the project sets a lifetime: then tokens issued
+// before it are refused.
+func tokenValid(token any, ttl time.Duration, now time.Time) bool {
+	t, _ := token.(string)
+	_, exp, ok := strings.Cut(t, ".")
+	if !ok {
+		return ttl <= 0
+	}
+	n, err := strconv.ParseInt(exp, 10, 64)
+	return err == nil && now.Unix() < n
+}
+
 // plain turns a sanitized row into template data.
 func plain(v any) map[string]any {
 	b, _ := json.Marshal(v)
@@ -100,7 +126,7 @@ func (s *Server) authForgotPassword(w http.ResponseWriter, r *http.Request, rc *
 		return nil
 	}
 	info := plain(s.sanitizeOutput(user, s.schemaOf(userUID), rc.auth))
-	token := randomHex(64)
+	token := expiringToken(64, s.cfg.Users.ResetPasswordTTL, time.Now())
 	opts := settings.ResetPassword.Options
 	msg := email.Template(opts.Message, map[string]any{
 		"URL": advanced.EmailResetPassword, "SERVER_URL": s.cfg.ServerURL, "ADMIN_URL": s.cfg.AdminURL, "USER": info, "TOKEN": token,
@@ -147,6 +173,12 @@ func (s *Server) authResetPassword(w http.ResponseWriter, r *http.Request, rc *r
 	if user == nil {
 		return validationError("Incorrect code provided", nil)
 	}
+	if code, _ := user.Get("resetPasswordToken"); !tokenValid(code, s.cfg.Users.ResetPasswordTTL, time.Now()) {
+		if _, err := s.editUser(ctx, user, map[string]any{"resetPasswordToken": nil}); err != nil {
+			return err
+		}
+		return validationError("Incorrect code provided", nil)
+	}
 	if _, err := s.editUser(ctx, user, map[string]any{"resetPasswordToken": nil, "password": body["password"]}); err != nil {
 		return err
 	}
@@ -173,6 +205,12 @@ func (s *Server) emailConfirmation(w http.ResponseWriter, r *http.Request, rc *r
 		return err
 	}
 	if len(users) == 0 {
+		return validationError("Invalid token", nil)
+	}
+	if code, _ := users[0].Get("confirmationToken"); !tokenValid(code, s.cfg.Users.EmailConfirmationTTL, time.Now()) {
+		if _, err := s.editUser(ctx, users[0], map[string]any{"confirmationToken": nil}); err != nil {
+			return err
+		}
 		return validationError("Invalid token", nil)
 	}
 	if _, err := s.editUser(ctx, users[0], map[string]any{"confirmed": true, "confirmationToken": nil}); err != nil {
@@ -235,7 +273,7 @@ func (s *Server) sendConfirmationEmail(ctx context.Context, user query.Row) erro
 		return err
 	}
 	info := plain(s.sanitizeOutput(user, s.schemaOf(userUID), nil))
-	token := randomHex(20)
+	token := expiringToken(20, s.cfg.Users.EmailConfirmationTTL, time.Now())
 	if _, err := s.editUser(ctx, user, map[string]any{"confirmationToken": token}); err != nil {
 		return err
 	}

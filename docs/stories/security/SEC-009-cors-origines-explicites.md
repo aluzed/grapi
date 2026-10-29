@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-009 : Restreindre CORS aux origines utilisées par les applications
@@ -48,3 +48,7 @@ Middleware CORS configurable ; durcissement au niveau du projet.
 - `DEPLOY.md`
 - `Configuration des middlewares du projet cible`
 
+## Avancement
+
+- `DEPLOY.md` donne un `config/middlewares.yaml` avec une liste explicite d'origines pour `strapi::cors`. Vérifié sur la révision de travail en chargeant cet exemple tel quel : un prévol depuis une origine listée reçoit `Access-Control-Allow-Origin`, une origine arbitraire n'en reçoit pas (test jetable, non conservé).
+- Reste : inventorier les origines réelles du front et de l'admin, appliquer, puis recette navigateur des parcours de connexion et d'administration.

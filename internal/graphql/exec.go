@@ -157,6 +157,9 @@ func (s *Schema) Execute(ctx context.Context, req Request, res Resolver) *Result
 	if len(errs) == 0 && s.depthLimit > 0 {
 		errs = depthErrors(doc, s.depthLimit)
 	}
+	if len(errs) == 0 && s.maxAliases > 0 {
+		errs = aliasErrors(doc, s.maxAliases)
+	}
 	if len(errs) == 0 {
 		errs = localeLiterals(doc)
 	}
@@ -290,6 +293,47 @@ func depthErrors(doc *ast.QueryDocument, maxDepth int) gqlerror.List {
 	}
 	for _, op := range doc.Operations {
 		children(op.SelectionSet, 0, op.Name, map[string]bool{})
+	}
+	return errs
+}
+
+// aliasErrors rejects an operation with more than limit aliased fields.
+// Aliases multiply the work of a query without making it deeper; a
+// fragment counts each time it is spread.
+func aliasErrors(doc *ast.QueryDocument, limit int) gqlerror.List {
+	var errs gqlerror.List
+	var count func(set ast.SelectionSet, seen map[string]bool) int
+	count = func(set ast.SelectionSet, seen map[string]bool) int {
+		n := 0
+		for _, sel := range set {
+			switch x := sel.(type) {
+			case *ast.Field:
+				if x.Alias != "" && x.Alias != x.Name {
+					n++
+				}
+				n += count(x.SelectionSet, seen)
+			case *ast.InlineFragment:
+				n += count(x.SelectionSet, seen)
+			case *ast.FragmentSpread:
+				if x.Definition != nil && !seen[x.Name] {
+					seen[x.Name] = true
+					n += count(x.Definition.SelectionSet, seen)
+					delete(seen, x.Name)
+				}
+			}
+			if n > limit {
+				return n
+			}
+		}
+		return n
+	}
+	for _, op := range doc.Operations {
+		if n := count(op.SelectionSet, map[string]bool{}); n > limit {
+			errs = append(errs, &gqlerror.Error{
+				Message:   fmt.Sprintf("'%s' exceeds the limit of %d aliases", op.Name, limit),
+				Locations: []gqlerror.Location{{Line: op.Position.Line, Column: op.Position.Column}},
+			})
+		}
 	}
 	return errs
 }

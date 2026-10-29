@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-015 : Valider les correctifs sauvegardés avant livraison
@@ -53,3 +53,9 @@ Patches de `SEC-001` à `SEC-006` disponibles. Cette story centralise la preuve 
 - `admin_registration_security_test.go`
 - `admin_history_security_test.go`
 
+## Avancement
+
+- 29 octobre 2026, Windows 11, Go 1.27.0, révision de travail après `ee637d4`. `go build ./...` et `go vet ./...` réussis, avec l'overlay qui exclut `ctb_fixture_test.go` et `develop_test.go` (`syscall.Kill`).
+- `go test ./...` : tout passe sauf les échecs Windows connus. `TestGracefulShutdown` et `TestUnixSocket` (vérifiés identiques sur la base sans les changements), `TestSuperviseRebuildsOnGoChanges`, `TestGenerateGoSkeletons` et `internal/typegen/TestMatchesStrapi` (déjà en échec avant les correctifs).
+- Les régressions de `SEC-001` à `SEC-006` passent sur SQLite sous Windows.
+- Reste tout le périmètre Linux : suite complète, `-race`, intégration PostgreSQL dédiée en série, typecheck et tests de l'admin, recette manuelle, audits de dépendances. Ni WSL ni Docker ni PostgreSQL ne sont disponibles sur ce poste.

@@ -8,21 +8,23 @@ import (
 
 // httpServer serves h with server.http.serverOptions, read as Node's
 // http.createServer options (milliseconds): requestTimeout, headersTimeout
-// and keepAliveTimeout.
+// and keepAliveTimeout. The defaults are Node's, except headers, which must
+// arrive within 10 seconds instead of 60.
 func (s *Server) httpServer(h http.Handler) *http.Server {
-	srv := &http.Server{Addr: s.Addr, Handler: h, ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Addr: s.Addr, Handler: h, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 5 * time.Minute, IdleTimeout: 5 * time.Second}
 	c := s.project.Conf
-	ms := func(key string) (time.Duration, bool) {
+	// 0 disables a timeout, as in Node, except headersTimeout.
+	ms := func(key string, min int) (time.Duration, bool) {
 		n, ok := c.Int("server.http.serverOptions." + key)
-		return time.Duration(n) * time.Millisecond, ok && n > 0
+		return time.Duration(n) * time.Millisecond, ok && n >= min
 	}
-	if d, ok := ms("requestTimeout"); ok {
+	if d, ok := ms("requestTimeout", 0); ok {
 		srv.ReadTimeout = d
 	}
-	if d, ok := ms("headersTimeout"); ok {
+	if d, ok := ms("headersTimeout", 1); ok {
 		srv.ReadHeaderTimeout = d
 	}
-	if d, ok := ms("keepAliveTimeout"); ok {
+	if d, ok := ms("keepAliveTimeout", 0); ok {
 		srv.IdleTimeout = d
 	}
 	return srv

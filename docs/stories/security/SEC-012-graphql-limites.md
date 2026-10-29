@@ -1,5 +1,5 @@
 ---
-status: todo
+status: in-progress
 ---
 
 # SEC-012 : Borner les requêtes GraphQL du projet
@@ -49,3 +49,8 @@ Plugin GraphQL : `depthLimit`, `maxLimit`, `defaultLimit` et protections du proj
 - `docs/configuration.md`
 - `Configuration GraphQL et proxy du projet cible`
 
+## Avancement
+
+- Nouvelle option grapi `plugins.graphql.config.maxAliases` : une opération dépassant ce nombre de champs aliasés, fragments compris, reçoit un 400 `GRAPHQL_VALIDATION_FAILED`. Défaut illimité, comme Strapi. Testée dans `TestGraphQLExtensions` avec un fragment.
+- `DEPLOY.md` propose `enabled: false` ou `depthLimit: 8`, `maxLimit: 100`, `maxAliases: 20`.
+- Reste : vérifier l'état de GraphQL dans le projet déployé, puis mesurer les requêtes du front pour ajuster les limites.

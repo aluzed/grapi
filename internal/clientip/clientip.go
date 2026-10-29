@@ -26,7 +26,9 @@ func (p Proxy) IPs(r *http.Request) []string {
 	if header == "" {
 		header = "X-Forwarded-For"
 	}
-	v := r.Header.Get(header)
+	// Node joins repeated headers: a proxy that adds its own line after a
+	// forged one still has the last word.
+	v := strings.Join(r.Header.Values(header), ",")
 	if v == "" {
 		return nil
 	}

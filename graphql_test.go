@@ -38,7 +38,7 @@ func TestGraphQLExtensions(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	conf := "graphql:\n  enabled: true\n  config:\n    depthLimit: 2\n"
+	conf := "graphql:\n  enabled: true\n  config:\n    depthLimit: 2\n    maxAliases: 3\n"
 	if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte(conf), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -94,6 +94,10 @@ func TestGraphQLExtensions(t *testing.T) {
 	status, out := gql(t, ts.URL, `query Deep { articles { tags { articles { title } } } }`)
 	if status != 400 || !strings.Contains(jsonOf(out), `'Deep' exceeds maximum operation depth of 2`) {
 		t.Errorf("depth: %d %v", status, jsonOf(out))
+	}
+	status, out = gql(t, ts.URL, `query Wide { a: hello b: hello ...more } fragment more on Query { c: hello d: hello }`)
+	if status != 400 || !strings.Contains(jsonOf(out), `'Wide' exceeds the limit of 3 aliases`) {
+		t.Errorf("aliases: %d %v", status, jsonOf(out))
 	}
 	_, out = gql(t, ts.URL, `{ a: __type(name: "Article") { fields { name } } m: __type(name: "Mutation") { fields { name } } f: __type(name: "ArticleFiltersInput") { inputFields { name } } }`)
 	s := jsonOf(out)
