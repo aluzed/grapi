@@ -123,3 +123,49 @@ func TestAdminCMFiltersOnlyWhatTheUserReads(t *testing.T) {
 		}
 	}
 }
+
+func TestAdminRelationPickerFollowsReadPermissions(t *testing.T) {
+	base, c, stop := newAuthoredProject(t)
+	defer stop()
+	c.do("POST", "/content-manager/collection-types/plugin::users-permissions.user", `{"data":{"username":"bob","email":"bob@example.com","password":"Secret123","confirmed":true}}`)
+	r := newReader(t, base, c, `["title","author"]`)
+	const picker = "/content-manager/relations/api::article.article/author"
+	s, b, _ := r.do("GET", picker, "")
+	raw, _ := json.Marshal(b)
+	if s != 200 || strings.Contains(string(raw), "bob") || b["meta"].(map[string]any)["mainField"] != "documentId" {
+		t.Fatalf("a reader without access to users gets their document ids only: %d %s", s, raw)
+	}
+	if s, b, _ := r.do("GET", picker+"?_q="+url.QueryEscape("bob@example"), ""); s != 200 || len(b["data"].([]any)) != 0 {
+		t.Fatalf("the search must not match fields the reader cannot see: %d %v", s, b)
+	}
+	if _, b, _ := c.do("GET", picker+"?_q=bo", ""); len(b["data"].([]any)) != 1 || b["data"].([]any)[0].(map[string]any)["label"] != "bob" {
+		t.Fatalf("super admin searches the main field: %v", b)
+	}
+}
+
+func TestAdminRelationPickerInComponentChecksTheField(t *testing.T) {
+	ts, _, stop, _ := newAdminApp(t, "components", false)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	c.do("POST", "/content-manager/collection-types/api::author.author", `{"data":{"name":"Zed"}}`)
+	reader := func(fields string) *adminClient {
+		_, b, _ := c.do("POST", "/roles", `{"name":"R`+fmt.Sprint(len(fields))+`"}`)
+		role := fmt.Sprint(int(dataOf(b)["id"].(float64)))
+		c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[
+			{"action":"plugin::content-manager.explorer.read","subject":"api::page.page","properties":{"fields":`+fields+`},"conditions":[]},
+			{"action":"plugin::content-manager.explorer.read","subject":"api::author.author","properties":{"fields":["name"]},"conditions":[]}]}`)
+		email := fmt.Sprintf("r%d@example.com", len(fields))
+		_, b, _ = c.do("POST", "/users", `{"firstname":"R","email":"`+email+`","roles":[`+role+`]}`)
+		r := newAdminClient(t, ts.URL)
+		_, b, _ = r.do("POST", "/auth/register", `{"registrationToken":"`+dataOf(b)["registrationToken"].(string)+`","userInfo":{"firstname":"R","password":"Rea1derPass"}}`)
+		r.token = dataOf(b)["token"].(string)
+		return r
+	}
+	const picker = "/content-manager/relations/api::page.page/author?component=shared.link"
+	if s, _, _ := reader(`["title"]`).do("GET", picker, ""); s != 404 {
+		t.Fatalf("links unreadable: %d", s)
+	}
+	if s, b, _ := reader(`["title","links"]`).do("GET", picker, ""); s != 200 || len(b["data"].([]any)) != 1 {
+		t.Fatalf("links readable: %d %v", s, b)
+	}
+}

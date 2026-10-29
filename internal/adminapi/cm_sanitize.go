@@ -245,3 +245,32 @@ func (s *Server) sortable(path []string, sc fieldScope, a *permissions.Ability) 
 	in, ok := s.inner(sc, path[0], attr)
 	return ok && s.sortable(path[1:], in, a)
 }
+
+// componentPaths are the paths in attrs where the component uid is used.
+func (s *Server) componentPaths(attrs *schema.OrderedMap[*schema.Attribute], uid, prefix string, depth int) []string {
+	if depth > 10 {
+		return nil
+	}
+	var out []string
+	for name, attr := range attrs.All() {
+		switch attr.Type {
+		case schema.TypeComponent:
+			if attr.Component == uid {
+				out = append(out, prefix+name)
+			}
+			if c, ok := s.set.Component(schema.UID(attr.Component)); ok {
+				out = append(out, s.componentPaths(&c.Attributes, uid, prefix+name+".", depth+1)...)
+			}
+		case schema.TypeDynamicZone:
+			for _, cu := range attr.Components {
+				if cu == uid {
+					out = append(out, prefix+name)
+				}
+				if c, ok := s.set.Component(schema.UID(cu)); ok {
+					out = append(out, s.componentPaths(&c.Attributes, uid, prefix+name+".", depth+1)...)
+				}
+			}
+		}
+	}
+	return out
+}

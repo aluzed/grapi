@@ -766,7 +766,10 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		if !ok {
 			return errNotFound
 		}
-		attrs, readable = &comp.Attributes, true
+		attrs, readable = &comp.Attributes, false
+		for _, p := range s.componentPaths(&ct.Attributes, cu, "", 0) {
+			readable = readable || a.Can(actionRead, string(ct.UID), p+"."+field)
+		}
 	}
 	attr, ok := attrs.Get(field)
 	if !ok || attr.Type != schema.TypeRelation || attr.IsMorph() || attr.Target == "" || !readable {
@@ -782,6 +785,11 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		return err
 	}
 	mainField := cfg.Settings.MainField
+	if mainField != "id" && mainField != schema.AttrDocumentID {
+		if mf, ok := target.Attributes.Get(mainField); !ok || !mf.IsScalar() || mf.Type == schema.TypePassword || !mf.IsVisible() || !a.Can(actionRead, attr.Target, mainField) {
+			mainField = schema.AttrDocumentID
+		}
+	}
 	page, size := pageParams(r)
 	p := document.Params{"sort": mainField + ":asc"}
 	fields := []any{schema.AttrUpdatedAt}
@@ -789,9 +797,6 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		fields = append(fields, mainField)
 	}
 	p["fields"] = fields
-	if q := strings.TrimSpace(r.URL.Query().Get("_q")); q != "" {
-		p["_q"] = q
-	}
 	// idsToOmit leaves out the documents the field already holds, so that
 	// every page of the picker brings new ones; documentIds reads back the
 	// held ones, for their label and status.
@@ -804,8 +809,17 @@ func (s *Server) cmRelationTargets(w http.ResponseWriter, r *http.Request, u *Us
 		page, size = 1, len(ids)
 		delete(p, "sort")
 	}
+	var filters []any
 	if len(filter) > 0 {
-		p["filters"] = map[string]any{schema.AttrDocumentID: filter}
+		filters = append(filters, map[string]any{schema.AttrDocumentID: filter})
+	}
+	// As in Strapi, the search only looks at the main field: _q would match
+	// every text field of the target, read permission or not.
+	if q := strings.TrimSpace(r.URL.Query().Get("_q")); q != "" && mainField != "id" {
+		filters = append(filters, map[string]any{mainField: map[string]any{"$containsi": q}})
+	}
+	if f := and(filters...); f != nil {
+		p["filters"] = f
 	}
 	if target.Localized() {
 		if l := r.URL.Query().Get("locale"); l != "" {
