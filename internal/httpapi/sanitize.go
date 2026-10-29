@@ -510,6 +510,48 @@ func (s *Server) validateQuery(q map[string]any, m *schemaModel, auth *Auth) err
 		if err := s.validatePopulate(p, m, ""); err != nil {
 			return err
 		}
+		if err := s.nestedWildcard(p, m, "", auth); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// nestedWildcard is what Strapi does with "*" under an attribute: the
+// sanitizer expands it to the target's readable populatable attributes, and
+// the document service rejects them as populate keys (without source or
+// param in the details).
+func (s *Server) nestedWildcard(populate any, m *schemaModel, path string, auth *Auth) error {
+	pm, ok := populate.(map[string]any)
+	if !ok || m == nil {
+		return nil
+	}
+	for _, key := range sortedKeys(pm) {
+		a := m.attr(key)
+		if !isPopulatable(a) || a.Type == schema.TypeDynamicZone || isMorphTo(a) {
+			continue
+		}
+		t := s.target(a)
+		if t == nil {
+			continue
+		}
+		p := joinPath(path, key)
+		switch v := pm[key].(type) {
+		case string:
+			if v != "*" {
+				continue
+			}
+			for name, ta := range t.attrs.All() {
+				if isPopulatable(ta) && !isPrivate(ta) && !s.restricted(t, name, ta, auth) {
+					full := joinPath(p, name)
+					return validationError("Invalid key "+name+" at "+full, map[string]any{"key": name, "path": full})
+				}
+			}
+		case map[string]any:
+			if err := s.nestedWildcard(v["populate"], t, p, auth); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
