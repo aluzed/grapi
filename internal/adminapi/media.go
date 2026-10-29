@@ -152,9 +152,12 @@ func (s *Server) fileRow(ctx context.Context, id int64) (query.Row, error) {
 	return row, nil
 }
 
-func (s *Server) getFile(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
+func (s *Server) getFile(w http.ResponseWriter, r *http.Request, _ *User, a *permissions.Ability) error {
 	id, err := fileID(r)
 	if err != nil {
+		return err
+	}
+	if err := s.fileAllowed(r.Context(), a, uploadRead, id); err != nil {
 		return err
 	}
 	row, err := s.fileRow(r.Context(), id)
@@ -173,6 +176,9 @@ func (s *Server) fileRelated(w http.ResponseWriter, r *http.Request, _ *User, a 
 		return err
 	}
 	ctx := r.Context()
+	if err := s.fileAllowed(ctx, a, uploadRead, id); err != nil {
+		return err
+	}
 	q := fmt.Sprintf(`select related_id, related_type, field from %s where file_id = %s order by id`, s.e.DB.Dialect.Quote("files_related_mph"), s.ph(1))
 	rows, err := s.e.DB.Query(ctx, q, id)
 	if err != nil {
@@ -274,7 +280,13 @@ func focalPoint(raw json.RawMessage) (any, error) {
 
 // writableFile checks the row filter of assets.update (is-creator).
 func (s *Server) writableFile(ctx context.Context, a *permissions.Ability, id int64) error {
-	f, _ := a.Filter(uploadUpdate, "")
+	return s.fileAllowed(ctx, a, uploadUpdate, id)
+}
+
+// fileAllowed answers 404 when the conditions of action (own files only)
+// leave the file out.
+func (s *Server) fileAllowed(ctx context.Context, a *permissions.Ability, action string, id int64) error {
+	f, _ := a.Filter(action, "")
 	n, err := s.e.Count(ctx, fileUID, query.Params{Where: and(map[string]any{"id": id}, f)})
 	if err != nil {
 		return err

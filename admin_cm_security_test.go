@@ -193,3 +193,32 @@ func TestAdminCTBRefusesPathsOutOfTheProject(t *testing.T) {
 		}
 	}
 }
+
+func TestAdminOwnFilesOnlyReadsOwnFileByID(t *testing.T) {
+	ts, _, stop := newAdminProject(t)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	s, up := c.upload("/upload", "red.png", pngBytes(t))
+	if s != 201 {
+		t.Fatalf("upload: %d %v", s, up)
+	}
+	id := fmt.Sprint(int(up["list"].([]any)[0].(map[string]any)["id"].(float64)))
+	_, b, _ := c.do("POST", "/roles", `{"name":"Authors"}`)
+	role := fmt.Sprint(int(dataOf(b)["id"].(float64)))
+	c.do("PUT", "/roles/"+role+"/permissions", `{"permissions":[{"action":"plugin::upload.read","subject":null,"conditions":["admin::is-creator"]}]}`)
+	_, b, _ = c.do("POST", "/users", `{"firstname":"Au","email":"au@example.com","roles":[`+role+`]}`)
+	r := newAdminClient(t, ts.URL)
+	_, b, _ = r.do("POST", "/auth/register", `{"registrationToken":"`+dataOf(b)["registrationToken"].(string)+`","userInfo":{"firstname":"Au","password":"Auth0rPass"}}`)
+	r.token = dataOf(b)["token"].(string)
+	if _, b, _ := r.do("GET", "/upload/files", ""); len(b["data"].([]any)) != 0 {
+		t.Fatalf("the list hides the others' files: %v", b)
+	}
+	for _, p := range []string{"/upload/files/" + id, "/upload/files/" + id + "/related"} {
+		if s, b, _ := r.do("GET", p, ""); s != 404 {
+			t.Errorf("%s of another admin's file: %d %v", p, s, b)
+		}
+	}
+	if s, _, _ := c.do("GET", "/upload/files/"+id, ""); s != 200 {
+		t.Fatalf("its creator reads it: %d", s)
+	}
+}
