@@ -262,7 +262,7 @@ func (s *Server) diffVersion(w http.ResponseWriter, r *http.Request, u *User) er
 		}
 		other = o.Data
 	}
-	changes := s.diff(visible(v.Data, ct, v.UID, a), visible(other, ct, v.UID, a), &ct.Attributes, "")
+	changes := s.diff(s.visible(v.Data, ct, a), s.visible(other, ct, a), &ct.Attributes, "")
 	if changes == nil {
 		changes = []FieldChange{}
 	}

@@ -364,7 +364,7 @@ func (s *Server) getVersion(w http.ResponseWriter, r *http.Request, u *User) err
 		return err
 	}
 	splitFields(v, ct)
-	v.Data = visible(v.Data, ct, v.UID, a)
+	v.Data = s.visible(v.Data, ct, a)
 	v.Dangling = s.prune(r.Context(), v.Data, &ct.Attributes, "")
 	return data(w, v)
 }

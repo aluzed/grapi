@@ -263,20 +263,6 @@ func toMap(v any) map[string]any {
 
 var alwaysReadable = map[string]bool{"id": true, schema.AttrDocumentID: true, "createdAt": true, "updatedAt": true, "publishedAt": true, "locale": true}
 
-// visible keeps the fields of row the user may read.
-func visible(row map[string]any, ct *schema.ContentType, uid string, a *permissions.Ability) map[string]any {
-	for k := range row {
-		if alwaysReadable[k] {
-			continue
-		}
-		attr, ok := ct.Attributes.Get(k)
-		if !ok || attr.Type == schema.TypePassword || !a.Can(actionRead, uid, k) {
-			delete(row, k)
-		}
-	}
-	return row
-}
-
 func (s *Server) cmList(w http.ResponseWriter, r *http.Request, u *User) error {
 	ct, a, rbac, err := s.cmAccess(r, u, actionRead)
 	if err != nil {
@@ -300,13 +286,13 @@ func (s *Server) cmList(w http.ResponseWriter, r *http.Request, u *User) error {
 			return validation([]FieldError{{Path: []string{"filters"}, Message: "filters must be a JSON object"}})
 		}
 	}
-	if f := and(userFilters, rbac); f != nil {
+	if f := and(s.sanitizeFilters(userFilters, s.cmScope(ct), a), rbac); f != nil {
 		p["filters"] = scoped(f)
 	}
 	if v := strings.TrimSpace(q.Get("_q")); v != "" {
 		p["_q"] = v
 	}
-	sortBy := q.Get("sort")
+	sortBy := s.sanitizeSort(q.Get("sort"), s.cmScope(ct), a)
 	if sortBy == "" {
 		sortBy = m.Settings.DefaultSortBy + ":" + strings.ToLower(m.Settings.DefaultSortOrder)
 	}
@@ -344,7 +330,7 @@ func (s *Server) cmList(w http.ResponseWriter, r *http.Request, u *User) error {
 	results := make([]map[string]any, 0, len(rows))
 	var ids []any
 	for _, row := range rows {
-		item := visible(toMap(row), ct, uid, a)
+		item := s.visible(toMap(row), ct, a)
 		results = append(results, item)
 		ids = append(ids, item[schema.AttrDocumentID])
 	}
@@ -563,7 +549,7 @@ func (s *Server) cmFindOne(w http.ResponseWriter, r *http.Request, u *User) erro
 	}
 	m := toMap(row)
 	created, updated := m[schema.AttrCreatedBy], m[schema.AttrUpdatedBy]
-	out := visible(m, ct, string(ct.UID), a)
+	out := s.visible(m, ct, a)
 	if stamped {
 		out[schema.AttrCreatedBy], out[schema.AttrUpdatedBy] = created, updated
 	}
@@ -671,7 +657,7 @@ func (s *Server) cmCreate(w http.ResponseWriter, r *http.Request, u *User) error
 		s.recordVersion(r.Context(), ct, id, p["locale"], "", u.ID)
 		s.audit(r, u, "entry.create", map[string]any{"uid": string(ct.UID), "documentId": id, "locale": p["locale"]})
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"data": visible(out, ct, string(ct.UID), a)})
+	writeJSON(w, http.StatusCreated, map[string]any{"data": s.visible(out, ct, a)})
 	return nil
 }
 
@@ -729,7 +715,7 @@ func (s *Server) cmUpdate(w http.ResponseWriter, r *http.Request, u *User) error
 	} else {
 		s.auditEntryUpdate(r, u, ct, id, p["locale"], before)
 	}
-	return data(w, visible(toMap(row), ct, string(ct.UID), a))
+	return data(w, s.visible(toMap(row), ct, a))
 }
 
 func (s *Server) relationRoutes() {
@@ -925,7 +911,7 @@ func (s *Server) stFind(w http.ResponseWriter, r *http.Request, u *User) error {
 	if row == nil {
 		return data(w, nil)
 	}
-	out := visible(toMap(row), ct, string(ct.UID), a)
+	out := s.visible(toMap(row), ct, a)
 	if ct.DraftAndPublish() {
 		if err := s.withStatus(r.Context(), string(ct.UID), p["locale"], "draft", []map[string]any{out}, []any{id}); err != nil {
 			return err
@@ -987,7 +973,7 @@ func (s *Server) stSave(w http.ResponseWriter, r *http.Request, u *User) error {
 			s.auditEntryUpdate(r, u, ct, docID, p["locale"], before)
 		}
 	}
-	return data(w, visible(out, ct, string(ct.UID), a))
+	return data(w, s.visible(out, ct, a))
 }
 
 func (s *Server) stDelete(w http.ResponseWriter, r *http.Request, u *User) error {
