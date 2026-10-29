@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -90,5 +91,30 @@ func TestOnlyJSONBodiesAreRead(t *testing.T) {
 	r.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if body, _, err := readBody(r); err != nil || body["identifier"] != "a" {
 		t.Fatalf("JSON body: %v %v", body, err)
+	}
+}
+
+func TestMultipartFieldLimits(t *testing.T) {
+	read := func(n, size int) error {
+		var body bytes.Buffer
+		mw := multipart.NewWriter(&body)
+		for i := range n {
+			_ = mw.WriteField("f"+strconv.Itoa(i), strings.Repeat("x", size))
+		}
+		_ = mw.Close()
+		r := httptest.NewRequest(http.MethodPost, "/api/upload", &body)
+		r.Header.Set("Content-Type", mw.FormDataContentType())
+		_, err := readMultipart(r, t.TempDir())
+		return err
+	}
+	if err := read(maxFields, 1); err != nil {
+		t.Fatalf("%d fields: %v", maxFields, err)
+	}
+	var e *APIError
+	if err := read(maxFields+1, 1); !errors.As(err, &e) || e.Status != http.StatusRequestEntityTooLarge {
+		t.Fatalf("one field too many: %v", err)
+	}
+	if err := read(21, 1<<20); !errors.As(err, &e) || e.Status != http.StatusRequestEntityTooLarge {
+		t.Fatalf("21mb of fields: %v", err)
 	}
 }

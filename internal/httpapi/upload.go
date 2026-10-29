@@ -97,9 +97,16 @@ type multipartRequest struct {
 	fields map[string][]string
 }
 
+// formidable's defaults for the non-file fields of a multipart body.
+const (
+	maxFields     = 1000
+	maxFieldsSize = 20 << 20
+)
+
 func readMultipart(r *http.Request, dir string) (*multipartRequest, error) {
 	out := &multipartRequest{fields: map[string][]string{}}
 	limit, total := maxFileSizeOf(r.Context()), int64(0)
+	fields, fieldsSize := 0, 0
 	mr, err := r.MultipartReader()
 	if err != nil {
 		return out, nil //nolint:nilerr // a request without multipart has no files
@@ -114,9 +121,15 @@ func readMultipart(r *http.Request, dir string) (*multipartRequest, error) {
 		}
 		name := part.FormName()
 		if part.FileName() == "" {
+			if fields++; fields > maxFields {
+				return nil, newError(http.StatusRequestEntityTooLarge, "PayloadTooLargeError", fmt.Sprintf("options.maxFields (%d) exceeded", maxFields))
+			}
 			b, err := io.ReadAll(io.LimitReader(part, 1<<20))
 			if err != nil {
 				return nil, err
+			}
+			if fieldsSize += len(b); fieldsSize > maxFieldsSize {
+				return nil, newError(http.StatusRequestEntityTooLarge, "PayloadTooLargeError", fmt.Sprintf("options.maxFieldsSize (%d bytes) exceeded, received %d bytes of field data", maxFieldsSize, fieldsSize))
 			}
 			out.fields[name] = append(out.fields[name], string(b))
 			continue
