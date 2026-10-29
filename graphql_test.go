@@ -109,3 +109,64 @@ func jsonOf(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
 }
+
+// GraphQL answers go through the content API output sanitization, as REST:
+// a password field reads null and the registered output sanitizers apply.
+func TestGraphQLSanitizesOutput(t *testing.T) {
+	dir := t.TempDir()
+	if err := copyDir(filepath.Join("compat", "fixtures", "graphql", "src"), filepath.Join(dir, "src")); err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(dir, "src", "api", "article", "content-types", "article", "schema.json")
+	raw, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw = []byte(strings.Replace(string(raw), `"attributes": {`, `"attributes": {
+    "pin": { "type": "password" },`, 1))
+	if err := os.WriteFile(p, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config", "plugins.yaml"), []byte("graphql:\n  enabled: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DATABASE_CLIENT", "sqlite")
+	t.Setenv("DATABASE_FILENAME", filepath.Join(dir, "data.db"))
+	t.Setenv("JWT_SECRET", "test")
+	app := grapi.New(grapi.Options{Dir: dir, Stderr: &bytes.Buffer{}})
+	app.AddSanitizer("content-api.output", func(uid string, e map[string]any) map[string]any {
+		if uid == "api::article.article" {
+			e["summary"] = "sanitized"
+		}
+		return e
+	})
+	no := false
+	app.GraphQL().Use(grapi.GraphQLExtension{ResolversConfig: map[string]grapi.GraphQLResolverConfig{
+		"Query.articles":         {Auth: &no},
+		"Mutation.createArticle": {Auth: &no},
+	}})
+	srv, err := app.Setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = srv.Close() }()
+	ts := httptest.NewServer(srv.Handler)
+	defer ts.Close()
+
+	_, out := gql(t, ts.URL, `mutation { createArticle(data: {title: "Hi", summary: "raw", pin: "1234"}, status: PUBLISHED) { title pin summary } }`)
+	created, _ := out["data"].(map[string]any)["createArticle"].(map[string]any)
+	if created == nil || created["pin"] != nil || created["summary"] != "sanitized" {
+		t.Fatalf("mutation output: %s", jsonOf(out))
+	}
+	_, out = gql(t, ts.URL, `{ articles { title pin summary } }`)
+	list, _ := out["data"].(map[string]any)["articles"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("articles: %s", jsonOf(out))
+	}
+	if a := list[0].(map[string]any); a["pin"] != nil || a["summary"] != "sanitized" {
+		t.Fatalf("query output: %s", jsonOf(out))
+	}
+}

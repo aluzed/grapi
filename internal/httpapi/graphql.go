@@ -533,7 +533,11 @@ func (g *gqlResolver) resolve(ctx context.Context, fc *graphql.FieldContext) (an
 	case graphql.FieldComponent:
 		return g.component(ctx, fc)
 	case graphql.FieldDynamicZone:
-		return g.load(ctx, fc.Field.UID, fc.Parent, fc.Field.Attr, nil)
+		v, err := g.load(ctx, fc.Field.UID, fc.Parent, fc.Field.Attr, nil)
+		if err != nil {
+			return nil, err
+		}
+		return g.s.sanitizePolymorphic(v, g.auth, true), nil
 	case graphql.FieldCreate, graphql.FieldUpdate, graphql.FieldDelete, graphql.FieldSingleUpdate, graphql.FieldSingleDelete:
 		return g.mutate(ctx, fc)
 	case graphql.FieldCustom:
@@ -561,17 +565,22 @@ func (g *gqlResolver) find(ctx context.Context, fc *graphql.FieldContext) (any, 
 		if err != nil || row == nil {
 			return nil, err
 		}
-		return row, nil
+		return g.output(row, f.UID), nil
 	case graphql.FieldSingleFind:
 		row, err := g.s.docs.FindFirst(ctx, string(f.UID), p)
 		if err != nil || row == nil {
 			return nil, err
 		}
-		return row, nil
+		return g.output(row, f.UID), nil
 	}
 	rows, err := g.s.docs.FindMany(ctx, string(f.UID), p)
 	if err != nil {
 		return nil, err
+	}
+	for i, r := range rows {
+		if out, ok := g.output(r, f.UID).(query.Row); ok {
+			rows[i] = out
+		}
 	}
 	if f.Kind == graphql.FieldFind {
 		return rowsAsAny(rows), nil
@@ -706,6 +715,7 @@ func (g *gqlResolver) association(ctx context.Context, fc *graphql.FieldContext)
 	if err != nil {
 		return nil, err
 	}
+	v = g.output(v, target)
 	switch f.Kind {
 	case graphql.FieldRelationConnection:
 		return map[string]any{"nodes": nonNilList(v)}, nil
@@ -775,7 +785,11 @@ func (g *gqlResolver) component(ctx context.Context, fc *graphql.FieldContext) (
 	if err != nil {
 		return nil, err
 	}
-	return g.load(ctx, f.UID, fc.Parent, f.Attr, loadParams(tq))
+	v, err := g.load(ctx, f.UID, fc.Parent, f.Attr, loadParams(tq))
+	if err != nil {
+		return nil, err
+	}
+	return g.output(v, f.Target), nil
 }
 
 // inputData converts the dynamic zone inputs (__typename) to __component.
@@ -823,10 +837,10 @@ func (g *gqlResolver) mutate(ctx context.Context, fc *graphql.FieldContext) (any
 	id, _ := fc.Args["documentId"].(string)
 	switch f.Kind {
 	case graphql.FieldCreate:
-		return nilRow(g.s.docs.Create(ctx, uid, p))
+		return g.outputRow(f.UID)(g.s.docs.Create(ctx, uid, p))
 	case graphql.FieldUpdate:
 		p["documentId"] = id
-		return nilRow(g.s.docs.Update(ctx, uid, id, p))
+		return g.outputRow(f.UID)(g.s.docs.Update(ctx, uid, id, p))
 	case graphql.FieldDelete:
 		if _, err := g.s.docs.Delete(ctx, uid, id, document.Params{}); err != nil {
 			return nil, err
@@ -846,14 +860,30 @@ func (g *gqlResolver) mutate(ctx context.Context, fc *graphql.FieldContext) (any
 		if _, err := g.s.docs.Delete(ctx, uid, ds, p); err != nil {
 			return nil, err
 		}
-		return existing, nil
+		return g.output(existing, f.UID), nil
 	}
 	if existing != nil {
 		docID, _ := existing.Get(schema.AttrDocumentID)
 		ds, _ := docID.(string)
-		return nilRow(g.s.docs.Update(ctx, uid, ds, p))
+		return g.outputRow(f.UID)(g.s.docs.Update(ctx, uid, ds, p))
 	}
-	return nilRow(g.s.docs.Create(ctx, uid, p))
+	return g.outputRow(f.UID)(g.s.docs.Create(ctx, uid, p))
+}
+
+// output is sanitize.contentAPI.output on what a resolver returns: the
+// schema hides private fields but not password ones, and the registered
+// output sanitizers apply as in REST.
+func (g *gqlResolver) output(v any, uid schema.UID) any {
+	return g.s.sanitizeOutput(v, g.s.schemaOf(string(uid)), g.auth)
+}
+
+func (g *gqlResolver) outputRow(uid schema.UID) func(query.Row, error) (any, error) {
+	return func(row query.Row, err error) (any, error) {
+		if err != nil || row == nil {
+			return nil, err
+		}
+		return g.output(row, uid), nil
+	}
 }
 
 func nilRow(row query.Row, err error) (any, error) {
