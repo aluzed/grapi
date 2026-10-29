@@ -986,6 +986,12 @@ func (s *Server) servePublic(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	name := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
+	// koa-send's hidden option, false: no dotfile nor dot directory.
+	for _, seg := range strings.Split(name, "/") {
+		if strings.HasPrefix(seg, ".") {
+			return false
+		}
+	}
 	public := os.DirFS(s.cfg.Upload.PublicDir)
 	st, err := fs.Stat(public, name)
 	if err != nil || st.IsDir() {
