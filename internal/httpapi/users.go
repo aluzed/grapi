@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -69,7 +68,7 @@ func (s *Server) addUsersRoutes() {
 // readBody is the raw JSON body (users-permissions routes take no data
 // wrapper) and its keys in body order.
 func readBody(r *http.Request) (map[string]any, []string, error) {
-	raw, err := io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
+	raw, err := readJSONBody(r)
 	if err != nil {
 		return nil, nil, err
 	}

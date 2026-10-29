@@ -68,3 +68,27 @@ func TestMaxFileSizeStreams(t *testing.T) {
 		t.Fatalf("over the limit: %v", err)
 	}
 }
+
+type unreadable struct{}
+
+func (unreadable) Read([]byte) (int, error) { panic("a body that is not JSON must not be read") }
+
+func TestOnlyJSONBodiesAreRead(t *testing.T) {
+	for _, ct := range []string{"", "application/octet-stream", "text/plain", "multipart/form-data; boundary=x"} {
+		r := httptest.NewRequest(http.MethodPost, "/api/auth/local", unreadable{})
+		if ct != "" {
+			r.Header.Set("Content-Type", ct)
+		}
+		if raw, err := readJSONBody(r); raw != nil || err != nil {
+			t.Errorf("%q: %q %v", ct, raw, err)
+		}
+		if body, _, err := readBody(r); err != nil || len(body) != 0 {
+			t.Errorf("%q: readBody = %v %v", ct, body, err)
+		}
+	}
+	r := httptest.NewRequest(http.MethodPost, "/api/auth/local", strings.NewReader(`{"identifier":"a"}`))
+	r.Header.Set("Content-Type", "application/json; charset=utf-8")
+	if body, _, err := readBody(r); err != nil || body["identifier"] != "a" {
+		t.Fatalf("JSON body: %v %v", body, err)
+	}
+}

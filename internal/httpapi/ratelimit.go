@@ -67,7 +67,7 @@ func (s *Server) rateLimited(w http.ResponseWriter, r *http.Request) bool {
 	}
 	var body []byte
 	if r.Body != nil {
-		body, _ = io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
+		body, _ = readJSONBody(r)
 		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
 	key := prefixKey(r.URL.Path, s.cfg.Proxy.IP(r), body)

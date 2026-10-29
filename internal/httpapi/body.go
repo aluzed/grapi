@@ -62,10 +62,28 @@ func parseBodyLimits(cfg map[string]any) *BodyLimits {
 	return &l
 }
 
+func isJSON(mt string) bool {
+	return mt == "application/json" || mt == "application/json-patch+json" || mt == "application/vnd.api+json" || mt == "application/csp-report" || strings.HasSuffix(mt, "+json")
+}
+
+// readJSONBody reads the body only when it is declared as JSON, as koa-body
+// parses it: any other body is left unread, so it never escapes the JSON
+// limit.
+func readJSONBody(r *http.Request) ([]byte, error) {
+	if r.Body == nil {
+		return nil, nil
+	}
+	mt, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if !isJSON(mt) {
+		return nil, nil
+	}
+	return io.ReadAll(io.LimitReader(r.Body, maxBodyRead))
+}
+
 func (l BodyLimits) of(contentType string) int64 {
 	mt, _, _ := mime.ParseMediaType(contentType)
 	switch {
-	case mt == "application/json", mt == "application/json-patch+json", mt == "application/vnd.api+json", mt == "application/csp-report", strings.HasSuffix(mt, "+json"):
+	case isJSON(mt):
 		return l.JSON
 	case mt == "application/x-www-form-urlencoded":
 		return l.Form
