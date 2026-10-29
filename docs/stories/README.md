@@ -46,6 +46,10 @@ compat/               banc de compatibilité contre Strapi de référence
 
 ## Index des tickets
 
+### security
+
+Les suites de l'audit du 29 octobre 2026 sont détaillées dans le [backlog sécurité](./security/README.md) : `SEC-001` à `SEC-006` pour les correctifs sauvegardés, `SEC-007` à `SEC-014` pour le durcissement des projets déployés et `SEC-015` pour la validation avant livraison.
+
 ### setup
 - `SETUP-001` Bootstrap du repo Go (module `github.com/aluzed/grapi`, layout, lint, CI, README, LICENSE, avertissement marque)
 - `SETUP-002` Banc de compatibilité contre Strapi 5.59 (mêmes requêtes, diff JSON normalisé, mesures perf et mémoire)

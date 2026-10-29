@@ -2,6 +2,8 @@
 
 grapi is one binary and a project directory (the `src/` of a Strapi project: `api/*/content-types/*/schema.json`, `components/`, `extensions/`) with its `config/` (YAML or JSON, see [`docs/configuration.md`](docs/configuration.md)).
 
+Before exposing a project, review the [security findings and production settings](docs/security-review-20261029.md), particularly upload types, webhook network access, CORS origins and users-permissions grants.
+
 Before pointing grapi at an existing Strapi database, run on a copy:
 
 ```sh
