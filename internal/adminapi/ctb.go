@@ -47,11 +47,14 @@ func (s *Server) srcPath(parts ...string) string {
 	return filepath.Join(append([]string{s.cfg.ProjectDir, "src"}, parts...)...)
 }
 
+// pathSegment keeps the names of a uid from leaving their folder.
+var pathSegment = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
 // ctPath is the schema file of an api:: content type.
 func (s *Server) ctPath(uid string) (string, bool) {
 	rest, ok := strings.CutPrefix(uid, "api::")
 	api, name, ok2 := strings.Cut(rest, ".")
-	if !ok || !ok2 {
+	if !ok || !ok2 || !pathSegment.MatchString(api) || !pathSegment.MatchString(name) {
 		return "", false
 	}
 	return s.srcPath("api", api, "content-types", name, "schema.json"), true
@@ -59,7 +62,7 @@ func (s *Server) ctPath(uid string) (string, bool) {
 
 func (s *Server) componentPath(uid string) (string, bool) {
 	cat, name, ok := strings.Cut(uid, ".")
-	if !ok {
+	if !ok || !pathSegment.MatchString(cat) || !pathSegment.MatchString(name) {
 		return "", false
 	}
 	return s.srcPath("components", cat, name+".json"), true
@@ -333,6 +336,10 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 			continue
 		}
 		if c.Action == "delete" {
+			if _, ok := s.set.Component(schema.UID(uid)); !ok {
+				p.fail(at, "unknown component %s", uid)
+				continue
+			}
 			p.removes = append(p.removes, path)
 			continue
 		}
@@ -384,8 +391,16 @@ func (s *Server) build(changes []Change, components []Change) *plan {
 			p.fail(at, "only the api:: content types can be edited")
 			continue
 		}
-		path, _ := s.ctPath(uid)
+		path, ok := s.ctPath(uid)
+		if !ok {
+			p.fail(at, "invalid content type uid %s", uid)
+			continue
+		}
 		if c.Action == "delete" {
+			if _, ok := s.set.ContentType(schema.UID(uid)); !ok {
+				p.fail(at, "unknown content type %s", uid)
+				continue
+			}
 			p.removes = append(p.removes, filepath.Dir(path))
 			continue
 		}
@@ -635,17 +650,27 @@ func (s *Server) coreFiles(p *plan, name, uid string) {
 
 // apply writes the plan under root (the project, or its copy).
 func (s *Server) apply(p *plan, root string) error {
-	rebase := func(path string) string {
-		rel, _ := filepath.Rel(s.cfg.ProjectDir, path)
-		return filepath.Join(root, rel)
+	rebase := func(path string) (string, error) {
+		rel, err := filepath.Rel(s.srcPath(), path)
+		if err != nil || rel == "." || !filepath.IsLocal(rel) {
+			return "", fmt.Errorf("%s is not under the project's src", path)
+		}
+		return filepath.Join(root, "src", rel), nil
 	}
 	for path, m := range p.files {
-		if err := writeAtomic(rebase(path), m); err != nil {
+		target, err := rebase(path)
+		if err != nil {
+			return err
+		}
+		if err := writeAtomic(target, m); err != nil {
 			return err
 		}
 	}
 	for path, text := range p.texts {
-		target := rebase(path)
+		target, err := rebase(path)
+		if err != nil {
+			return err
+		}
 		if _, err := os.Stat(target); err == nil {
 			continue
 		}
@@ -657,7 +682,10 @@ func (s *Server) apply(p *plan, root string) error {
 		}
 	}
 	for _, path := range p.removes {
-		target := rebase(path)
+		target, err := rebase(path)
+		if err != nil {
+			return err
+		}
 		if err := os.RemoveAll(target); err != nil {
 			return err
 		}

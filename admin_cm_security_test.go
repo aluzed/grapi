@@ -169,3 +169,27 @@ func TestAdminRelationPickerInComponentChecksTheField(t *testing.T) {
 		t.Fatalf("links readable: %d %v", s, b)
 	}
 }
+
+func TestAdminCTBRefusesPathsOutOfTheProject(t *testing.T) {
+	ts, _, stop, _ := newAdminApp(t, "basic", true)
+	defer stop()
+	c := adminLogin(t, ts.URL)
+	victim := t.TempDir()
+	if err := os.WriteFile(filepath.Join(victim, "keep.json"), []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	up := strings.Repeat("../", 30) + strings.TrimPrefix(victim, "/")
+	for _, body := range []string{
+		`{"contentTypes":[{"action":"delete","uid":"api::a./` + up + `","data":{"info":{}}}],"components":[]}`,
+		`{"contentTypes":[{"action":"delete","uid":"api::../../..` + victim + `.x","data":{"info":{}}}],"components":[]}`,
+		`{"contentTypes":[],"components":[{"action":"delete","uid":"x./` + up + `/keep","data":{}}]}`,
+	} {
+		s, b, _ := c.do("POST", "/content-type-builder/update-schema", body)
+		if s != 400 {
+			t.Errorf("%s: %d %v", body, s, b)
+		}
+		if _, err := os.Stat(filepath.Join(victim, "keep.json")); err != nil {
+			t.Fatalf("a file out of the project was removed: %v", err)
+		}
+	}
+}
