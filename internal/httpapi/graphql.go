@@ -875,7 +875,10 @@ func (g *gqlResolver) rest(h func(http.ResponseWriter, *http.Request, *requestCo
 	r := httptest.NewRequestWithContext(g.r.Context(), method, target, bytes.NewReader(b))
 	r.RemoteAddr = g.r.RemoteAddr
 	r.Header.Set("Content-Type", "application/json")
-	for _, k := range []string{"Authorization", "X-Forwarded-For"} {
+	for _, k := range []string{"Authorization", "X-Forwarded-For", g.s.cfg.Proxy.IPHeader} {
+		if k == "" {
+			continue
+		}
 		if v := g.r.Header.Get(k); v != "" {
 			r.Header.Set(k, v)
 		}
