@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -1032,6 +1033,41 @@ func TestAdminAPITokens(t *testing.T) {
 	}
 	if s, _, _ := c.do("DELETE", "/api-tokens/"+id, ""); s != 200 || api("/api/articles", next) != 401 {
 		t.Fatalf("delete: %d", s)
+	}
+}
+
+// A token whose expiry cannot be read is refused, not treated as eternal.
+func TestAPITokenUnreadableExpiry(t *testing.T) {
+	ts, _, stop, dir := newAdminApp(t, "basic", false)
+	defer stop()
+	c := newAdminClient(t, ts.URL)
+	_, b, _ := c.do("POST", "/auth/register-admin", `{"firstname":"Ada","email":"ada@example.com","password":"Passw0rd"}`)
+	c.token = dataOf(b)["token"].(string)
+	_, b, _ = c.do("POST", "/api-tokens", `{"name":"Front","type":"read-only","lifespan":30}`)
+	key := dataOf(b)["accessKey"].(string)
+	get := func() int {
+		req, _ := http.NewRequest("GET", ts.URL+"/api/articles", nil)
+		req.Header.Set("Authorization", "Bearer "+key)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = res.Body.Close()
+		return res.StatusCode
+	}
+	if s := get(); s != 200 {
+		t.Fatalf("valid token: %d", s)
+	}
+	d, err := sql.Open("sqlite", "file:"+filepath.Join(dir, "data.db")+"?_pragma=busy_timeout(5000)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = d.Close() }()
+	if _, err := d.Exec(`update "strapi_api_tokens" set "expires_at" = 'not a date'`); err != nil {
+		t.Fatal(err)
+	}
+	if s := get(); s != 401 {
+		t.Fatalf("unreadable expiry: %d, want 401", s)
 	}
 }
 

@@ -197,7 +197,7 @@ func (a *authenticator) apiToken(ctx context.Context, token string) (*Auth, erro
 		return nil, err
 	}
 	if expires.Valid && expires.String != "" {
-		if t, ok := parseStoredTime(expires.String); ok && t.Before(time.Now()) {
+		if t, ok := parseStoredTime(expires.String); !ok || t.Before(time.Now()) {
 			return nil, newError(http.StatusUnauthorized, "UnauthorizedError", "Token expired")
 		}
 	}
@@ -240,7 +240,7 @@ func (a *authenticator) touchToken(ctx context.Context, id int64, last sql.NullS
 // parseStoredTime reads expires_at: an ISO string under Postgres, epoch
 // milliseconds under SQLite.
 func parseStoredTime(s string) (time.Time, bool) {
-	for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999", "2006-01-02 15:04:05"} {
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999999-07:00", "2006-01-02 15:04:05.999999-07", "2006-01-02 15:04:05.999999", "2006-01-02 15:04:05"} {
 		if t, err := time.Parse(layout, s); err == nil {
 			return t, true
 		}
