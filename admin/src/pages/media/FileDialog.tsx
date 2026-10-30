@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { TextField } from '@/components/ui/field'
 import { api, upload } from '@/lib/api'
 import { showError } from '@/lib/form'
+import { uploadOrigin } from '@/lib/media'
 import { can } from '@/lib/permissions'
 import type { MediaFile } from '@/lib/types'
 import { useAuth } from '@/providers/AuthProvider'
@@ -16,7 +17,7 @@ import { useI18n } from '@/providers/I18nProvider'
 import { CropDialog } from './CropDialog'
 import { Thumb } from './MediaBrowser'
 
-export const absolute = (url: string) => new URL(url, window.location.origin).toString()
+export const absolute = (url: string) => new URL(url, uploadOrigin()).toString()
 
 // FileDialog edits a file's details. onSaved and onDeleted let a media field
 // follow the change without reloading the document.

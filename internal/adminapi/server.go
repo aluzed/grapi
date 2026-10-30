@@ -89,6 +89,9 @@ type Config struct {
 	UploadFromURLMaxSize int64
 	UploadFromURLTimeout time.Duration
 	UploadFromURLPrivate bool
+	// UploadPublicURL is plugins.upload.config.publicUrl: the origin the
+	// editors put before a file's relative URL instead of the admin's own.
+	UploadPublicURL string
 	// HistoryOrigins are the origins whose writes record a version
 	// (admin-panel only when empty).
 	HistoryOrigins []string

@@ -49,12 +49,15 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	_, _ = w.Write(withBase(index, s.cfg.Path+"/"))
+	_, _ = w.Write(withBase(index, s.cfg.Path+"/", s.cfg.UploadPublicURL))
 }
 
 // withBase points the relative URLs of the build at the admin path, so one
-// build serves any admin.url.
-func withBase(index []byte, base string) []byte {
-	tag := []byte(`<head><base href="` + html.EscapeString(base) + `">`)
-	return bytes.Replace(index, []byte("<head>"), tag, 1)
+// build serves any admin.url, and hands the SPA the uploads' public URL.
+func withBase(index []byte, base, uploadURL string) []byte {
+	tag := `<head><base href="` + html.EscapeString(base) + `">`
+	if uploadURL != "" {
+		tag += `<meta name="grapi-upload-url" content="` + html.EscapeString(uploadURL) + `">`
+	}
+	return bytes.Replace(index, []byte("<head>"), []byte(tag), 1)
 }

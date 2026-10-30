@@ -68,6 +68,9 @@ func adminConfig(c *config.Config, dir string, mail *email.Service, proxy client
 	if b, ok := c.Bool("plugins.upload.config.uploadFromUrls.allowPrivateNetworks"); ok {
 		cfg.UploadFromURLPrivate = b
 	}
+	if u, _ := c.String("plugins.upload.config.publicUrl"); u != "" {
+		cfg.UploadPublicURL = strings.TrimRight(u, "/")
+	}
 	if n, ok := c.Int("plugins.upload.config.uploadFromUrls.maxSize"); ok {
 		cfg.UploadFromURLMaxSize = int64(n)
 	}

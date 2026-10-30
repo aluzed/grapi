@@ -32,6 +32,11 @@ export function reorder<T>(list: T[], from: number, to: number): T[] {
 // included, get their icon, as the admin's CSP has object-src 'none'.
 export const previewOf = (mime: string): Kind => kindOf(mime)
 
+// uploadOrigin is plugins.upload.config.publicUrl, which the server puts in
+// index.html, or the admin's origin.
+export const uploadOrigin = () =>
+  document.querySelector<HTMLMetaElement>('meta[name="grapi-upload-url"]')?.content || window.location.origin
+
 // backendUrl is Strapi's prefixFileUrlWithBackendUrl: the editors store a
-// file's URL with the server's origin when it is relative.
-export const backendUrl = (url: string) => (url.startsWith('/') ? `${window.location.origin}${url}` : url)
+// file's URL with the uploads' origin when it is relative.
+export const backendUrl = (url: string, origin = uploadOrigin()) => (url.startsWith('/') ? `${origin}${url}` : url)

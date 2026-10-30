@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { accepts, checkDrop, kindOf, previewOf, reorder } from './media'
+import { accepts, backendUrl, checkDrop, kindOf, previewOf, reorder } from './media'
 
 test('kindOf', () => {
   expect(kindOf('image/png')).toBe('image')
@@ -36,4 +36,9 @@ test('previewOf', () => {
   expect(previewOf('application/pdf')).toBe('file')
   expect(previewOf('image/gif')).toBe('image')
   expect(previewOf('text/csv')).toBe('file')
+})
+
+test('backendUrl prefixes a relative URL with the uploads origin', () => {
+  expect(backendUrl('/uploads/a.png', 'https://cdn.example.com')).toBe('https://cdn.example.com/uploads/a.png')
+  expect(backendUrl('https://s3.example.com/a.png', 'https://cdn.example.com')).toBe('https://s3.example.com/a.png')
 })
