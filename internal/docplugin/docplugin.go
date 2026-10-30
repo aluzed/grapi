@@ -65,7 +65,7 @@ func (p *Plugin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/documentation/login" && r.Method == http.MethodPost:
 		p.login(w, r)
 	case r.URL.Path == "/documentation/login" && r.Method == http.MethodGet:
-		p.render(w, loginPage, map[string]any{"ActionURL": p.cfg.BackendURL + "/documentation/login", "Error": r.URL.Query().Get("error") != ""})
+		p.render(w, loginPage, map[string]any{"BackendURL": p.cfg.BackendURL, "ActionURL": p.cfg.BackendURL + "/documentation/login", "Error": r.URL.Query().Get("error") != ""})
 	case r.Method == http.MethodGet && r.URL.Path != "/documentation/login":
 		p.index(w, r)
 	default:
@@ -128,8 +128,7 @@ var indexPage = template.Must(template.New("index").Parse(`<!doctype html>
     <meta charset="UTF-8">
     <title>Swagger UI</title>
     <link rel="stylesheet" type="text/css" href="{{.BackendURL}}/plugins/documentation/swagger-ui.css">
-    <link rel="icon" type="image/png" href="{{.BackendURL}}/plugins/documentation/favicon-32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="{{.BackendURL}}/plugins/documentation/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/svg+xml" href="{{.BackendURL}}/plugins/documentation/favicon.svg">
     <style>html { box-sizing: border-box; overflow-y: scroll; } *, *:before, *:after { box-sizing: inherit; } body { margin: 0; background: #fafafa; }</style>
   </head>
   <body>
@@ -159,6 +158,7 @@ var loginPage = template.Must(template.New("login").Parse(`<!doctype html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Documentation</title>
+    <link rel="icon" type="image/svg+xml" href="{{.BackendURL}}/plugins/documentation/favicon.svg">
     <style>
       body { margin: 0; min-height: 100vh; background: #f6f9fc; font: 16px system-ui, sans-serif; display: flex; align-items: flex-start; justify-content: center; }
       form { margin: 12vh 16px 0; width: 100%; max-width: 420px; background: #fff; border-top: 2px solid #4945ff; border-radius: 4px; box-shadow: 0 2px 4px rgba(91, 107, 174, .15); padding: 24px; display: flex; flex-direction: column; gap: 12px; }
