@@ -10,7 +10,7 @@ The public content API stays wire-compatible with Strapi 5, so an existing front
 
 ## Status
 
-Pre-alpha. `grapi start` serves the REST and GraphQL content APIs of a Strapi project, and an admin panel under `/admin` (first admin, login, profile so far; API: [`docs/admin-api.md`](docs/admin-api.md)) (configuration: [`docs/configuration.md`](docs/configuration.md); Go hooks, routes and policies: [`docs/framework.md`](docs/framework.md)). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
+Pre-alpha. `grapi start` serves the REST and GraphQL content APIs of a Strapi project, and an admin panel under `/admin`. The admin includes first-admin setup, login, profiles, a content manager with draft and publish, and content history. Use `grapi develop` for the content-type builder. See the [admin API](docs/admin-api.md), [configuration](docs/configuration.md), and [Go hooks, routes and policies](docs/framework.md). The plan lives in [`docs/feasibility.md`](docs/feasibility.md) and the backlog in [`docs/stories/`](docs/stories).
 
 ## Commands
 

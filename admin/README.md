@@ -25,3 +25,4 @@ cd admin && bun run dev             # the SPA with hot reload, /admin/api proxie
 - The build uses relative URLs (`base: './'`); the server injects `<base href="<admin.url>/">` into `index.html`, so one build works under any admin path.
 - The access token lives in memory only; the refresh token is an httpOnly cookie. A 401 triggers one refresh (shared by the concurrent requests) and the request is retried.
 - UI conventions: see `docs/stories/admin/ADM-002-shell-admin.md`.
+- The content editor localizes known empty required-field errors using the admin language. Incomplete drafts can still be saved, and API validation responses stay unchanged. Other errors keep the server's message.

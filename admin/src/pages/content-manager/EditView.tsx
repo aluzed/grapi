@@ -25,6 +25,7 @@ import { PreviewButton, PreviewPanel, storedPreviewMode, usePreviewURL, type Pre
 import { ReleaseButton } from './ReleaseButton'
 import { splitLayout, type Section as SectionName } from './sections'
 import { entryPath, useLocales, useModels } from './hooks'
+import { localizeValidationError } from './validation'
 
 const readOnlyFields = new Set(['id', 'documentId', 'createdAt', 'updatedAt'])
 
@@ -170,7 +171,14 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     setErrorList(list)
   }
   const fail = (err: unknown) => {
-    if (err instanceof ApiError) showFieldErrors(err.fieldErrors())
+    if (err instanceof ApiError) {
+      const error = localizeValidationError(err, model.attributes, t('validation.required'))
+      showFieldErrors(error.fields)
+      if (error.localized) {
+        toast.error(error.message)
+        return
+      }
+    }
     showError(err, undefined, t('common.error'))
   }
 
@@ -209,8 +217,9 @@ function Edit({ model, documentId, single, components }: { model: Model; documen
     },
     onSuccess: ({ r, op }) => {
       if (r.errors.length > 0) {
-        showFieldErrors(r.errors.flatMap((e) => e.details?.errors ?? []))
-        toast.error(r.errors.map((e) => e.message).join(', '))
+        const errors = r.errors.map((e) => localizeValidationError(e, model.attributes, t('validation.required')))
+        showFieldErrors(errors.flatMap((e) => e.fields))
+        toast.error(errors.map((e) => e.message).join(', '))
         return
       }
       toast.success(t(op === 'publish' ? 'cm.published' : op === 'unpublish' ? 'cm.unpublished' : op === 'discard' ? 'cm.discarded' : 'cm.deleted'))
