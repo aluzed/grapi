@@ -49,7 +49,7 @@ func (s *Server) serveUI(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	_, _ = w.Write(withBase(index, s.cfg.Path+"/", s.cfg.UploadPublicURL))
+	_, _ = w.Write(withBase(index, s.cfg.Path+"/", s.uploadPublicURL(r.Context())))
 }
 
 // withBase points the relative URLs of the build at the admin path, so one

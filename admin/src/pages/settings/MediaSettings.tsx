@@ -5,13 +5,20 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/app/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/field'
+import { Checkbox, TextField } from '@/components/ui/field'
 import { api } from '@/lib/api'
 import { showError } from '@/lib/form'
+import { setUploadOrigin } from '@/lib/media'
 import type { MessageKey } from '@/i18n'
 import { useI18n } from '@/providers/I18nProvider'
 
-type UploadSettings = { sizeOptimization: boolean; responsiveDimensions: boolean; autoOrientation: boolean }
+type UploadSettings = {
+  sizeOptimization: boolean
+  responsiveDimensions: boolean
+  autoOrientation: boolean
+  publicUrl: string
+  publicUrlDefault?: string
+}
 
 const keys = ['responsiveDimensions', 'sizeOptimization', 'autoOrientation'] as const
 
@@ -24,8 +31,9 @@ export function MediaSettings() {
     if (settings.data) setValue(settings.data)
   }, [settings.data])
   const save = useMutation({
-    mutationFn: () => api.put('/upload/settings', value),
-    onSuccess: () => {
+    mutationFn: () => api.put<UploadSettings>('/upload/settings', value),
+    onSuccess: (saved) => {
+      setUploadOrigin(saved.publicUrl || saved.publicUrlDefault || '')
       toast.success(t('mediaSettings.saved'))
       void queryClient.invalidateQueries({ queryKey: ['media', 'settings'] })
     },
@@ -50,6 +58,17 @@ export function MediaSettings() {
               <p className="pl-6 text-xs text-muted">{t(`mediaSettings.${k}Help` as MessageKey)}</p>
             </div>
           ))}
+        {value && (
+          <TextField
+            label={t('mediaSettings.publicUrl')}
+            type="url"
+            inputMode="url"
+            value={value.publicUrl}
+            placeholder={value.publicUrlDefault || window.location.origin}
+            hint={t('mediaSettings.publicUrlHelp')}
+            onChange={(e) => setValue({ ...value, publicUrl: e.target.value })}
+          />
+        )}
       </Card>
     </div>
   )

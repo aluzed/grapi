@@ -631,6 +631,8 @@
   "mediaSettings.sizeOptimizationHelp": "Réencode les images pour réduire leur poids, sans perte visible.",
   "mediaSettings.autoOrientation": "Orientation automatique",
   "mediaSettings.autoOrientationHelp": "Pivote les images selon leur orientation EXIF.",
+  "mediaSettings.publicUrl": "URL publique des médias",
+  "mediaSettings.publicUrlHelp": "Placée devant les fichiers insérés dans les contenus et les liens copiés, par exemple https://media.example.com. Vaut pour les prochaines insertions seulement : les contenus déjà écrits gardent leurs liens. Vide : la config du serveur, sinon l'adresse de cet admin.",
   "media.sort": "Tri",
   "media.sort.createdAt:DESC": "Envois les plus récents",
   "media.sort.createdAt:ASC": "Envois les plus anciens",

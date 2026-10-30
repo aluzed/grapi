@@ -90,7 +90,8 @@ type Config struct {
 	UploadFromURLTimeout time.Duration
 	UploadFromURLPrivate bool
 	// UploadPublicURL is plugins.upload.config.publicUrl: the origin the
-	// editors put before a file's relative URL instead of the admin's own.
+	// editors put before a file's relative URL instead of the admin's own,
+	// unless the media library settings set another one.
 	UploadPublicURL string
 	// HistoryOrigins are the origins whose writes record a version
 	// (admin-panel only when empty).

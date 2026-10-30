@@ -43,24 +43,94 @@ type UploadSettings struct {
 	AutoOrientation      bool `json:"autoOrientation"`
 }
 
+// uploadSettingsBody adds grapi's public URL to Strapi's settings. It is
+// stored under its own key so that Strapi reads plugin_upload_settings
+// unchanged; a body without publicUrl leaves it as it is.
+type uploadSettingsBody struct {
+	UploadSettings
+	PublicURL *string `json:"publicUrl,omitempty"`
+}
+
+type uploadSettingsAnswer struct {
+	UploadSettings
+	PublicURL        string `json:"publicUrl"`
+	PublicURLDefault string `json:"publicUrlDefault"`
+}
+
+type uploadPublicURL struct {
+	URL string `json:"url"`
+}
+
+// uploadPublicURL is the origin the editors put before a relative file
+// URL: the one set in the admin, else plugins.upload.config.publicUrl.
+func (s *Server) uploadPublicURL(ctx context.Context) string {
+	var v uploadPublicURL
+	if found, err := s.store.Get(ctx, uploadScope, "public_url", &v); err == nil && found && v.URL != "" {
+		return v.URL
+	}
+	return s.cfg.UploadPublicURL
+}
+
+// normalizePublicURL accepts "" or an absolute http(s) origin with an
+// optional path, without query or fragment.
+func normalizePublicURL(raw string) (string, bool) {
+	raw = strings.TrimRight(strings.TrimSpace(raw), "/")
+	if raw == "" {
+		return "", true
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || strings.HasSuffix(raw, "?") || strings.HasSuffix(raw, "#") {
+		return "", false
+	}
+	return raw, true
+}
+
+func (s *Server) uploadSettingsAnswer(ctx context.Context) (uploadSettingsAnswer, error) {
+	v := uploadSettingsAnswer{UploadSettings: UploadSettings{SizeOptimization: true, ResponsiveDimensions: true}, PublicURLDefault: s.cfg.UploadPublicURL}
+	if _, err := s.store.Get(ctx, uploadScope, "settings", &v.UploadSettings); err != nil {
+		return v, err
+	}
+	var p uploadPublicURL
+	if _, err := s.store.Get(ctx, uploadScope, "public_url", &p); err != nil {
+		return v, err
+	}
+	v.PublicURL = p.URL
+	return v, nil
+}
+
 func (s *Server) getUploadSettings(w http.ResponseWriter, r *http.Request, _ *User, _ *permissions.Ability) error {
-	v := UploadSettings{SizeOptimization: true, ResponsiveDimensions: true}
-	if _, err := s.store.Get(r.Context(), uploadScope, "settings", &v); err != nil {
+	v, err := s.uploadSettingsAnswer(r.Context())
+	if err != nil {
 		return err
 	}
 	return data(w, v)
 }
 
 func (s *Server) putUploadSettings(w http.ResponseWriter, r *http.Request, u *User, _ *permissions.Ability) error {
-	var v UploadSettings
+	var v uploadSettingsBody
 	if err := decode(r, &v); err != nil {
 		return err
 	}
-	if err := s.store.Set(r.Context(), uploadScope, "settings", v); err != nil {
+	changes := map[string]any{"sizeOptimization": v.SizeOptimization, "responsiveDimensions": v.ResponsiveDimensions, "autoOrientation": v.AutoOrientation}
+	if v.PublicURL != nil {
+		pub, ok := normalizePublicURL(*v.PublicURL)
+		if !ok {
+			return validation([]FieldError{{Path: []string{"publicUrl"}, Message: "publicUrl must be an http or https URL"}})
+		}
+		if err := s.store.Set(r.Context(), uploadScope, "public_url", uploadPublicURL{URL: pub}); err != nil {
+			return err
+		}
+		changes["publicUrl"] = pub
+	}
+	if err := s.store.Set(r.Context(), uploadScope, "settings", v.UploadSettings); err != nil {
 		return err
 	}
-	s.audit(r, u, "media-settings.update", map[string]any{"sizeOptimization": v.SizeOptimization, "responsiveDimensions": v.ResponsiveDimensions, "autoOrientation": v.AutoOrientation})
-	return data(w, v)
+	s.audit(r, u, "media-settings.update", changes)
+	out, err := s.uploadSettingsAnswer(r.Context())
+	if err != nil {
+		return err
+	}
+	return data(w, out)
 }
 
 // UploadConfiguration is plugin_upload_view_configuration.

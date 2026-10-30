@@ -37,6 +37,21 @@ export const previewOf = (mime: string): Kind => kindOf(mime)
 export const uploadOrigin = () =>
   document.querySelector<HTMLMetaElement>('meta[name="grapi-upload-url"]')?.content || window.location.origin
 
+// setUploadOrigin applies a saved public URL without reloading the admin.
+export function setUploadOrigin(url: string) {
+  let meta = document.querySelector<HTMLMetaElement>('meta[name="grapi-upload-url"]')
+  if (!url) {
+    meta?.remove()
+    return
+  }
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'grapi-upload-url'
+    document.head.append(meta)
+  }
+  meta.content = url
+}
+
 // backendUrl is Strapi's prefixFileUrlWithBackendUrl: the editors store a
 // file's URL with the uploads' origin when it is relative.
 export const backendUrl = (url: string, origin = uploadOrigin()) => (url.startsWith('/') ? `${origin}${url}` : url)
